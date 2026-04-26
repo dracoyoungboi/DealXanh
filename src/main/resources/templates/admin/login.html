@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập Quản trị viên - DealXanh</title>
+    <meta name="description" content="Hệ thống quản trị DealXanh dành cho Admin và Moderator">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages/login.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <!-- Left Side - Hero Section (Có thể thay ảnh/text cho hợp lý) -->
+        <div class="login-hero">
+            <div class="login-hero__overlay"
+                style="background: linear-gradient(135deg, rgba(8, 48, 22, 0.9), rgba(11, 66, 32, 0.8));"></div>
+            <div class="login-hero__content">
+                <!-- Logo -->
+                <div class="login-hero__logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                    <span class="login-hero__brand">Admin Portal</span>
+                </div>
+
+                <!-- Hero Text -->
+                <h1 class="login-hero__title">Hệ thống quản lý<br><span class="text-accent">DealXanh</span></h1>
+                <p class="login-hero__title" style="font-size: 1.5rem; margin-top: 20px;">
+                    Dành cho Admin và Moderator
+                </p>
+                <p class="login-hero__subtitle" style="margin-top: 10px;">
+                    Đảm bảo nền tảng hoạt động ổn định và phê duyệt nhanh chóng.
+                </p>
+            </div>
+
+            <!-- Background Image -->
+            <div class="login-hero__bg">
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop&q=80"
+                    alt="Admin Dashboard" loading="lazy">
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="login-form-container">
+            <div class="login-card">
+                <!-- Mobile Logo (hidden on desktop) -->
+                <div class="login-card__mobile-logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                        stroke="var(--primary)" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                    <span class="login-card__mobile-brand">Admin Portal</span>
+                </div>
+
+                <!-- Login View -->
+                <div id="login-view">
+                    <!-- Header -->
+                    <div class="login-card__header">
+                        <h2 class="login-card__title">Đăng nhập</h2>
+                        <p class="login-card__subtitle">Vui lòng đăng nhập với tài khoản được cấp</p>
+                    </div>
+
+                    <!-- Email Login Form Only (No tabs for phone needed for Admin) -->
+                    <div id="tab-email">
+                        <div class="login-card__body">
+                            <form action="/perform_login" method="post" id="email-form" class="login-card__form">
+                                <div class="form-group">
+                                    <label class="form-label" for="username">Tài khoản (Email)</label>
+                                    <div class="input-with-icon">
+                                        <span class="input-with-icon__icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <path
+                                                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                                </path>
+                                                <polyline points="22,6 12,13 2,6"></polyline>
+                                            </svg>
+                                        </span>
+                                        <input type="email" id="username" name="username" class="form-input"
+                                            placeholder="admin@dealxanh.com" autocomplete="email" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="password">Mật khẩu</label>
+                                    <div class="input-with-icon">
+                                        <span class="input-with-icon__icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                            </svg>
+                                        </span>
+                                        <input type="password" id="password" name="password" class="form-input"
+                                            placeholder="••••••••" autocomplete="current-password" required>
+                                        <button type="button" id="toggle-password" class="input-with-icon__toggle">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-options">
+                                    <label class="form-check">
+                                        <input type="checkbox" name="rememberme" id="remember"
+                                            class="form-check__input">
+                                        <span class="form-check__label">Ghi nhớ đăng nhập</span>
+                                    </label>
+                                    <a href="/admin/forgot-password" id="forgot-link" class="forgot-link">Quên mật
+                                        khẩu?</a>
+                                </div>
+
+                                <button type="submit" id="email-submit" class="login-submit">Đăng nhập hệ thống</button>
+                            </form>
+                        </div>
+
+                        <!-- Footer (No register link for Admin/Moderator) -->
+                        <div class="login-card__footer"
+                            style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; text-align: center;">
+                            <p class="login-card__footer-text" style="color: var(--text-tertiary); font-size: 0.85rem;">
+                                Hệ thống dành riêng cho nhân sự vận hành DealXanh.<br> Việc truy cập trái phép sẽ bị
+                                cấm.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple password toggle logic for the admin page
+        document.getElementById('toggle-password').addEventListener('click', function () {
+            var passInput = document.getElementById('password');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+            } else {
+                passInput.type = 'password';
+            }
+        });
+    </script>
+</body>
+
+</html>

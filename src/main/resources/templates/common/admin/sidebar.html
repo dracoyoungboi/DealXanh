@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  common/admin/sidebar.html
+-->
+<body th:fragment="sidebar">
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-header__logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+        </div>
+        <div class="sidebar-header__text">
+            <div class="sidebar-header__brand">DealXanh</div>
+            <div class="sidebar-header__sub">Admin Portal</div>
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section__label">Tổng quan</div>
+        <a class="nav-item" th:href="@{/admin/dashboard}" th:classappend="${activeSidebar == 'dashboard'} ? ' active' : ''">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <path d="M14 14h7v7h-7z"/>
+            </svg>
+            Dashboard
+        </a>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section__label">Quản lý</div>
+        <a class="nav-item" th:href="@{/admin/seller-verify}" th:classappend="${activeSidebar == 'seller-verify'} ? ' active' : ''">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Xét duyệt Seller
+            <span class="nav-badge" id="sidebar-pending-count" th:if="${pendingSellerCount != null and pendingSellerCount > 0}" th:text="${pendingSellerCount}">7</span>
+        </a>
+        <a class="nav-item" th:href="@{/admin/users}" th:classappend="${activeSidebar == 'users'} ? ' active' : ''">
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Người dùng
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-user__avatar">
+                <img th:src="${#authentication != null and #authentication.principal.user.avatar != null ? #authentication.principal.user.avatar : '/img/default-avatar.png'}" alt="Admin">
+            </div>
+            <div>
+                <div class="sidebar-user__name" th:text="${#authentication != null ? #authentication.name : 'Admin'}">Admin Name</div>
+                <div class="sidebar-user__role">Super Admin</div>
+            </div>
+        </div>
+    </div>
+</aside>
+</body>
+</html>

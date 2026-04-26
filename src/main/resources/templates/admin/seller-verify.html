@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xét duyệt Seller - Admin DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;
+    --accent:#d4af37;
+    --surface:#fff;--bg:#f0f2f5;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.1);
+    --danger:#ef4444;--danger-bg:rgba(239,68,68,.1);
+    --warning:#f59e0b;--warning-bg:rgba(245,158,11,.1);
+    --success:#10b981;--success-bg:rgba(16,185,129,.1);
+    --info:#3b82f6;--info-bg:rgba(59,130,246,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+    --sidebar:240px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary)}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+img{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+
+/* Reuse sidebar from dashboard */
+.layout{display:flex;min-height:100vh}
+.sidebar{
+    width:var(--sidebar);flex-shrink:0;background:var(--primary);
+    display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:30;
+    overflow-y:auto;scrollbar-width:none;
+}
+.sidebar::-webkit-scrollbar{display:none}
+.sidebar-header{
+    padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;gap:10px;
+}
+.sidebar-header__logo{width:36px;height:36px;border-radius:var(--radius-md);background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-header__logo svg{width:18px;height:18px;color:#fff}
+.sidebar-header__brand{font-size:16px;font-weight:800;color:#fff}
+.sidebar-header__sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px}
+.nav-section{padding:16px 10px 0}
+.nav-section__label{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:var(--radius-md);color:rgba(255,255,255,.65);font-size:13px;font-weight:500;margin-bottom:2px;cursor:pointer;transition:all var(--tr);position:relative}
+.nav-item:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
+.nav-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;border-radius:0 2px 2px 0;background:#fff}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.nav-badge{margin-left:auto;min-width:18px;height:18px;border-radius:9px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:0 4px;display:flex;align-items:center;justify-content:center}
+.sidebar-footer{margin-top:auto;padding:14px 10px;border-top:1px solid rgba(255,255,255,.1)}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius-md);cursor:pointer;transition:background var(--tr)}
+.sidebar-user:hover{background:rgba(255,255,255,.1)}
+.sidebar-user__avatar{width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.2);flex-shrink:0}
+.sidebar-user__avatar img{width:100%;height:100%;object-fit:cover}
+.sidebar-user__name{font-size:13px;font-weight:600;color:#fff}
+.sidebar-user__role{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
+
+.main{margin-left:var(--sidebar);flex:1}
+.topbar{background:var(--surface);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-light);position:sticky;top:0;z-index:20}
+.topbar__title{font-size:18px;font-weight:800}
+.topbar-btn{width:36px;height:36px;border-radius:var(--radius-md);background:var(--bg);display:flex;align-items:center;justify-content:center;transition:background var(--tr)}
+.topbar-btn:hover{background:var(--border-light)}
+.topbar-btn svg{width:18px;height:18px;color:var(--text-secondary)}
+
+/* Content */
+.content{display:grid;grid-template-columns:1fr 420px;gap:20px;padding:24px;align-items:start}
+
+/* Filter/search bar */
+.filter-bar{
+    display:flex;gap:10px;margin-bottom:16px;align-items:center;
+}
+.search-wrap{position:relative;flex:1}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none}
+.search-icon svg{width:16px;height:16px}
+.search-input{
+    width:100%;padding:10px 12px 10px 36px;
+    border:1px solid var(--border);border-radius:var(--radius-md);
+    font-size:14px;background:var(--surface);transition:border-color var(--tr);
+}
+.search-input:focus{outline:none;border-color:var(--primary)}
+.filter-select{
+    padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-md);
+    font-size:13px;font-weight:600;background:var(--surface);cursor:pointer;
+}
+.filter-select:focus{outline:none;border-color:var(--primary)}
+
+/* Tabs */
+.verify-tabs{display:flex;gap:8px;margin-bottom:16px}
+.verify-tab{
+    padding:8px 16px;border-radius:var(--radius-full);
+    font-size:13px;font-weight:600;cursor:pointer;
+    border:1.5px solid var(--border);background:var(--surface);color:var(--text-secondary);
+    transition:all var(--tr);display:flex;align-items:center;gap:6px;
+}
+.verify-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.verify-tab__count{
+    min-width:18px;height:18px;border-radius:9px;
+    background:currentColor;opacity:.25;
+    font-size:10px;font-weight:700;padding:0 4px;
+    display:flex;align-items:center;justify-content:center;color:inherit;
+}
+.verify-tab.active .verify-tab__count{background:rgba(255,255,255,.3);opacity:1;color:#fff}
+
+/* Seller list */
+.seller-list{display:flex;flex-direction:column;gap:10px}
+.seller-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);
+    cursor:pointer;transition:all var(--tr);
+    overflow:hidden;
+}
+.seller-card:hover{box-shadow:var(--shadow-md);border-color:var(--border)}
+.seller-card.selected{border-color:var(--primary);box-shadow:0 0 0 2px rgba(13,92,46,.15)}
+.seller-card__top{display:flex;gap:14px;padding:16px}
+.seller-store-img{
+    width:56px;height:56px;border-radius:var(--radius-md);overflow:hidden;
+    flex-shrink:0;border:1px solid var(--border-light);background:var(--bg);
+}
+.seller-store-img img{width:100%;height:100%;object-fit:cover}
+.seller-store-info{flex:1;min-width:0}
+.seller-store-name{font-size:15px;font-weight:700;margin-bottom:3px}
+.seller-store-type{font-size:12px;color:var(--text-secondary);margin-bottom:6px}
+.seller-meta-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seller-meta-chip{
+    display:flex;align-items:center;gap:4px;
+    font-size:11px;color:var(--text-secondary);font-weight:500;
+}
+.seller-meta-chip svg{width:12px;height:12px;flex-shrink:0}
+.seller-card-status{
+    padding:4px 10px;border-radius:var(--radius-full);
+    font-size:11px;font-weight:700;flex-shrink:0;align-self:flex-start;
+}
+.seller-card-status.pending{background:var(--warning-bg);color:var(--warning)}
+.seller-card-status.approved{background:var(--success-bg);color:var(--success)}
+.seller-card-status.rejected{background:var(--danger-bg);color:var(--danger)}
+
+/* Docs chips */
+.seller-card__docs{
+    display:flex;gap:6px;padding:0 16px 14px;flex-wrap:wrap;
+}
+.doc-chip{
+    display:flex;align-items:center;gap:4px;
+    padding:4px 10px;border-radius:var(--radius-full);
+    font-size:11px;font-weight:600;
+}
+.doc-chip.ok{background:var(--success-bg);color:var(--success)}
+.doc-chip.missing{background:var(--danger-bg);color:var(--danger)}
+.doc-chip svg{width:11px;height:11px}
+
+/* Right panel - detail -->
+.detail-panel{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);
+    position:sticky;top:80px;
+    max-height:calc(100vh - 100px);overflow-y:auto;
+    scrollbar-width:thin;
+}
+.detail-panel::-webkit-scrollbar{width:4px}
+.detail-panel::-webkit-scrollbar-thumb{background:var(--border)}
+.detail-header{
+    padding:20px;border-bottom:1px solid var(--border-light);
+    display:flex;align-items:center;gap:14px;
+}
+.detail-store-img{width:60px;height:60px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-light)}
+.detail-store-img img{width:100%;height:100%;object-fit:cover}
+.detail-store-name{font-size:16px;font-weight:800;margin-bottom:4px}
+.detail-store-sub{font-size:13px;color:var(--text-secondary)}
+.detail-status{
+    margin-left:auto;padding:5px 12px;border-radius:var(--radius-full);
+    font-size:12px;font-weight:700;flex-shrink:0;
+}
+.detail-status.pending{background:var(--warning-bg);color:var(--warning)}
+
+.detail-section{padding:16px 20px;border-bottom:1px solid var(--border-light)}
+.detail-section:last-child{border-bottom:none}
+.detail-section__title{font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.detail-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+.detail-row .label{color:var(--text-secondary)}
+.detail-row .value{font-weight:600;text-align:right;max-width:200px}
+
+/* Doc cards */
+.doc-card{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 12px;border-radius:var(--radius-md);
+    border:1px solid var(--border-light);background:var(--bg);
+    margin-bottom:8px;cursor:pointer;transition:all var(--tr);
+}
+.doc-card:hover{border-color:var(--primary);background:rgba(13,92,46,.02)}
+.doc-card__icon{
+    width:36px;height:36px;border-radius:var(--radius-sm);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.doc-card__icon svg{width:18px;height:18px}
+.doc-card__info{flex:1}
+.doc-card__name{font-size:13px;font-weight:600}
+.doc-card__status{font-size:11px;margin-top:2px;font-weight:500}
+.doc-card__view{
+    font-size:12px;color:var(--primary);font-weight:600;flex-shrink:0;
+    padding:5px 10px;border-radius:var(--radius-sm);background:rgba(13,92,46,.08);
+}
+
+/* Action buttons */
+.action-section{padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.btn-approve-seller{
+    width:100%;padding:13px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:15px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 4px 14px rgba(13,92,46,.3);transition:all var(--tr);
+}
+.btn-approve-seller:hover{background:var(--primary-dark)}
+.btn-approve-seller svg{width:18px;height:18px}
+.btn-reject-seller{
+    width:100%;padding:12px;border-radius:var(--radius-md);
+    background:var(--bg);color:var(--danger);
+    font-size:14px;font-weight:700;border:1.5px solid rgba(239,68,68,.2);
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:all var(--tr);
+}
+.btn-reject-seller:hover{background:var(--danger-bg);border-color:rgba(239,68,68,.4)}
+.btn-reject-seller svg{width:16px;height:16px}
+.reject-reason{
+    width:100%;padding:10px 12px;border:1.5px solid var(--border);
+    border-radius:var(--radius-md);font-size:13px;resize:none;
+    min-height:72px;transition:border-color var(--tr);display:none;
+    font-family:inherit;
+}
+.reject-reason.show{display:block}
+.reject-reason:focus{outline:none;border-color:var(--danger)}
+.btn-send-reject{
+    width:100%;padding:11px;border-radius:var(--radius-md);
+    background:var(--danger);color:#fff;font-size:14px;font-weight:700;
+    display:none;align-items:center;justify-content:center;gap:6px;
+    transition:all var(--tr);
+}
+.btn-send-reject.show{display:flex}
+.btn-send-reject:hover{background:#dc2626}
+    </style>
+</head>
+<body>
+<div class="layout">
+
+    <!-- Sidebar (same as dashboard) -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-header__logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <div>
+                <div class="sidebar-header__brand">DealXanh</div>
+                <div class="sidebar-header__sub">Admin Portal</div>
+            </div>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section__label">Tổng quan</div>
+            <a class="nav-item" href='dashboard.html'>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/></svg>
+                Dashboard
+            </a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section__label">Quản lý</div>
+            <a class="nav-item active" href='seller-verify.html'>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Xét duyệt Seller
+                <span class="nav-badge">7</span>
+            </a>
+            <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Người dùng</a>
+            <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Tất cả Deals</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section__label">Tài chính & Hỗ trợ</div>
+            <a class="nav-item" href='finance.html'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Tài chính</a>
+            <a class="nav-item" href='dispute.html'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Khiếu nại & Tranh chấp<span class="nav-badge">3</span></a>
+        </div>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-user__avatar"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=68&q=70" alt=""></div>
+                <div><div class="sidebar-user__name">Trần Hải Nam</div><div class="sidebar-user__role">Super Admin</div></div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <div class="topbar__title">Xét duyệt Seller</div>
+            <div style="display:flex;gap:10px">
+                <button class="topbar-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- Left: list -->
+            <div>
+                <div class="filter-bar">
+                    <div class="search-wrap">
+                        <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                        <input type="text" class="search-input" placeholder="Tìm theo tên cửa hàng, email...">
+                    </div>
+                    <select class="filter-select">
+                        <option>Tất cả thành phố</option>
+                        <option>TP. Hồ Chí Minh</option>
+                        <option>Hà Nội</option>
+                        <option>Đà Nẵng</option>
+                    </select>
+                    <select class="filter-select">
+                        <option>Mới nhất trước</option>
+                        <option>Cũ nhất trước</option>
+                    </select>
+                </div>
+
+                <div class="verify-tabs">
+                    <button class="verify-tab active">Chờ duyệt <span class="verify-tab__count">7</span></button>
+                    <button class="verify-tab">Đã duyệt <span class="verify-tab__count">1,241</span></button>
+                    <button class="verify-tab">Từ chối <span class="verify-tab__count">48</span></button>
+                    <button class="verify-tab">Tất cả</button>
+                </div>
+
+                <div class="seller-list">
+                    <div class="seller-card selected" onclick="selectSeller(this)">
+                        <div class="seller-card__top">
+                            <div class="seller-store-img"><img src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=112&q=70" alt=""></div>
+                            <div class="seller-store-info">
+                                <div class="seller-store-name">Tiệm Bánh Mì Hoa Hồng</div>
+                                <div class="seller-store-type">Tiệm bánh · Quận 1, TP.HCM</div>
+                                <div class="seller-meta-row">
+                                    <span class="seller-meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Lê Thị Hoa</span>
+                                    <span class="seller-meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 2h trước</span>
+                                </div>
+                            </div>
+                            <span class="seller-card-status pending">Pending</span>
+                        </div>
+                        <div class="seller-card__docs">
+                            <span class="doc-chip ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> CCCD</span>
+                            <span class="doc-chip ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> GPKD</span>
+                            <span class="doc-chip ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> VSATTP</span>
+                            <span class="doc-chip ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Logo</span>
+                        </div>
+                    </div>
+
+                    <div class="seller-card" onclick="selectSeller(this)">
+                        <div class="seller-card__top">
+                            <div class="seller-store-img"><img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=112&q=70" alt=""></div>
+                            <div class="seller-store-info">
+                                <div class="seller-store-name">Cafe Góc Phố</div>
+                                <div class="seller-store-type">Cà phê · Hoàn Kiếm, Hà Nội</div>
+                                <div class="seller-meta-row">
+                                    <span class="seller-meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Nguyễn Minh Tuấn</span>
+                                    <span class="seller-meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 5h trước</span>
+                                </div>
+                            </div>
+                            <span class="seller-card-status pending">Pending</span>
+                        </div>
+                        <div class="seller-card__docs">
+                            <span class="doc-chip ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> CCCD</span>
+                            <span class="doc-chip ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> GPKD</span>
+                            <span class="doc-chip missing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> VSATTP</span>
+                        </div>
+                    </div>
+
+                    <div class="seller-card" onclick="selectSeller(this)">
+                        <div class="seller-card__top">
+                            <div class="seller-store-img" style="background:rgba(13,92,46,.08);display:flex;align-items:center;justify-content:center;font-size:24px">🍜</div>
+                            <div class="seller-store-info">
+                                <div class="seller-store-name">Nhà Hàng Phở Ngon</div>
+                                <div class="seller-store-type">Nhà hàng · Cầu Giấy, Hà Nội</div>
+                                <div class="seller-meta-row">
+                                    <span class="seller-meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Trần Đức Long</span>
+                                    <span class="seller-meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 1 ngày trước</span>
+                                </div>
+                            </div>
+                            <span class="seller-card-status pending">Pending</span>
+                        </div>
+                        <div class="seller-card__docs">
+                            <span class="doc-chip ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> CCCD</span>
+                            <span class="doc-chip ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> GPKD</span>
+                            <span class="doc-chip ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> VSATTP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: detail panel -->
+            <div class="detail-panel">
+                <div class="detail-header">
+                    <div class="detail-store-img"><img src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=120&q=70" alt=""></div>
+                    <div>
+                        <div class="detail-store-name">Tiệm Bánh Mì Hoa Hồng</div>
+                        <div class="detail-store-sub">Tiệm bánh · Quận 1, TP.HCM</div>
+                    </div>
+                    <span class="detail-status pending">Pending</span>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section__title">Thông tin chủ cửa hàng</div>
+                    <div class="detail-row"><span class="label">Họ tên</span><span class="value">Lê Thị Hoa</span></div>
+                    <div class="detail-row"><span class="label">Email</span><span class="value">lethihoa@gmail.com</span></div>
+                    <div class="detail-row"><span class="label">Số điện thoại</span><span class="value">0912 345 678</span></div>
+                    <div class="detail-row"><span class="label">Ngày nộp hồ sơ</span><span class="value">18/01/2025, 12:30</span></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section__title">Thông tin kinh doanh</div>
+                    <div class="detail-row"><span class="label">Loại hình</span><span class="value">Tiệm bánh / Bakery</span></div>
+                    <div class="detail-row"><span class="label">Địa chỉ</span><span class="value">45 Nguyễn Thái Học, Q.1, HCM</span></div>
+                    <div class="detail-row"><span class="label">Giờ hoạt động</span><span class="value">6:00–21:00</span></div>
+                    <div class="detail-row"><span class="label">Slot hàng ngày</span><span class="value">17:00–18:00, 18:00–20:00</span></div>
+                    <div class="detail-row"><span class="label">Ngân hàng</span><span class="value">Vietcombank – ****4891</span></div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section__title">Giấy tờ đã nộp</div>
+                    <div class="doc-card">
+                        <div class="doc-card__icon" style="background:var(--success-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                        <div class="doc-card__info">
+                            <div class="doc-card__name">CCCD / CMND</div>
+                            <div class="doc-card__status" style="color:var(--success)">✓ Đã tải lên · Hợp lệ</div>
+                        </div>
+                        <button class="doc-card__view">Xem</button>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-card__icon" style="background:var(--success-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                        <div class="doc-card__info">
+                            <div class="doc-card__name">Giấy phép kinh doanh</div>
+                            <div class="doc-card__status" style="color:var(--success)">✓ Đã tải lên · Hợp lệ</div>
+                        </div>
+                        <button class="doc-card__view">Xem</button>
+                    </div>
+                    <div class="doc-card">
+                        <div class="doc-card__icon" style="background:var(--success-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                        <div class="doc-card__info">
+                            <div class="doc-card__name">Giấy chứng nhận VSATTP</div>
+                            <div class="doc-card__status" style="color:var(--success)">✓ Đã tải lên · Hợp lệ</div>
+                        </div>
+                        <button class="doc-card__view">Xem</button>
+                    </div>
+                </div>
+
+                <div class="action-section">
+                    <button class="btn-approve-seller" onclick="approveSeller()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Phê duyệt Seller
+                    </button>
+                    <button class="btn-reject-seller" id="btn-reject" onclick="showRejectForm()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Từ chối — Yêu cầu bổ sung
+                    </button>
+                    <textarea class="reject-reason" id="reject-reason" placeholder="Nêu rõ lý do từ chối và yêu cầu bổ sung tài liệu gì..."></textarea>
+                    <button class="btn-send-reject" id="btn-send-reject" onclick="sendReject()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Gửi yêu cầu bổ sung
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectSeller(card) {
+    document.querySelectorAll('.seller-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+}
+function showRejectForm() {
+    document.getElementById('reject-reason').classList.add('show');
+    document.getElementById('btn-send-reject').classList.add('show');
+    document.getElementById('btn-reject').style.display = 'none';
+}
+function approveSeller() {
+    if (confirm('Xác nhận phê duyệt Seller này?')) {
+        const selected = document.querySelector('.seller-card.selected');
+        if (selected) {
+            selected.querySelector('.seller-card-status').textContent = 'Approved';
+            selected.querySelector('.seller-card-status').className = 'seller-card-status approved';
+        }
+        document.querySelector('.detail-status').textContent = 'Approved';
+        document.querySelector('.detail-status').className = 'detail-status approved';
+        document.querySelector('.action-section').innerHTML = '<div style="text-align:center;padding:16px 0;color:var(--success);font-weight:700;font-size:15px">✓ Đã phê duyệt thành công</div>';
+    }
+}
+function sendReject() {
+    const reason = document.getElementById('reject-reason').value.trim();
+    if (!reason) { alert('Vui lòng nhập lý do từ chối'); return; }
+    alert('Đã gửi yêu cầu bổ sung đến Seller');
+}
+</script>
+</body>
+</html>

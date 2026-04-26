@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DealXanh — Săn deal đồ ăn cận date</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ===== TOKENS ===== */
+:root {
+    --primary:#0d5c2e; --primary-dark:#08421f; --primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff; --background:#f5f6f8;
+    --text-primary:#1a1a1a; --text-secondary:#666; --text-inverse:#fff;
+    --shadow-lg:0 8px 32px rgba(0,0,0,.16);
+    --radius-md:10px; --radius-lg:16px; --radius-xl:20px; --radius-full:9999px;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    --tr:250ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:var(--font);overflow:hidden}
+img{display:block;max-width:100%}
+button{cursor:pointer;border:none;font-family:inherit}
+
+/* ===== LAYOUT ===== */
+.splash{
+    position:relative;min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    padding:0 0 48px;
+    background:#0d1a0f;
+    overflow:hidden;
+}
+
+/* Background */
+.splash__bg{
+    position:absolute;inset:0;
+    z-index:0;
+}
+.splash__bg img{
+    width:100%;height:100%;object-fit:cover;
+    animation:bgZoom 8s ease-out forwards;
+}
+.splash__gradient{
+    position:absolute;inset:0;
+    background:linear-gradient(
+        to bottom,
+        rgba(13,26,15,.25) 0%,
+        rgba(13,26,15,.15) 30%,
+        rgba(13,26,15,.75) 70%,
+        rgba(13,26,15,.97) 100%
+    );
+}
+@keyframes bgZoom{from{transform:scale(1.08)}to{transform:scale(1)}}
+
+/* Top bar: logo left, badges right — FIXED layout */
+.splash__topbar{
+    position:absolute;
+    top:0;left:0;right:0;
+    z-index:2;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 24px;
+    animation:fadeDown .6s ease-out both;
+}
+
+/* Logo */
+.splash__logo{
+    display:flex;align-items:center;gap:10px;
+}
+.splash__logo-icon{
+    width:44px;height:44px;
+    background:var(--primary);
+    border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(13,92,46,.4);
+    flex-shrink:0;
+}
+.splash__logo-icon svg{color:#fff}
+.splash__logo-text{
+    font-size:22px;font-weight:800;color:#fff;letter-spacing:-.3px;
+}
+
+/* Floating badges */
+.splash__badges{
+    display:flex;align-items:center;gap:8px;
+}
+.splash__badge{
+    display:flex;align-items:center;gap:6px;
+    padding:7px 14px;
+    background:rgba(255,255,255,.12);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:var(--radius-full);
+    color:#fff;font-size:13px;font-weight:500;
+    white-space:nowrap;
+}
+.splash__badge svg{width:14px;height:14px;flex-shrink:0;color:var(--accent)}
+
+/* Scroll indicator */
+.splash__indicator{
+    position:absolute;top:50%;left:24px;transform:translateY(-50%);
+    display:flex;flex-direction:column;gap:6px;
+    z-index:2;
+    animation:fadeIn 1s 1s ease-out both;
+}
+.splash__dot{
+    width:6px;height:6px;border-radius:50%;
+    background:rgba(255,255,255,.3);
+    transition:all var(--tr);
+}
+.splash__dot.active{background:#fff;transform:scaleX(2.5);border-radius:3px}
+
+/* Content block */
+.splash__content{
+    position:relative;z-index:2;
+    width:100%;max-width:480px;
+    padding:0 24px;
+    text-align:center;
+    animation:fadeUp .7s .2s ease-out both;
+}
+.splash__eyebrow{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 14px;
+    background:rgba(212,175,55,.18);
+    border:1px solid rgba(212,175,55,.35);
+    border-radius:var(--radius-full);
+    color:var(--accent);font-size:12px;font-weight:600;
+    letter-spacing:.5px;text-transform:uppercase;
+    margin-bottom:16px;
+}
+.splash__eyebrow svg{width:13px;height:13px}
+.splash__title{
+    font-size:36px;font-weight:800;color:#fff;
+    line-height:1.15;letter-spacing:-.8px;
+    margin-bottom:14px;
+}
+.splash__title span{
+    color:var(--accent);
+    -webkit-text-stroke:.5px rgba(212,175,55,.3);
+}
+.splash__subtitle{
+    font-size:15px;color:rgba(255,255,255,.72);
+    line-height:1.65;margin-bottom:32px;
+}
+
+/* Stats row */
+.splash__stats{
+    display:flex;justify-content:center;gap:0;
+    margin-bottom:32px;
+}
+.splash__stat{
+    flex:1;padding:12px 8px;
+    border-right:1px solid rgba(255,255,255,.12);
+}
+.splash__stat:last-child{border-right:none}
+.splash__stat-val{font-size:22px;font-weight:800;color:#fff}
+.splash__stat-lbl{font-size:11px;color:rgba(255,255,255,.55);margin-top:3px;font-weight:500}
+
+/* CTAs */
+.splash__ctas{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+.btn-main{
+    width:100%;padding:16px;
+    background:var(--primary);
+    color:#fff;font-size:16px;font-weight:700;
+    border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:all var(--tr);
+    box-shadow:0 6px 20px rgba(13,92,46,.4);
+}
+.btn-main:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 8px 28px rgba(13,92,46,.5)}
+.btn-main svg{width:18px;height:18px;flex-shrink:0}
+.btn-secondary{
+    width:100%;padding:15px;
+    background:rgba(255,255,255,.1);
+    border:1.5px solid rgba(255,255,255,.25);
+    backdrop-filter:blur(8px);
+    color:#fff;font-size:15px;font-weight:600;
+    border-radius:var(--radius-md);
+    transition:all var(--tr);
+}
+.btn-secondary:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4)}
+.btn-guest{
+    background:none;border:none;
+    color:rgba(255,255,255,.55);font-size:13px;font-weight:500;
+    text-decoration:underline;text-underline-offset:3px;
+    transition:color var(--tr);
+    padding:4px;
+}
+.btn-guest:hover{color:rgba(255,255,255,.85)}
+
+/* Terms */
+.splash__terms{
+    font-size:11px;color:rgba(255,255,255,.35);line-height:1.6;
+}
+.splash__terms a{color:rgba(255,255,255,.5);text-decoration:underline}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Loading overlay */
+.splash__loader{
+    position:fixed;inset:0;
+    background:var(--primary);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;
+    z-index:100;
+    transition:opacity .5s ease,visibility .5s ease;
+}
+.splash__loader.hidden{opacity:0;visibility:hidden}
+.loader-logo{display:flex;align-items:center;gap:10px;animation:pulse 1.2s ease-in-out infinite}
+.loader-logo-icon{width:56px;height:56px;background:rgba(255,255,255,.15);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center}
+.loader-logo-text{font-size:28px;font-weight:800;color:#fff}
+.loader-bar{width:120px;height:3px;background:rgba(255,255,255,.15);border-radius:var(--radius-full);overflow:hidden}
+.loader-bar-fill{height:100%;background:var(--accent);border-radius:var(--radius-full);animation:loadBar 1.8s ease-out forwards}
+@keyframes loadBar{from{width:0}to{width:100%}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* Responsive: stack badges below logo on small screens */
+@media(max-width:520px){
+    .splash__topbar{
+        flex-direction:column;
+        align-items:center;
+        gap:12px;
+        padding:16px 20px;
+    }
+    .splash__badges{
+        flex-wrap:wrap;
+        justify-content:center;
+    }
+}
+@media(min-width:600px){
+    .splash__title{font-size:44px}
+}
+    </style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="splash__loader" id="loader">
+    <div class="loader-logo">
+        <div class="loader-logo-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+        </div>
+        <span class="loader-logo-text">DealXanh</span>
+    </div>
+    <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+</div>
+
+<!-- Main splash -->
+<div class="splash">
+    <!-- Background -->
+    <div class="splash__bg">
+        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1400&h=900&fit=crop&q=85" alt="Đồ ăn ngon">
+        <div class="splash__gradient"></div>
+    </div>
+
+    <!-- Top bar: Logo + Badges cùng hàng, không overlap -->
+    <div class="splash__topbar">
+        <div class="splash__logo">
+            <div class="splash__logo-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <span class="splash__logo-text">DealXanh</span>
+        </div>
+
+        <div class="splash__badges">
+            <span class="splash__badge">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                #1 App săn deal Việt Nam
+            </span>
+            <span class="splash__badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                An toàn & Uy tín
+            </span>
+        </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="splash__indicator">
+        <div class="splash__dot active"></div>
+        <div class="splash__dot"></div>
+        <div class="splash__dot"></div>
+    </div>
+
+    <!-- Bottom content -->
+    <div class="splash__content">
+        <div class="splash__eyebrow">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Flash deals hàng ngày
+        </div>
+
+        <h1 class="splash__title">
+            Săn deal đồ ăn<br>ngon giảm đến <span>70%</span>
+        </h1>
+        <p class="splash__subtitle">
+            Tiết kiệm chi phí ăn uống với các deal đồ ăn cận date chất lượng cao từ nhà hàng, quán ăn uy tín.
+        </p>
+
+        <!-- Stats -->
+        <div class="splash__stats">
+            <div class="splash__stat">
+                <div class="splash__stat-val">50K+</div>
+                <div class="splash__stat-lbl">Người dùng</div>
+            </div>
+            <div class="splash__stat">
+                <div class="splash__stat-val">1K+</div>
+                <div class="splash__stat-lbl">Cửa hàng</div>
+            </div>
+            <div class="splash__stat">
+                <div class="splash__stat-val">100K+</div>
+                <div class="splash__stat-lbl">Deal đã bán</div>
+            </div>
+        </div>
+
+        <!-- CTAs -->
+        <div class="splash__ctas">
+            <button class="btn-main" onclick="window.location.href='../pages/auth/role-select.html'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Bắt đầu ngay — Miễn phí
+            </button>
+            <button class="btn-secondary" onclick="window.location.href='/pages/login.html'">
+                Đăng nhập tài khoản có sẵn
+            </button>
+            <button class="btn-guest" onclick="window.location.href='../pages/home.html'">
+                Tiếp tục không cần đăng ký →
+            </button>
+        </div>
+
+        <p class="splash__terms">
+            Bằng cách tiếp tục, bạn đồng ý với
+            <a href="#">Điều khoản sử dụng</a> và
+            <a href="#">Chính sách bảo mật</a> của chúng tôi.
+        </p>
+    </div>
+</div>
+
+<script>
+// Hide loader after animation
+setTimeout(() => {
+    document.getElementById('loader').classList.add('hidden');
+}, 1900);
+
+// Dot indicator animation
+const dots = document.querySelectorAll('.splash__dot');
+let current = 0;
+setInterval(() => {
+    dots[current].classList.remove('active');
+    current = (current + 1) % dots.length;
+    dots[current].classList.add('active');
+}, 2000);
+</script>
+</body>
+</html>

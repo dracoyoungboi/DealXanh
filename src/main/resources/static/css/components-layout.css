@@ -1,0 +1,214 @@
+/**
+ * Components Layout CSS - DealXanh
+ * Shared layout styles for all pages
+ */
+
+/* Container padding adjustment for component usage */
+.component-section {
+    padding: 48px 0;
+}
+
+@media (max-width: 768px) {
+    .component-section {
+        padding: 32px 0;
+    }
+}
+
+/* Base Page Layout */
+.page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-content {
+    flex: 1;
+    padding-bottom: 80px; /* Space for mobile nav */
+}
+
+.page-content--no-nav {
+    padding-bottom: 0;
+}
+
+/* Desktop Header (for future use) */
+.desktop-header {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .desktop-header {
+        display: block;
+    }
+
+    .mobile-header {
+        display: none;
+    }
+}
+
+/* Page Header (for page titles) */
+.page-header {
+    padding: 24px 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.page-header__title {
+    font-size: 24px;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+.page-header__breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.breadcrumb-item {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.breadcrumb-item:hover {
+    color: var(--primary);
+}
+
+.breadcrumb-separator {
+    color: var(--text-tertiary);
+}
+
+/* Loading States */
+.loading-skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--border-light) 0%,
+        var(--surface) 50%,
+        var(--border-light) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Empty States */
+.empty-state--page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+}
+
+/* Error States */
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.error-state__icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--status-danger-bg);
+    border-radius: var(--radius-full);
+    color: var(--status-danger);
+    margin-bottom: 16px;
+}
+
+.error-state__title {
+    font-size: 20px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.error-state__message {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    max-width: 400px;
+}
+
+/* Back Button (for pages) */
+.page-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.page-back:hover {
+    color: var(--primary);
+}
+
+/* Content Spacing */
+.content-spacer {
+    height: 16px;
+}
+
+.content-spacer--lg {
+    height: 24px;
+}
+
+.content-spacer--xl {
+    height: 32px;
+}
+
+/* Horizontal Rule */
+.hr {
+    height: 1px;
+    background: var(--border);
+    border: none;
+    margin: 24px 0;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Focus visible for accessibility */
+.focus-visible:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Skip to content (accessibility) */
+.skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary);
+    color: white;
+    padding: 8px 16px;
+    z-index: 9999;
+    text-decoration: none;
+}
+
+.skip-to-content:focus {
+    top: 0;
+}

@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Tạo Deal Mới - DealXanh Seller</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff;--bg:#f5f6f8;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 20px rgba(0,0,0,.12);
+    --danger:#ef4444;--danger-bg:rgba(239,68,68,.1);
+    --warning:#f59e0b;--warning-bg:rgba(245,158,11,.1);
+    --success:#10b981;--success-bg:rgba(16,185,129,.1);
+    --info:#3b82f6;--info-bg:rgba(59,130,246,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+    --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary)}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+input,select,textarea{font-family:inherit}
+img{display:block;max-width:100%}
+
+/* Header */
+.page-header{
+    background:var(--surface);
+    padding:calc(var(--safe-top) + 12px) 16px 12px;
+    display:flex;align-items:center;gap:12px;
+    border-bottom:1px solid var(--border-light);
+    position:sticky;top:0;z-index:20;
+}
+.back-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    transition:background var(--tr);
+}
+.back-btn:hover{background:var(--border-light)}
+.back-btn svg{width:18px;height:18px}
+.header-title{font-size:17px;font-weight:700;flex:1}
+.header-step{font-size:12px;color:var(--text-secondary);font-weight:500}
+
+/* Progress bar */
+.progress-bar{height:3px;background:var(--border-light)}
+.progress-fill{height:100%;background:var(--primary);transition:width .4s ease;border-radius:0 2px 2px 0}
+
+/* Body */
+.body{padding:20px 16px 100px;max-width:560px;margin:0 auto}
+
+/* Deal type selector */
+.deal-types{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.deal-type-card{
+    padding:16px 14px;border-radius:var(--radius-lg);
+    border:2px solid var(--border-light);background:var(--surface);
+    cursor:pointer;transition:all var(--tr);text-align:left;
+}
+.deal-type-card:hover{border-color:var(--primary);background:rgba(13,92,46,.02)}
+.deal-type-card.selected{border-color:var(--primary);background:rgba(13,92,46,.05)}
+.deal-type-card.selected .deal-type-icon{background:rgba(13,92,46,.12)}
+.deal-type-icon{
+    width:40px;height:40px;border-radius:var(--radius-md);
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:10px;transition:background var(--tr);
+}
+.deal-type-icon svg{width:20px;height:20px;color:var(--primary)}
+.deal-type-icon.accent{background:rgba(212,175,55,.1)}
+.deal-type-icon.accent svg{color:var(--accent)}
+.deal-type-icon.info{background:var(--info-bg)}
+.deal-type-icon.info svg{color:var(--info)}
+.deal-type-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.deal-type-desc{font-size:11px;color:var(--text-secondary);line-height:1.45}
+
+/* Form sections */
+.form-section{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);padding:16px;
+    margin-bottom:14px;
+}
+.form-section__header{
+    display:flex;align-items:center;gap:8px;
+    margin-bottom:16px;
+    font-size:14px;font-weight:700;
+}
+.form-section__header svg{width:16px;height:16px;color:var(--primary)}
+.form-group{margin-bottom:16px}
+.form-group:last-child{margin-bottom:0}
+.form-label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}
+.form-label span{color:var(--danger);margin-left:2px}
+.form-label em{font-style:normal;font-weight:400;font-size:12px;color:var(--text-secondary)}
+.form-input{
+    width:100%;padding:11px 14px;
+    border:1.5px solid var(--border);border-radius:var(--radius-md);
+    font-size:15px;background:var(--surface);
+    transition:border-color var(--tr),box-shadow var(--tr);
+}
+.form-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,92,46,.1)}
+.form-input--icon{padding-left:44px}
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none}
+.input-icon svg{width:17px;height:17px}
+.input-suffix{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:var(--text-secondary)}
+.form-select{
+    width:100%;padding:11px 36px 11px 14px;
+    border:1.5px solid var(--border);border-radius:var(--radius-md);
+    font-size:15px;background:var(--surface);appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
+    cursor:pointer;transition:border-color var(--tr);
+}
+.form-select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,92,46,.1)}
+.form-hint{font-size:12px;color:var(--text-secondary);margin-top:6px;line-height:1.5}
+.form-row{display:flex;gap:12px}
+.form-row .form-group{flex:1}
+
+/* Price calculator */
+.price-calc{
+    background:rgba(13,92,46,.04);
+    border:1px solid rgba(13,92,46,.12);
+    border-radius:var(--radius-md);
+    padding:14px;margin-top:14px;
+}
+.price-calc__title{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.price-calc__title svg{width:14px;height:14px}
+.price-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.price-row:last-child{font-weight:700;font-size:14px;padding-top:8px;border-top:1px solid rgba(13,92,46,.1);margin-top:4px}
+.price-row span:last-child{color:var(--primary);font-weight:600}
+
+/* Discount preview */
+.discount-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 14px;border-radius:var(--radius-full);
+    background:var(--danger-bg);color:var(--danger);
+    font-size:14px;font-weight:700;margin-top:10px;
+}
+
+/* Slot time grid */
+.slot-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+}
+.slot-chip{
+    padding:10px 6px;text-align:center;border-radius:var(--radius-md);
+    border:1.5px solid var(--border);cursor:pointer;
+    font-size:12px;font-weight:500;transition:all var(--tr);
+    background:var(--surface);
+}
+.slot-chip:hover{border-color:var(--primary);color:var(--primary)}
+.slot-chip.selected{background:rgba(13,92,46,.08);border-color:var(--primary);color:var(--primary);font-weight:700}
+
+/* Photo upload */
+.photo-upload{
+    border:2px dashed var(--border);border-radius:var(--radius-lg);
+    padding:24px;text-align:center;cursor:pointer;
+    transition:all var(--tr);background:var(--surface);position:relative;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.photo-upload:hover{border-color:var(--primary);background:rgba(13,92,46,.02)}
+.photo-upload input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.photo-upload__icon{
+    width:48px;height:48px;border-radius:var(--radius-lg);
+    background:rgba(13,92,46,.08);color:var(--primary);
+    display:flex;align-items:center;justify-content:center;
+}
+.photo-upload__icon svg{width:24px;height:24px}
+.photo-upload__title{font-size:14px;font-weight:600}
+.photo-upload__sub{font-size:12px;color:var(--text-secondary)}
+
+/* Photo grid */
+.photo-grid{display:flex;gap:8px;flex-wrap:wrap}
+.photo-item{
+    width:72px;height:72px;border-radius:var(--radius-md);
+    overflow:hidden;position:relative;
+    border:1.5px solid var(--border-light);
+}
+.photo-item img{width:100%;height:100%;object-fit:cover}
+.photo-item__remove{
+    position:absolute;top:3px;right:3px;
+    width:20px;height:20px;border-radius:50%;
+    background:rgba(0,0,0,.6);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;
+}
+
+/* Blind box items */
+.blindbox-items{margin-top:12px}
+.blindbox-item{
+    display:flex;align-items:center;gap:10px;
+    padding:10px;border-radius:var(--radius-md);
+    background:var(--bg);margin-bottom:8px;
+}
+.blindbox-item__drag{color:var(--text-tertiary);cursor:grab}
+.blindbox-item__drag svg{width:16px;height:16px}
+.blindbox-item__info{flex:1;min-width:0}
+.blindbox-item__name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blindbox-item__qty{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.blindbox-item__remove{
+    width:28px;height:28px;border-radius:var(--radius-sm);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-tertiary);transition:all var(--tr);
+}
+.blindbox-item__remove:hover{background:var(--danger-bg);color:var(--danger)}
+.blindbox-item__remove svg{width:14px;height:14px}
+.add-item-btn{
+    width:100%;padding:10px;border-radius:var(--radius-md);
+    border:1.5px dashed var(--border);background:none;
+    font-size:13px;font-weight:600;color:var(--text-secondary);
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    transition:all var(--tr);margin-top:8px;
+}
+.add-item-btn:hover{border-color:var(--primary);color:var(--primary);background:rgba(13,92,46,.02)}
+.add-item-btn svg{width:14px;height:14px}
+
+/* Preview card */
+.preview-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);overflow:hidden;
+    margin-bottom:14px;
+}
+.preview-card__header{
+    display:flex;align-items:center;gap:8px;
+    padding:12px 16px;background:rgba(13,92,46,.04);
+    border-bottom:1px solid var(--border-light);
+    font-size:13px;font-weight:600;color:var(--primary);
+}
+.preview-card__header svg{width:15px;height:15px}
+.preview-inner{
+    display:flex;gap:12px;padding:14px;
+}
+.preview-img{
+    width:72px;height:72px;border-radius:var(--radius-md);
+    overflow:hidden;flex-shrink:0;background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+}
+.preview-img img{width:100%;height:100%;object-fit:cover}
+.preview-img svg{width:28px;height:28px;color:var(--text-tertiary)}
+.preview-info{flex:1}
+.preview-name{font-size:14px;font-weight:700;margin-bottom:5px}
+.preview-prices{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.preview-price{font-size:18px;font-weight:800;color:var(--primary)}
+.preview-orig{font-size:12px;color:var(--text-tertiary);text-decoration:line-through}
+.preview-discount{
+    padding:2px 8px;border-radius:var(--radius-full);
+    background:var(--danger-bg);color:var(--danger);font-size:11px;font-weight:700;
+}
+.preview-tags{display:flex;gap:6px;flex-wrap:wrap}
+.preview-tag{
+    padding:3px 9px;border-radius:var(--radius-full);
+    font-size:11px;font-weight:600;background:var(--bg);color:var(--text-secondary);
+}
+
+/* Bottom CTA */
+.bottom-cta{
+    position:fixed;bottom:0;left:0;right:0;
+    padding:12px 16px calc(12px + var(--safe-bot));
+    background:var(--surface);border-top:1px solid var(--border-light);
+    z-index:20;
+}
+.cta-row{display:flex;gap:10px}
+.btn-draft{
+    flex:1;padding:13px;border-radius:var(--radius-md);
+    background:var(--bg);color:var(--text-primary);
+    font-size:14px;font-weight:700;border:1.5px solid var(--border);
+    transition:all var(--tr);
+}
+.btn-draft:hover{border-color:var(--primary);color:var(--primary)}
+.btn-publish{
+    flex:2;padding:13px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:15px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 4px 16px rgba(13,92,46,.3);
+    transition:all var(--tr);
+}
+.btn-publish:hover{background:var(--primary-dark)}
+.btn-publish svg{width:18px;height:18px}
+
+/* Toggle switch */
+.toggle-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 0;
+}
+.toggle-row:not(:last-child){border-bottom:1px solid var(--border-light);margin-bottom:10px}
+.toggle-info .toggle-label{font-size:13px;font-weight:600}
+.toggle-info .toggle-desc{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.toggle{
+    position:relative;width:42px;height:24px;
+    background:var(--border);border-radius:12px;
+    transition:background .2s;cursor:pointer;flex-shrink:0;
+}
+.toggle.on{background:var(--primary)}
+.toggle::after{
+    content:'';position:absolute;top:3px;left:3px;
+    width:18px;height:18px;border-radius:50%;background:#fff;
+    transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+.toggle.on::after{transform:translateX(18px)}
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="page-header">
+    <button class="back-btn" onclick="window.location.href='deals.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <span class="header-title">Tạo deal mới</span>
+    <span class="header-step" id="step-label">Bước 1/3</span>
+</header>
+<div class="progress-bar">
+    <div class="progress-fill" id="progress" style="width:33%"></div>
+</div>
+
+<main class="body" id="main-body">
+
+    <!-- STEP 1: Deal type & basic info -->
+    <div id="step-1">
+        <!-- Deal type -->
+        <div style="margin-bottom:20px">
+            <div style="font-size:13px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Loại deal</div>
+            <div class="deal-types">
+                <button class="deal-type-card selected" onclick="selectType(this,'regular')" id="type-regular">
+                    <div class="deal-type-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
+                    <div class="deal-type-name">Deal thường</div>
+                    <div class="deal-type-desc">Giảm giá đơn giản, tự chọn % và số lượng slot</div>
+                </button>
+                <button class="deal-type-card" onclick="selectType(this,'blindbox')" id="type-blindbox">
+                    <div class="deal-type-icon accent">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                    </div>
+                    <div class="deal-type-name">🎁 Blind Box</div>
+                    <div class="deal-type-desc">Combo bí ẩn nhiều món, giá hấp dẫn hơn</div>
+                </button>
+                <button class="deal-type-card" onclick="selectType(this,'flash')" id="type-flash">
+                    <div class="deal-type-icon info">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <div class="deal-type-name">⚡ Flash Sale</div>
+                    <div class="deal-type-desc">Giảm sâu trong thời gian ngắn, tạo FOMO</div>
+                </button>
+                <button class="deal-type-card" onclick="selectType(this,'scheduled')" id="type-scheduled">
+                    <div class="deal-type-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <div class="deal-type-name">Lên lịch</div>
+                    <div class="deal-type-desc">Tự động live theo ngày giờ đặt trước</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Basic info -->
+        <div class="form-section">
+            <div class="form-section__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Thông tin cơ bản
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tên deal <span>*</span></label>
+                <input type="text" class="form-input" id="deal-name" placeholder="VD: Combo bánh mì thịt nguội 2 cái" oninput="updatePreview()">
+                <p class="form-hint">Ngắn gọn, hấp dẫn. Tối đa 80 ký tự</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Mô tả <em>(tùy chọn)</em></label>
+                <textarea class="form-input" style="min-height:80px;resize:vertical;padding:11px 14px" placeholder="Mô tả thêm về deal: nguyên liệu, thành phần, lưu ý khi pickup..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Danh mục <span>*</span></label>
+                <select class="form-select">
+                    <option value="">-- Chọn danh mục --</option>
+                    <option>Bánh mì</option>
+                    <option>Đồ uống</option>
+                    <option>Bánh ngọt</option>
+                    <option>Cơm & Bữa chính</option>
+                    <option>Ăn vặt / Snack</option>
+                    <option>Hải sản</option>
+                    <option>Thực phẩm đóng gói</option>
+                    <option>Blind Box</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Photo upload -->
+        <div class="form-section">
+            <div class="form-section__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Hình ảnh sản phẩm
+            </div>
+            <div class="photo-grid" id="photo-grid" style="margin-bottom:10px"></div>
+            <div class="photo-upload" id="photo-upload-area">
+                <input type="file" accept="image/*" multiple onchange="handlePhotoUpload(this)">
+                <div class="photo-upload__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <div class="photo-upload__title">Thêm ảnh sản phẩm</div>
+                <div class="photo-upload__sub">JPG, PNG · Tối đa 5 ảnh · 5MB mỗi ảnh</div>
+            </div>
+        </div>
+
+        <!-- Blind box items section (shown when type=blindbox) -->
+        <div class="form-section" id="blindbox-section" style="display:none">
+            <div class="form-section__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/></svg>
+                Các món trong Blind Box
+            </div>
+            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">Thêm các món ăn sẽ có trong hộp. Buyer sẽ nhận ngẫu nhiên theo số lượng.</p>
+            <div class="blindbox-items" id="blindbox-items">
+                <div class="blindbox-item">
+                    <span class="blindbox-item__drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
+                    <div class="blindbox-item__info">
+                        <div class="blindbox-item__name">Bánh mì pate đặc biệt</div>
+                        <div class="blindbox-item__qty">Giá gốc: 45.000đ · Số lượng tối đa: 3</div>
+                    </div>
+                    <button class="blindbox-item__remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>
+                <div class="blindbox-item">
+                    <span class="blindbox-item__drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
+                    <div class="blindbox-item__info">
+                        <div class="blindbox-item__name">Cà phê sữa đá</div>
+                        <div class="blindbox-item__qty">Giá gốc: 35.000đ · Số lượng tối đa: 2</div>
+                    </div>
+                    <button class="blindbox-item__remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>
+            </div>
+            <button class="add-item-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Thêm món vào box
+            </button>
+        </div>
+    </div>
+
+    <!-- STEP 2: Pricing & Slots -->
+    <div id="step-2" style="display:none">
+        <div class="form-section">
+            <div class="form-section__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Định giá
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Giá gốc <span>*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-suffix">đ</span>
+                        <input type="number" class="form-input" id="orig-price" placeholder="100000" oninput="calcDiscount()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giá deal <span>*</span></label>
+                    <div class="input-wrap">
+                        <span class="input-suffix">đ</span>
+                        <input type="number" class="form-input" id="deal-price" placeholder="35000" oninput="calcDiscount()">
+                    </div>
+                </div>
+            </div>
+
+            <div id="discount-preview" style="display:none">
+                <div class="discount-badge" id="discount-text">-65%</div>
+            </div>
+
+            <div class="price-calc" id="price-calc" style="display:none">
+                <div class="price-calc__title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Ước tính doanh thu
+                </div>
+                <div class="price-row">
+                    <span>Giá deal</span><span id="pc-price">35.000đ</span>
+                </div>
+                <div class="price-row">
+                    <span>Hoa hồng DealXanh (13%)</span><span id="pc-fee">- 4.550đ</span>
+                </div>
+                <div class="price-row">
+                    <span>Bạn nhận / slot</span><span id="pc-earn">30.450đ</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Slots & Thời gian
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Số lượng slot <span>*</span></label>
+                    <input type="number" class="form-input" value="20" min="1" max="500">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giới hạn / người</label>
+                    <input type="number" class="form-input" value="2" min="1" max="10">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top:4px">
+                <label class="form-label">Khung giờ pickup <span>*</span></label>
+                <div class="slot-grid">
+                    <label class="slot-chip"><input type="checkbox" style="display:none"> 14:00–16:00</label>
+                    <label class="slot-chip selected"><input type="checkbox" style="display:none" checked> 16:00–18:00</label>
+                    <label class="slot-chip selected"><input type="checkbox" style="display:none" checked> 17:00–19:00</label>
+                    <label class="slot-chip selected"><input type="checkbox" style="display:none" checked> 18:00–20:00</label>
+                    <label class="slot-chip"><input type="checkbox" style="display:none"> 19:00–21:00</label>
+                    <label class="slot-chip"><input type="checkbox" style="display:none"> 20:00–22:00</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Ngày hiệu lực <span>*</span></label>
+                <select class="form-select">
+                    <option>Hôm nay (18/01/2025)</option>
+                    <option>Ngày mai (19/01/2025)</option>
+                    <option>Chọn ngày khác...</option>
+                </select>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <div class="toggle-label">Tự động lặp lại hàng ngày</div>
+                    <div class="toggle-desc">Deal sẽ tự reset slot và live lại vào ngày hôm sau</div>
+                </div>
+                <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP 3: Preview & publish -->
+    <div id="step-3" style="display:none">
+        <div class="preview-card">
+            <div class="preview-card__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Xem trước deal (như Buyer thấy)
+            </div>
+            <div class="preview-inner">
+                <div class="preview-img" id="preview-img">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+                <div class="preview-info">
+                    <div class="preview-name" id="preview-name">Tên deal sẽ hiện ở đây</div>
+                    <div class="preview-prices">
+                        <span class="preview-price" id="preview-price">0đ</span>
+                        <span class="preview-orig" id="preview-orig">0đ</span>
+                        <span class="preview-discount" id="preview-disc">-0%</span>
+                    </div>
+                    <div class="preview-tags">
+                        <span class="preview-tag">17:00–18:00</span>
+                        <span class="preview-tag">20 slots</span>
+                        <span class="preview-tag">Pickup</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Cài đặt thêm
+            </div>
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <div class="toggle-label">Thông báo cho Buyer yêu thích</div>
+                    <div class="toggle-desc">Push notification khi deal live cho buyers đã follow</div>
+                </div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <div class="toggle-label">Cho phép đặt trước (pre-order)</div>
+                    <div class="toggle-desc">Buyer đặt slot trước khi deal live</div>
+                </div>
+                <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <div class="toggle-label">Hiển thị trên Deal Map</div>
+                    <div class="toggle-desc">Deal xuất hiện trên bản đồ theo vị trí cửa hàng</div>
+                </div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+        </div>
+
+        <div style="background:var(--warning-bg);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-md);padding:14px;margin-bottom:14px;font-size:13px;color:var(--text-secondary);line-height:1.55">
+            <strong style="color:var(--warning)">⚠️ Lưu ý trước khi đăng:</strong> Deal sau khi được duyệt sẽ live ngay lập tức. Đảm bảo thông tin chính xác, hình ảnh đúng sản phẩm và số lượng khả thi.
+        </div>
+    </div>
+
+</main>
+
+<!-- Bottom CTA -->
+<div class="bottom-cta">
+    <div class="cta-row">
+        <button class="btn-draft" id="btn-back" onclick="prevStep()">← Quay lại</button>
+        <button class="btn-publish" id="btn-next" onclick="nextStep()">
+            <span id="btn-label">Tiếp tục</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="btn-icon"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+let currentStep = 1;
+let selectedType = 'regular';
+
+function selectType(btn, type) {
+    document.querySelectorAll('.deal-type-card').forEach(c => c.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedType = type;
+    document.getElementById('blindbox-section').style.display = type === 'blindbox' ? 'block' : 'none';
+}
+
+function nextStep() {
+    if (currentStep < 3) {
+        document.getElementById('step-'+currentStep).style.display = 'none';
+        currentStep++;
+        document.getElementById('step-'+currentStep).style.display = 'block';
+        updateUI();
+        window.scrollTo({top:0,behavior:'smooth'});
+    } else {
+        // Submit
+        alert('Deal đã được gửi để duyệt!');
+        window.location.href = 'deals.html';
+    }
+}
+
+function prevStep() {
+    if (currentStep > 1) {
+        document.getElementById('step-'+currentStep).style.display = 'none';
+        currentStep--;
+        document.getElementById('step-'+currentStep).style.display = 'block';
+        updateUI();
+        window.scrollTo({top:0,behavior:'smooth'});
+    } else {
+        window.location.href = 'deals.html';
+    }
+}
+
+function updateUI() {
+    document.getElementById('step-label').textContent = 'Bước ' + currentStep + '/3';
+    document.getElementById('progress').style.width = (currentStep/3*100) + '%';
+    const labels = ['Tiếp tục', 'Xem trước', 'Đăng deal'];
+    const icons = ['<path d="M5 12h14M12 5l7 7-7 7"/>', '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>', '<polyline points="20 6 9 17 4 12"/>'];
+    document.getElementById('btn-label').textContent = labels[currentStep-1];
+    document.getElementById('btn-icon').innerHTML = icons[currentStep-1];
+    document.getElementById('btn-back').textContent = currentStep === 1 ? '✕ Hủy' : '← Quay lại';
+}
+
+function calcDiscount() {
+    const orig = parseFloat(document.getElementById('orig-price').value) || 0;
+    const deal = parseFloat(document.getElementById('deal-price').value) || 0;
+    if (orig > 0 && deal > 0 && deal < orig) {
+        const pct = Math.round((1 - deal/orig) * 100);
+        document.getElementById('discount-text').textContent = '-' + pct + '%';
+        document.getElementById('discount-preview').style.display = 'block';
+        const fee = deal * 0.13;
+        document.getElementById('pc-price').textContent = deal.toLocaleString('vi') + 'đ';
+        document.getElementById('pc-fee').textContent = '- ' + Math.round(fee).toLocaleString('vi') + 'đ';
+        document.getElementById('pc-earn').textContent = Math.round(deal - fee).toLocaleString('vi') + 'đ';
+        document.getElementById('price-calc').style.display = 'block';
+        // Update preview
+        document.getElementById('preview-price').textContent = deal.toLocaleString('vi') + 'đ';
+        document.getElementById('preview-orig').textContent = orig.toLocaleString('vi') + 'đ';
+        document.getElementById('preview-disc').textContent = '-' + pct + '%';
+    }
+}
+
+function updatePreview() {
+    const name = document.getElementById('deal-name').value || 'Tên deal sẽ hiện ở đây';
+    document.getElementById('preview-name').textContent = name;
+}
+
+function handlePhotoUpload(input) {
+    const grid = document.getElementById('photo-grid');
+    Array.from(input.files).slice(0,5).forEach(file => {
+        const url = URL.createObjectURL(file);
+        const item = document.createElement('div');
+        item.className = 'photo-item';
+        item.innerHTML = `<img src="${url}" alt=""><button class="photo-item__remove" onclick="this.parentElement.remove()">✕</button>`;
+        grid.appendChild(item);
+    });
+}
+
+// Slot chips
+document.querySelectorAll('.slot-chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+        this.classList.toggle('selected');
+    });
+});
+</script>
+</body>
+</html>

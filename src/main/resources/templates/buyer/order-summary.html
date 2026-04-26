@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xác nhận đơn hàng — DealXanh</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#0d5c2e;--primary-dark:#08421f;
+  --accent:#d4af37;
+  --surface:#fff;--background:#f5f6f8;
+  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+  --border:#e0e0e0;--border-light:#f0f0f0;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.11);
+  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--background);min-height:100vh;color:var(--text-primary)}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+img{display:block;max-width:100%}
+
+/* HEADER */
+.page-header{
+  position:sticky;top:0;z-index:50;
+  background:var(--surface);border-bottom:1px solid var(--border-light);
+  box-shadow:var(--shadow-sm);padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.back-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-md);color:var(--text-primary);transition:background var(--tr)}
+.back-btn:hover{background:var(--background)}
+.back-btn svg{width:20px;height:20px}
+.page-title{font-size:17px;font-weight:700;flex:1}
+
+/* PROGRESS STEPPER */
+.stepper{
+  display:flex;align-items:center;
+  padding:16px 20px;background:var(--surface);
+  border-bottom:1px solid var(--border-light);
+  gap:0;
+}
+.step-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.step-circle{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;
+  transition:all var(--tr);
+}
+.step-circle.done{background:var(--primary);color:#fff}
+.step-circle.active{background:var(--primary);color:#fff;box-shadow:0 0 0 4px rgba(13,92,46,.15)}
+.step-circle.pending{background:var(--background);border:2px solid var(--border);color:var(--text-tertiary)}
+.step-label{font-size:10px;font-weight:600;color:var(--text-tertiary);white-space:nowrap}
+.step-label.active{color:var(--primary)}
+.step-line{flex:1;height:2px;background:var(--border-light);margin:0 -2px;position:relative;top:-8px;z-index:0}
+.step-line.done{background:var(--primary)}
+
+/* BODY */
+.order-body{padding:14px 14px 140px;display:flex;flex-direction:column;gap:12px}
+
+/* Cards */
+.section-card{
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:1px solid var(--border-light);overflow:hidden;
+  box-shadow:var(--shadow-sm);
+}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid var(--border-light);
+  background:rgba(13,92,46,.02);
+}
+.card-header-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px}
+.card-header-title svg{width:15px;height:15px;color:var(--primary)}
+.card-edit{font-size:12px;font-weight:600;color:var(--primary);padding:4px 8px;border-radius:var(--radius-sm);transition:background var(--tr)}
+.card-edit:hover{background:var(--background)}
+
+/* Store group in summary */
+.summary-store{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border-light);
+  display:flex;align-items:center;gap:10px;
+}
+.summary-store:last-child{border-bottom:none}
+.ss-logo{width:32px;height:32px;border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0}
+.ss-logo img{width:100%;height:100%;object-fit:cover}
+.ss-name{font-size:13px;font-weight:700;flex:1}
+.ss-items{font-size:11px;color:var(--text-tertiary)}
+
+/* Order items */
+.order-items{padding:0 16px}
+.oi-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--border-light);
+}
+.oi-row:last-child{border-bottom:none}
+.oi-img{width:56px;height:56px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0;position:relative;background:var(--border-light)}
+.oi-img img{width:100%;height:100%;object-fit:cover}
+.oi-qty-badge{
+  position:absolute;top:-6px;right:-6px;
+  width:18px;height:18px;background:var(--primary);
+  border-radius:50%;color:#fff;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--surface);
+}
+.oi-body{flex:1;min-width:0}
+.oi-store{font-size:10px;color:var(--text-tertiary);font-weight:500}
+.oi-name{font-size:13px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oi-slot{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:600;color:var(--text-secondary);
+  padding:2px 7px;background:var(--background);border-radius:var(--radius-full);
+}
+.oi-slot svg{width:9px;height:9px}
+.oi-price{font-size:14px;font-weight:800;color:var(--primary);flex-shrink:0}
+
+/* Pickup location */
+.pickup-detail{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.pickup-row{display:flex;align-items:flex-start;gap:10px}
+.pickup-icon{width:32px;height:32px;border-radius:var(--radius-sm);background:var(--background);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pickup-icon svg{width:15px;height:15px;color:var(--primary)}
+.pickup-label{font-size:11px;color:var(--text-tertiary);font-weight:500;margin-bottom:2px}
+.pickup-value{font-size:13px;font-weight:600;color:var(--text-primary)}
+.pickup-map-preview{
+  height:100px;border-radius:var(--radius-md);
+  background:linear-gradient(135deg,#e8f5e9,#c8e6c9);
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(13,92,46,.1);cursor:pointer;
+  position:relative;overflow:hidden;
+}
+.map-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(13,92,46,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(13,92,46,.06) 1px,transparent 1px);
+  background-size:20px 20px;
+}
+.map-pin-dot{width:32px;height:32px;background:var(--primary);border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(13,92,46,.3);position:relative}
+.map-pin-dot svg{transform:rotate(45deg);color:#fff;width:14px;height:14px}
+.map-open-btn{position:absolute;top:8px;right:8px;background:var(--surface);padding:4px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:600;color:var(--primary);border:1px solid rgba(13,92,46,.15)}
+
+/* Price breakdown */
+.price-rows{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.pr-row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.pr-key{color:var(--text-secondary)}
+.pr-val{font-weight:500}
+.pr-val.green{color:var(--success)}
+.pr-val.red{color:var(--danger)}
+.pr-divider{height:1px;background:var(--border-light);margin:4px 0}
+.pr-total{display:flex;justify-content:space-between;align-items:baseline}
+.pr-total-label{font-size:15px;font-weight:700}
+.pr-total-val{font-size:22px;font-weight:800;color:var(--primary)}
+.pr-savings-note{font-size:12px;color:var(--success);font-weight:600;text-align:right;margin-top:3px}
+
+/* Note input */
+.note-area{
+  width:100%;padding:12px 14px;
+  border:1.5px solid var(--border);border-radius:var(--radius-md);
+  font-size:14px;font-family:var(--font);color:var(--text-primary);
+  resize:none;outline:none;transition:border-color var(--tr);
+  background:var(--surface);min-height:80px;
+}
+.note-area:focus{border-color:var(--primary)}
+.note-section{padding:14px 16px}
+
+/* Confirm footer */
+.confirm-footer{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:var(--surface);border-top:1px solid var(--border-light);
+  box-shadow:0 -4px 20px rgba(0,0,0,.1);
+  padding:14px 16px max(16px,env(safe-area-inset-bottom));
+}
+.confirm-total-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.confirm-total-label{font-size:14px;color:var(--text-secondary);font-weight:500}
+.confirm-total-val{font-size:20px;font-weight:800;color:var(--primary)}
+.btn-confirm{
+  width:100%;padding:15px;
+  background:var(--primary);color:#fff;
+  font-size:16px;font-weight:800;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all var(--tr);box-shadow:0 4px 16px rgba(13,92,46,.35);
+}
+.btn-confirm:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 24px rgba(13,92,46,.45)}
+.btn-confirm svg{width:18px;height:18px}
+
+/* Timer banner */
+.timer-banner{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;
+  background:rgba(239,68,68,.06);
+  border:1px solid rgba(239,68,68,.18);
+  border-radius:var(--radius-md);
+}
+.timer-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#991b1b}
+.timer-left svg{width:15px;height:15px}
+.timer-clock{font-size:20px;font-weight:800;color:var(--danger);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="page-header">
+  <button class="back-btn" onclick="history.back()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+  <span class="page-title">Xác nhận đơn hàng</span>
+</header>
+
+<!-- Stepper -->
+<div class="stepper">
+  <div class="step-item">
+    <div class="step-circle done"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <span class="step-label">Giỏ hàng</span>
+  </div>
+  <div class="step-line done"></div>
+  <div class="step-item">
+    <div class="step-circle active">2</div>
+    <span class="step-label active">Xác nhận</span>
+  </div>
+  <div class="step-line"></div>
+  <div class="step-item">
+    <div class="step-circle pending">3</div>
+    <span class="step-label">Thanh toán</span>
+  </div>
+  <div class="step-line"></div>
+  <div class="step-item">
+    <div class="step-circle pending">4</div>
+    <span class="step-label">Hoàn tất</span>
+  </div>
+</div>
+
+<!-- Body -->
+<div class="order-body">
+
+  <!-- Slot reservation countdown -->
+  <div class="timer-banner">
+    <div class="timer-left">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Giữ slot trong
+    </div>
+    <span class="timer-clock" id="countdown">09:58</span>
+  </div>
+
+  <!-- Items summary -->
+  <div class="section-card">
+    <div class="card-header">
+      <span class="card-header-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>Sản phẩm đặt mua (4 món)</span>
+      <button class="card-edit" onclick="history.back()">Sửa →</button>
+    </div>
+    <div class="order-items">
+      <div class="oi-row">
+        <div class="oi-img">
+          <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=120&q=70" alt="">
+          <span class="oi-qty-badge">1</span>
+        </div>
+        <div class="oi-body">
+          <div class="oi-store">Bánh mì Hòa Mai</div>
+          <div class="oi-name">Bánh mì pate nóng hổi</div>
+          <span class="oi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>17:00–18:00</span>
+        </div>
+        <span class="oi-price">12.500đ</span>
+      </div>
+      <div class="oi-row">
+        <div class="oi-img">
+          <img src="https://images.unsplash.com/photo-1591814468924-caf88d1232e1?w=120&q=70" alt="">
+          <span class="oi-qty-badge">2</span>
+        </div>
+        <div class="oi-body">
+          <div class="oi-store">Bánh mì Hòa Mai</div>
+          <div class="oi-name">Bánh mì thịt nguội đặc biệt</div>
+          <span class="oi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>18:00–19:00</span>
+        </div>
+        <span class="oi-price">30.000đ</span>
+      </div>
+      <div class="oi-row">
+        <div class="oi-img">
+          <img src="https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=120&q=70" alt="">
+          <span class="oi-qty-badge">1</span>
+        </div>
+        <div class="oi-body">
+          <div class="oi-store">Mixue Hòa Lạc</div>
+          <div class="oi-name">Trà sữa trân châu đường đen</div>
+          <span class="oi-slot" style="color:var(--danger);background:rgba(239,68,68,.08)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>⚡ Còn 28 phút!</span>
+        </div>
+        <span class="oi-price">15.000đ</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pickup per store -->
+  <div class="section-card">
+    <div class="card-header">
+      <span class="card-header-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Điểm nhận hàng</span>
+    </div>
+
+    <!-- Store 1 -->
+    <div class="pickup-detail" style="border-bottom:1px solid var(--border-light)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=48&q=70" style="width:28px;height:28px;border-radius:6px;object-fit:cover" alt="">
+        <span style="font-size:13px;font-weight:700">Bánh mì Hòa Mai</span>
+      </div>
+      <div class="pickup-map-preview" onclick="openMap()">
+        <div class="map-grid"></div>
+        <div class="map-pin-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <span class="map-open-btn">Mở bản đồ →</span>
+      </div>
+      <div class="pickup-row">
+        <div class="pickup-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div><div class="pickup-label">Địa chỉ</div><div class="pickup-value">123 Đường Thống Nhất, Hòa Lạc</div></div>
+      </div>
+      <div class="pickup-row">
+        <div class="pickup-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div><div class="pickup-label">Khung giờ pickup</div><div class="pickup-value">2 khung: 17:00–18:00 và 18:00–19:00</div></div>
+      </div>
+    </div>
+
+    <!-- Store 2 -->
+    <div class="pickup-detail">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <img src="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=48&q=70" style="width:28px;height:28px;border-radius:6px;object-fit:cover" alt="">
+        <span style="font-size:13px;font-weight:700">Mixue Hòa Lạc</span>
+      </div>
+      <div class="pickup-row">
+        <div class="pickup-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div><div class="pickup-label">Địa chỉ</div><div class="pickup-value">Big C Hòa Lạc, Tầng 1</div></div>
+      </div>
+      <div class="pickup-row">
+        <div class="pickup-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div><div class="pickup-label">Khung giờ</div><div class="pickup-value" style="color:var(--danger)">⚡ Còn ~28 phút · Thanh toán ngay!</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price breakdown -->
+  <div class="section-card">
+    <div class="card-header">
+      <span class="card-header-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Chi tiết thanh toán</span>
+    </div>
+    <div class="price-rows">
+      <div class="pr-row"><span class="pr-key">Giá gốc (4 món)</span><span class="pr-val" style="text-decoration:line-through;color:var(--text-tertiary)">128.000đ</span></div>
+      <div class="pr-row"><span class="pr-key">Giảm giá deal</span><span class="pr-val green">-70.500đ</span></div>
+      <div class="pr-row"><span class="pr-key">Mã DEAL20</span><span class="pr-val green">-10.000đ</span></div>
+      <div class="pr-divider"></div>
+      <div class="pr-total">
+        <span class="pr-total-label">Tổng thanh toán</span>
+        <span class="pr-total-val">47.500đ</span>
+      </div>
+      <div class="pr-savings-note">🎉 Bạn tiết kiệm được 80.500đ (63%) cho đơn này!</div>
+    </div>
+  </div>
+
+  <!-- Note -->
+  <div class="section-card">
+    <div class="card-header">
+      <span class="card-header-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Ghi chú cho cửa hàng</span>
+    </div>
+    <div class="note-section">
+      <textarea class="note-area" placeholder="VD: Không cần túi, lấy thêm tương ớt, đến cổng bên phải..."></textarea>
+    </div>
+  </div>
+
+</div>
+
+<!-- Confirm Footer -->
+<div class="confirm-footer">
+  <div class="confirm-total-row">
+    <span class="confirm-total-label">Tổng thanh toán</span>
+    <span class="confirm-total-val">47.500đ</span>
+  </div>
+  <button class="btn-confirm" onclick="window.location.href='payment.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    Chọn phương thức thanh toán
+  </button>
+</div>
+
+<script>
+// Countdown 10 minutes
+let secs = 598;
+const el = document.getElementById('countdown');
+const iv = setInterval(() => {
+  if (--secs <= 0) { clearInterval(iv); el.textContent = '00:00'; el.style.color = '#ccc'; return; }
+  if (secs <= 60) el.style.color = '#ef4444';
+  el.textContent = String(Math.floor(secs/60)).padStart(2,'0') + ':' + String(secs%60).padStart(2,'0');
+}, 1000);
+function openMap(){ window.location.href='deal-map.html'; }
+</script>
+</body>
+</html>

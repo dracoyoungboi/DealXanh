@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Quản lý Deals - DealXanh Seller</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff;--bg:#f5f6f8;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 20px rgba(0,0,0,.12);
+    --danger:#ef4444;--danger-bg:rgba(239,68,68,.1);
+    --warning:#f59e0b;--warning-bg:rgba(245,158,11,.1);
+    --success:#10b981;--success-bg:rgba(16,185,129,.1);
+    --info:#3b82f6;--info-bg:rgba(59,130,246,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+    --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary)}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+img{display:block;max-width:100%}
+
+/* Header */
+.page-header{
+    background:var(--primary);
+    padding:calc(var(--safe-top) + 14px) 16px 16px;
+    position:sticky;top:0;z-index:20;
+}
+.header-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.back-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:rgba(255,255,255,.12);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;flex-shrink:0;transition:background var(--tr);
+}
+.back-btn:hover{background:rgba(255,255,255,.2)}
+.back-btn svg{width:18px;height:18px}
+.header-title{font-size:17px;font-weight:700;color:#fff;flex:1}
+.header-actions{display:flex;gap:8px}
+.hdr-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:rgba(255,255,255,.12);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;transition:background var(--tr);position:relative;
+}
+.hdr-btn:hover{background:rgba(255,255,255,.2)}
+.hdr-btn svg{width:18px;height:18px}
+.hdr-badge{
+    position:absolute;top:-3px;right:-3px;
+    min-width:16px;height:16px;border-radius:8px;
+    background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+    padding:0 3px;display:flex;align-items:center;justify-content:center;
+    border:1.5px solid var(--primary);
+}
+
+/* Summary chips */
+.summary-row{
+    display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+}
+.summary-row::-webkit-scrollbar{display:none}
+.summary-chip{
+    flex-shrink:0;padding:8px 14px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:var(--radius-full);
+    display:flex;align-items:center;gap:6px;
+}
+.summary-chip__value{font-size:15px;font-weight:800;color:#fff}
+.summary-chip__label{font-size:11px;color:rgba(255,255,255,.65);font-weight:500}
+
+/* Tabs */
+.deal-tabs{
+    display:flex;background:var(--surface);
+    border-bottom:1px solid var(--border-light);
+    position:sticky;top:calc(var(--safe-top) + 90px);z-index:15;
+    overflow-x:auto;scrollbar-width:none;
+}
+.deal-tabs::-webkit-scrollbar{display:none}
+.deal-tab{
+    flex:1;min-width:80px;padding:13px 8px;text-align:center;
+    font-size:13px;font-weight:500;color:var(--text-secondary);
+    border-bottom:2px solid transparent;transition:all var(--tr);cursor:pointer;
+    white-space:nowrap;background:none;
+}
+.deal-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:700}
+.deal-tab__count{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:18px;height:18px;border-radius:9px;
+    background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+    margin-left:4px;vertical-align:middle;
+}
+.deal-tab__count.success{background:var(--success)}
+.deal-tab__count.warning{background:var(--warning)}
+
+/* Search + filter bar */
+.search-bar{
+    display:flex;gap:10px;padding:12px 14px;
+    background:var(--surface);border-bottom:1px solid var(--border-light);
+}
+.search-wrap{position:relative;flex:1}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none}
+.search-icon svg{width:16px;height:16px}
+.search-input{
+    width:100%;padding:9px 12px 9px 36px;
+    border:1.5px solid var(--border-light);border-radius:var(--radius-md);
+    font-size:14px;background:var(--bg);transition:border-color var(--tr);
+}
+.search-input:focus{outline:none;border-color:var(--primary);background:var(--surface)}
+.filter-btn{
+    width:38px;height:38px;border-radius:var(--radius-md);
+    background:var(--bg);border:1.5px solid var(--border-light);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;transition:all var(--tr);
+}
+.filter-btn:hover{border-color:var(--primary)}
+.filter-btn svg{width:16px;height:16px;color:var(--text-secondary)}
+
+/* Body */
+.body{padding:12px 14px 100px}
+
+/* Pending approval section */
+.pending-section{
+    background:var(--warning-bg);border:1px solid rgba(245,158,11,.2);
+    border-radius:var(--radius-lg);padding:14px;margin-bottom:16px;
+}
+.pending-section__header{
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;
+}
+.pending-section__title{
+    font-size:13px;font-weight:700;color:var(--warning);
+    display:flex;align-items:center;gap:6px;
+}
+.pending-section__title svg{width:15px;height:15px}
+.approve-all-btn{
+    padding:6px 12px;border-radius:var(--radius-full);
+    background:var(--warning);color:#fff;
+    font-size:12px;font-weight:700;
+    transition:background var(--tr);
+}
+.approve-all-btn:hover{background:#d48f09}
+
+/* Deal card */
+.deal-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);
+    margin-bottom:12px;overflow:hidden;
+    transition:box-shadow var(--tr);
+}
+.deal-card:hover{box-shadow:var(--shadow-md)}
+.deal-card__top{display:flex;gap:12px;padding:14px 14px 0}
+.deal-thumb{
+    width:72px;height:72px;border-radius:var(--radius-md);
+    overflow:hidden;flex-shrink:0;position:relative;
+}
+.deal-thumb img{width:100%;height:100%;object-fit:cover}
+.deal-thumb__badge{
+    position:absolute;top:4px;left:4px;
+    padding:3px 7px;border-radius:var(--radius-sm);
+    font-size:10px;font-weight:700;color:#fff;
+}
+.deal-info{flex:1;min-width:0}
+.deal-name{font-size:14px;font-weight:700;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.deal-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+.deal-price{font-size:16px;font-weight:800;color:var(--primary)}
+.deal-orig{font-size:12px;color:var(--text-tertiary);text-decoration:line-through}
+.deal-discount{
+    padding:2px 7px;border-radius:var(--radius-full);
+    background:var(--danger-bg);color:var(--danger);
+    font-size:11px;font-weight:700;
+}
+.deal-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.deal-status{
+    padding:3px 9px;border-radius:var(--radius-full);
+    font-size:11px;font-weight:700;
+}
+.deal-status.live{background:var(--success-bg);color:var(--success)}
+.deal-status.pending{background:var(--warning-bg);color:var(--warning)}
+.deal-status.expired{background:var(--danger-bg);color:var(--danger)}
+.deal-status.scheduled{background:var(--info-bg);color:var(--info)}
+.deal-type{
+    padding:3px 9px;border-radius:var(--radius-full);
+    font-size:11px;font-weight:600;
+    background:var(--bg);color:var(--text-secondary);
+}
+.deal-expiry{font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:3px}
+.deal-expiry svg{width:11px;height:11px}
+.deal-expiry.urgent{color:var(--danger);font-weight:600}
+
+/* Slots progress */
+.deal-card__slots{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 14px;
+}
+.slots-bar{flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.slots-bar__fill{height:100%;background:var(--primary);border-radius:3px;transition:width .4s}
+.slots-bar__fill.high{background:var(--success)}
+.slots-bar__fill.mid{background:var(--warning)}
+.slots-bar__fill.low{background:var(--danger)}
+.slots-text{font-size:12px;font-weight:600;color:var(--text-secondary);white-space:nowrap;flex-shrink:0}
+.slots-revenue{font-size:12px;font-weight:700;color:var(--primary);white-space:nowrap;flex-shrink:0}
+
+/* Deal card actions */
+.deal-card__actions{
+    display:flex;border-top:1px solid var(--border-light);
+}
+.deal-action{
+    flex:1;padding:10px 8px;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    font-size:12px;font-weight:600;color:var(--text-secondary);
+    border-right:1px solid var(--border-light);
+    transition:all var(--tr);cursor:pointer;
+}
+.deal-action:last-child{border-right:none}
+.deal-action:hover{background:var(--bg);color:var(--text-primary)}
+.deal-action--primary{color:var(--primary)}
+.deal-action--primary:hover{background:rgba(13,92,46,.05);color:var(--primary-dark)}
+.deal-action--danger:hover{background:var(--danger-bg);color:var(--danger)}
+.deal-action--success{color:var(--success)}
+.deal-action--success:hover{background:var(--success-bg)}
+.deal-action svg{width:14px;height:14px}
+
+/* Approve card (pending) */
+.approve-card{
+    background:var(--surface);border-radius:var(--radius-md);
+    border:1px solid rgba(245,158,11,.2);
+    padding:12px;margin-bottom:8px;
+    display:flex;gap:10px;align-items:center;
+}
+.approve-thumb{width:48px;height:48px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0}
+.approve-thumb img{width:100%;height:100%;object-fit:cover}
+.approve-info{flex:1;min-width:0}
+.approve-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.approve-meta{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.approve-btns{display:flex;gap:6px;flex-shrink:0}
+.btn-approve{
+    padding:7px 12px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:12px;font-weight:700;
+    transition:background var(--tr);
+}
+.btn-approve:hover{background:var(--primary-dark)}
+.btn-reject{
+    padding:7px 10px;border-radius:var(--radius-md);
+    background:var(--bg);color:var(--danger);
+    font-size:12px;font-weight:700;border:1px solid var(--border-light);
+    transition:all var(--tr);
+}
+.btn-reject:hover{background:var(--danger-bg);border-color:rgba(239,68,68,.2)}
+
+/* FAB */
+.fab{
+    position:fixed;bottom:calc(74px + var(--safe-bot));right:16px;
+    width:54px;height:54px;border-radius:27px;
+    background:var(--primary);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 20px rgba(13,92,46,.4);z-index:18;
+    transition:all var(--tr);
+}
+.fab:hover{background:var(--primary-dark);transform:translateY(-2px);box-shadow:0 8px 26px rgba(13,92,46,.5)}
+.fab svg{width:22px;height:22px}
+
+/* Bottom nav */
+.bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;
+    display:flex;background:var(--surface);
+    border-top:1px solid var(--border-light);
+    padding:8px 0 calc(8px + var(--safe-bot));z-index:20;
+}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer}
+.nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
+.nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
+.nav-item.active svg,.nav-item.active span{color:var(--primary)}
+
+/* Empty state */
+.empty-state{
+    display:flex;flex-direction:column;align-items:center;
+    padding:48px 24px;text-align:center;
+}
+.empty-state__icon{
+    width:64px;height:64px;border-radius:50%;
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:16px;
+}
+.empty-state__icon svg{width:28px;height:28px;color:var(--text-tertiary)}
+.empty-state__title{font-size:16px;font-weight:700;margin-bottom:8px}
+.empty-state__desc{font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:20px}
+.btn-create{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:12px 24px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:14px;font-weight:700;
+    box-shadow:0 4px 14px rgba(13,92,46,.3);
+    transition:all var(--tr);
+}
+.btn-create:hover{background:var(--primary-dark)}
+.btn-create svg{width:16px;height:16px}
+
+/* Section label */
+.section-label{
+    font-size:11px;font-weight:700;color:var(--text-tertiary);
+    text-transform:uppercase;letter-spacing:.6px;
+    padding:8px 2px 8px;
+}
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="page-header">
+    <div class="header-top">
+        <button class="back-btn" onclick="window.location.href='dashboard.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <span class="header-title">Quản lý Deals</span>
+        <div class="header-actions">
+            <button class="hdr-btn" id="pending-bell">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="hdr-badge">3</span>
+            </button>
+            <button class="hdr-btn" onclick="window.location.href='create-deal.html'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+        </div>
+    </div>
+    <div class="summary-row">
+        <div class="summary-chip">
+            <span class="summary-chip__value">8</span>
+            <span class="summary-chip__label">Đang live</span>
+        </div>
+        <div class="summary-chip">
+            <span class="summary-chip__value">3</span>
+            <span class="summary-chip__label">Chờ duyệt</span>
+        </div>
+        <div class="summary-chip">
+            <span class="summary-chip__value">124</span>
+            <span class="summary-chip__label">Slots đã bán</span>
+        </div>
+        <div class="summary-chip">
+            <span class="summary-chip__value">4.2tr</span>
+            <span class="summary-chip__label">GMV hôm nay</span>
+        </div>
+    </div>
+</header>
+
+<!-- Tabs -->
+<div class="deal-tabs">
+    <button class="deal-tab active" onclick="switchTab(this)">Tất cả</button>
+    <button class="deal-tab" onclick="switchTab(this)">
+        Live <span class="deal-tab__count success">8</span>
+    </button>
+    <button class="deal-tab" onclick="switchTab(this)">
+        Chờ duyệt <span class="deal-tab__count">3</span>
+    </button>
+    <button class="deal-tab" onclick="switchTab(this)">
+        Lên lịch <span class="deal-tab__count warning">2</span>
+    </button>
+    <button class="deal-tab" onclick="switchTab(this)">Đã hết</button>
+</div>
+
+<!-- Search bar -->
+<div class="search-bar">
+    <div class="search-wrap">
+        <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input type="text" class="search-input" placeholder="Tìm tên deal, SKU...">
+    </div>
+    <button class="filter-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+    </button>
+</div>
+
+<!-- Body -->
+<main class="body">
+
+    <!-- Pending approval -->
+    <div class="pending-section" id="pending-section">
+        <div class="pending-section__header">
+            <span class="pending-section__title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                3 deal chờ bạn duyệt
+            </span>
+            <button class="approve-all-btn" onclick="approveAll()">Duyệt tất cả</button>
+        </div>
+
+        <div class="approve-card" id="pending-1">
+            <div class="approve-thumb"><img src="https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=96&q=70" alt=""></div>
+            <div class="approve-info">
+                <div class="approve-name">🎁 Blind Box đồ ngọt buổi tối</div>
+                <div class="approve-meta">Nhân viên Hoa · 65.000đ · -60% · 15 slots</div>
+            </div>
+            <div class="approve-btns">
+                <button class="btn-approve" onclick="approveItem('pending-1')">✓ Duyệt</button>
+                <button class="btn-reject" onclick="rejectItem('pending-1')">✕</button>
+            </div>
+        </div>
+
+        <div class="approve-card" id="pending-2">
+            <div class="approve-thumb"><img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=96&q=70" alt=""></div>
+            <div class="approve-info">
+                <div class="approve-name">Flash Sale bánh mì 19h–20h</div>
+                <div class="approve-meta">Nhân viên Dũng · 25.000đ · -75% · 30 slots</div>
+            </div>
+            <div class="approve-btns">
+                <button class="btn-approve" onclick="approveItem('pending-2')">✓ Duyệt</button>
+                <button class="btn-reject" onclick="rejectItem('pending-2')">✕</button>
+            </div>
+        </div>
+
+        <div class="approve-card" id="pending-3">
+            <div class="approve-thumb"><img src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=96&q=70" alt=""></div>
+            <div class="approve-info">
+                <div class="approve-name">Combo bánh ngọt cuối ngày</div>
+                <div class="approve-meta">Nhân viên Hoa · 80.000đ · -55% · 10 slots</div>
+            </div>
+            <div class="approve-btns">
+                <button class="btn-approve" onclick="approveItem('pending-3')">✓ Duyệt</button>
+                <button class="btn-reject" onclick="rejectItem('pending-3')">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live deals -->
+    <div class="section-label">Đang live · 8 deals</div>
+
+    <!-- Deal 1 -->
+    <div class="deal-card">
+        <div class="deal-card__top">
+            <div class="deal-thumb">
+                <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=144&q=70" alt="">
+                <span class="deal-thumb__badge" style="background:var(--danger)">-65%</span>
+            </div>
+            <div class="deal-info">
+                <div class="deal-name">Bánh mì thịt nguội combo 2 cái</div>
+                <div class="deal-price-row">
+                    <span class="deal-price">35.000đ</span>
+                    <span class="deal-orig">100.000đ</span>
+                    <span class="deal-discount">-65%</span>
+                </div>
+                <div class="deal-meta-row">
+                    <span class="deal-status live">Live</span>
+                    <span class="deal-type">Regular</span>
+                    <span class="deal-expiry urgent">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Còn 45 phút
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="deal-card__slots">
+            <div class="slots-bar"><div class="slots-bar__fill low" style="width:60%"></div></div>
+            <span class="slots-text">12/20 slots</span>
+            <span class="slots-revenue">420.000đ</span>
+        </div>
+        <div class="deal-card__actions">
+            <button class="deal-action deal-action--primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Sửa
+            </button>
+            <button class="deal-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                + Slots
+            </button>
+            <button class="deal-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Kéo dài
+            </button>
+            <button class="deal-action deal-action--danger">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Kết thúc
+            </button>
+        </div>
+    </div>
+
+    <!-- Deal 2 -->
+    <div class="deal-card">
+        <div class="deal-card__top">
+            <div class="deal-thumb">
+                <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=144&q=70" alt="">
+                <span class="deal-thumb__badge" style="background:var(--accent);color:#1a1a1a">BOX</span>
+            </div>
+            <div class="deal-info">
+                <div class="deal-name">🎁 Blind Box cà phê & snack</div>
+                <div class="deal-price-row">
+                    <span class="deal-price">45.000đ</span>
+                    <span class="deal-orig">120.000đ+</span>
+                    <span class="deal-discount">-62%</span>
+                </div>
+                <div class="deal-meta-row">
+                    <span class="deal-status live">Live</span>
+                    <span class="deal-type">Blind Box</span>
+                    <span class="deal-expiry">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Còn 2h 10p
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="deal-card__slots">
+            <div class="slots-bar"><div class="slots-bar__fill mid" style="width:33%"></div></div>
+            <span class="slots-text">5/15 slots</span>
+            <span class="slots-revenue">225.000đ</span>
+        </div>
+        <div class="deal-card__actions">
+            <button class="deal-action deal-action--primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Sửa
+            </button>
+            <button class="deal-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                + Slots
+            </button>
+            <button class="deal-action">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Kéo dài
+            </button>
+            <button class="deal-action deal-action--danger">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Xóa
+            </button>
+        </div>
+    </div>
+
+    <!-- Deal 3 - Scheduled -->
+    <div class="section-label" style="margin-top:8px">Lên lịch · 2 deals</div>
+
+    <div class="deal-card">
+        <div class="deal-card__top">
+            <div class="deal-thumb">
+                <img src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=144&q=70" alt="">
+                <span class="deal-thumb__badge" style="background:var(--info)">SCH</span>
+            </div>
+            <div class="deal-info">
+                <div class="deal-name">Hộp bánh ngọt mix buổi tối</div>
+                <div class="deal-price-row">
+                    <span class="deal-price">60.000đ</span>
+                    <span class="deal-orig">200.000đ</span>
+                    <span class="deal-discount">-70%</span>
+                </div>
+                <div class="deal-meta-row">
+                    <span class="deal-status scheduled">Lên lịch 19:00</span>
+                    <span class="deal-type">Regular</span>
+                </div>
+            </div>
+        </div>
+        <div class="deal-card__slots">
+            <div class="slots-bar"><div class="slots-bar__fill high" style="width:0%"></div></div>
+            <span class="slots-text">0/10 slots</span>
+            <span class="slots-revenue">–</span>
+        </div>
+        <div class="deal-card__actions">
+            <button class="deal-action deal-action--primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Sửa
+            </button>
+            <button class="deal-action deal-action--success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Live ngay
+            </button>
+            <button class="deal-action deal-action--danger">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Xóa
+            </button>
+        </div>
+    </div>
+
+</main>
+
+<!-- FAB -->
+<button class="fab" onclick="window.location.href='create-deal.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+    <div class="nav-item" onclick="window.location.href='dashboard.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/></svg>
+        <span>Dashboard</span>
+    </div>
+    <div class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Deals</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='create-deal.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span>Tạo deal</span>
+    </div>
+    <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Tài chính</span>
+    </div>
+    <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Tài khoản</span>
+    </div>
+</nav>
+
+<script>
+function switchTab(el) {
+    document.querySelectorAll('.deal-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+}
+function approveItem(id) {
+    const card = document.getElementById(id);
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(20px)';
+    card.style.transition = 'all .3s ease-out';
+    setTimeout(() => card.remove(), 300);
+}
+function rejectItem(id) {
+    const card = document.getElementById(id);
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(-20px)';
+    card.style.transition = 'all .3s ease-out';
+    setTimeout(() => card.remove(), 300);
+}
+function approveAll() {
+    ['pending-1','pending-2','pending-3'].forEach((id,i) => {
+        setTimeout(() => {
+            const card = document.getElementById(id);
+            if (card) approveItem(id);
+        }, i * 150);
+    });
+    setTimeout(() => {
+        const section = document.getElementById('pending-section');
+        if (section) { section.style.display = 'none'; }
+    }, 800);
+}
+</script>
+</body>
+</html>

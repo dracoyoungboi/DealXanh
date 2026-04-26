@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký cửa hàng — DealXanh</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff;--background:#f5f6f8;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 20px rgba(0,0,0,.1);
+    --status-success:#10b981;--status-success-bg:rgba(16,185,129,.1);
+    --status-danger:#ef4444;--status-danger-bg:rgba(239,68,68,.1);
+    --status-warning:#f59e0b;--status-warning-bg:rgba(245,158,11,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--background);min-height:100vh;color:var(--text-primary)}
+button,input,select,textarea{font-family:inherit}
+img{display:block;max-width:100%}
+
+/* ===== LAYOUT ===== */
+.page{display:grid;min-height:100vh}
+@media(min-width:900px){.page{grid-template-columns:300px 1fr}}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+    background:var(--primary);
+    padding:40px 28px;
+    display:flex;flex-direction:column;
+}
+@media(max-width:899px){.sidebar{padding:20px 24px 0}}
+.sidebar__logo{display:flex;align-items:center;gap:10px;margin-bottom:48px}
+@media(max-width:899px){.sidebar__logo{margin-bottom:0}}
+.sidebar__logo-box{width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center}
+.sidebar__logo-text{font-size:20px;font-weight:800;color:#fff}
+.sidebar__steps{display:flex;flex-direction:column;gap:4px;flex:1}
+@media(max-width:899px){.sidebar__steps{display:none}}
+.sidebar__step{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 14px;
+    border-radius:var(--radius-md);
+    transition:all var(--tr);
+    position:relative;
+}
+.sidebar__step::before{
+    content:'';position:absolute;left:26px;top:100%;width:2px;height:4px;
+    background:rgba(255,255,255,.2);
+}
+.sidebar__step:last-child::before{display:none}
+.sidebar__step.active{background:rgba(255,255,255,.15)}
+.sidebar__step.done{opacity:.75}
+.step-num{
+    width:32px;height:32px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.15);
+    font-size:13px;font-weight:700;color:#fff;
+    border:1.5px solid rgba(255,255,255,.2);
+    transition:all var(--tr);
+}
+.sidebar__step.done .step-num{background:rgba(255,255,255,.9);color:var(--primary)}
+.sidebar__step.active .step-num{background:#fff;color:var(--primary);border-color:transparent}
+.step-info{flex:1}
+.step-title{font-size:13px;font-weight:600;color:rgba(255,255,255,.9)}
+.step-subtitle{font-size:11px;color:rgba(255,255,255,.55);margin-top:2px}
+.sidebar__step.active .step-title{color:#fff}
+.step-check{width:16px;height:16px;color:rgba(255,255,255,.7);display:none}
+.sidebar__step.done .step-check{display:block}
+
+/* Mobile step indicator */
+.mobile-steps{
+    display:none;
+    padding:16px 24px;
+    background:var(--primary);
+    overflow-x:auto;
+    gap:8px;
+    scrollbar-width:none;
+}
+@media(max-width:899px){.mobile-steps{display:flex}}
+.mobile-steps::-webkit-scrollbar{display:none}
+.mobile-step-dot{
+    flex-shrink:0;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    opacity:.5;transition:opacity var(--tr);
+}
+.mobile-step-dot.active,.mobile-step-dot.done{opacity:1}
+.mobile-step-dot-circle{
+    width:28px;height:28px;border-radius:50%;
+    background:rgba(255,255,255,.15);
+    border:1.5px solid rgba(255,255,255,.3);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;color:#fff;
+}
+.mobile-step-dot.done .mobile-step-dot-circle{background:rgba(255,255,255,.9);color:var(--primary)}
+.mobile-step-dot.active .mobile-step-dot-circle{background:#fff;color:var(--primary);border-color:transparent}
+.mobile-step-label{font-size:10px;color:rgba(255,255,255,.8);white-space:nowrap}
+
+/* ===== MAIN CONTENT ===== */
+.main{
+    padding:40px 48px;
+    overflow-y:auto;
+    display:flex;flex-direction:column;
+    min-height:100vh;
+}
+@media(max-width:1100px){.main{padding:32px 32px}}
+@media(max-width:899px){.main{padding:28px 20px;min-height:calc(100vh - 120px)}}
+
+.step-content{display:none;flex-direction:column;flex:1}
+.step-content.active{display:flex}
+
+/* Step header */
+.step-header{margin-bottom:32px}
+.step-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:4px 12px;background:rgba(13,92,46,.08);border-radius:var(--radius-full);
+    font-size:12px;font-weight:600;color:var(--primary);margin-bottom:12px;
+    border:1px solid rgba(13,92,46,.15);
+}
+.step-badge svg{width:13px;height:13px}
+.step-header h1{font-size:26px;font-weight:800;letter-spacing:-.4px;margin-bottom:8px}
+.step-header p{font-size:15px;color:var(--text-secondary);line-height:1.6}
+
+/* Form */
+.form-grid{display:grid;gap:20px}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.form-grid-2{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:13px;font-weight:600;color:var(--text-primary)}
+.form-label span{color:var(--status-danger);margin-left:2px}
+.form-hint{font-size:12px;color:var(--text-tertiary);margin-top:3px}
+.input-wrap{position:relative;display:flex;align-items:center}
+.input-icon{position:absolute;left:13px;width:17px;height:17px;color:var(--text-tertiary);pointer-events:none}
+.form-input,.form-select,.form-textarea{
+    width:100%;padding:11px 14px;
+    font-size:14px;
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-md);
+    background:var(--surface);
+    transition:all var(--tr);outline:none;color:var(--text-primary);
+}
+.form-input.with-icon{padding-left:42px}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,92,46,.1)}
+.form-textarea{min-height:100px;resize:vertical}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:36px}
+
+/* Upload zones */
+.upload-zone{
+    border:2px dashed var(--border);
+    border-radius:var(--radius-lg);
+    padding:28px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:all var(--tr);
+    background:var(--surface);
+    position:relative;overflow:hidden;
+}
+.upload-zone:hover{border-color:var(--primary);background:rgba(13,92,46,.03)}
+.upload-zone.has-file{border-color:var(--status-success);background:var(--status-success-bg)}
+.upload-zone__icon{width:48px;height:48px;background:var(--background);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.upload-zone__icon svg{width:24px;height:24px;color:var(--text-tertiary)}
+.upload-zone.has-file .upload-zone__icon{background:var(--status-success-bg)}
+.upload-zone.has-file .upload-zone__icon svg{color:var(--status-success)}
+.upload-zone__title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.upload-zone__sub{font-size:12px;color:var(--text-secondary)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.upload-preview{display:none;align-items:center;gap:10px;padding:12px 14px;background:var(--status-success-bg);border-radius:var(--radius-md);margin-top:10px;border:1px solid rgba(16,185,129,.2)}
+.upload-preview.show{display:flex}
+.upload-preview-icon svg{width:18px;height:18px;color:var(--status-success)}
+.upload-preview-name{font-size:13px;font-weight:500;color:var(--text-primary);flex:1}
+.upload-preview-remove{background:none;border:none;color:var(--text-tertiary);cursor:pointer;padding:2px}
+.upload-preview-remove:hover{color:var(--status-danger)}
+.upload-preview-remove svg{width:15px;height:15px}
+
+/* Slot builder */
+.slots-builder{display:flex;flex-direction:column;gap:12px}
+.slot-row{
+    display:flex;align-items:center;gap:10px;
+    padding:14px 16px;
+    background:var(--background);
+    border-radius:var(--radius-md);
+    border:1.5px solid var(--border-light);
+}
+.slot-row:hover{border-color:var(--border)}
+.slot-time-inputs{display:flex;align-items:center;gap:8px;flex:1}
+.slot-time-inputs input{
+    width:90px;padding:8px 10px;
+    border:1.5px solid var(--border);border-radius:var(--radius-sm);
+    font-size:14px;outline:none;
+    transition:border-color var(--tr);
+}
+.slot-time-inputs input:focus{border-color:var(--primary)}
+.slot-separator{font-size:13px;color:var(--text-tertiary);font-weight:500}
+.slot-cap{width:70px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;outline:none;transition:border-color var(--tr)}
+.slot-cap:focus{border-color:var(--primary)}
+.slot-remove{background:none;border:none;color:var(--text-tertiary);cursor:pointer;padding:4px;border-radius:var(--radius-sm);transition:color var(--tr)}
+.slot-remove:hover{color:var(--status-danger)}
+.slot-remove svg{width:16px;height:16px}
+.add-slot-btn{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:11px;border:1.5px dashed var(--border);
+    border-radius:var(--radius-md);background:none;
+    font-size:13px;font-weight:600;color:var(--primary);
+    cursor:pointer;transition:all var(--tr);
+}
+.add-slot-btn:hover{border-color:var(--primary);background:rgba(13,92,46,.04)}
+.add-slot-btn svg{width:15px;height:15px}
+
+/* Days of week picker */
+.days-picker{display:flex;gap:8px;flex-wrap:wrap}
+.day-btn{
+    width:44px;height:44px;border-radius:50%;
+    border:1.5px solid var(--border);
+    background:var(--surface);
+    font-size:12px;font-weight:600;color:var(--text-secondary);
+    cursor:pointer;transition:all var(--tr);
+}
+.day-btn:hover{border-color:var(--primary);color:var(--primary)}
+.day-btn.selected{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* Bank section */
+.bank-logo-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.bank-chip{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 14px;
+    border:1.5px solid var(--border);border-radius:var(--radius-md);
+    cursor:pointer;transition:all var(--tr);background:var(--surface);
+}
+.bank-chip:hover{border-color:rgba(13,92,46,.3)}
+.bank-chip.selected{border-color:var(--primary);background:rgba(13,92,46,.05)}
+.bank-chip img{width:24px;height:24px;object-fit:contain;border-radius:4px}
+.bank-chip span{font-size:13px;font-weight:600;color:var(--text-primary)}
+
+/* Divider */
+.section-divider{height:1px;background:var(--border-light);margin:24px 0}
+.section-sub-title{font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:16px}
+
+/* Info alert */
+.info-box{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:12px 16px;
+    background:rgba(59,130,246,.07);
+    border:1px solid rgba(59,130,246,.2);
+    border-radius:var(--radius-md);
+    font-size:13px;color:#2563eb;line-height:1.5;
+}
+.info-box svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+.warn-box{background:var(--status-warning-bg);border-color:rgba(245,158,11,.25);color:#92400e}
+
+/* Checkbox */
+.check-item{display:flex;align-items:flex-start;gap:10px}
+.check-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary);margin-top:2px;cursor:pointer;flex-shrink:0}
+.check-item label{font-size:14px;color:var(--text-primary);cursor:pointer;line-height:1.5}
+.check-item label a{color:var(--primary)}
+
+/* Nav buttons */
+.step-nav{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:auto;padding-top:32px;
+    gap:12px;
+}
+.btn-back{
+    padding:12px 22px;
+    border:1.5px solid var(--border);border-radius:var(--radius-md);
+    background:var(--surface);color:var(--text-primary);
+    font-size:14px;font-weight:600;
+    display:flex;align-items:center;gap:6px;
+    transition:all var(--tr);cursor:pointer;
+}
+.btn-back:hover{border-color:var(--primary);color:var(--primary)}
+.btn-back svg{width:16px;height:16px}
+.btn-next{
+    flex:1;max-width:260px;
+    padding:13px 24px;
+    background:var(--primary);color:#fff;
+    font-size:15px;font-weight:700;
+    border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:all var(--tr);
+    box-shadow:0 4px 14px rgba(13,92,46,.3);
+    cursor:pointer;border:none;
+}
+.btn-next:hover{background:var(--primary-dark);box-shadow:0 6px 20px rgba(13,92,46,.4);transform:translateY(-1px)}
+.btn-next svg{width:16px;height:16px}
+.save-draft{font-size:13px;color:var(--text-tertiary);cursor:pointer;background:none;border:none;font-family:inherit}
+.save-draft:hover{color:var(--primary);text-decoration:underline}
+
+/* Progress bar top */
+.top-progress{height:4px;background:var(--border-light);position:fixed;top:0;left:0;right:0;z-index:100}
+.top-progress-fill{height:100%;background:var(--primary);transition:width .4s ease-out;border-radius:0 2px 2px 0}
+
+/* Character counter */
+.char-counter{text-align:right;font-size:11px;color:var(--text-tertiary);margin-top:4px}
+
+/* Avatar upload */
+.avatar-upload{display:flex;align-items:center;gap:20px}
+.avatar-preview{
+    width:88px;height:88px;border-radius:var(--radius-lg);
+    background:var(--background);border:2px dashed var(--border);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    overflow:hidden;position:relative;cursor:pointer;transition:all var(--tr);flex-shrink:0;
+}
+.avatar-preview:hover{border-color:var(--primary)}
+.avatar-preview img{width:100%;height:100%;object-fit:cover;display:none}
+.avatar-preview svg{width:28px;height:28px;color:var(--text-tertiary)}
+.avatar-preview-label{font-size:10px;color:var(--text-tertiary);margin-top:4px}
+.avatar-preview input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.avatar-info{flex:1}
+.avatar-info h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.avatar-info p{font-size:12px;color:var(--text-tertiary);line-height:1.5}
+
+/* Rating preview */
+.store-preview{
+    padding:20px;
+    background:var(--background);
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-lg);
+    margin-top:20px;
+}
+.store-preview-title{font-size:12px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.store-preview-card{display:flex;align-items:center;gap:14px}
+.store-preview-img{width:56px;height:56px;border-radius:var(--radius-md);background:var(--border-light);overflow:hidden}
+.store-preview-img img{width:100%;height:100%;object-fit:cover}
+.store-preview-name{font-size:15px;font-weight:700;margin-bottom:4px}
+.store-preview-cat{font-size:12px;color:var(--text-secondary);margin-bottom:6px}
+.store-preview-tags{display:flex;gap:6px;flex-wrap:wrap}
+.store-preview-tag{padding:3px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-full);font-size:11px;color:var(--text-secondary)}
+    </style>
+</head>
+<body>
+
+<!-- Top progress bar -->
+<div class="top-progress"><div class="top-progress-fill" id="top-bar" style="width:20%"></div></div>
+
+<div class="page">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar__logo">
+            <div class="sidebar__logo-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <span class="sidebar__logo-text">DealXanh</span>
+        </div>
+
+        <div class="sidebar__steps" id="sidebar-steps">
+            <div class="sidebar__step active" data-s="1">
+                <div class="step-num">1</div>
+                <div class="step-info"><div class="step-title">Hồ sơ cửa hàng</div><div class="step-subtitle">Tên, mô tả, hình ảnh</div></div>
+                <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="sidebar__step" data-s="2">
+                <div class="step-num">2</div>
+                <div class="step-info"><div class="step-title">Xác minh pháp lý</div><div class="step-subtitle">ĐKKD, VSATTP</div></div>
+                <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="sidebar__step" data-s="3">
+                <div class="step-num">3</div>
+                <div class="step-info"><div class="step-title">Tài khoản ngân hàng</div><div class="step-subtitle">Nhận thanh toán</div></div>
+                <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="sidebar__step" data-s="4">
+                <div class="step-num">4</div>
+                <div class="step-info"><div class="step-title">Cài đặt vận hành</div><div class="step-subtitle">Giờ mở cửa, địa chỉ</div></div>
+                <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="sidebar__step" data-s="5">
+                <div class="step-num">5</div>
+                <div class="step-info"><div class="step-title">Khung giờ pickup</div><div class="step-subtitle">Thời gian nhận hàng</div></div>
+                <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile step dots -->
+    <div class="mobile-steps" id="mobile-steps">
+        <div class="mobile-step-dot active" data-ms="1"><div class="mobile-step-dot-circle">1</div><div class="mobile-step-label">Hồ sơ</div></div>
+        <div class="mobile-step-dot" data-ms="2"><div class="mobile-step-dot-circle">2</div><div class="mobile-step-label">Pháp lý</div></div>
+        <div class="mobile-step-dot" data-ms="3"><div class="mobile-step-dot-circle">3</div><div class="mobile-step-label">Ngân hàng</div></div>
+        <div class="mobile-step-dot" data-ms="4"><div class="mobile-step-dot-circle">4</div><div class="mobile-step-label">Vận hành</div></div>
+        <div class="mobile-step-dot" data-ms="5"><div class="mobile-step-dot-circle">5</div><div class="mobile-step-label">Pickup</div></div>
+    </div>
+
+    <!-- Main content -->
+    <div class="main">
+
+        <!-- ===== STEP 1: Store Profile ===== -->
+        <div class="step-content active" id="sc1">
+            <div class="step-header">
+                <div class="step-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/></svg>Bước 1 / 5</div>
+                <h1>Hồ sơ cửa hàng</h1>
+                <p>Thông tin này sẽ hiển thị với khách hàng trên DealXanh</p>
+            </div>
+
+            <div class="form-grid">
+                <!-- Avatar -->
+                <div class="form-group">
+                    <div class="form-label">Ảnh đại diện cửa hàng</div>
+                    <div class="avatar-upload">
+                        <div class="avatar-preview" id="avatar-preview-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span class="avatar-preview-label">Tải lên</span>
+                            <input type="file" accept="image/*" onchange="previewAvatar(this)">
+                        </div>
+                        <div class="avatar-info">
+                            <h4>Logo cửa hàng</h4>
+                            <p>Định dạng PNG, JPG, WebP<br>Kích thước tối thiểu 200×200px<br>Tối đa 5MB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Tên cửa hàng <span>*</span></label>
+                        <input type="text" class="form-input" id="store-name" placeholder="VD: Bánh mì Hòa Mai" maxlength="50" oninput="updatePreview()">
+                        <div class="char-counter"><span id="name-count">0</span>/50</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Loại hình kinh doanh <span>*</span></label>
+                        <select class="form-select" id="store-type" onchange="updatePreview()">
+                            <option value="">Chọn loại hình</option>
+                            <option>Quán ăn / Nhà hàng</option>
+                            <option>Tiệm bánh / Cà phê</option>
+                            <option>Cửa hàng tiện lợi</option>
+                            <option>Siêu thị mini</option>
+                            <option>Food truck</option>
+                            <option>Khác</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mô tả cửa hàng <span>*</span></label>
+                    <textarea class="form-textarea" id="store-desc" placeholder="Mô tả về cửa hàng, đặc sản, ưu điểm..." maxlength="300" oninput="updateDescCount()"></textarea>
+                    <div class="char-counter"><span id="desc-count">0</span>/300</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Danh mục sản phẩm chính</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px" id="cat-picker">
+                        <button type="button" class="bank-chip" onclick="toggleCat(this)"><span>🍞 Bánh mì</span></button>
+                        <button type="button" class="bank-chip" onclick="toggleCat(this)"><span>🍜 Cơm / Bún / Phở</span></button>
+                        <button type="button" class="bank-chip" onclick="toggleCat(this)"><span>🧋 Đồ uống</span></button>
+                        <button type="button" class="bank-chip" onclick="toggleCat(this)"><span>🍰 Bánh ngọt / Kem</span></button>
+                        <button type="button" class="bank-chip" onclick="toggleCat(this)"><span>🍗 Gà rán / Đồ chiên</span></button>
+                        <button type="button" class="bank-chip" onclick="toggleCat(this)"><span>🥗 Salad / Healthy</span></button>
+                        <button type="button" class="bank-chip" onclick="toggleCat(this)"><span>🛒 Tạp hóa / Thực phẩm khô</span></button>
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div class="store-preview">
+                    <div class="store-preview-title">Xem trước trên ứng dụng</div>
+                    <div class="store-preview-card">
+                        <div class="store-preview-img" id="sp-img">
+                            <img id="sp-avatar" src="" alt="" style="display:none">
+                        </div>
+                        <div>
+                            <div class="store-preview-name" id="sp-name">Tên cửa hàng của bạn</div>
+                            <div class="store-preview-cat" id="sp-type">Loại hình chưa chọn</div>
+                            <div class="store-preview-tags" id="sp-tags"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <button class="save-draft" onclick="saveDraft()">Lưu nháp</button>
+                <button class="btn-next" onclick="nextStep()">
+                    Tiếp theo
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== STEP 2: Legal documents ===== -->
+        <div class="step-content" id="sc2">
+            <div class="step-header">
+                <div class="step-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Bước 2 / 5</div>
+                <h1>Xác minh pháp lý</h1>
+                <p>Tài liệu của bạn được bảo mật tuyệt đối và chỉ dùng để xác minh danh tính</p>
+            </div>
+
+            <div class="info-box" style="margin-bottom:24px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Quá trình xét duyệt thường mất <strong>1–3 ngày làm việc</strong>. Bạn sẽ nhận thông báo qua email và SMS.
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <div class="form-label">Giấy đăng ký kinh doanh (ĐKKD) <span>*</span></div>
+                    <div class="upload-zone" id="uz-dkkd">
+                        <div class="upload-zone__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                        <div class="upload-zone__title">Tải lên ảnh / PDF</div>
+                        <div class="upload-zone__sub">PNG, JPG, PDF — tối đa 10MB</div>
+                        <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="handleUpload(this,'dkkd','uz-dkkd','prev-dkkd')">
+                    </div>
+                    <div class="upload-preview" id="prev-dkkd">
+                        <svg class="upload-preview-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        <span class="upload-preview-name" id="name-dkkd">—</span>
+                        <button class="upload-preview-remove" onclick="removeFile('dkkd','uz-dkkd','prev-dkkd')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <div class="form-hint">Bản scan / ảnh rõ nét cả mặt trước</div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label">Giấy chứng nhận VSATTP <span>*</span></div>
+                    <div class="upload-zone" id="uz-vsattp">
+                        <div class="upload-zone__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                        <div class="upload-zone__title">Giấy chứng nhận VSATTP</div>
+                        <div class="upload-zone__sub">PNG, JPG, PDF — tối đa 10MB</div>
+                        <input type="file" accept=".pdf,.png,.jpg,.jpeg" onchange="handleUpload(this,'vsattp','uz-vsattp','prev-vsattp')">
+                    </div>
+                    <div class="upload-preview" id="prev-vsattp">
+                        <svg class="upload-preview-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        <span class="upload-preview-name" id="name-vsattp">—</span>
+                        <button class="upload-preview-remove" onclick="removeFile('vsattp','uz-vsattp','prev-vsattp')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+                <div class="section-sub-title">Thông tin đại diện pháp nhân</div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Họ và tên chủ hộ <span>*</span></label>
+                        <input type="text" class="form-input" placeholder="Nguyễn Văn A">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Số CCCD / CMND <span>*</span></label>
+                        <input type="text" class="form-input" placeholder="0123456789" maxlength="12">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label">Ảnh CCCD (mặt trước + sau)</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="upload-zone" style="padding:20px 12px">
+                            <div class="upload-zone__icon" style="width:40px;height:40px;margin-bottom:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                            <div class="upload-zone__title" style="font-size:13px">Mặt trước</div>
+                            <input type="file" accept="image/*">
+                        </div>
+                        <div class="upload-zone" style="padding:20px 12px">
+                            <div class="upload-zone__icon" style="width:40px;height:40px;margin-bottom:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                            <div class="upload-zone__title" style="font-size:13px">Mặt sau</div>
+                            <input type="file" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-back" onclick="prevStep()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Quay lại</button>
+                <button class="save-draft" onclick="saveDraft()">Lưu nháp</button>
+                <button class="btn-next" onclick="nextStep()">Tiếp theo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+            </div>
+        </div>
+
+        <!-- ===== STEP 3: Bank account ===== -->
+        <div class="step-content" id="sc3">
+            <div class="step-header">
+                <div class="step-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Bước 3 / 5</div>
+                <h1>Tài khoản ngân hàng</h1>
+                <p>Tiền từ deal sẽ được chuyển vào tài khoản này sau khi trừ hoa hồng 12–15%</p>
+            </div>
+
+            <div class="info-box warn-box" style="margin-bottom:24px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Tên tài khoản phải <strong>trùng khớp với tên ĐKKD hoặc CCCD</strong> của chủ cửa hàng.
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <div class="form-label">Chọn ngân hàng <span>*</span></div>
+                    <div class="bank-logo-row" id="bank-row">
+                        <div class="bank-chip" onclick="selectBank(this,'Vietcombank')"><span>🏦 Vietcombank</span></div>
+                        <div class="bank-chip" onclick="selectBank(this,'BIDV')"><span>🏦 BIDV</span></div>
+                        <div class="bank-chip" onclick="selectBank(this,'VietinBank')"><span>🏦 VietinBank</span></div>
+                        <div class="bank-chip" onclick="selectBank(this,'Techcombank')"><span>🏦 Techcombank</span></div>
+                        <div class="bank-chip" onclick="selectBank(this,'MB Bank')"><span>🏦 MB Bank</span></div>
+                        <div class="bank-chip" onclick="selectBank(this,'TPBank')"><span>🏦 TPBank</span></div>
+                        <div class="bank-chip" onclick="selectBank(this,'VPBank')"><span>🏦 VPBank</span></div>
+                        <div class="bank-chip" onclick="selectBank(this,'ACB')"><span>🏦 ACB</span></div>
+                    </div>
+                    <div class="form-group" style="margin-top:8px">
+                        <select class="form-select" id="bank-select">
+                            <option value="">Hoặc chọn ngân hàng khác...</option>
+                            <option>Agribank</option><option>Sacombank</option><option>SHB</option><option>Eximbank</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Số tài khoản <span>*</span></label>
+                        <input type="text" class="form-input" id="acc-num" placeholder="0123456789012" maxlength="19">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tên chủ tài khoản <span>*</span></label>
+                        <input type="text" class="form-input" id="acc-name" placeholder="NGUYEN VAN A" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Chi nhánh (không bắt buộc)</label>
+                    <input type="text" class="form-input" placeholder="VD: Chi nhánh Hòa Lạc">
+                </div>
+
+                <div class="section-divider"></div>
+                <div class="section-sub-title">Thông tin hoa hồng</div>
+
+                <div style="background:var(--background);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:20px;display:flex;flex-direction:column;gap:12px">
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--text-secondary)">Hoa hồng DealXanh</span>
+                        <span style="font-weight:700;color:var(--text-primary)">12 – 15% / giao dịch</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--text-secondary)">Phí cổng thanh toán</span>
+                        <span style="font-weight:700;color:var(--text-primary)">Miễn phí (DealXanh chịu)</span>
+                    </div>
+                    <div style="height:1px;background:var(--border-light)"></div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--text-secondary)">Chu kỳ thanh toán</span>
+                        <span style="font-weight:700;color:var(--primary)">Hàng tuần (Thứ 2)</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--text-secondary)">Rút tiền tối thiểu</span>
+                        <span style="font-weight:700;color:var(--text-primary)">50.000đ</span>
+                    </div>
+                </div>
+
+                <div class="check-item">
+                    <input type="checkbox" id="agree-bank" style="margin-top:2px">
+                    <label for="agree-bank">Tôi xác nhận thông tin tài khoản chính xác và đồng ý với <a href="#">Điều khoản thanh toán</a> của DealXanh</label>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-back" onclick="prevStep()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Quay lại</button>
+                <button class="save-draft" onclick="saveDraft()">Lưu nháp</button>
+                <button class="btn-next" onclick="nextStep()">Tiếp theo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+            </div>
+        </div>
+
+        <!-- ===== STEP 4: Operations ===== -->
+        <div class="step-content" id="sc4">
+            <div class="step-header">
+                <div class="step-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Bước 4 / 5</div>
+                <h1>Cài đặt vận hành</h1>
+                <p>Giờ mở cửa và địa chỉ giúp khách hàng tìm thấy bạn nhanh hơn</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Địa chỉ cửa hàng <span>*</span></label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <input type="text" class="form-input with-icon" placeholder="Số nhà, tên đường...">
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Quận / Huyện <span>*</span></label>
+                        <select class="form-select">
+                            <option>Chọn quận / huyện</option>
+                            <option>Thạch Thất (Hòa Lạc)</option>
+                            <option>Ba Vì</option><option>Quốc Oai</option><option>Chương Mỹ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tỉnh / Thành phố <span>*</span></label>
+                        <select class="form-select">
+                            <option>Hà Nội</option><option>TP. Hồ Chí Minh</option><option>Đà Nẵng</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại cửa hàng <span>*</span></label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.03 12.03 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <input type="tel" class="form-input with-icon" placeholder="0123456789">
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+                <div class="section-sub-title">Giờ mở cửa</div>
+
+                <div class="form-group">
+                    <div class="form-label" style="margin-bottom:12px">Ngày hoạt động</div>
+                    <div class="days-picker">
+                        <button type="button" class="day-btn" onclick="toggleDay(this)">T2</button>
+                        <button type="button" class="day-btn selected" onclick="toggleDay(this)">T3</button>
+                        <button type="button" class="day-btn selected" onclick="toggleDay(this)">T4</button>
+                        <button type="button" class="day-btn selected" onclick="toggleDay(this)">T5</button>
+                        <button type="button" class="day-btn selected" onclick="toggleDay(this)">T6</button>
+                        <button type="button" class="day-btn selected" onclick="toggleDay(this)">T7</button>
+                        <button type="button" class="day-btn" onclick="toggleDay(this)">CN</button>
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Giờ mở cửa <span>*</span></label>
+                        <input type="time" class="form-input" value="06:00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Giờ đóng cửa <span>*</span></label>
+                        <input type="time" class="form-input" value="22:00">
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+                <div class="section-sub-title">Chế độ duyệt deal</div>
+
+                <div style="display:flex;flex-direction:column;gap:10px">
+                    <div class="role-card" id="auto-mode" onclick="selectApprovalMode('auto')" style="cursor:pointer">
+                        <div class="role-card__check">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="role-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        </div>
+                        <div class="role-info">
+                            <div class="role-name">⚡ Tự động duyệt (Auto)</div>
+                            <div class="role-desc">Deal của nhân viên sẽ được đăng lên ngay lập tức. Phù hợp khi bạn tin tưởng nhân viên.</div>
+                        </div>
+                    </div>
+                    <div class="role-card selected" id="manual-mode" onclick="selectApprovalMode('manual')" style="cursor:pointer">
+                        <div class="role-card__check">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="role-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                        <div class="role-info">
+                            <div class="role-name">✋ Duyệt thủ công (Manual)</div>
+                            <div class="role-desc">Mọi deal cần được bạn (Owner) duyệt trước khi xuất hiện trên app. Kiểm soát tốt hơn.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-back" onclick="prevStep()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Quay lại</button>
+                <button class="save-draft" onclick="saveDraft()">Lưu nháp</button>
+                <button class="btn-next" onclick="nextStep()">Tiếp theo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+            </div>
+        </div>
+
+        <!-- ===== STEP 5: Pickup slots ===== -->
+        <div class="step-content" id="sc5">
+            <div class="step-header">
+                <div class="step-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Bước 5 / 5</div>
+                <h1>Khung giờ pickup</h1>
+                <p>Khách hàng sẽ chọn khung giờ này khi đặt deal. Bạn có thể thay đổi sau.</p>
+            </div>
+
+            <div class="info-box" style="margin-bottom:24px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Theo dữ liệu thực tế, <strong>khung 17h–21h</strong> có lượng đặt hàng cao nhất. Khuyến nghị tạo ít nhất 2 slot trong khung này.</span>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <div class="form-label" style="margin-bottom:14px">Khung giờ pickup <span>*</span></div>
+                    <div class="slots-builder" id="slots-builder">
+                        <div class="slot-row">
+                            <div class="slot-time-inputs">
+                                <input type="time" value="17:00">
+                                <span class="slot-separator">—</span>
+                                <input type="time" value="18:00">
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+                                <span>Tối đa</span>
+                                <input class="slot-cap" type="number" value="20" min="1" max="999" placeholder="SL">
+                                <span>đơn</span>
+                            </div>
+                            <button class="slot-remove" onclick="removeSlot(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                            </button>
+                        </div>
+                        <div class="slot-row">
+                            <div class="slot-time-inputs">
+                                <input type="time" value="18:00">
+                                <span class="slot-separator">—</span>
+                                <input type="time" value="19:00">
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+                                <span>Tối đa</span>
+                                <input class="slot-cap" type="number" value="15" min="1" max="999">
+                                <span>đơn</span>
+                            </div>
+                            <button class="slot-remove" onclick="removeSlot(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                            </button>
+                        </div>
+                        <div class="slot-row">
+                            <div class="slot-time-inputs">
+                                <input type="time" value="19:00">
+                                <span class="slot-separator">—</span>
+                                <input type="time" value="20:00">
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+                                <span>Tối đa</span>
+                                <input class="slot-cap" type="number" value="10" min="1" max="999">
+                                <span>đơn</span>
+                            </div>
+                            <button class="slot-remove" onclick="removeSlot(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="add-slot-btn" onclick="addSlot()" style="margin-top:10px">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Thêm khung giờ mới
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Ghi chú hướng dẫn pickup (hiển thị cho khách)</label>
+                    <textarea class="form-textarea" placeholder="VD: Đến cửa trước và báo nhân viên mã QR. Đỗ xe trước cổng chính..." style="min-height:80px"></textarea>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <div class="check-item">
+                    <input type="checkbox" id="agree-final">
+                    <label for="agree-final">Tôi xác nhận tất cả thông tin chính xác và đồng ý với <a href="#">Điều khoản dành cho Seller</a> của DealXanh</label>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-back" onclick="prevStep()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Quay lại</button>
+                <button class="btn-next" onclick="submitOnboarding()" style="max-width:200px">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+                    Gửi hồ sơ
+                </button>
+            </div>
+        </div>
+
+    </div><!-- /main -->
+</div><!-- /page -->
+
+<script>
+let currentStep = 1;
+const TOTAL = 5;
+const progressPct = [20,40,60,80,100];
+
+function goToStep(n) {
+    document.getElementById('sc' + currentStep).classList.remove('active');
+    // sidebar
+    document.querySelectorAll('.sidebar__step').forEach(s => {
+        const sn = parseInt(s.dataset.s);
+        s.classList.remove('active','done');
+        if(sn === n) s.classList.add('active');
+        if(sn < n) s.classList.add('done');
+    });
+    // mobile
+    document.querySelectorAll('.mobile-step-dot').forEach(d => {
+        const dn = parseInt(d.dataset.ms);
+        d.classList.remove('active','done');
+        if(dn === n) d.classList.add('active');
+        if(dn < n) d.classList.add('done');
+    });
+    currentStep = n;
+    document.getElementById('sc' + n).classList.add('active');
+    document.getElementById('top-bar').style.width = progressPct[n-1] + '%';
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function nextStep(){ if(currentStep < TOTAL) goToStep(currentStep+1); }
+function prevStep(){ if(currentStep > 1) goToStep(currentStep-1); }
+
+// Preview
+function updatePreview() {
+    const name = document.getElementById('store-name').value || 'Tên cửa hàng của bạn';
+    const type = document.getElementById('store-type').value || 'Loại hình chưa chọn';
+    document.getElementById('sp-name').textContent = name;
+    document.getElementById('sp-type').textContent = type;
+    document.getElementById('name-count').textContent = document.getElementById('store-name').value.length;
+}
+function updateDescCount(){
+    document.getElementById('desc-count').textContent = document.getElementById('store-desc').value.length;
+}
+function previewAvatar(inp) {
+    if(!inp.files[0]) return;
+    const url = URL.createObjectURL(inp.files[0]);
+    const img = document.getElementById('sp-avatar');
+    img.src = url; img.style.display = 'block';
+    const wrap = document.getElementById('avatar-preview-wrap');
+    wrap.querySelector('svg').style.display = 'none';
+    wrap.querySelector('.avatar-preview-label').style.display = 'none';
+}
+function toggleCat(el) {
+    el.classList.toggle('selected');
+    const tags = [...document.querySelectorAll('#cat-picker .bank-chip.selected')].map(e => e.querySelector('span').textContent);
+    const cont = document.getElementById('sp-tags');
+    cont.innerHTML = tags.map(t => `<span class="store-preview-tag">${t}</span>`).join('');
+}
+
+// Upload handlers
+function handleUpload(inp, key, zoneId, prevId) {
+    if(!inp.files[0]) return;
+    document.getElementById(zoneId).classList.add('has-file');
+    document.getElementById('name-'+key).textContent = inp.files[0].name;
+    document.getElementById(prevId).classList.add('show');
+}
+function removeFile(key, zoneId, prevId) {
+    document.getElementById(zoneId).classList.remove('has-file');
+    document.getElementById(prevId).classList.remove('show');
+}
+
+// Bank
+function selectBank(el, name) {
+    document.querySelectorAll('#bank-row .bank-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('bank-select').value = '';
+}
+
+// Approval mode
+function selectApprovalMode(mode) {
+    document.getElementById('auto-mode').classList.remove('selected');
+    document.getElementById('manual-mode').classList.remove('selected');
+    document.getElementById(mode+'-mode').classList.add('selected');
+}
+
+// Day picker
+function toggleDay(btn){ btn.classList.toggle('selected'); }
+
+// Slots
+function addSlot() {
+    const builder = document.getElementById('slots-builder');
+    const row = document.createElement('div');
+    row.className = 'slot-row';
+    row.innerHTML = `
+        <div class="slot-time-inputs">
+            <input type="time" value="20:00">
+            <span class="slot-separator">—</span>
+            <input type="time" value="21:00">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+            <span>Tối đa</span>
+            <input class="slot-cap" type="number" value="10" min="1" max="999">
+            <span>đơn</span>
+        </div>
+        <button class="slot-remove" onclick="removeSlot(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>`;
+    builder.appendChild(row);
+}
+function removeSlot(btn) {
+    const rows = document.querySelectorAll('#slots-builder .slot-row');
+    if(rows.length > 1) btn.closest('.slot-row').remove();
+}
+
+function saveDraft() {
+    // Show brief toast
+    const t = document.createElement('div');
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:999;animation:fadeUp .3s ease-out';
+    t.textContent = '💾 Đã lưu nháp thành công';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+}
+
+function submitOnboarding() {
+    window.location.href = 'onboarding-pending.html';
+}
+</script>
+</body>
+</html>

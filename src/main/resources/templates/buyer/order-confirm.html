@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đặt hàng thành công — DealXanh</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+  --accent:#d4af37;
+  --surface:#fff;--background:#f5f6f8;
+  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+  --border:#e0e0e0;--border-light:#f0f0f0;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.11);--shadow-lg:0 8px 32px rgba(0,0,0,.18);
+  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--background);min-height:100vh;color:var(--text-primary)}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+
+/* ===== ORDER CONFIRM (3.07) ===== */
+#view-confirm{ min-height:100vh; }
+
+/* Header */
+.confirm-header{
+  padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);border-bottom:1px solid var(--border-light);
+}
+.confirm-header svg{width:20px;height:20px;color:var(--text-primary)}
+
+/* Success hero */
+.success-hero{
+  background:linear-gradient(135deg, #0d5c2e 0%, #1a7c40 60%, #10b981 100%);
+  padding:32px 20px 40px;
+  text-align:center;
+  position:relative;overflow:hidden;
+}
+.success-hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 70%, rgba(255,255,255,.08) 0%, transparent 60%),
+             radial-gradient(circle at 80% 20%, rgba(255,255,255,.06) 0%, transparent 50%);
+}
+.success-checkmark{
+  width:72px;height:72px;background:rgba(255,255,255,.2);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;
+  border:3px solid rgba(255,255,255,.4);
+  animation:checkPop .5s .1s cubic-bezier(.175,.885,.32,1.275) both;
+  position:relative;z-index:1;
+}
+.success-checkmark svg{width:36px;height:36px;color:#fff;stroke-dasharray:50;stroke-dashoffset:50;animation:drawCheck .4s .4s ease forwards}
+@keyframes drawCheck{to{stroke-dashoffset:0}}
+@keyframes checkPop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{font-size:22px;font-weight:800;color:#fff;margin-bottom:6px;position:relative;z-index:1;animation:fadeUp .4s .3s ease both}
+.success-subtitle{font-size:14px;color:rgba(255,255,255,.8);position:relative;z-index:1;animation:fadeUp .4s .4s ease both;line-height:1.55}
+.order-id-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 16px;
+  background:rgba(255,255,255,.15);backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.25);border-radius:var(--radius-full);
+  font-size:13px;font-weight:700;color:#fff;
+  margin-top:14px;position:relative;z-index:1;
+  animation:fadeUp .4s .5s ease both;
+}
+.order-id-badge svg{width:14px;height:14px;flex-shrink:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Confetti particles */
+.confetti-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+.conf{
+  position:absolute;width:8px;height:8px;border-radius:2px;
+  animation:confFall var(--dur,1.4s) var(--delay,0s) ease-out both;
+}
+@keyframes confFall{
+  0%{transform:translateY(-20px) rotate(0deg);opacity:1}
+  100%{transform:translateY(140px) rotate(360deg);opacity:0}
+}
+
+/* Body */
+.confirm-body{padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:120px}
+
+/* QR Cards per store */
+.qr-ticket{
+  background:var(--surface);border-radius:var(--radius-xl);
+  border:1px solid var(--border-light);overflow:hidden;
+  box-shadow:var(--shadow-md);
+  position:relative;
+}
+.qr-ticket::before,.qr-ticket::after{
+  content:'';position:absolute;
+  width:20px;height:20px;border-radius:50%;background:var(--background);
+  top:50%;transform:translateY(-50%);z-index:1;
+}
+.qr-ticket::before{left:-10px;box-shadow:inset -2px 0 0 var(--border-light)}
+.qr-ticket::after{right:-10px;box-shadow:inset 2px 0 0 var(--border-light)}
+
+.ticket-top{padding:14px 16px;background:rgba(13,92,46,.04);border-bottom:1.5px dashed var(--border)}
+.ticket-store-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ticket-store-img{width:36px;height:36px;border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0}
+.ticket-store-img img{width:100%;height:100%;object-fit:cover}
+.ticket-store-name{font-size:14px;font-weight:700}
+.ticket-meta{display:flex;gap:8px;flex-wrap:wrap}
+.ticket-chip{
+  display:flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:var(--radius-full);
+  font-size:11px;font-weight:600;
+  border:1px solid;
+}
+.t-chip-time{background:rgba(13,92,46,.08);color:var(--primary);border-color:rgba(13,92,46,.2)}
+.t-chip-loc{background:var(--background);color:var(--text-secondary);border-color:var(--border-light)}
+.t-chip-warn{background:rgba(245,158,11,.1);color:var(--warning);border-color:rgba(245,158,11,.2)}
+.ticket-chip svg{width:10px;height:10px;flex-shrink:0}
+
+.ticket-bottom{padding:16px}
+.ticket-qr-row{display:flex;align-items:center;gap:16px}
+.ticket-qr-box{
+  width:110px;height:110px;flex-shrink:0;
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:2px solid var(--border-light);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-sm);
+  position:relative;cursor:pointer;
+  transition:transform var(--tr);
+}
+.ticket-qr-box:hover{transform:scale(1.03)}
+.qr-svg{width:88px;height:88px;flex-shrink:0}
+.qr-expand-hint{
+  position:absolute;bottom:-1px;left:0;right:0;
+  background:rgba(13,92,46,.85);color:#fff;
+  font-size:9px;font-weight:600;text-align:center;
+  padding:3px;border-radius:0 0 10px 10px;
+  opacity:0;transition:opacity var(--tr);
+}
+.ticket-qr-box:hover .qr-expand-hint{opacity:1}
+
+.ticket-info{flex:1;min-width:0}
+.ticket-order-num{font-size:11px;color:var(--text-tertiary);font-weight:500;margin-bottom:3px}
+.ticket-items-list{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.ticket-item-row{display:flex;justify-content:space-between;font-size:12px}
+.ticket-item-name{color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:8px}
+.ticket-item-price{font-weight:600;color:var(--text-primary);flex-shrink:0}
+.ticket-subtotal{display:flex;justify-content:space-between;align-items:center;padding-top:7px;border-top:1px solid var(--border-light)}
+.ticket-subtotal-label{font-size:12px;font-weight:600;color:var(--text-secondary)}
+.ticket-subtotal-val{font-size:15px;font-weight:800;color:var(--primary)}
+
+/* OTP fallback section */
+.otp-fallback{
+  margin-top:10px;padding:10px 12px;
+  background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);
+  border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.otp-fallback-label{font-size:11px;color:var(--text-secondary);font-weight:500}
+.otp-code{
+  font-size:22px;font-weight:800;color:#1d4ed8;
+  letter-spacing:4px;font-variant-numeric:tabular-nums;
+}
+
+/* Expand QR modal */
+.qr-modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:1000;display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px;
+}
+.qr-modal-backdrop.show{display:flex}
+.qr-modal{
+  background:var(--surface);border-radius:var(--radius-xl);
+  padding:28px;text-align:center;max-width:340px;width:100%;
+  box-shadow:var(--shadow-lg);
+}
+.qr-modal-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.qr-modal-store{font-size:13px;color:var(--text-secondary);margin-bottom:20px}
+.qr-modal-box{
+  width:220px;height:220px;margin:0 auto 16px;
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:2px solid var(--border-light);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-md);position:relative;
+}
+.qr-modal-amount{font-size:13px;color:var(--text-secondary);margin-bottom:6px}
+.qr-modal-otp{
+  font-size:28px;font-weight:800;color:#1d4ed8;
+  letter-spacing:6px;margin:8px 0;
+}
+.qr-modal-otp-label{font-size:11px;color:var(--text-tertiary)}
+.qr-modal-close{
+  margin-top:16px;padding:12px 28px;
+  background:var(--primary);color:#fff;
+  border-radius:var(--radius-md);font-size:14px;font-weight:700;
+  transition:all var(--tr);width:100%;
+}
+.qr-modal-close:hover{background:var(--primary-dark)}
+
+/* Pickup info card */
+.pickup-info-card{
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:1px solid var(--border-light);
+  box-shadow:var(--shadow-sm);overflow:hidden;
+}
+.pic-header{
+  padding:12px 16px;border-bottom:1px solid var(--border-light);
+  font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;
+  background:rgba(13,92,46,.02);
+}
+.pic-header svg{width:14px;height:14px;color:var(--primary);flex-shrink:0}
+.pic-steps{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.pic-step{display:flex;align-items:flex-start;gap:12px}
+.pic-step-num{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--primary);color:#fff;
+  font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.pic-step-text{font-size:13px;color:var(--text-secondary);line-height:1.5;padding-top:2px}
+.pic-step-text strong{color:var(--text-primary)}
+
+/* Footer actions */
+.confirm-footer{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:var(--surface);border-top:1px solid var(--border-light);
+  box-shadow:0 -4px 20px rgba(0,0,0,.1);
+  padding:12px 16px max(16px,env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:10px;
+}
+.btn-view-qr{
+  width:100%;padding:14px;
+  background:var(--primary);color:#fff;
+  font-size:15px;font-weight:800;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:all var(--tr);box-shadow:0 3px 12px rgba(13,92,46,.3);
+}
+.btn-view-qr:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.confirm-footer-row{display:flex;gap:10px}
+.btn-track{
+  flex:1;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-md);
+  font-size:14px;font-weight:600;color:var(--text-primary);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all var(--tr);
+}
+.btn-track:hover{border-color:var(--primary);color:var(--primary)}
+.btn-home{
+  flex:1;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-md);
+  font-size:14px;font-weight:600;color:var(--text-primary);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all var(--tr);
+}
+.btn-home:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ===== QR PICKUP FULL VIEW (3.10) ===== */
+#view-qr-pickup{
+  display:none;
+  min-height:100vh;
+  background:#0d1a0f;
+  flex-direction:column;
+}
+.qrp-header{
+  padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+.qrp-back{width:38px;height:38px;border-radius:var(--radius-md);background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.qrp-title{font-size:16px;font-weight:700;color:#fff;flex:1}
+.qrp-share{width:38px;height:38px;border-radius:var(--radius-md);background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+
+.qrp-body{flex:1;padding:20px 20px 100px;display:flex;flex-direction:column;gap:16px}
+
+.qrp-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.qrp-tabs::-webkit-scrollbar{display:none}
+.qrp-tab{
+  flex-shrink:0;padding:8px 16px;
+  border-radius:var(--radius-full);
+  border:1.5px solid rgba(255,255,255,.15);
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.6);
+  transition:all var(--tr);
+}
+.qrp-tab.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+.qrp-card{
+  background:var(--surface);border-radius:var(--radius-xl);
+  overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.35);
+}
+.qrp-card-top{
+  padding:16px 18px;
+  background:var(--primary);
+  display:flex;align-items:center;gap:12px;
+}
+.qrp-store-img{width:40px;height:40px;border-radius:var(--radius-md);overflow:hidden;border:2px solid rgba(255,255,255,.3);flex-shrink:0}
+.qrp-store-img img{width:100%;height:100%;object-fit:cover}
+.qrp-store-info{flex:1;min-width:0}
+.qrp-store-name{font-size:15px;font-weight:700;color:#fff}
+.qrp-slot-info{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px}
+.qrp-status{
+  padding:4px 12px;border-radius:var(--radius-full);
+  font-size:11px;font-weight:700;flex-shrink:0;
+  background:rgba(255,255,255,.2);color:#fff;
+}
+.qrp-status.active-status{background:rgba(16,185,129,.25);color:#6ee7b7}
+
+.qrp-card-mid{
+  padding:24px 18px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  border-bottom:1.5px dashed var(--border);
+}
+.qrp-qr-wrap{
+  width:200px;height:200px;
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:3px solid var(--border-light);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(0,0,0,.12);
+  position:relative;flex-shrink:0;
+}
+.qrp-qr-corner{
+  position:absolute;width:20px;height:20px;
+  border-color:var(--primary);border-style:solid;border-width:0;
+}
+.qrp-qr-corner.tl{top:6px;left:6px;border-top-width:3px;border-left-width:3px;border-radius:3px 0 0 0}
+.qrp-qr-corner.tr{top:6px;right:6px;border-top-width:3px;border-right-width:3px;border-radius:0 3px 0 0}
+.qrp-qr-corner.bl{bottom:6px;left:6px;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 3px}
+.qrp-qr-corner.br{bottom:6px;right:6px;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 3px 0}
+
+.qrp-scan-line{
+  position:absolute;left:10px;right:10px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--primary),transparent);
+  animation:scanMove 2s ease-in-out infinite;
+  border-radius:var(--radius-full);
+}
+@keyframes scanMove{0%{top:10px;opacity:1}50%{opacity:.7}100%{top:calc(100% - 12px);opacity:1}}
+
+.qrp-order-num{font-size:12px;color:var(--text-tertiary);font-weight:600;letter-spacing:.5px}
+.qrp-amount-val{font-size:24px;font-weight:800;color:var(--primary)}
+
+.qrp-otp-section{
+  text-align:center;padding-bottom:4px;
+}
+.qrp-otp-label{font-size:11px;color:var(--text-tertiary);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.qrp-otp-code{
+  font-size:36px;font-weight:800;color:var(--text-primary);
+  letter-spacing:10px;font-variant-numeric:tabular-nums;
+}
+.qrp-otp-hint{font-size:11px;color:var(--text-tertiary);margin-top:4px}
+
+.qrp-card-bot{padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.qrp-item-row{display:flex;justify-content:space-between;font-size:13px}
+.qrp-item-name{color:var(--text-secondary);flex:1;margin-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qrp-item-qty{color:var(--text-tertiary);font-weight:500;flex-shrink:0}
+.qrp-total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:700;padding-top:8px;border-top:1px solid var(--border-light)}
+
+.offline-notice{
+  display:flex;align-items:center;gap:9px;
+  padding:10px 14px;
+  background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);
+  border-radius:var(--radius-md);
+  font-size:12px;color:rgba(255,255,255,.8);font-weight:500;
+}
+.offline-notice svg{width:14px;height:14px;color:#60a5fa;flex-shrink:0}
+
+.qrp-footer{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(13,26,15,.95);backdrop-filter:blur(12px);
+  border-top:1px solid rgba(255,255,255,.08);
+  padding:12px 16px max(16px,env(safe-area-inset-bottom));
+  display:flex;gap:10px;
+}
+.qrp-btn-secondary{
+  flex:1;padding:13px;
+  border:1.5px solid rgba(255,255,255,.2);border-radius:var(--radius-md);
+  font-size:13px;font-weight:600;color:rgba(255,255,255,.8);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all var(--tr);
+}
+.qrp-btn-secondary:hover{border-color:rgba(255,255,255,.4);color:#fff}
+.qrp-btn-primary{
+  flex:2;padding:13px;
+  background:var(--primary);color:#fff;
+  border-radius:var(--radius-md);font-size:14px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:all var(--tr);box-shadow:0 3px 12px rgba(13,92,46,.4);
+}
+.qrp-btn-primary:hover{background:var(--primary-light)}
+</style>
+</head>
+<body>
+
+<!-- ============ VIEW 1: ORDER CONFIRM (3.07) ============ -->
+<div id="view-confirm">
+
+  <div class="confirm-header">
+    <a href="../home.html">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </a>
+    <span style="font-size:16px;font-weight:700;flex:1;text-align:center">Đặt hàng thành công</span>
+    <div style="width:20px"></div>
+  </div>
+
+  <!-- Success hero -->
+  <div class="success-hero" id="success-hero">
+    <div class="confetti-wrap" id="confetti"></div>
+    <div class="success-checkmark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:36px;height:36px">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <h1 class="success-title">Đặt hàng thành công! 🎉</h1>
+    <p class="success-subtitle">Scan QR bên dưới khi đến cửa hàng pickup.<br>OTP cũng hoạt động nếu không có internet.</p>
+    <div class="order-id-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      Mã đơn: #DX-38291-A
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="confirm-body">
+
+    <!-- QR Ticket: Store 1 -->
+    <div class="qr-ticket" id="ticket-1">
+      <div class="ticket-top">
+        <div class="ticket-store-row">
+          <div class="ticket-store-img"><img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=72&q=70" alt=""></div>
+          <div>
+            <div class="ticket-store-name">Bánh mì Hòa Mai</div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:1px">123 Đường Thống Nhất, Hòa Lạc</div>
+          </div>
+        </div>
+        <div class="ticket-meta">
+          <span class="ticket-chip t-chip-time">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            17:00–18:00 hôm nay
+          </span>
+          <span class="ticket-chip t-chip-loc">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
+            350m
+          </span>
+        </div>
+      </div>
+      <div class="ticket-bottom">
+        <div class="ticket-qr-row">
+          <div class="ticket-qr-box" onclick="openQRFullscreen('store1')" title="Nhấn để phóng to">
+            <svg class="qr-svg" viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+              <rect x="6" y="6" width="14" height="14" rx="1" fill="#1a1a1a"/>
+              <rect x="64" y="2" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+              <rect x="68" y="6" width="14" height="14" rx="1" fill="#1a1a1a"/>
+              <rect x="2" y="64" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+              <rect x="6" y="68" width="14" height="14" rx="1" fill="#1a1a1a"/>
+              <rect x="28" y="2" width="4" height="4" fill="#1a1a1a"/><rect x="34" y="2" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="44" y="2" width="4" height="4" fill="#1a1a1a"/><rect x="54" y="2" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="28" y="8" width="4" height="4" fill="#1a1a1a"/><rect x="38" y="8" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="48" y="8" width="4" height="4" fill="#1a1a1a"/><rect x="58" y="8" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="26" y="26" width="4" height="4" fill="#1a1a1a"/><rect x="32" y="26" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="42" y="26" width="4" height="4" fill="#1a1a1a"/><rect x="52" y="26" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="62" y="26" width="4" height="4" fill="#1a1a1a"/><rect x="70" y="26" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="26" y="32" width="4" height="4" fill="#1a1a1a"/><rect x="36" y="32" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="46" y="32" width="4" height="4" fill="#1a1a1a"/><rect x="56" y="32" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="66" y="32" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="26" y="38" width="4" height="4" fill="#1a1a1a"/><rect x="38" y="38" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="48" y="38" width="4" height="4" fill="#1a1a1a"/><rect x="60" y="38" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="70" y="38" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="2" y="30" width="4" height="4" fill="#1a1a1a"/><rect x="8" y="30" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="16" y="30" width="4" height="4" fill="#1a1a1a"/><rect x="22" y="30" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="2" y="36" width="4" height="4" fill="#1a1a1a"/><rect x="12" y="36" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="20" y="36" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="2" y="42" width="4" height="4" fill="#1a1a1a"/><rect x="8" y="42" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="16" y="42" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="26" y="50" width="4" height="4" fill="#1a1a1a"/><rect x="36" y="50" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="46" y="50" width="4" height="4" fill="#1a1a1a"/><rect x="56" y="50" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="66" y="50" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="28" y="56" width="4" height="4" fill="#1a1a1a"/><rect x="40" y="56" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="52" y="56" width="4" height="4" fill="#1a1a1a"/><rect x="62" y="56" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="72" y="56" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="26" y="62" width="4" height="4" fill="#1a1a1a"/><rect x="36" y="62" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="50" y="62" width="4" height="4" fill="#1a1a1a"/><rect x="60" y="62" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="26" y="68" width="4" height="4" fill="#1a1a1a"/><rect x="38" y="68" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="48" y="68" width="4" height="4" fill="#1a1a1a"/><rect x="58" y="68" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="70" y="68" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="28" y="74" width="4" height="4" fill="#1a1a1a"/><rect x="42" y="74" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="54" y="74" width="4" height="4" fill="#1a1a1a"/><rect x="66" y="74" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="2" y="50" width="4" height="4" fill="#1a1a1a"/><rect x="10" y="50" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="18" y="50" width="4" height="4" fill="#1a1a1a"/><rect x="4" y="56" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="14" y="56" width="4" height="4" fill="#1a1a1a"/><rect x="22" y="56" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="2" y="62" width="4" height="4" fill="#1a1a1a"/><rect x="12" y="62" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="6" y="82" width="4" height="4" fill="#1a1a1a"/><rect x="16" y="82" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="36" y="36" width="16" height="16" rx="2" fill="#0d5c2e"/>
+              <text x="44" y="48" text-anchor="middle" font-size="10" font-weight="800" fill="white" font-family="Inter,sans-serif">D</text>
+            </svg>
+            <span class="qr-expand-hint">Phóng to →</span>
+          </div>
+          <div class="ticket-info">
+            <div class="ticket-order-num">#DX-38291-A · Bánh mì Hòa Mai</div>
+            <div class="ticket-items-list">
+              <div class="ticket-item-row"><span class="ticket-item-name">1× Bánh mì pate</span><span class="ticket-item-price">12.500đ</span></div>
+              <div class="ticket-item-row"><span class="ticket-item-name">2× Bánh mì thịt nguội</span><span class="ticket-item-price">30.000đ</span></div>
+            </div>
+            <div class="ticket-subtotal">
+              <span class="ticket-subtotal-label">Tổng cửa hàng này</span>
+              <span class="ticket-subtotal-val">42.500đ</span>
+            </div>
+          </div>
+        </div>
+        <div class="otp-fallback">
+          <div><div class="otp-fallback-label">Mã OTP (không cần internet)</div><div class="otp-code">7 2 4 1</div></div>
+          <div style="font-size:11px;color:var(--text-tertiary);text-align:right">Hết hạn<br><strong>60 phút</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Ticket: Store 2 -->
+    <div class="qr-ticket">
+      <div class="ticket-top">
+        <div class="ticket-store-row">
+          <div class="ticket-store-img"><img src="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=72&q=70" alt=""></div>
+          <div>
+            <div class="ticket-store-name">Mixue Hòa Lạc</div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:1px">Big C Hòa Lạc, Tầng 1</div>
+          </div>
+        </div>
+        <div class="ticket-meta">
+          <span class="ticket-chip t-chip-warn">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            ⚡ Còn ~25 phút!
+          </span>
+          <span class="ticket-chip t-chip-loc">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
+            1.2km
+          </span>
+        </div>
+      </div>
+      <div class="ticket-bottom">
+        <div class="ticket-qr-row">
+          <div class="ticket-qr-box" onclick="openQRFullscreen('store2')">
+            <svg class="qr-svg" viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+              <rect x="6" y="6" width="14" height="14" rx="1" fill="#1a1a1a"/>
+              <rect x="64" y="2" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+              <rect x="68" y="6" width="14" height="14" rx="1" fill="#1a1a1a"/>
+              <rect x="2" y="64" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+              <rect x="6" y="68" width="14" height="14" rx="1" fill="#1a1a1a"/>
+              <rect x="30" y="4" width="4" height="4" fill="#1a1a1a"/><rect x="40" y="4" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="52" y="4" width="4" height="4" fill="#1a1a1a"/><rect x="60" y="4" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="28" y="26" width="4" height="4" fill="#1a1a1a"/><rect x="38" y="26" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="50" y="26" width="4" height="4" fill="#1a1a1a"/><rect x="62" y="26" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="72" y="26" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="26" y="34" width="4" height="4" fill="#1a1a1a"/><rect x="36" y="34" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="46" y="34" width="4" height="4" fill="#1a1a1a"/><rect x="58" y="34" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="68" y="34" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="4" y="28" width="4" height="4" fill="#1a1a1a"/><rect x="14" y="28" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="4" y="38" width="4" height="4" fill="#1a1a1a"/><rect x="18" y="38" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="28" y="50" width="4" height="4" fill="#1a1a1a"/><rect x="40" y="50" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="52" y="50" width="4" height="4" fill="#1a1a1a"/><rect x="64" y="50" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="74" y="50" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="30" y="60" width="4" height="4" fill="#1a1a1a"/><rect x="42" y="60" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="54" y="60" width="4" height="4" fill="#1a1a1a"/><rect x="64" y="60" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="26" y="70" width="4" height="4" fill="#1a1a1a"/><rect x="38" y="70" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="50" y="70" width="4" height="4" fill="#1a1a1a"/><rect x="62" y="70" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="4" y="50" width="4" height="4" fill="#1a1a1a"/><rect x="14" y="50" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="6" y="60" width="4" height="4" fill="#1a1a1a"/><rect x="16" y="60" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="4" y="70" width="4" height="4" fill="#1a1a1a"/><rect x="18" y="70" width="4" height="4" fill="#1a1a1a"/>
+              <rect x="36" y="36" width="16" height="16" rx="2" fill="#0d5c2e"/>
+              <text x="44" y="48" text-anchor="middle" font-size="10" font-weight="800" fill="white" font-family="Inter,sans-serif">D</text>
+            </svg>
+            <span class="qr-expand-hint">Phóng to →</span>
+          </div>
+          <div class="ticket-info">
+            <div class="ticket-order-num">#DX-38291-B · Mixue</div>
+            <div class="ticket-items-list">
+              <div class="ticket-item-row"><span class="ticket-item-name">1× Trà sữa đường đen</span><span class="ticket-item-price">15.000đ</span></div>
+            </div>
+            <div class="ticket-subtotal">
+              <span class="ticket-subtotal-label">Tổng cửa hàng này</span>
+              <span class="ticket-subtotal-val">15.000đ</span>
+            </div>
+          </div>
+        </div>
+        <div class="otp-fallback">
+          <div><div class="otp-fallback-label">Mã OTP (không cần internet)</div><div class="otp-code">3 8 5 9</div></div>
+          <div style="font-size:11px;color:var(--text-tertiary);text-align:right">Hết hạn<br><strong>30 phút</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pickup instructions -->
+    <div class="pickup-info-card">
+      <div class="pic-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Hướng dẫn nhận hàng
+      </div>
+      <div class="pic-steps">
+        <div class="pic-step"><div class="pic-step-num">1</div><div class="pic-step-text">Đến cửa hàng trong <strong>khung giờ đã chọn</strong></div></div>
+        <div class="pic-step"><div class="pic-step-num">2</div><div class="pic-step-text">Đưa <strong>QR code</strong> (hoặc OTP) cho nhân viên scan</div></div>
+        <div class="pic-step"><div class="pic-step-num">3</div><div class="pic-step-text">Nhận hàng và <strong>đánh giá deal</strong> để nhận điểm thưởng</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="confirm-footer">
+    <button class="btn-view-qr" onclick="showQRPickup()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/>
+        <path d="M17 14h3"/><path d="M14 17v3"/><path d="M17 20h3v-3"/>
+      </svg>
+      Xem QR fullscreen để scan
+    </button>
+    <div class="confirm-footer-row">
+      <button class="btn-track" onclick="showToast('🚀 Tính năng theo dõi đơn sắp ra mắt!')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Theo dõi đơn
+      </button>
+      <button class="btn-home" onclick="window.location.href='../home.html'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Về trang chủ
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW 2: QR PICKUP FULLSCREEN (3.10) ============ -->
+<div id="view-qr-pickup" style="display:none;flex-direction:column">
+  <div class="qrp-header">
+    <button class="qrp-back" onclick="backToConfirm()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    <span class="qrp-title">QR Pickup</span>
+    <button class="qrp-share" onclick="shareQR()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="qrp-body">
+    <div class="qrp-tabs">
+      <button class="qrp-tab active" onclick="selQRTab(this,0)">🏪 Bánh mì Hòa Mai</button>
+      <button class="qrp-tab" onclick="selQRTab(this,1)">🥤 Mixue · ⚡ 25 phút</button>
+    </div>
+
+    <div class="qrp-card" id="qrp-active-card">
+      <div class="qrp-card-top">
+        <div class="qrp-store-img"><img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=80&q=70" alt=""></div>
+        <div class="qrp-store-info">
+          <div class="qrp-store-name">Bánh mì Hòa Mai</div>
+          <div class="qrp-slot-info">Pickup: 17:00–18:00 · 350m</div>
+        </div>
+        <div class="qrp-status active-status">Đang chờ</div>
+      </div>
+
+      <div class="qrp-card-mid">
+        <div class="qrp-qr-wrap">
+          <div class="qrp-qr-corner tl"></div>
+          <div class="qrp-qr-corner tr"></div>
+          <div class="qrp-qr-corner bl"></div>
+          <div class="qrp-qr-corner br"></div>
+          <div class="qrp-scan-line"></div>
+          <svg width="170" height="170" viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+            <rect x="6" y="6" width="14" height="14" rx="1" fill="#1a1a1a"/>
+            <rect x="64" y="2" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+            <rect x="68" y="6" width="14" height="14" rx="1" fill="#1a1a1a"/>
+            <rect x="2" y="64" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+            <rect x="6" y="68" width="14" height="14" rx="1" fill="#1a1a1a"/>
+            <rect x="30" y="2" width="4" height="4" fill="#1a1a1a"/><rect x="38" y="2" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="46" y="2" width="4" height="4" fill="#1a1a1a"/><rect x="56" y="2" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="28" y="28" width="4" height="4" fill="#1a1a1a"/><rect x="36" y="28" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="48" y="28" width="4" height="4" fill="#1a1a1a"/><rect x="60" y="28" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="70" y="28" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="26" y="36" width="4" height="4" fill="#1a1a1a"/><rect x="38" y="36" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="50" y="36" width="4" height="4" fill="#1a1a1a"/><rect x="62" y="36" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="4" y="28" width="4" height="4" fill="#1a1a1a"/><rect x="14" y="28" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="22" y="28" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="26" y="48" width="4" height="4" fill="#1a1a1a"/><rect x="36" y="48" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="50" y="48" width="4" height="4" fill="#1a1a1a"/><rect x="62" y="48" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="74" y="48" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="28" y="58" width="4" height="4" fill="#1a1a1a"/><rect x="42" y="58" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="54" y="58" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="26" y="66" width="4" height="4" fill="#1a1a1a"/><rect x="38" y="66" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="52" y="66" width="4" height="4" fill="#1a1a1a"/><rect x="64" y="66" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="4" y="48" width="4" height="4" fill="#1a1a1a"/><rect x="16" y="48" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="4" y="56" width="4" height="4" fill="#1a1a1a"/><rect x="20" y="56" width="4" height="4" fill="#1a1a1a"/>
+            <rect x="36" y="36" width="16" height="16" rx="2" fill="#0d5c2e"/>
+            <text x="44" y="48" text-anchor="middle" font-size="11" font-weight="800" fill="white" font-family="Inter,sans-serif">D</text>
+          </svg>
+        </div>
+        <div class="qrp-order-num">ĐƠN HÀNG #DX-38291-A</div>
+        <div class="qrp-amount-val">42.500đ</div>
+      </div>
+
+      <div style="padding:16px 18px;border-bottom:1.5px dashed var(--border)">
+        <div class="qrp-otp-section">
+          <div class="qrp-otp-label">Mã OTP (Offline backup)</div>
+          <div class="qrp-otp-code">7241</div>
+          <div class="qrp-otp-hint">Đọc cho nhân viên nếu không scan được QR</div>
+        </div>
+      </div>
+
+      <div class="qrp-card-bot">
+        <div class="qrp-item-row"><span class="qrp-item-name">Bánh mì pate nóng hổi</span><span class="qrp-item-qty">×1</span></div>
+        <div class="qrp-item-row"><span class="qrp-item-name">Bánh mì thịt nguội đặc biệt</span><span class="qrp-item-qty">×2</span></div>
+        <div class="qrp-total-row"><span>Tổng</span><span style="color:var(--primary)">42.500đ</span></div>
+      </div>
+    </div>
+
+    <div class="offline-notice">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 6s4-4 11-4 11 4 11 4"/><path d="M1 10s4-4 11-4 11 4 11 4"/>
+        <path d="M8.5 16l3.5 3.5 3.5-3.5"/><path d="M12 13v6"/>
+      </svg>
+      QR và OTP hoạt động <strong>offline</strong> — không cần internet tại điểm pickup
+    </div>
+  </div>
+
+  <div class="qrp-footer">
+    <button class="qrp-btn-secondary" onclick="backToConfirm()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Quay lại
+    </button>
+    <button class="qrp-btn-primary" onclick="showToast('📍 Đang mở bản đồ...',true)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+      Dẫn đường đến cửa hàng
+    </button>
+  </div>
+</div>
+
+<!-- QR Fullscreen Modal -->
+<div class="qr-modal-backdrop" id="qr-modal" onclick="closeQRModal()">
+  <div class="qr-modal" onclick="event.stopPropagation()">
+    <div class="qr-modal-title">QR Pickup</div>
+    <div class="qr-modal-store" id="modal-store-name">Bánh mì Hòa Mai</div>
+    <div class="qr-modal-box">
+      <svg width="180" height="180" viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+        <rect x="6" y="6" width="14" height="14" rx="1" fill="#1a1a1a"/>
+        <rect x="64" y="2" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+        <rect x="68" y="6" width="14" height="14" rx="1" fill="#1a1a1a"/>
+        <rect x="2" y="64" width="22" height="22" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+        <rect x="6" y="68" width="14" height="14" rx="1" fill="#1a1a1a"/>
+        <rect x="36" y="36" width="16" height="16" rx="2" fill="#0d5c2e"/>
+        <text x="44" y="48" text-anchor="middle" font-size="11" font-weight="800" fill="white" font-family="Inter,sans-serif">D</text>
+      </svg>
+    </div>
+    <div class="qr-modal-amount">42.500đ · #DX-38291-A</div>
+    <div class="qr-modal-otp-label">OTP Backup</div>
+    <div class="qr-modal-otp" id="modal-otp">7241</div>
+    <button class="qr-modal-close" onclick="closeQRModal()">Đóng</button>
+  </div>
+</div>
+
+<script>
+function spawnConfetti() {
+  const c = document.getElementById('confetti');
+  const colors = ['#d4af37','#0d5c2e','#10b981','#f59e0b','#fff','#3b82f6'];
+  for(let i=0;i<30;i++){
+    const el=document.createElement('div');
+    el.className='conf';
+    el.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*40}%;background:${colors[i%colors.length]};--dur:${1+Math.random()*1}s;--delay:${Math.random()*.8}s;opacity:${.7+Math.random()*.3};transform:rotate(${Math.random()*360}deg)`;
+    c.appendChild(el);
+  }
+  setTimeout(()=>c.innerHTML='',2500);
+}
+spawnConfetti();
+
+function showQRPickup(){
+  document.getElementById('view-confirm').style.display='none';
+  document.getElementById('view-qr-pickup').style.display='flex';
+  window.scrollTo(0,0);
+}
+function backToConfirm(){
+  document.getElementById('view-qr-pickup').style.display='none';
+  document.getElementById('view-confirm').style.display='';
+}
+
+const qrStores=[
+  {name:'Bánh mì Hòa Mai',otp:'7241'},
+  {name:'Mixue Hòa Lạc',otp:'3859'},
+];
+function selQRTab(btn,idx){
+  document.querySelectorAll('.qrp-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelector('.qrp-store-name').textContent=qrStores[idx].name;
+  document.querySelector('.qrp-otp-code').textContent=qrStores[idx].otp;
+  document.querySelector('.qrp-order-num').textContent='ĐƠN HÀNG #DX-38291-'+(idx===0?'A':'B');
+}
+
+function openQRFullscreen(store){
+  document.getElementById('modal-store-name').textContent=store==='store1'?'Bánh mì Hòa Mai':'Mixue Hòa Lạc';
+  document.getElementById('modal-otp').textContent=store==='store1'?'7241':'3859';
+  document.getElementById('qr-modal').classList.add('show');
+}
+function closeQRModal(){document.getElementById('qr-modal').classList.remove('show');}
+
+function shareQR(){
+  navigator.share?navigator.share({title:'DealXanh QR #DX-38291',text:'QR Pickup đơn hàng',url:location.href}):showToast('📋 Đã copy link QR!');
+}
+
+function showToast(msg,dark=false){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:${dark?'rgba(13,26,15,.95)':'#1a1a1a'};color:#fff;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:500;z-index:9999;white-space:nowrap;backdrop-filter:blur(8px)`;
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
+}
+</script>
+</body>
+</html>

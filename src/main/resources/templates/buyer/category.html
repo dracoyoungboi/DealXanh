@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh mục - DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;
+    --accent:#d4af37;
+    --surface:#fff;--background:#f5f6f8;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --status-success:#10b981;--status-warning:#f59e0b;--status-danger:#ef4444;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.12);
+    --radius-md:10px;--radius-lg:16px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--background);color:var(--text-primary)}
+button{cursor:pointer;border:none;font-family:inherit}
+img{display:block;max-width:100%}
+
+/* Mobile header */
+.mobile-header{
+    background:var(--surface);padding:12px 16px;
+    display:flex;align-items:center;gap:12px;
+    border-bottom:1px solid var(--border-light);
+    position:sticky;top:0;z-index:20;
+}
+.back-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;
+    background:var(--background);flex-shrink:0;transition:background var(--tr);
+}
+.back-btn:hover{background:var(--border-light)}
+.back-btn svg{width:18px;height:18px}
+.header-title{font-size:17px;font-weight:700;flex:1}
+.header-filter{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:var(--background);display:flex;align-items:center;justify-content:center;
+    position:relative;
+}
+.header-filter svg{width:18px;height:18px;color:var(--text-secondary)}
+.filter-dot{
+    position:absolute;top:8px;right:8px;
+    width:7px;height:7px;border-radius:50%;
+    background:var(--primary);border:1.5px solid var(--surface);
+}
+
+/* Search bar */
+.search-bar{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border-light)}
+.search-input-wrap{position:relative}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary)}
+.search-icon svg{width:18px;height:18px}
+.search-input{
+    width:100%;padding:10px 12px 10px 40px;
+    border:1.5px solid var(--border-light);border-radius:var(--radius-full);
+    font-size:14px;background:var(--background);
+    transition:border-color var(--tr);
+}
+.search-input:focus{outline:none;border-color:var(--primary);background:var(--surface)}
+
+/* Category tabs */
+.cat-tabs{
+    display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+    background:var(--surface);border-bottom:1px solid var(--border-light);
+    padding:0 4px;
+}
+.cat-tabs::-webkit-scrollbar{display:none}
+.cat-tab{
+    padding:12px 16px;font-size:13px;font-weight:500;
+    color:var(--text-secondary);white-space:nowrap;
+    border-bottom:2px solid transparent;transition:all var(--tr);cursor:pointer;
+    flex-shrink:0;background:none;
+}
+.cat-tab:hover{color:var(--text-primary)}
+.cat-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+
+/* Content area */
+.content{padding:0 0 80px}
+
+/* Section */
+.section{padding:16px 16px 0}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:16px;font-weight:700}
+.section-count{font-size:13px;color:var(--text-secondary)}
+.see-all{font-size:13px;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer}
+
+/* Category hero cards */
+.cat-heroes{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+    padding:16px;
+}
+.cat-hero{
+    border-radius:var(--radius-lg);overflow:hidden;
+    position:relative;aspect-ratio:1/0.75;cursor:pointer;
+}
+.cat-hero img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.cat-hero:hover img{transform:scale(1.05)}
+.cat-hero__overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.1) 50%)}
+.cat-hero__body{
+    position:absolute;bottom:0;left:0;right:0;
+    padding:12px;color:#fff;
+}
+.cat-hero__name{font-size:15px;font-weight:700;margin-bottom:3px}
+.cat-hero__count{font-size:12px;opacity:.8}
+.cat-hero__badge{
+    position:absolute;top:10px;left:10px;
+    padding:4px 10px;border-radius:var(--radius-full);
+    font-size:11px;font-weight:700;
+}
+.cat-hero__badge--hot{background:#ef4444;color:#fff}
+.cat-hero__badge--new{background:var(--accent);color:#1a1a1a}
+
+/* Deal card list */
+.deal-list{display:flex;flex-direction:column;gap:12px;padding:0 16px}
+.deal-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);
+    display:flex;gap:0;overflow:hidden;
+    transition:box-shadow var(--tr);cursor:pointer;
+}
+.deal-card:hover{box-shadow:var(--shadow-md)}
+.deal-card__img{
+    width:100px;height:100px;flex-shrink:0;
+    overflow:hidden;position:relative;
+}
+.deal-card__img img{width:100%;height:100%;object-fit:cover}
+.deal-card__discount{
+    position:absolute;top:6px;left:6px;
+    background:#ef4444;color:#fff;
+    font-size:11px;font-weight:700;
+    padding:3px 7px;border-radius:var(--radius-sm);
+}
+.deal-card__body{flex:1;padding:12px 12px 12px 10px;min-width:0}
+.deal-card__store{font-size:11px;color:var(--text-secondary);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.deal-card__store svg{width:12px;height:12px;flex-shrink:0}
+.deal-card__name{font-size:14px;font-weight:700;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.deal-card__meta{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.deal-card__expiry{
+    display:flex;align-items:center;gap:4px;
+    font-size:11px;font-weight:600;padding:3px 8px;
+    border-radius:var(--radius-full);
+}
+.deal-card__expiry.urgent{background:rgba(239,68,68,.1);color:#ef4444}
+.deal-card__expiry.soon{background:rgba(245,158,11,.1);color:#f59e0b}
+.deal-card__expiry.safe{background:rgba(16,185,129,.1);color:#10b981}
+.deal-card__expiry svg{width:11px;height:11px}
+.deal-card__slots{font-size:11px;color:var(--text-tertiary)}
+.deal-card__footer{display:flex;align-items:center;justify-content:space-between}
+.deal-card__price-row{display:flex;align-items:baseline;gap:6px}
+.deal-card__price{font-size:16px;font-weight:800;color:var(--primary)}
+.deal-card__orig{font-size:12px;color:var(--text-tertiary);text-decoration:line-through}
+.deal-card__btn{
+    width:32px;height:32px;border-radius:50%;
+    background:var(--primary);color:#fff;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    transition:all var(--tr);
+}
+.deal-card__btn:hover{background:var(--primary-dark);transform:scale(1.05)}
+.deal-card__btn svg{width:16px;height:16px}
+
+/* Filter chips active bar */
+.filter-bar{
+    display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+    padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border-light);
+}
+.filter-bar::-webkit-scrollbar{display:none}
+.filter-chip{
+    flex-shrink:0;display:flex;align-items:center;gap:6px;
+    padding:7px 14px;border-radius:var(--radius-full);
+    border:1.5px solid var(--border);background:var(--surface);
+    font-size:13px;font-weight:500;cursor:pointer;transition:all var(--tr);
+    white-space:nowrap;
+}
+.filter-chip.active{background:rgba(13,92,46,.08);border-color:var(--primary);color:var(--primary);font-weight:600}
+.filter-chip svg{width:14px;height:14px}
+
+/* Sort bar */
+.sort-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 16px;background:var(--surface);
+    border-bottom:1px solid var(--border-light);
+}
+.sort-label{font-size:13px;color:var(--text-secondary)}
+.sort-label strong{color:var(--text-primary)}
+.sort-select{
+    font-size:13px;font-weight:600;color:var(--primary);
+    background:none;border:none;cursor:pointer;
+    display:flex;align-items:center;gap:4px;
+}
+.sort-select svg{width:14px;height:14px}
+
+/* Empty state */
+.empty-state{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:60px 24px;text-align:center;
+}
+.empty-state__icon{
+    width:64px;height:64px;border-radius:50%;
+    background:var(--border-light);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:16px;
+}
+.empty-state__icon svg{width:28px;height:28px;color:var(--text-tertiary)}
+.empty-state__title{font-size:16px;font-weight:700;margin-bottom:8px}
+.empty-state__desc{font-size:14px;color:var(--text-secondary);line-height:1.6}
+
+/* Bottom nav */
+.bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;
+    display:flex;background:var(--surface);
+    border-top:1px solid var(--border-light);
+    padding:8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+    z-index:20;
+}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 0;cursor:pointer;transition:color var(--tr)}
+.nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
+.nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
+.nav-item.active svg,.nav-item.active span{color:var(--primary)}
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="mobile-header">
+        <button class="back-btn" onclick="window.history.back()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <span class="header-title">Khám phá danh mục</span>
+        <button class="header-filter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="10" y2="18"/></svg>
+            <span class="filter-dot"></span>
+        </button>
+    </header>
+
+    <!-- Search -->
+    <div class="search-bar">
+        <div class="search-input-wrap">
+            <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input type="text" class="search-input" placeholder="Tìm theo tên món ăn, cửa hàng...">
+        </div>
+    </div>
+
+    <!-- Category tabs -->
+    <div class="cat-tabs">
+        <button class="cat-tab active" onclick="switchTab(this,'all')">Tất cả</button>
+        <button class="cat-tab" onclick="switchTab(this,'food')">🍜 Đồ ăn</button>
+        <button class="cat-tab" onclick="switchTab(this,'drink')">☕ Đồ uống</button>
+        <button class="cat-tab" onclick="switchTab(this,'bakery')">🥐 Bánh ngọt</button>
+        <button class="cat-tab" onclick="switchTab(this,'snack')">🥨 Ăn vặt</button>
+        <button class="cat-tab" onclick="switchTab(this,'blindbox')">🎁 Blind Box</button>
+    </div>
+
+    <main class="content">
+
+        <!-- Category hero grid -->
+        <div id="view-all">
+            <div class="cat-heroes">
+                <div class="cat-hero" onclick="switchTab(document.querySelector('.cat-tab:nth-child(2)'),'food')">
+                    <img src="https://images.unsplash.com/photo-1555126634-323283e090fa?w=400&h=300&fit=crop" alt="Đồ ăn">
+                    <div class="cat-hero__overlay"></div>
+                    <div class="cat-hero__badge cat-hero__badge--hot">HOT</div>
+                    <div class="cat-hero__body">
+                        <div class="cat-hero__name">Đồ ăn chính</div>
+                        <div class="cat-hero__count">234 deal · Giảm 40–70%</div>
+                    </div>
+                </div>
+                <div class="cat-hero">
+                    <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop" alt="Đồ uống">
+                    <div class="cat-hero__overlay"></div>
+                    <div class="cat-hero__body">
+                        <div class="cat-hero__name">Đồ uống</div>
+                        <div class="cat-hero__count">89 deal · Giảm 30–50%</div>
+                    </div>
+                </div>
+                <div class="cat-hero">
+                    <img src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400&h=300&fit=crop" alt="Bánh ngọt">
+                    <div class="cat-hero__overlay"></div>
+                    <div class="cat-hero__badge cat-hero__badge--new">MỚI</div>
+                    <div class="cat-hero__body">
+                        <div class="cat-hero__name">Bánh ngọt</div>
+                        <div class="cat-hero__count">156 deal · Giảm 50–70%</div>
+                    </div>
+                </div>
+                <div class="cat-hero">
+                    <img src="https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=400&h=300&fit=crop" alt="Blind Box">
+                    <div class="cat-hero__overlay"></div>
+                    <div class="cat-hero__body">
+                        <div class="cat-hero__name">Blind Box 🎁</div>
+                        <div class="cat-hero__count">48 deal · Surprise!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured deals in all tab -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Deal nổi bật hôm nay</span>
+                    <button class="see-all">Xem thêm</button>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <button class="filter-chip active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Tất cả
+                </button>
+                <button class="filter-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Còn &lt;30 phút
+                </button>
+                <button class="filter-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Gần bạn (&lt;1km)
+                </button>
+                <button class="filter-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    Giảm &gt;50%
+                </button>
+            </div>
+
+            <div class="sort-bar">
+                <span class="sort-label">Hiển thị <strong>527 deal</strong></span>
+                <button class="sort-select">
+                    Gần nhất
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Deal list -->
+        <div class="deal-list" style="padding-top:12px">
+
+            <div class="deal-card" onclick="window.location.href='deal-detail.html'">
+                <div class="deal-card__img">
+                    <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&h=200&fit=crop" alt="">
+                    <span class="deal-card__discount">-65%</span>
+                </div>
+                <div class="deal-card__body">
+                    <div class="deal-card__store">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                        Tiệm Bánh Mì Hương Việt
+                    </div>
+                    <div class="deal-card__name">Bánh mì thịt nguội combo 2 cái</div>
+                    <div class="deal-card__meta">
+                        <span class="deal-card__expiry urgent">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Còn 28 phút
+                        </span>
+                        <span class="deal-card__slots">3 slot còn lại</span>
+                    </div>
+                    <div class="deal-card__footer">
+                        <div class="deal-card__price-row">
+                            <span class="deal-card__price">35.000đ</span>
+                            <span class="deal-card__orig">100.000đ</span>
+                        </div>
+                        <button class="deal-card__btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="deal-card" onclick="window.location.href='deal-detail.html'">
+                <div class="deal-card__img">
+                    <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&h=200&fit=crop" alt="">
+                    <span class="deal-card__discount">-50%</span>
+                </div>
+                <div class="deal-card__body">
+                    <div class="deal-card__store">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                        The Coffee House
+                    </div>
+                    <div class="deal-card__name">Cà phê sữa đá + bánh croissant</div>
+                    <div class="deal-card__meta">
+                        <span class="deal-card__expiry soon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Còn 1h 20p
+                        </span>
+                        <span class="deal-card__slots">8 slot còn lại</span>
+                    </div>
+                    <div class="deal-card__footer">
+                        <div class="deal-card__price-row">
+                            <span class="deal-card__price">45.000đ</span>
+                            <span class="deal-card__orig">90.000đ</span>
+                        </div>
+                        <button class="deal-card__btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="deal-card" onclick="window.location.href='deal-detail.html'">
+                <div class="deal-card__img">
+                    <img src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=200&h=200&fit=crop" alt="">
+                    <span class="deal-card__discount">-70%</span>
+                </div>
+                <div class="deal-card__body">
+                    <div class="deal-card__store">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                        Paris Baguette
+                    </div>
+                    <div class="deal-card__name">Hộp bánh ngọt mix (6 loại)</div>
+                    <div class="deal-card__meta">
+                        <span class="deal-card__expiry safe">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Còn 3h 15p
+                        </span>
+                        <span class="deal-card__slots">15 slot còn lại</span>
+                    </div>
+                    <div class="deal-card__footer">
+                        <div class="deal-card__price-row">
+                            <span class="deal-card__price">60.000đ</span>
+                            <span class="deal-card__orig">200.000đ</span>
+                        </div>
+                        <button class="deal-card__btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="deal-card" onclick="window.location.href='deal-detail.html'">
+                <div class="deal-card__img">
+                    <img src="https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=200&h=200&fit=crop" alt="">
+                    <span class="deal-card__discount" style="background:var(--accent);color:#1a1a1a">BOX</span>
+                </div>
+                <div class="deal-card__body">
+                    <div class="deal-card__store">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                        Highlands Coffee
+                    </div>
+                    <div class="deal-card__name">🎁 Blind Box đồ uống — Ngọt</div>
+                    <div class="deal-card__meta">
+                        <span class="deal-card__expiry soon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Còn 2h
+                        </span>
+                        <span class="deal-card__slots">5 slot còn lại</span>
+                    </div>
+                    <div class="deal-card__footer">
+                        <div class="deal-card__price-row">
+                            <span class="deal-card__price">29.000đ</span>
+                            <span class="deal-card__orig">70.000đ+</span>
+                        </div>
+                        <button class="deal-card__btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Bottom nav -->
+    <nav class="bottom-nav">
+        <div class="nav-item" onclick="window.location.href='home.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Trang chủ</span>
+        </div>
+        <div class="nav-item" onclick="window.location.href='deal-map.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Bản đồ</span>
+        </div>
+        <div class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Khám phá</span>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Đơn hàng</span>
+        </div>
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Tài khoản</span>
+        </div>
+    </nav>
+
+<script>
+function switchTab(el, cat) {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    if (el.classList) el.classList.add('active');
+}
+document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn vai trò — DealXanh</title>
+    
+    <!-- CSS Fragment -->
+    <div th:replace="common/auth/css :: css"></div>
+    
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff;--background:#f5f6f8;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--text-inverse:#fff;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 20px rgba(0,0,0,.1);--shadow-lg:0 8px 32px rgba(0,0,0,.13);
+    --status-success:#10b981;--status-success-bg:rgba(16,185,129,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--background);color:var(--text-primary);min-height:100vh;display:flex;flex-direction:column}
+img{display:block;max-width:100%}
+button{cursor:pointer;border:none;font-family:inherit}
+
+/* ===== SPLIT LAYOUT ===== */
+.page{display:flex;min-height:100vh}
+
+/* Left hero */
+.hero{
+    width:45%;
+    position:relative;overflow:hidden;
+    background:#0d1a0f;
+    display:none;
+}
+@media(min-width:900px){.hero{display:flex;flex-direction:column;justify-content:flex-end;padding:48px}}
+.hero__bg{position:absolute;inset:0}
+.hero__bg img{width:100%;height:100%;object-fit:cover;opacity:.55}
+.hero__overlay{
+    position:absolute;inset:0;
+    background:linear-gradient(to bottom,rgba(13,26,15,.2) 0%,rgba(13,26,15,.85) 100%);
+}
+.hero__content{position:relative;z-index:1}
+.hero__logo{display:flex;align-items:center;gap:10px;margin-bottom:40px}
+.hero__logo-box{width:44px;height:44px;background:var(--primary);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center}
+.hero__logo-text{font-size:22px;font-weight:800;color:#fff}
+.hero__title{font-size:38px;font-weight:800;color:#fff;line-height:1.18;letter-spacing:-.8px;margin-bottom:16px}
+.hero__title span{color:var(--accent)}
+.hero__desc{font-size:15px;color:rgba(255,255,255,.7);line-height:1.65;margin-bottom:32px}
+.hero__features{display:flex;flex-direction:column;gap:14px}
+.hero__feature{display:flex;align-items:center;gap:12px}
+.hero__feature-icon{width:36px;height:36px;border-radius:var(--radius-md);background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hero__feature-icon svg{width:18px;height:18px;color:#fff}
+.hero__feature-text{font-size:13px;color:rgba(255,255,255,.8);font-weight:500}
+
+/* Right panel */
+.panel{
+    flex:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:40px 24px;
+    min-height:100vh;
+}
+.panel__card{
+    width:100%;max-width:480px;
+    background:var(--surface);
+    border-radius:var(--radius-xl);
+    box-shadow:var(--shadow-md);
+    padding:40px 36px;
+    border:1px solid var(--border-light);
+}
+@media(max-width:600px){.panel__card{padding:28px 20px;border-radius:var(--radius-lg)}}
+
+/* Mobile logo */
+.mobile-logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:28px}
+@media(min-width:900px){.mobile-logo{display:none}}
+.mobile-logo-box{width:40px;height:40px;background:var(--primary);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center}
+.mobile-logo-text{font-size:20px;font-weight:800;color:var(--primary)}
+
+/* Header */
+.panel__header{text-align:center;margin-bottom:32px}
+.panel__title{font-size:26px;font-weight:800;color:var(--text-primary);letter-spacing:-.4px;margin-bottom:8px}
+.panel__subtitle{font-size:15px;color:var(--text-secondary);line-height:1.55}
+
+/* Role cards */
+.roles{display:flex;flex-direction:column;gap:14px;margin-bottom:28px}
+.role-card{
+    position:relative;
+    padding:20px;
+    border:2px solid var(--border);
+    border-radius:var(--radius-lg);
+    cursor:pointer;
+    transition:all var(--tr);
+    background:var(--surface);
+    display:flex;align-items:flex-start;gap:16px;
+}
+.role-card:hover{border-color:rgba(13,92,46,.35);background:rgba(13,92,46,.02);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.role-card.selected{border-color:var(--primary);background:rgba(13,92,46,.04)}
+.role-card.selected .role-icon-wrap{background:var(--primary)}
+.role-card.selected .role-icon-wrap svg{color:#fff}
+.role-card__check{
+    position:absolute;top:14px;right:14px;
+    width:20px;height:20px;
+    border:2px solid var(--border);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    transition:all var(--tr);
+}
+.role-card.selected .role-card__check{background:var(--primary);border-color:var(--primary)}
+.role-card.selected .role-card__check svg{display:block}
+.role-card__check svg{display:none;width:12px;height:12px;color:#fff}
+.role-icon-wrap{
+    width:52px;height:52px;flex-shrink:0;
+    border-radius:var(--radius-md);
+    background:var(--background);
+    display:flex;align-items:center;justify-content:center;
+    transition:all var(--tr);
+}
+.role-icon-wrap svg{width:26px;height:26px;color:var(--primary);transition:color var(--tr)}
+.role-info{flex:1}
+.role-name{font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+.role-desc{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px}
+.role-tags{display:flex;flex-wrap:wrap;gap:6px}
+.role-tag{
+    padding:3px 10px;
+    background:var(--background);
+    border:1px solid var(--border);
+    border-radius:var(--radius-full);
+    font-size:11px;font-weight:500;color:var(--text-secondary);
+}
+.role-card.selected .role-tag{border-color:rgba(13,92,46,.2);background:rgba(13,92,46,.06);color:var(--primary)}
+
+/* Guest option */
+.guest-option{
+    text-align:center;
+    padding:14px;
+    border:1.5px dashed var(--border);
+    border-radius:var(--radius-lg);
+    cursor:pointer;
+    transition:all var(--tr);
+    margin-bottom:24px;
+}
+.guest-option:hover{border-color:rgba(13,92,46,.3);background:rgba(13,92,46,.02)}
+.guest-option-text{font-size:14px;font-weight:500;color:var(--text-secondary)}
+.guest-option-sub{font-size:12px;color:var(--text-tertiary);margin-top:3px}
+
+/* CTA */
+.btn-continue{
+    width:100%;padding:15px;
+    background:var(--primary);color:#fff;
+    font-size:16px;font-weight:700;
+    border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:all var(--tr);
+    box-shadow:0 4px 16px rgba(13,92,46,.3);
+    margin-bottom:16px;
+}
+.btn-continue:hover{background:var(--primary-dark);box-shadow:0 6px 20px rgba(13,92,46,.4);transform:translateY(-1px)}
+.btn-continue:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-continue svg{width:18px;height:18px}
+.login-hint{text-align:center;font-size:14px;color:var(--text-secondary)}
+.login-hint a{color:var(--primary);font-weight:600;text-decoration:none}
+.login-hint a:hover{text-decoration:underline}
+
+/* Progress dots */
+.progress{display:flex;justify-content:center;gap:6px;margin-bottom:32px}
+.progress-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.progress-dot.active{background:var(--primary);width:22px;border-radius:4px}
+
+/* Animations */
+.role-card{animation:slideIn .4s ease-out both}
+.role-card:nth-child(1){animation-delay:.1s}
+.role-card:nth-child(2){animation-delay:.2s}
+@keyframes slideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero__bg">
+            <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=1000&fit=crop&q=80" alt="">
+            <div class="hero__overlay"></div>
+        </div>
+        <div class="hero__content">
+            <div class="hero__logo">
+                <div class="hero__logo-box">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <span class="hero__logo-text">DealXanh</span>
+            </div>
+            <h2 class="hero__title">Tiết kiệm đến<br><span>70%</span> chi phí ăn uống</h2>
+            <p class="hero__desc">Kết nối người mua thông minh với cửa hàng có tồn kho cận date. Cùng nhau giảm lãng phí thực phẩm.</p>
+            <div class="hero__features">
+                <div class="hero__feature">
+                    <div class="hero__feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                    <span class="hero__feature-text">Tìm deal theo vị trí, bán kính <3km</span>
+                </div>
+                <div class="hero__feature">
+                    <div class="hero__feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                    <span class="hero__feature-text">Flash sale cập nhật real-time</span>
+                </div>
+                <div class="hero__feature">
+                    <div class="hero__feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                    <span class="hero__feature-text">Hoàn tiền 100% nếu không đúng cam kết</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel -->
+    <div class="panel">
+        <div class="panel__card">
+
+            <!-- Mobile logo -->
+            <div class="mobile-logo">
+                <div class="mobile-logo-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <span class="mobile-logo-text">DealXanh</span>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress">
+                <div class="progress-dot active"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+            </div>
+
+            <!-- Header -->
+            <div class="panel__header">
+                <h1 class="panel__title">Bạn là ai?</h1>
+                <p class="panel__subtitle">Chọn vai trò để chúng tôi cá nhân hóa trải nghiệm dành cho bạn</p>
+            </div>
+
+            <!-- Role Cards -->
+            <div class="roles" id="roles">
+
+                <!-- Buyer -->
+                <div class="role-card selected" data-role="buyer" id="card-buyer" onclick="selectRole('buyer')">
+                    <div class="role-card__check">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="role-icon-wrap" id="icon-buyer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <div class="role-info">
+                        <div class="role-name"> Người mua </div>
+                        <div class="role-desc">Săn deal đồ ăn cận date giá rẻ, tiết kiệm chi phí hàng ngày</div>
+                        <div class="role-tags">
+                            <span class="role-tag">Tìm deal gần đây</span>
+                            <span class="role-tag">Blind Box</span>
+                            <span class="role-tag">Flash Sale</span>
+                            <span class="role-tag">Pickup</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seller -->
+                <div class="role-card" data-role="seller" id="card-seller" onclick="selectRole('seller')">
+                    <div class="role-card__check">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="role-icon-wrap" id="icon-seller">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg>
+                    </div>
+                    <div class="role-info">
+                        <div class="role-name">Người bán</div>
+                        <div class="role-desc">Đăng deal tồn kho cận date, thu hồi vốn thay vì đổ bỏ</div>
+                        <div class="role-tags">
+                            <span class="role-tag">Quản lý tồn kho</span>
+                            <span class="role-tag">Tạo deal</span>
+                            <span class="role-tag">Blind Box</span>
+                            <span class="role-tag">Báo cáo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guest option -->
+            <div class="guest-option" onclick="window.location.href='/'">
+                <div class="guest-option-text">Khám phá trước, đăng ký sau</div>
+                <div class="guest-option-sub">Xem tối đa 10 deal trong 5 phút không cần tài khoản</div>
+            </div>
+
+            <!-- CTA -->
+            <button class="btn-continue" id="btn-continue" onclick="handleContinue()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Tiếp tục với <span id="role-label">Người mua</span>
+            </button>
+
+            <p class="login-hint">Đã có tài khoản? <a href='/login'>Đăng nhập ngay</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedRole = 'buyer';
+
+function selectRole(role) {
+    selectedRole = role;
+    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('card-' + role).classList.add('selected');
+    document.getElementById('role-label').textContent = role === 'buyer' ? 'Người mua' : 'Người bán';
+}
+
+function handleContinue() {
+    if (selectedRole === 'buyer') {
+        window.location.href = '/register/buyer';
+    } else {
+        window.location.href = '/seller/register';
+    }
+}
+</script>
+
+<!-- JS Fragment -->
+<div th:replace="common/auth/js :: js"></div>
+
+</body>
+</html>

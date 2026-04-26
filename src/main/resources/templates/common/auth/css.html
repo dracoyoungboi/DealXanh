@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  common/auth/css.html
+  Sử dụng cho tất cả các trang Auth (Login, Register, Forgot Password, Role Select...)
+-->
+<head th:fragment="css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Các file hệ thống chung -->
+    <link rel="stylesheet" th:href="@{/css/variables.css}" href="../../../css/variables.css">
+    <link rel="stylesheet" th:href="@{/css/reset.css}" href="../../../css/reset.css">
+</head>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khu vực của bạn - DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --primary:#0d5c2e; --primary-dark:#08421f; --primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff; --bg:#f5f6f8;
+    --text-primary:#1a1a1a; --text-secondary:#666; --text-tertiary:#999;
+    --border:#e0e0e0; --border-light:#f0f0f0;
+    --success:#10b981; --success-bg:rgba(16,185,129,.1);
+    --warning:#f59e0b; --warning-bg:rgba(245,158,11,.1);
+    --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:20px; --radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif; --tr:250ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary);min-height:100vh}
+button{cursor:pointer;border:none;font-family:inherit}
+img{display:block;max-width:100%}
+
+.page{min-height:100vh;display:flex;flex-direction:column}
+
+/* Top nav */
+.onboard-nav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 24px;background:var(--surface);
+    border-bottom:1px solid var(--border-light);
+}
+.nav-left{display:flex;align-items:center;gap:12px}
+.back-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;
+    background:var(--bg);transition:background var(--tr);
+}
+.back-btn:hover{background:var(--border-light)}
+.back-btn svg{width:18px;height:18px}
+.onboard-dots{display:flex;gap:6px}
+.onboard-dot{
+    width:8px;height:8px;border-radius:4px;
+    background:var(--border);transition:all .3s;
+}
+.onboard-dot.active{background:var(--primary);width:24px}
+.onboard-dot.done{background:var(--success)}
+.skip-btn{font-size:13px;font-weight:600;color:var(--text-secondary);background:none;padding:4px 8px}
+.skip-btn:hover{color:var(--primary)}
+
+/* Map illustration */
+.map-section{
+    background:linear-gradient(160deg,#e8f5ef 0%,#f0faf5 100%);
+    padding:32px 24px;display:flex;justify-content:center;align-items:center;
+    position:relative;overflow:hidden;
+}
+.map-section::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 60% 40%,rgba(13,92,46,.06) 0%,transparent 70%);
+}
+.map-visual{
+    position:relative;z-index:2;
+    width:240px;height:200px;
+    display:flex;align-items:center;justify-content:center;
+}
+
+/* Map grid */
+.map-grid{
+    width:220px;height:180px;position:relative;
+    border-radius:var(--radius-xl);overflow:hidden;
+    border:2px solid rgba(13,92,46,.15);
+    background:#e8f4f0;
+}
+.map-road-h,.map-road-v{position:absolute;background:rgba(255,255,255,.8)}
+.map-road-h{height:2px;left:0;right:0}
+.map-road-h:nth-child(1){top:33%}
+.map-road-h:nth-child(2){top:66%}
+.map-road-v{width:2px;top:0;bottom:0}
+.map-road-v:nth-child(3){left:33%}
+.map-road-v:nth-child(4){left:66%}
+
+/* Deal pins on map */
+.map-pin{
+    position:absolute;transform:translate(-50%,-100%);
+    display:flex;flex-direction:column;align-items:center;
+    cursor:pointer;
+    animation:pinDrop .4s ease-out both;
+}
+.map-pin__bubble{
+    padding:5px 9px;border-radius:var(--radius-full);
+    font-size:10px;font-weight:700;color:#fff;white-space:nowrap;
+    box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+.map-pin__tail{
+    width:2px;height:6px;
+    background:inherit;
+    position:relative;bottom:0;
+}
+.map-pin__dot{
+    width:6px;height:6px;border-radius:50%;background:#fff;
+    border:1.5px solid currentColor;
+}
+@keyframes pinDrop{from{opacity:0;transform:translate(-50%,-110%)}to{opacity:1;transform:translate(-50%,-100%)}}
+
+/* User pin */
+.user-pin{
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    z-index:5;
+}
+.user-pin__outer{
+    width:40px;height:40px;border-radius:50%;
+    background:rgba(13,92,46,.15);
+    display:flex;align-items:center;justify-content:center;
+    animation:pulse-loc 2s ease-in-out infinite;
+}
+.user-pin__inner{
+    width:20px;height:20px;border-radius:50%;
+    background:var(--primary);border:2px solid #fff;
+    box-shadow:0 2px 8px rgba(13,92,46,.4);
+}
+@keyframes pulse-loc{0%,100%{box-shadow:0 0 0 0 rgba(13,92,46,.3)}50%{box-shadow:0 0 0 12px rgba(13,92,46,0)}}
+
+/* Radius circle */
+.radius-circle{
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    width:100px;height:100px;border-radius:50%;
+    border:1.5px dashed rgba(13,92,46,.3);
+    background:rgba(13,92,46,.05);
+}
+
+/* Body */
+.body{flex:1;padding:24px 24px 48px;max-width:480px;margin:0 auto;width:100%}
+
+/* How it works */
+.section-title{font-size:20px;font-weight:800;margin-bottom:6px}
+.section-sub{font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:24px}
+
+/* Steps */
+.how-steps{display:flex;flex-direction:column;gap:0;margin-bottom:28px}
+.how-step{
+    display:flex;gap:16px;padding-bottom:20px;position:relative;
+}
+.how-step:last-child{padding-bottom:0}
+.how-step__left{display:flex;flex-direction:column;align-items:center;width:36px;flex-shrink:0}
+.how-step__num{
+    width:36px;height:36px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:800;flex-shrink:0;
+    border:2px solid;
+}
+.how-step__line{
+    width:2px;flex:1;margin:4px 0;min-height:12px;
+    background:var(--border-light);
+}
+.how-step__content{flex:1;padding-top:6px}
+.how-step__title{font-size:14px;font-weight:700;margin-bottom:4px}
+.how-step__desc{font-size:13px;color:var(--text-secondary);line-height:1.55}
+
+/* Location permission card */
+.location-card{
+    background:var(--surface);border-radius:var(--radius-xl);
+    border:1.5px solid rgba(13,92,46,.15);padding:20px;margin-bottom:20px;
+    position:relative;overflow:hidden;
+}
+.location-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(to right,var(--primary),var(--primary-light));
+}
+.location-card__header{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.location-icon{
+    width:48px;height:48px;border-radius:var(--radius-lg);
+    background:rgba(13,92,46,.08);display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+}
+.location-icon svg{width:24px;height:24px;color:var(--primary)}
+.location-card__title{font-size:15px;font-weight:700;margin-bottom:4px}
+.location-card__desc{font-size:13px;color:var(--text-secondary);line-height:1.5}
+
+.location-benefits{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.location-benefit{
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;padding:8px 12px;
+    background:var(--bg);border-radius:var(--radius-md);
+}
+.location-benefit svg{width:16px;height:16px;color:var(--success);flex-shrink:0}
+
+/* Buttons */
+.btn-allow{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;padding:15px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:15px;font-weight:700;
+    transition:all var(--tr);box-shadow:0 4px 16px rgba(13,92,46,.3);
+    margin-bottom:12px;
+}
+.btn-allow:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.btn-allow svg{width:18px;height:18px}
+
+.btn-manual{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    width:100%;padding:13px;border-radius:var(--radius-md);
+    background:var(--bg);border:1.5px solid var(--border);
+    color:var(--text-secondary);font-size:14px;font-weight:600;
+    transition:all var(--tr);margin-bottom:12px;
+}
+.btn-manual:hover{border-color:var(--primary);color:var(--primary);background:rgba(13,92,46,.02)}
+
+.privacy-note{
+    text-align:center;font-size:12px;color:var(--text-tertiary);
+    display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.privacy-note svg{width:13px;height:13px}
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Top nav -->
+    <div class="onboard-nav">
+        <div class="nav-left">
+            <button class="back-btn" onclick="window.location.href='onboarding-step1.html'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            </button>
+            <div class="onboard-dots">
+                <div class="onboard-dot done"></div>
+                <div class="onboard-dot active"></div>
+                <div class="onboard-dot"></div>
+            </div>
+        </div>
+        <button class="skip-btn" onclick="window.location.href='onboarding-step3.html'">Bỏ qua</button>
+    </div>
+
+    <!-- Map section -->
+    <div class="map-section">
+        <div class="map-visual">
+            <div class="map-grid">
+                <div class="map-road-h"></div>
+                <div class="map-road-h"></div>
+                <div class="map-road-v"></div>
+                <div class="map-road-v"></div>
+                <!-- Deal pins -->
+                <div class="map-pin" style="left:22%;top:28%;animation-delay:.1s">
+                    <div class="map-pin__bubble" style="background:#ef4444">-65%</div>
+                    <div class="map-pin__dot" style="border-color:#ef4444;color:#ef4444"></div>
+                </div>
+                <div class="map-pin" style="left:72%;top:22%;animation-delay:.25s">
+                    <div class="map-pin__bubble" style="background:#f59e0b">-50%</div>
+                    <div class="map-pin__dot" style="border-color:#f59e0b;color:#f59e0b"></div>
+                </div>
+                <div class="map-pin" style="left:60%;top:70%;animation-delay:.4s">
+                    <div class="map-pin__bubble" style="background:var(--primary)">-70%</div>
+                    <div class="map-pin__dot" style="border-color:var(--primary);color:var(--primary)"></div>
+                </div>
+                <div class="map-pin" style="left:30%;top:72%;animation-delay:.55s">
+                    <div class="map-pin__bubble" style="background:#8b5cf6">🎁 Box</div>
+                    <div class="map-pin__dot" style="border-color:#8b5cf6;color:#8b5cf6"></div>
+                </div>
+                <!-- Radius circle -->
+                <div class="radius-circle"></div>
+                <!-- User pin -->
+                <div class="user-pin">
+                    <div class="user-pin__outer">
+                        <div class="user-pin__inner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+        <h1 class="section-title">Deal xung quanh bạn</h1>
+        <p class="section-sub">DealXanh dùng vị trí của bạn để hiển thị các deal tốt nhất trong bán kính 3km — không cần tìm kiếm thủ công.</p>
+
+        <!-- How it works -->
+        <div class="how-steps">
+            <div class="how-step">
+                <div class="how-step__left">
+                    <div class="how-step__num" style="background:rgba(13,92,46,.08);color:var(--primary);border-color:rgba(13,92,46,.2)">1</div>
+                    <div class="how-step__line"></div>
+                </div>
+                <div class="how-step__content">
+                    <div class="how-step__title">Cho phép quyền vị trí</div>
+                    <div class="how-step__desc">Bật một lần, app tự động nhận biết bạn đang ở đâu</div>
+                </div>
+            </div>
+            <div class="how-step">
+                <div class="how-step__left">
+                    <div class="how-step__num" style="background:rgba(212,175,55,.1);color:var(--accent);border-color:rgba(212,175,55,.25)">2</div>
+                    <div class="how-step__line"></div>
+                </div>
+                <div class="how-step__content">
+                    <div class="how-step__title">Xem deal trên bản đồ</div>
+                    <div class="how-step__desc">Pin màu đỏ = deal gần hết, pin xanh = còn nhiều slot, 🎁 = Blind Box</div>
+                </div>
+            </div>
+            <div class="how-step">
+                <div class="how-step__left">
+                    <div class="how-step__num" style="background:var(--success-bg);color:var(--success);border-color:rgba(16,185,129,.2)">3</div>
+                </div>
+                <div class="how-step__content">
+                    <div class="how-step__title">Đặt và pickup trong 30 phút</div>
+                    <div class="how-step__desc">Thanh toán online, đến cửa hàng, quét QR là xong!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location permission card -->
+        <div class="location-card">
+            <div class="location-card__header">
+                <div class="location-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div>
+                    <div class="location-card__title">Cho phép truy cập vị trí</div>
+                    <div class="location-card__desc">Cần thiết để hiển thị deal gần bạn và tính khoảng cách chính xác</div>
+                </div>
+            </div>
+            <div class="location-benefits">
+                <div class="location-benefit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Hiển thị deal trong bán kính 3km theo thời gian thực
+                </div>
+                <div class="location-benefit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Nhận thông báo khi có deal mới gần bạn
+                </div>
+                <div class="location-benefit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Chỉ đường đến cửa hàng pickup nhanh nhất
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-allow" onclick="requestLocation()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Cho phép truy cập vị trí
+        </button>
+
+        <button class="btn-manual" onclick="window.location.href='onboarding-step3.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+            Tự nhập khu vực thủ công
+        </button>
+
+        <p class="privacy-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Vị trí chỉ dùng để tìm deal. Không lưu trữ hay chia sẻ với bên thứ 3.
+        </p>
+    </div>
+
+</div>
+
+<script>
+function requestLocation() {
+    if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            () => { window.location.href = 'onboarding-step3.html'; },
+            () => { window.location.href = 'onboarding-step3.html'; }
+        );
+    } else {
+        window.location.href = 'onboarding-step3.html';
+    }
+}
+</script>
+</body>
+</html>

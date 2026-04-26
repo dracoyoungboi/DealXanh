@@ -1,0 +1,39 @@
+# ==========================================
+# CÁC FILE BIÊN DỊCH CỦA JAVA & SPRING
+# ==========================================
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ==========================================
+# CÁC FILE CỦA IDE (IntelliJ, Eclipse, VS Code)
+# ==========================================
+.idea/
+*.iml
+*.iws
+.project
+.classpath
+.settings/
+.vscode/
+
+# ==========================================
+# HỆ ĐIỀU HÀNH & LOGS
+# ==========================================
+.DS_Store
+Thumbs.db
+*.log
+
+# ==========================================
+# BẢO MẬT & THÔNG TIN NHẠY CẢM (CỰC KỲ QUAN TRỌNG)
+# ==========================================
+# Đừng bao giờ đẩy file chứa mật khẩu DB hoặc mật khẩu Gmail (App Password) lên mạng
+application-secret.properties
+application-dev.properties
+.env

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thanh toán — DealXanh</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#0d5c2e;--primary-dark:#08421f;
+  --accent:#d4af37;
+  --surface:#fff;--background:#f5f6f8;
+  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+  --border:#e0e0e0;--border-light:#f0f0f0;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.11);
+  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--background);min-height:100vh;color:var(--text-primary)}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+
+/* HEADER */
+.page-header{position:sticky;top:0;z-index:50;background:var(--surface);border-bottom:1px solid var(--border-light);box-shadow:var(--shadow-sm);padding:14px 16px;display:flex;align-items:center;gap:12px}
+.back-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-md);color:var(--text-primary);transition:background var(--tr)}
+.back-btn:hover{background:var(--background)}
+.back-btn svg{width:20px;height:20px}
+.page-title{font-size:17px;font-weight:700;flex:1}
+
+/* STEPPER */
+.stepper{display:flex;align-items:center;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border-light);gap:0}
+.step-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.step-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.step-circle.done{background:var(--primary);color:#fff}
+.step-circle.active{background:var(--primary);color:#fff;box-shadow:0 0 0 4px rgba(13,92,46,.15)}
+.step-circle.pending{background:var(--background);border:2px solid var(--border);color:var(--text-tertiary)}
+.step-label{font-size:10px;font-weight:600;color:var(--text-tertiary)}
+.step-label.active{color:var(--primary)}
+.step-line{flex:1;height:2px;background:var(--border-light);margin:0 -2px;position:relative;top:-8px}
+.step-line.done{background:var(--primary)}
+
+/* BODY */
+.pay-body{padding:14px 14px 160px;display:flex;flex-direction:column;gap:12px}
+
+/* Order recap bar */
+.order-recap{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:1px solid var(--border-light);box-shadow:var(--shadow-sm);
+}
+.recap-items{font-size:13px;color:var(--text-secondary)}
+.recap-items strong{color:var(--text-primary)}
+.recap-total{display:flex;flex-direction:column;align-items:flex-end}
+.recap-total-label{font-size:11px;color:var(--text-tertiary)}
+.recap-total-val{font-size:18px;font-weight:800;color:var(--primary)}
+
+/* Section */
+.pay-section{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);overflow:hidden;box-shadow:var(--shadow-sm)}
+.pay-section-title{
+  padding:12px 16px;border-bottom:1px solid var(--border-light);
+  font-size:13px;font-weight:700;color:var(--text-primary);
+  display:flex;align-items:center;gap:7px;
+  background:rgba(13,92,46,.02);
+}
+.pay-section-title svg{width:15px;height:15px;color:var(--primary)}
+
+/* Payment method option */
+.pay-method{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 16px;
+  border-bottom:1px solid var(--border-light);
+  cursor:pointer;transition:all var(--tr);
+  position:relative;
+}
+.pay-method:last-child{border-bottom:none}
+.pay-method:hover{background:rgba(13,92,46,.02)}
+.pay-method.selected{background:rgba(13,92,46,.04)}
+.pay-method.selected::after{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--primary);border-radius:0 2px 2px 0;
+}
+.pay-logo{
+  width:48px;height:48px;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:22px;
+  border:1.5px solid var(--border-light);overflow:hidden;
+}
+.pay-logo img{width:100%;height:100%;object-fit:contain;padding:4px}
+.pay-info{flex:1;min-width:0}
+.pay-name{font-size:14px;font-weight:700;color:var(--text-primary)}
+.pay-desc{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.pay-badge{
+  padding:2px 8px;border-radius:var(--radius-full);
+  font-size:10px;font-weight:700;
+  margin-top:4px;display:inline-flex;
+}
+.badge-recommend{background:rgba(13,92,46,.1);color:var(--primary)}
+.badge-cashback{background:rgba(212,175,55,.12);color:#92400e}
+.badge-instant{background:rgba(16,185,129,.1);color:var(--success)}
+.pay-radio{
+  width:20px;height:20px;border-radius:50%;
+  border:2px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--tr);
+}
+.pay-method.selected .pay-radio{border-color:var(--primary);background:var(--primary)}
+.pay-radio-dot{width:8px;height:8px;border-radius:50%;background:#fff;display:none}
+.pay-method.selected .pay-radio-dot{display:block}
+
+/* VietQR expanded panel */
+.qr-panel{
+  padding:16px;border-top:1px solid var(--border-light);
+  background:rgba(13,92,46,.02);
+  display:none;
+  flex-direction:column;align-items:center;gap:12px;
+}
+.qr-panel.show{display:flex}
+.qr-box{
+  width:180px;height:180px;
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:2px solid var(--border-light);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  box-shadow:var(--shadow-md);
+}
+/* QR code pattern via CSS */
+.qr-pattern{
+  width:150px;height:150px;
+  background-image:
+    repeating-linear-gradient(0deg,#1a1a1a 0px,#1a1a1a 4px,transparent 4px,transparent 8px),
+    repeating-linear-gradient(90deg,#1a1a1a 0px,#1a1a1a 4px,transparent 4px,transparent 8px);
+  background-size:8px 8px;
+  border-radius:4px;
+  mask:
+    linear-gradient(#fff 0 0) center/130px 130px no-repeat,
+    linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) center/130px 130px no-repeat,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite:destination-out;
+}
+.qr-logo-center{
+  position:absolute;
+  width:40px;height:40px;border-radius:var(--radius-sm);
+  background:var(--surface);border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.qr-timer{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--text-secondary);font-weight:500;
+}
+.qr-timer-val{font-weight:800;color:var(--danger);font-size:16px}
+.qr-amount{font-size:18px;font-weight:800;color:var(--primary)}
+.qr-bank-info{
+  text-align:center;font-size:12px;color:var(--text-secondary);
+  background:var(--background);padding:10px 16px;border-radius:var(--radius-md);
+  width:100%;border:1px solid var(--border-light);
+}
+.qr-bank-info strong{display:block;color:var(--text-primary);font-size:13px;margin-bottom:2px}
+.qr-action-row{display:flex;gap:8px;width:100%}
+.qr-action-btn{
+  flex:1;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius-md);
+  font-size:12px;font-weight:600;color:var(--text-secondary);
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  transition:all var(--tr);
+}
+.qr-action-btn:hover{border-color:var(--primary);color:var(--primary)}
+.qr-action-btn svg{width:14px;height:14px}
+
+/* Bank select */
+.bank-select-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
+  padding:14px 16px;border-top:1px solid var(--border-light);
+  display:none;
+}
+.bank-select-grid.show{display:grid}
+.bank-opt{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:10px 6px;border-radius:var(--radius-md);
+  border:1.5px solid var(--border);cursor:pointer;transition:all var(--tr);
+}
+.bank-opt:hover,.bank-opt.selected{border-color:var(--primary);background:rgba(13,92,46,.04)}
+.bank-opt-emoji{font-size:18px}
+.bank-opt-name{font-size:10px;font-weight:600;color:var(--text-secondary)}
+.bank-opt.selected .bank-opt-name{color:var(--primary)}
+
+/* Saved cards */
+.saved-card{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border-bottom:1px solid var(--border-light);
+  cursor:pointer;
+}
+.saved-card:last-child{border-bottom:none}
+.sc-visual{
+  width:48px;height:30px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;color:#fff;flex-shrink:0;
+  letter-spacing:.5px;
+}
+.visa{background:linear-gradient(135deg,#1a1f71,#3b5998)}
+.mc{background:linear-gradient(135deg,#eb001b,#f79e1b)}
+.sc-info{flex:1}
+.sc-name{font-size:13px;font-weight:600}
+.sc-num{font-size:12px;color:var(--text-tertiary)}
+.sc-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all var(--tr);flex-shrink:0}
+.saved-card.selected .sc-radio{border-color:var(--primary);background:var(--primary)}
+.sc-dot{width:8px;height:8px;border-radius:50%;background:#fff;display:none}
+.saved-card.selected .sc-dot{display:block}
+
+/* Security notice */
+.security-notice{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;background:rgba(16,185,129,.06);
+  border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-md);
+  font-size:12px;color:var(--success);font-weight:500;
+}
+.security-notice svg{width:14px;height:14px;flex-shrink:0}
+
+/* Pay footer */
+.pay-footer{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:var(--surface);border-top:1px solid var(--border-light);
+  box-shadow:0 -4px 20px rgba(0,0,0,.1);
+  padding:14px 16px max(16px,env(safe-area-inset-bottom));
+}
+.pay-footer-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.pay-footer-method{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:5px}
+.pay-footer-method strong{color:var(--text-primary)}
+.pay-footer-total{font-size:20px;font-weight:800;color:var(--primary)}
+.btn-pay{
+  width:100%;padding:16px;
+  background:var(--primary);color:#fff;
+  font-size:16px;font-weight:800;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all var(--tr);box-shadow:0 4px 16px rgba(13,92,46,.35);
+}
+.btn-pay:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.btn-pay:active{transform:translateY(0);box-shadow:0 2px 8px rgba(13,92,46,.3)}
+.btn-pay svg{width:18px;height:18px}
+
+/* Processing overlay */
+.processing-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+.processing-overlay.show{display:flex}
+.proc-card{background:var(--surface);border-radius:var(--radius-xl);padding:32px 28px;text-align:center;width:260px}
+.proc-spinner{
+  width:56px;height:56px;border-radius:50%;
+  border:4px solid var(--border-light);border-top:4px solid var(--primary);
+  animation:spin .8s linear infinite;margin:0 auto 16px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proc-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.proc-desc{font-size:13px;color:var(--text-secondary);line-height:1.5}
+.proc-dots{display:flex;justify-content:center;gap:6px;margin-top:12px}
+.proc-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.proc-dot.active{background:var(--primary)}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="page-header">
+  <button class="back-btn" onclick="history.back()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+  <span class="page-title">Chọn phương thức thanh toán</span>
+</header>
+
+<!-- Stepper -->
+<div class="stepper">
+  <div class="step-item"><div class="step-circle done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><span class="step-label">Giỏ hàng</span></div>
+  <div class="step-line done"></div>
+  <div class="step-item"><div class="step-circle done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><span class="step-label">Xác nhận</span></div>
+  <div class="step-line done"></div>
+  <div class="step-item"><div class="step-circle active">3</div><span class="step-label active">Thanh toán</span></div>
+  <div class="step-line"></div>
+  <div class="step-item"><div class="step-circle pending">4</div><span class="step-label">Hoàn tất</span></div>
+</div>
+
+<div class="pay-body">
+
+  <!-- Order recap -->
+  <div class="order-recap">
+    <div class="recap-items"><strong>4 món</strong> từ 2 cửa hàng</div>
+    <div class="recap-total"><span class="recap-total-label">Cần thanh toán</span><span class="recap-total-val">47.500đ</span></div>
+  </div>
+
+  <!-- E-wallets -->
+  <div class="pay-section">
+    <div class="pay-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Ví điện tử</div>
+
+    <!-- MoMo -->
+    <div class="pay-method selected" id="pm-momo" onclick="selectMethod('momo')">
+      <div class="pay-logo" style="background:#ae2070">
+        <span style="font-size:16px;font-weight:900;color:#fff">M</span>
+      </div>
+      <div class="pay-info">
+        <div class="pay-name">MoMo</div>
+        <div class="pay-desc">Số dư: 125.000đ · Thanh toán 1 chạm</div>
+        <span class="pay-badge badge-recommend">⭐ Khuyên dùng</span>
+      </div>
+      <div class="pay-radio"><div class="pay-radio-dot"></div></div>
+    </div>
+
+    <!-- ZaloPay -->
+    <div class="pay-method" id="pm-zalopay" onclick="selectMethod('zalopay')">
+      <div class="pay-logo" style="background:#0068ff">
+        <span style="font-size:14px;font-weight:900;color:#fff">Z</span>
+      </div>
+      <div class="pay-info">
+        <div class="pay-name">ZaloPay</div>
+        <div class="pay-desc">Liên kết tài khoản ngân hàng</div>
+        <span class="pay-badge badge-cashback">💰 Hoàn 5% đơn đầu</span>
+      </div>
+      <div class="pay-radio"><div class="pay-radio-dot"></div></div>
+    </div>
+
+    <!-- VietQR -->
+    <div class="pay-method" id="pm-vietqr" onclick="selectMethod('vietqr')">
+      <div class="pay-logo" style="background:linear-gradient(135deg,#005bac,#e42726)">
+        <span style="font-size:11px;font-weight:900;color:#fff;letter-spacing:-.3px">QR</span>
+      </div>
+      <div class="pay-info">
+        <div class="pay-name">VietQR (Chuyển khoản)</div>
+        <div class="pay-desc">Quét QR · Tự động xác nhận trong 30s</div>
+        <span class="pay-badge badge-instant">⚡ Xác nhận tức thì</span>
+      </div>
+      <div class="pay-radio"><div class="pay-radio-dot"></div></div>
+    </div>
+
+    <!-- VietQR expanded panel -->
+    <div class="qr-panel" id="qr-panel">
+      <div class="qr-timer">Mã QR hết hạn sau <span class="qr-timer-val" id="qr-timer">14:55</span></div>
+      <div class="qr-box">
+        <div class="qr-pattern"></div>
+        <div class="qr-logo-center">💳</div>
+      </div>
+      <div class="qr-amount">47.500đ</div>
+      <div class="qr-bank-info">
+        <strong>Techcombank · 0000 1234 5678 9012</strong>
+        DEALXANH JSC · Nội dung: DXBUY38291
+      </div>
+      <div class="qr-action-row">
+        <button class="qr-action-btn" onclick="copyTransfer()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy số TK
+        </button>
+        <button class="qr-action-btn" onclick="saveQR()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+          Lưu QR
+        </button>
+      </div>
+    </div>
+
+    <!-- Bank select for VietQR -->
+    <div class="bank-select-grid" id="bank-grid">
+      <div class="bank-opt selected" onclick="selBank(this)"><span class="bank-opt-emoji">🏦</span><span class="bank-opt-name">Techcombank</span></div>
+      <div class="bank-opt" onclick="selBank(this)"><span class="bank-opt-emoji">🏦</span><span class="bank-opt-name">Vietcombank</span></div>
+      <div class="bank-opt" onclick="selBank(this)"><span class="bank-opt-emoji">🏦</span><span class="bank-opt-name">MB Bank</span></div>
+      <div class="bank-opt" onclick="selBank(this)"><span class="bank-opt-emoji">🏦</span><span class="bank-opt-name">BIDV</span></div>
+      <div class="bank-opt" onclick="selBank(this)"><span class="bank-opt-emoji">🏦</span><span class="bank-opt-name">VietinBank</span></div>
+      <div class="bank-opt" onclick="selBank(this)"><span class="bank-opt-emoji">🏦</span><span class="bank-opt-name">TPBank</span></div>
+    </div>
+  </div>
+
+  <!-- Linked bank cards -->
+  <div class="pay-section">
+    <div class="pay-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Thẻ ngân hàng đã liên kết</div>
+    <div class="saved-card" id="pm-visa" onclick="selectMethod('visa')">
+      <div class="sc-visual visa">VISA</div>
+      <div class="sc-info"><div class="sc-name">Visa Techcombank</div><div class="sc-num">•••• •••• •••• 4521</div></div>
+      <div class="sc-radio"><div class="sc-dot"></div></div>
+    </div>
+    <div class="saved-card" id="pm-mc" onclick="selectMethod('mc')">
+      <div class="sc-visual mc">MC</div>
+      <div class="sc-info"><div class="sc-name">Mastercard VPBank</div><div class="sc-num">•••• •••• •••• 8839</div></div>
+      <div class="sc-radio"><div class="sc-dot"></div></div>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border-light)">
+      <button style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--primary);padding:6px 0">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Thêm thẻ mới
+      </button>
+    </div>
+  </div>
+
+  <!-- COD -->
+  <div class="pay-section">
+    <div class="pay-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Thanh toán khác</div>
+    <div class="pay-method" id="pm-cash" onclick="selectMethod('cash')">
+      <div class="pay-logo" style="background:#f5f6f8;border-color:var(--border)">
+        <span style="font-size:22px">💵</span>
+      </div>
+      <div class="pay-info">
+        <div class="pay-name">Tiền mặt khi nhận hàng</div>
+        <div class="pay-desc">Thanh toán bằng tiền mặt lúc pickup · Slot vẫn được giữ</div>
+      </div>
+      <div class="pay-radio"><div class="pay-radio-dot"></div></div>
+    </div>
+  </div>
+
+  <!-- Security -->
+  <div class="security-notice">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Mọi giao dịch được mã hóa SSL 256-bit. Chúng tôi không lưu thông tin thẻ của bạn.
+  </div>
+
+</div>
+
+<!-- Pay Footer -->
+<div class="pay-footer">
+  <div class="pay-footer-row">
+    <span class="pay-footer-method" id="method-label">💜 <strong>MoMo</strong></span>
+    <span class="pay-footer-total">47.500đ</span>
+  </div>
+  <button class="btn-pay" id="btn-pay" onclick="processPay()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Xác nhận thanh toán
+  </button>
+</div>
+
+<!-- Processing overlay -->
+<div class="processing-overlay" id="proc-overlay">
+  <div class="proc-card">
+    <div class="proc-spinner"></div>
+    <div class="proc-title" id="proc-title">Đang xử lý...</div>
+    <div class="proc-desc" id="proc-desc">Đang kết nối đến MoMo. Vui lòng không đóng ứng dụng.</div>
+    <div class="proc-dots">
+      <div class="proc-dot active"></div>
+      <div class="proc-dot"></div>
+      <div class="proc-dot"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selected = 'momo';
+const methods = {
+  momo:{label:'💜 <strong>MoMo</strong>',btn:'Thanh toán qua MoMo'},
+  zalopay:{label:'💙 <strong>ZaloPay</strong>',btn:'Thanh toán qua ZaloPay'},
+  vietqr:{label:'🏦 <strong>VietQR</strong>',btn:'Tôi đã chuyển khoản xong'},
+  visa:{label:'💳 <strong>Visa ••4521</strong>',btn:'Thanh toán 47.500đ'},
+  mc:{label:'💳 <strong>MC ••8839</strong>',btn:'Thanh toán 47.500đ'},
+  cash:{label:'💵 <strong>Tiền mặt</strong>',btn:'Xác nhận đặt hàng'},
+};
+
+function selectMethod(id) {
+  selected = id;
+  // Deselect all
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+  document.querySelectorAll('.saved-card').forEach(c => c.classList.remove('selected'));
+  // Select
+  const el = document.getElementById('pm-'+id);
+  if(el) el.classList.add('selected');
+  // VietQR panel
+  document.getElementById('qr-panel').classList.toggle('show', id==='vietqr');
+  document.getElementById('bank-grid').classList.toggle('show', id==='vietqr');
+  // Update footer
+  document.getElementById('method-label').innerHTML = methods[id]?.label || '';
+  const btn = document.getElementById('btn-pay');
+  btn.childNodes[btn.childNodes.length-1].textContent = ' ' + (methods[id]?.btn || 'Thanh toán');
+}
+
+function selBank(el){
+  document.querySelectorAll('.bank-opt').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function processPay() {
+  const overlay = document.getElementById('proc-overlay');
+  const title = document.getElementById('proc-title');
+  const desc = document.getElementById('proc-desc');
+  const labels = {
+    momo:{t:'Đang mở MoMo...',d:'Đang kết nối đến ví MoMo của bạn.'},
+    zalopay:{t:'Đang mở ZaloPay...',d:'Đang kết nối đến ví ZaloPay.'},
+    vietqr:{t:'Đang xác nhận chuyển khoản...',d:'Đang kiểm tra giao dịch từ ngân hàng của bạn.'},
+    visa:{t:'Đang xử lý thẻ...',d:'Đang xác thực thẻ Visa của bạn.'},
+    mc:{t:'Đang xử lý thẻ...',d:'Đang xác thực thẻ Mastercard.'},
+    cash:{t:'Đang xác nhận đơn hàng...',d:'Đơn hàng sẽ được giữ slot đến khi bạn đến pickup.'},
+  };
+  const l = labels[selected] || {t:'Đang xử lý...',d:'Vui lòng chờ...'};
+  title.textContent = l.t; desc.textContent = l.d;
+  overlay.classList.add('show');
+  // Animate dots
+  const dots = document.querySelectorAll('.proc-dot');
+  let di=0;
+  const dInt = setInterval(()=>{ dots.forEach((d,i)=>d.classList.toggle('active',i===di%3)); di++; },400);
+  setTimeout(() => { clearInterval(dInt); overlay.classList.remove('show'); window.location.href='order-confirm.html'; }, 2200);
+}
+
+// VietQR countdown
+let qrSecs=895;
+const qrEl=document.getElementById('qr-timer');
+setInterval(()=>{ if(--qrSecs<=0)return; qrEl.textContent=String(Math.floor(qrSecs/60)).padStart(2,'0')+':'+String(qrSecs%60).padStart(2,'0'); if(qrSecs<60)qrEl.style.color='#ef4444'; },1000);
+
+function copyTransfer(){showToast('✅ Đã copy số tài khoản');}
+function saveQR(){showToast('📥 Đã lưu QR vào thư viện');}
+function showToast(msg){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap';
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
+}
+</script>
+</body>
+</html>

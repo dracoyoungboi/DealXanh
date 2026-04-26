@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Nhân viên — DealXanh</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+  --accent:#d4af37;
+  --surface:#fff;--bg:#f5f6f8;
+  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+  --border:#e0e0e0;--border-light:#f0f0f0;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 20px rgba(0,0,0,.12);
+  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+  --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary)}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+img{display:block;max-width:100%}
+
+/* ===== HEADER ===== */
+.emp-header{
+  background:var(--primary);
+  padding:calc(var(--safe-top) + 16px) 16px 20px;
+  position:relative;overflow:hidden;
+}
+.emp-header::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 90% 10%,rgba(255,255,255,.1) 0%,transparent 50%);
+}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative;z-index:1}
+.emp-greeting{display:flex;align-items:center;gap:10px}
+.emp-avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.3);flex-shrink:0}
+.emp-avatar img{width:100%;height:100%;object-fit:cover}
+.emp-name{font-size:14px;font-weight:700;color:#fff}
+.emp-role{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px}
+.header-actions{display:flex;gap:8px}
+.hdr-btn{
+  width:38px;height:38px;border-radius:var(--radius-md);
+  background:rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;transition:background var(--tr);position:relative;
+}
+.hdr-btn:hover{background:rgba(255,255,255,.2)}
+.hdr-btn svg{width:18px;height:18px}
+.notif-dot{
+  position:absolute;top:7px;right:7px;
+  width:8px;height:8px;border-radius:50%;
+  background:#ef4444;border:1.5px solid var(--primary);
+}
+
+/* Slot status strip */
+.slot-strip{
+  display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+  position:relative;z-index:1;
+}
+.slot-strip::-webkit-scrollbar{display:none}
+.slot-pill{
+  flex-shrink:0;
+  padding:8px 14px;border-radius:var(--radius-full);
+  border:1.5px solid rgba(255,255,255,.2);
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.75);
+  display:flex;align-items:center;gap:6px;
+  transition:all var(--tr);cursor:pointer;
+  white-space:nowrap;
+}
+.slot-pill.active{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5);color:#fff}
+.slot-pill.urgent{border-color:rgba(239,68,68,.5);color:#fca5a5;animation:urgentPulse 1.5s ease-in-out infinite}
+@keyframes urgentPulse{0%,100%{background:rgba(239,68,68,.15)}50%{background:rgba(239,68,68,.25)}}
+.slot-pill-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.8}
+
+/* ===== PRIMARY ACTION — TAP 1 ===== */
+.scan-cta-section{padding:16px 14px 0}
+.scan-cta-card{
+  background:var(--primary);
+  border-radius:var(--radius-xl);
+  padding:22px 20px;
+  display:flex;align-items:center;gap:16px;
+  cursor:pointer;
+  transition:all .15s;
+  box-shadow:0 6px 24px rgba(13,92,46,.4);
+  position:relative;overflow:hidden;
+  border:1px solid rgba(255,255,255,.1);
+}
+.scan-cta-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 80% 50%,rgba(255,255,255,.08) 0%,transparent 60%);
+}
+.scan-cta-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(13,92,46,.5)}
+.scan-cta-card:active{transform:scale(.98)}
+.scan-cta-icon{
+  width:60px;height:60px;border-radius:var(--radius-lg);
+  background:rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;border:1.5px solid rgba(255,255,255,.2);
+  position:relative;z-index:1;
+}
+.scan-cta-icon svg{width:30px;height:30px;color:#fff}
+/* Pulse ring */
+.scan-cta-icon::before{
+  content:'';position:absolute;inset:-6px;border-radius:var(--radius-lg);
+  border:2px solid rgba(255,255,255,.15);
+  animation:ringPulse 2s ease-in-out infinite;
+}
+@keyframes ringPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:.5}}
+.scan-cta-text{flex:1;position:relative;z-index:1}
+.scan-cta-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:4px}
+.scan-cta-subtitle{font-size:13px;color:rgba(255,255,255,.75)}
+.scan-cta-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;background:rgba(255,255,255,.15);
+  border-radius:var(--radius-full);font-size:11px;font-weight:700;color:#fff;
+  margin-top:6px;
+}
+.scan-cta-arrow{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  position:relative;z-index:1;flex-shrink:0;
+}
+.scan-cta-arrow svg{width:16px;height:16px}
+
+/* ===== TAP COUNTER ===== */
+.tap-indicator{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px;
+}
+.tap-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.tap-dot.done{background:var(--primary)}
+.tap-dot.current{background:var(--primary);transform:scale(1.3);box-shadow:0 0 0 3px rgba(13,92,46,.2)}
+.tap-label{font-size:11px;color:var(--text-tertiary);font-weight:500}
+
+/* ===== QUICK STATS ===== */
+.quick-stats{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
+  padding:0 14px;margin-bottom:12px;
+}
+.qs-card{
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:1px solid var(--border-light);
+  padding:14px;box-shadow:var(--shadow-sm);
+}
+.qs-val{font-size:22px;font-weight:800;margin-bottom:3px}
+.qs-val.primary{color:var(--primary)}
+.qs-val.warning{color:var(--warning)}
+.qs-lbl{font-size:11px;color:var(--text-tertiary);font-weight:500}
+.qs-sub{font-size:12px;font-weight:600;margin-top:4px}
+.qs-sub.green{color:var(--success)}
+.qs-sub.orange{color:var(--warning)}
+
+/* ===== PENDING ORDERS LIST ===== */
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;margin-bottom:10px;
+}
+.section-title{font-size:15px;font-weight:700}
+.section-link{font-size:13px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:3px}
+.section-link svg{width:13px;height:13px}
+
+.order-queue{padding:0 14px;display:flex;flex-direction:column;gap:8px;padding-bottom:100px}
+.queue-item{
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:1px solid var(--border-light);
+  display:flex;gap:0;overflow:hidden;
+  box-shadow:var(--shadow-sm);
+  cursor:pointer;transition:all var(--tr);
+  position:relative;
+}
+.queue-item:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:rgba(13,92,46,.15)}
+/* Urgency left bar */
+.queue-item::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+}
+.queue-item.urgent::before{background:var(--danger)}
+.queue-item.warning::before{background:var(--warning)}
+.queue-item.safe::before{background:var(--success)}
+
+.qi-main{flex:1;padding:13px 14px 13px 16px;min-width:0}
+.qi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.qi-order-id{font-size:12px;font-weight:700;color:var(--primary)}
+.qi-time-left{
+  display:flex;align-items:center;gap:3px;
+  font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--radius-full);
+}
+.time-urgent{background:var(--danger);color:#fff}
+.time-warning{background:rgba(245,158,11,.12);color:var(--warning)}
+.time-safe{background:rgba(16,185,129,.1);color:var(--success)}
+.qi-time-left svg{width:10px;height:10px}
+.qi-buyer{font-size:13px;font-weight:600;margin-bottom:3px}
+.qi-items{font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qi-slot-row{display:flex;align-items:center;gap:6px;margin-top:6px}
+.qi-slot{
+  display:flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;color:var(--text-tertiary);
+  padding:3px 8px;background:var(--bg);border-radius:var(--radius-full);
+}
+.qi-slot svg{width:10px;height:10px}
+.qi-pay{font-size:11px;font-weight:600;padding:3px 8px;background:var(--bg);border-radius:var(--radius-full);color:var(--text-secondary)}
+
+.qi-action{
+  padding:0 14px;display:flex;align-items:center;justify-content:center;
+  border-left:1px solid var(--border-light);background:rgba(13,92,46,.03);
+  flex-shrink:0;
+}
+.qi-action-btn{
+  width:44px;height:44px;border-radius:var(--radius-md);
+  background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--tr);
+}
+.qi-action-btn:hover{background:var(--primary-dark);transform:scale(1.05)}
+.qi-action-btn svg{width:20px;height:20px}
+
+/* Empty state */
+.empty-queue{
+  padding:40px 24px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.eq-icon{width:72px;height:72px;background:rgba(16,185,129,.1);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.eq-icon svg{width:34px;height:34px;color:var(--success)}
+.eq-title{font-size:16px;font-weight:700}
+.eq-desc{font-size:13px;color:var(--text-secondary);line-height:1.6}
+
+/* ===== FOOTER NAV (employee) ===== */
+.emp-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border-light);
+  display:grid;grid-template-columns:repeat(3,1fr);
+  height:calc(60px + var(--safe-bot));
+  padding-bottom:var(--safe-bot);
+}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-tertiary);font-size:10px;font-weight:500;transition:color var(--tr);position:relative}
+.nav-item.active{color:var(--primary)}
+.nav-item svg{width:22px;height:22px}
+/* Big scan button in center nav */
+.nav-scan-wrap{display:flex;align-items:center;justify-content:center}
+.nav-scan-circle{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(13,92,46,.4);
+  margin-bottom:16px;
+  transition:all var(--tr);
+}
+.nav-scan-circle:hover{transform:scale(1.05);box-shadow:0 6px 20px rgba(13,92,46,.5)}
+.nav-scan-circle svg{width:24px;height:24px;color:#fff}
+.nav-badge{position:absolute;top:8px;right:calc(50% - 16px);width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="emp-header">
+  <div class="header-top">
+    <div class="emp-greeting">
+      <div class="emp-avatar">
+        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=70" alt="">
+      </div>
+      <div>
+        <div class="emp-name">Nguyễn Văn Nhân</div>
+        <div class="emp-role">Nhân viên · Bánh mì Hòa Mai</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-btn" onclick="window.location.href='dashboard.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+      <button class="hdr-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Slot pills -->
+  <div class="slot-strip">
+    <div class="slot-pill urgent">
+      <span class="slot-pill-dot"></span>⏰ 17:00–18:00 · 2 còn lại
+    </div>
+    <div class="slot-pill active">
+      <span class="slot-pill-dot"></span>18:00–19:00 · 3 đơn
+    </div>
+    <div class="slot-pill">
+      <span class="slot-pill-dot"></span>19:00–20:00 · 5 đơn
+    </div>
+  </div>
+</header>
+
+<!-- PRIMARY SCAN CTA — TAP 1 -->
+<div class="scan-cta-section">
+  <div class="scan-cta-card" onclick="goScan()">
+    <div class="scan-cta-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z M17 14h3 M14 17v3 M17 20h3v-3"/></svg>
+    </div>
+    <div class="scan-cta-text">
+      <div class="scan-cta-title">Quét QR / Nhập OTP</div>
+      <div class="scan-cta-subtitle">Nhấn đây để phục vụ khách ngay</div>
+      <div class="scan-cta-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        2 đơn đang chờ slot này
+      </div>
+    </div>
+    <div class="scan-cta-arrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </div>
+  </div>
+
+  <!-- 3-tap indicator -->
+  <div class="tap-indicator">
+    <div class="tap-dot current"></div>
+    <div class="tap-dot"></div>
+    <div class="tap-dot"></div>
+    <span class="tap-label">Tap 1/3 — Quét QR</span>
+  </div>
+</div>
+
+<!-- Quick stats -->
+<div class="quick-stats">
+  <div class="qs-card">
+    <div class="qs-val primary">3</div>
+    <div class="qs-lbl">Đã phục vụ hôm nay</div>
+    <div class="qs-sub green">↑ Tốt hơn hôm qua</div>
+  </div>
+  <div class="qs-card">
+    <div class="qs-val warning">5</div>
+    <div class="qs-lbl">Đơn đang chờ hôm nay</div>
+    <div class="qs-sub orange">⏰ 2 đơn cần gấp</div>
+  </div>
+</div>
+
+<!-- Pending orders -->
+<div class="section-head">
+  <span class="section-title">Đơn đang chờ phục vụ</span>
+  <button class="section-link" onclick="window.location.href='deals.html'">Tất cả <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+</div>
+
+<div class="order-queue">
+
+  <!-- URGENT -->
+  <div class="queue-item urgent" onclick="goScan()">
+    <div class="qi-main">
+      <div class="qi-top">
+        <span class="qi-order-id">#DX-38291-A</span>
+        <span class="qi-time-left time-urgent">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          12 phút!
+        </span>
+      </div>
+      <div class="qi-buyer">Trần Thị B</div>
+      <div class="qi-items">1× Bánh mì pate · 2× Bánh mì thịt nguội</div>
+      <div class="qi-slot-row">
+        <span class="qi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>17:00–18:00</span>
+        <span class="qi-pay">💜 MoMo · 42.500đ</span>
+      </div>
+    </div>
+    <div class="qi-action">
+      <div class="qi-action-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- WARNING -->
+  <div class="queue-item warning" onclick="goScan()">
+    <div class="qi-main">
+      <div class="qi-top">
+        <span class="qi-order-id">#DX-38291-B</span>
+        <span class="qi-time-left time-warning">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          45 phút
+        </span>
+      </div>
+      <div class="qi-buyer">Lê Văn C</div>
+      <div class="qi-items">1× Bún bò Huế cận date</div>
+      <div class="qi-slot-row">
+        <span class="qi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>17:00–18:00</span>
+        <span class="qi-pay">💙 ZaloPay · 27.000đ</span>
+      </div>
+    </div>
+    <div class="qi-action">
+      <div class="qi-action-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAFE upcoming -->
+  <div class="queue-item safe" onclick="showToast('Slot này bắt đầu lúc 18:00')">
+    <div class="qi-main">
+      <div class="qi-top">
+        <span class="qi-order-id">#DX-38303-A</span>
+        <span class="qi-time-left time-safe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          1h 12m
+        </span>
+      </div>
+      <div class="qi-buyer">Phạm Minh D</div>
+      <div class="qi-items">1× Bánh baguette tươi giòn</div>
+      <div class="qi-slot-row">
+        <span class="qi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>18:00–19:00</span>
+        <span class="qi-pay">💵 Tiền mặt · 8.000đ</span>
+      </div>
+    </div>
+    <div class="qi-action">
+      <div class="qi-action-btn" style="background:var(--bg);border:1.5px solid var(--border)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty slot for upcoming (collapsed) -->
+  <div style="padding:10px 0;text-align:center;font-size:12px;color:var(--text-tertiary);font-weight:500">
+    + 2 đơn slot 19:00–20:00
+    <button onclick="showToast('Xem tất cả đơn hàng')" style="color:var(--primary);font-weight:700;font-size:12px;margin-left:6px">Xem →</button>
+  </div>
+
+</div>
+
+<!-- Bottom nav (employee simplified) -->
+<nav class="emp-nav">
+  <a class="nav-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Trang chủ</span>
+  </a>
+  <div class="nav-scan-wrap">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div class="nav-scan-circle" onclick="goScan()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg>
+      </div>
+    </div>
+  </div>
+  <a class="nav-item" onclick="window.location.href='deals.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span>Đơn hàng</span>
+    <span class="nav-badge">5</span>
+  </a>
+</nav>
+
+<script>
+function goScan(){ window.location.href = 'fulfillment.html'; }
+function showToast(msg){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap';
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
+}
+// Update clock
+function updateTime(){
+  const now=new Date();
+  const h=now.getHours(),m=now.getMinutes().toString().padStart(2,'0');
+  const slot=h<17?'17:00–18:00':h<18?'17:00–18:00':h<19?'18:00–19:00':'19:00–20:00';
+}
+updateTime();setInterval(updateTime,30000);
+</script>
+</body>
+</html>

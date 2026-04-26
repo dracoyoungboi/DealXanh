@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tìm kiếm — DealXanh</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#0d5c2e;--primary-dark:#08421f;
+  --accent:#d4af37;
+  --surface:#fff;--background:#f5f6f8;
+  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+  --border:#e0e0e0;--border-light:#f0f0f0;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.11);
+  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
+  --danger-bg:rgba(239,68,68,.08);--warning-bg:rgba(245,158,11,.08);--success-bg:rgba(16,185,129,.08);
+  --primary-bg:rgba(13,92,46,.07);
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--background);min-height:100vh;color:var(--text-primary)}
+button,input{font-family:inherit;border:none;cursor:pointer;background:none}
+img{display:block;max-width:100%}
+
+/* ===== HEADER ===== */
+.search-header{
+  position:sticky;top:0;z-index:50;
+  background:var(--surface);
+  border-bottom:1px solid var(--border-light);
+  box-shadow:var(--shadow-sm);
+  padding:10px 14px;
+}
+.search-bar{
+  display:flex;align-items:center;gap:10px;
+  background:var(--background);
+  border:1.5px solid var(--border-light);
+  border-radius:var(--radius-full);
+  padding:10px 16px;
+  transition:border-color var(--tr);
+}
+.search-bar:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,92,46,.08)}
+.search-bar svg{width:18px;height:18px;color:var(--text-tertiary);flex-shrink:0}
+.search-bar input{flex:1;font-size:15px;outline:none;color:var(--text-primary)}
+.search-bar input::placeholder{color:var(--text-tertiary)}
+.search-clear{width:20px;height:20px;border-radius:50%;background:var(--border-light);display:none;align-items:center;justify-content:center;flex-shrink:0;transition:background var(--tr)}
+.search-clear:hover{background:var(--border)}
+.search-clear.show{display:flex}
+.search-clear svg{width:10px;height:10px;color:var(--text-secondary)}
+
+/* ===== BODY LAYOUT ===== */
+.page-body{padding:0 0 80px}
+
+/* ===== SECTIONS ===== */
+.section{padding:20px 16px 0}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:15px;font-weight:700;color:var(--text-primary)}
+.section-link{font-size:13px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:3px}
+.section-link svg{width:13px;height:13px}
+
+/* ===== RECENT + SUGGESTIONS ===== */
+.recent-searches{padding:16px}
+.recent-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.clear-all{font-size:12px;color:var(--danger);font-weight:600}
+.recent-list{display:flex;flex-direction:column;gap:2px}
+.recent-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 8px;border-radius:var(--radius-md);
+  transition:background var(--tr);cursor:pointer;
+}
+.recent-item:hover{background:var(--background)}
+.recent-icon{width:34px;height:34px;border-radius:var(--radius-sm);background:var(--border-light);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.recent-icon svg{width:16px;height:16px;color:var(--text-tertiary)}
+.recent-text{flex:1;font-size:14px;color:var(--text-primary)}
+.recent-remove{padding:4px;color:var(--text-tertiary);border-radius:4px}
+.recent-remove:hover{color:var(--danger)}
+.recent-remove svg{width:14px;height:14px}
+
+/* Suggestion chips */
+.suggest-chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px}
+.suggest-chip{
+  display:flex;align-items:center;gap:5px;
+  padding:7px 14px;border-radius:var(--radius-full);
+  background:var(--surface);border:1.5px solid var(--border);
+  font-size:13px;font-weight:500;color:var(--text-secondary);
+  transition:all var(--tr);
+}
+.suggest-chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-bg)}
+
+/* ===== TRENDING ===== */
+.trending-list{display:flex;flex-direction:column;gap:4px;padding:0 16px}
+.trending-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 8px;border-radius:var(--radius-md);
+  cursor:pointer;transition:background var(--tr);
+}
+.trending-item:hover{background:var(--background)}
+.trend-rank{width:28px;height:28px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.rank-1{background:#fff8e1;color:#d97706}.rank-2{background:#f3f4f6;color:#374151}.rank-3{background:#fef3eb;color:#c2410c}
+.rank-default{background:var(--background);color:var(--text-tertiary);font-weight:600}
+.trend-text{flex:1;font-size:14px;font-weight:500;color:var(--text-primary)}
+.trend-meta{font-size:11px;color:var(--text-tertiary);font-weight:500}
+.trend-badge{padding:2px 8px;border-radius:var(--radius-full);font-size:10px;font-weight:700}
+.badge-hot{background:rgba(239,68,68,.1);color:#dc2626}
+.badge-new{background:rgba(13,92,46,.1);color:var(--primary)}
+
+/* ===== SEARCH RESULTS ===== */
+.results-header{
+  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border-light);
+  background:var(--surface);
+}
+.results-count{font-size:14px;color:var(--text-secondary)}
+.results-count strong{color:var(--text-primary)}
+.filter-toggle{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius-full);
+  font-size:12px;font-weight:600;color:var(--text-secondary);
+  transition:all var(--tr);
+}
+.filter-toggle:hover{border-color:var(--primary);color:var(--primary)}
+.filter-toggle.active{border-color:var(--primary);background:var(--primary-bg);color:var(--primary)}
+.filter-toggle svg{width:13px;height:13px}
+.filter-badge{width:16px;height:16px;background:var(--danger);border-radius:50%;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+/* Compact filter chips under results */
+.active-filters{
+  padding:8px 16px;
+  display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
+  background:var(--surface);border-bottom:1px solid var(--border-light);
+}
+.active-filters::-webkit-scrollbar{display:none}
+.active-filter-chip{
+  flex-shrink:0;display:flex;align-items:center;gap:5px;
+  padding:5px 12px;border-radius:var(--radius-full);
+  background:var(--primary-bg);border:1px solid rgba(13,92,46,.2);
+  font-size:12px;font-weight:600;color:var(--primary);
+}
+.active-filter-chip button{width:14px;height:14px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center}
+.active-filter-chip button svg{width:8px;height:8px;color:#fff}
+
+/* Deal card grid */
+.deal-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  padding:14px 12px;
+}
+@media(min-width:600px){.deal-grid{grid-template-columns:repeat(3,1fr)}}
+
+.deal-card{
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:1px solid var(--border-light);overflow:hidden;
+  box-shadow:var(--shadow-sm);transition:all var(--tr);cursor:pointer;
+}
+.deal-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:rgba(13,92,46,.15)}
+.deal-card-img{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--border-light)}
+.deal-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.deal-card:hover .deal-card-img img{transform:scale(1.04)}
+.deal-card-discount{
+  position:absolute;top:6px;left:6px;
+  padding:3px 8px;border-radius:var(--radius-full);
+  font-size:11px;font-weight:700;color:#fff;
+}
+.deal-card-time{
+  position:absolute;bottom:6px;left:6px;right:6px;
+  display:flex;align-items:center;gap:4px;
+  padding:4px 8px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  border-radius:var(--radius-full);
+  font-size:10px;font-weight:600;color:#fff;width:fit-content;
+}
+.deal-card-time svg{width:10px;height:10px}
+.deal-card-wishlist{
+  position:absolute;top:6px;right:6px;
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.85);
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--tr);
+}
+.deal-card-wishlist:hover{background:#fff;transform:scale(1.1)}
+.deal-card-wishlist svg{width:13px;height:13px;color:var(--text-secondary)}
+.deal-card-wishlist.active svg{color:var(--danger);fill:var(--danger)}
+.deal-card-body{padding:10px}
+.deal-card-store{font-size:10px;color:var(--text-tertiary);font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deal-card-name{font-size:12px;font-weight:700;color:var(--text-primary);line-height:1.3;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:31px}
+.deal-card-price-row{display:flex;align-items:baseline;gap:5px;margin-bottom:4px}
+.deal-card-new{font-size:14px;font-weight:800;color:var(--primary)}
+.deal-card-old{font-size:10px;color:var(--text-tertiary);text-decoration:line-through}
+.deal-card-bottom{display:flex;align-items:center;justify-content:space-between}
+.deal-card-dist{font-size:10px;color:var(--text-tertiary);display:flex;align-items:center;gap:3px}
+.deal-card-dist svg{width:10px;height:10px}
+.deal-card-rating{font-size:10px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:2px}
+.deal-card-rating svg{width:10px;height:10px}
+
+/* ===== EMPTY STATE ===== */
+.empty-state{
+  padding:60px 24px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.empty-icon{width:80px;height:80px;background:var(--background);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+.empty-icon svg{width:36px;height:36px;color:var(--text-tertiary)}
+.empty-title{font-size:17px;font-weight:700;color:var(--text-primary)}
+.empty-desc{font-size:14px;color:var(--text-secondary);line-height:1.6}
+.btn-try{padding:10px 22px;background:var(--primary);color:#fff;border-radius:var(--radius-full);font-size:14px;font-weight:600;transition:all var(--tr)}
+.btn-try:hover{background:var(--primary-dark)}
+
+/* Mobile nav */
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--border-light);display:flex;height:64px}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-tertiary);font-size:10px;font-weight:500;transition:color var(--tr)}
+.nav-item.active{color:var(--primary)}
+.nav-item svg{width:22px;height:22px}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="search-header">
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search-input" placeholder="Tìm deal, cửa hàng, món ăn..." autofocus oninput="handleSearch(this.value)">
+    <button class="search-clear" id="clear-btn" onclick="clearSearch()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Default view (no query) -->
+<div id="default-view">
+  <!-- Recent searches -->
+  <div class="recent-searches">
+    <div class="recent-title">
+      Tìm kiếm gần đây
+      <button class="clear-all" onclick="clearRecent()">Xóa tất cả</button>
+    </div>
+    <div class="recent-list" id="recent-list">
+      <div class="recent-item" onclick="setSearch('Bánh mì pate')">
+        <div class="recent-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <span class="recent-text">Bánh mì pate</span>
+        <button class="recent-remove" onclick="event.stopPropagation();this.closest('.recent-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="recent-item" onclick="setSearch('Trà sữa giảm 50%')">
+        <div class="recent-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <span class="recent-text">Trà sữa giảm 50%</span>
+        <button class="recent-remove" onclick="event.stopPropagation();this.closest('.recent-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="recent-item" onclick="setSearch('KFC')">
+        <div class="recent-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/></svg></div>
+        <span class="recent-text">KFC</span>
+        <button class="recent-remove" onclick="event.stopPropagation();this.closest('.recent-item').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-top:8px">
+    <div class="section-header"><span class="section-title">💡 Gợi ý tìm kiếm</span></div>
+    <div class="suggest-chips">
+      <button class="suggest-chip" onclick="setSearch('Bánh mì')">🍞 Bánh mì</button>
+      <button class="suggest-chip" onclick="setSearch('Cà phê')">☕ Cà phê</button>
+      <button class="suggest-chip" onclick="setSearch('Bún phở')">🍜 Bún phở</button>
+      <button class="suggest-chip" onclick="setSearch('Bánh ngọt')">🍰 Bánh ngọt</button>
+      <button class="suggest-chip" onclick="setSearch('Trà sữa')">🧋 Trà sữa</button>
+      <button class="suggest-chip" onclick="setSearch('Gà rán')">🍗 Gà rán</button>
+      <button class="suggest-chip" onclick="setSearch('Sushi')">🍱 Sushi</button>
+      <button class="suggest-chip" onclick="setSearch('Blind Box')">🎁 Blind Box</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">🔥 Từ khóa trending</span>
+    </div>
+    <div class="trending-list">
+      <div class="trending-item" onclick="setSearch('Bánh mì cận date')">
+        <div class="trend-rank rank-1">1</div>
+        <span class="trend-text">Bánh mì cận date</span>
+        <span class="trend-meta">2.3K lượt tìm</span>
+        <span class="trend-badge badge-hot">🔥 HOT</span>
+      </div>
+      <div class="trending-item" onclick="setSearch('Trà sữa giảm 50%')">
+        <div class="trend-rank rank-2">2</div>
+        <span class="trend-text">Trà sữa giảm 50%</span>
+        <span class="trend-meta">1.8K lượt tìm</span>
+      </div>
+      <div class="trending-item" onclick="setSearch('Blind Box đồ ăn')">
+        <div class="trend-rank rank-3">3</div>
+        <span class="trend-text">Blind Box đồ ăn</span>
+        <span class="trend-meta">1.2K lượt tìm</span>
+        <span class="trend-badge badge-new">✨ MỚI</span>
+      </div>
+      <div class="trending-item" onclick="setSearch('Cơm trưa giá rẻ')">
+        <div class="trend-rank rank-default">4</div>
+        <span class="trend-text">Cơm trưa giá rẻ</span>
+        <span class="trend-meta">980 lượt tìm</span>
+      </div>
+      <div class="trending-item" onclick="setSearch('Sushi 50%')">
+        <div class="trend-rank rank-default">5</div>
+        <span class="trend-text">Sushi 50%</span>
+        <span class="trend-meta">760 lượt tìm</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Results view -->
+<div id="results-view" style="display:none">
+  <div class="results-header">
+    <div class="results-count">Tìm thấy <strong id="result-count">0</strong> kết quả cho "<strong id="result-query"></strong>"</div>
+    <button class="filter-toggle active" onclick="toggleFilterDrawer()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      Lọc
+      <span class="filter-badge">2</span>
+    </button>
+  </div>
+  <div class="active-filters">
+    <div class="active-filter-chip">Gần nhất <button onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="active-filter-chip">< 3km <button onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  </div>
+  <div class="deal-grid" id="results-grid"></div>
+  <div class="empty-state" id="empty-state" style="display:none">
+    <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+    <div class="empty-title">Không tìm thấy kết quả</div>
+    <div class="empty-desc">Thử từ khóa khác hoặc xóa bộ lọc<br>để xem nhiều deal hơn</div>
+    <button class="btn-try" onclick="clearSearch()">Thử từ khóa khác</button>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav class="mobile-nav">
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Trang chủ</span></a>
+  <a class="nav-item" href='deal-map.html'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg><span>Bản đồ</span></a>
+  <a class="nav-item" href='cart.html'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span>Giỏ hàng</span></a>
+  <a class="nav-item active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Tìm kiếm</span></a>
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Tài khoản</span></a>
+</nav>
+
+<script>
+const DEALS=[
+  {id:1,name:'Bánh mì pate nóng hổi',store:'Bánh mì Hòa Mai',cat:'food',price:12500,original:25000,discount:50,urgency:'warning',timeLeft:'1h 45m',dist:350,rating:4.5,img:'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=300&q=70'},
+  {id:2,name:'Bún bò Huế cận date',store:'Bún bò Thảo',cat:'food',price:27000,original:45000,discount:40,urgency:'warning',timeLeft:'55m',dist:520,rating:4.7,img:'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300&q=70'},
+  {id:3,name:'Blind Box Mystery 3 món',store:'Cơm Niêu Nhà',cat:'blindbox',price:48000,original:80000,discount:40,urgency:'safe',timeLeft:'3h 10m',dist:780,rating:4.3,img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&q=70'},
+  {id:4,name:'Trà sữa trân châu đường đen',store:'Mixue',cat:'beverage',price:15000,original:30000,discount:50,urgency:'danger',timeLeft:'28m',dist:1200,rating:4.2,img:'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=300&q=70'},
+  {id:5,name:'Gà rán KFC 2 miếng',store:'KFC Hòa Lạc',cat:'food',price:33000,original:55000,discount:40,urgency:'safe',timeLeft:'4h',dist:1500,rating:4.6,img:'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=300&q=70'},
+  {id:6,name:'Bánh mousse 3 hộp',store:'Bánh Mousse',cat:'bakery',price:36000,original:60000,discount:40,urgency:'safe',timeLeft:'5h',dist:950,rating:4.4,img:'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=300&q=70'},
+  {id:7,name:'Cà phê sữa đá tươi',store:'Coffee House',cat:'beverage',price:18000,original:35000,discount:49,urgency:'warning',timeLeft:'2h 20m',dist:430,rating:4.8,img:'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=300&q=70'},
+  {id:8,name:'Sushi combo 10 miếng',store:'Sushi Yuki',cat:'food',price:45000,original:90000,discount:50,urgency:'danger',timeLeft:'35m',dist:860,rating:4.5,img:'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=300&q=70'},
+];
+const timeColor={danger:'#ef4444',warning:'#f59e0b',safe:'#10b981'};
+const discColor={50:'#ef4444',40:'#f59e0b',49:'#ef4444'};
+
+let searchTimeout=null;
+let wishlist=new Set();
+
+function handleSearch(val){
+  clearTimeout(searchTimeout);
+  const clear=document.getElementById('clear-btn');
+  clear.classList.toggle('show',val.length>0);
+  if(!val.trim()){showDefault();return;}
+  searchTimeout=setTimeout(()=>doSearch(val),280);
+}
+
+function doSearch(q){
+  const lower=q.toLowerCase();
+  const results=DEALS.filter(d=>
+    d.name.toLowerCase().includes(lower)||
+    d.store.toLowerCase().includes(lower)||
+    d.cat.toLowerCase().includes(lower)
+  );
+  showResults(q,results);
+}
+
+function showDefault(){
+  document.getElementById('default-view').style.display='';
+  document.getElementById('results-view').style.display='none';
+}
+
+function showResults(q,results){
+  document.getElementById('default-view').style.display='none';
+  document.getElementById('results-view').style.display='';
+  document.getElementById('result-count').textContent=results.length;
+  document.getElementById('result-query').textContent=q;
+  const grid=document.getElementById('results-grid');
+  const empty=document.getElementById('empty-state');
+  if(!results.length){grid.style.display='none';empty.style.display='flex';return;}
+  grid.style.display='grid';empty.style.display='none';
+  grid.innerHTML=results.map(d=>buildCard(d)).join('');
+}
+
+function buildCard(d){
+  const tColor=timeColor[d.urgency]||'#10b981';
+  const dColor=d.discount>=50?'#ef4444':d.discount>=40?'#f59e0b':'#10b981';
+  return`<div class="deal-card" onclick="window.location.href='deal-detail.html?id=${d.id}'">
+    <div class="deal-card-img">
+      <img src="${d.img}" alt="${d.name}" loading="lazy">
+      <span class="deal-card-discount" style="background:${dColor}">-${d.discount}%</span>
+      <span class="deal-card-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${d.timeLeft}</span>
+      <button class="deal-card-wishlist ${wishlist.has(d.id)?'active':''}" onclick="event.stopPropagation();toggleWish(this,${d.id})">
+        <svg viewBox="0 0 24 24" fill="${wishlist.has(d.id)?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+    </div>
+    <div class="deal-card-body">
+      <div class="deal-card-store">${d.store}</div>
+      <div class="deal-card-name">${d.name}</div>
+      <div class="deal-card-price-row">
+        <span class="deal-card-new">${d.price.toLocaleString('vi-VN')}đ</span>
+        <span class="deal-card-old">${d.original.toLocaleString('vi-VN')}đ</span>
+      </div>
+      <div class="deal-card-bottom">
+        <span class="deal-card-dist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${d.dist}m</span>
+        <span class="deal-card-rating"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>${d.rating}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleWish(btn,id){
+  if(wishlist.has(id)){wishlist.delete(id);btn.classList.remove('active');}
+  else{wishlist.add(id);btn.classList.add('active');}
+  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="${wishlist.has(id)?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+}
+
+function clearSearch(){
+  document.getElementById('search-input').value='';
+  document.getElementById('clear-btn').classList.remove('show');
+  showDefault();
+}
+function clearRecent(){document.getElementById('recent-list').innerHTML='<div style="padding:16px 0;text-align:center;font-size:13px;color:var(--text-tertiary)">Chưa có tìm kiếm nào</div>';}
+function setSearch(val){document.getElementById('search-input').value=val;handleSearch(val);}
+function toggleFilterDrawer(){/* Link to filter.html */window.location.href='filter.html';}
+</script>
+</body>
+</html>

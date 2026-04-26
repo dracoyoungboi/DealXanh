@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điều khoản & Chính sách - DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --primary:#0d5c2e;--primary-dark:#08421f;
+    --surface:#fff;--background:#f5f6f8;
+    --text-primary:#1a1a1a;--text-secondary:#555;--text-tertiary:#888;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --radius-md:10px;--radius-lg:16px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--background);color:var(--text-primary)}
+a{color:var(--primary);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.page-header{
+    background:var(--surface);border-bottom:1px solid var(--border-light);
+    padding:16px 20px;position:sticky;top:0;z-index:10;
+    display:flex;align-items:center;gap:12px;
+}
+.back-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;
+    background:var(--background);border:none;cursor:pointer;transition:background var(--tr);
+}
+.back-btn:hover{background:var(--border-light)}
+.back-btn svg{width:18px;height:18px}
+.header-logo{display:flex;align-items:center;gap:8px}
+.header-logo svg{color:var(--primary)}
+.header-brand{font-size:18px;font-weight:800;color:var(--primary)}
+
+.page-wrap{max-width:780px;margin:0 auto;padding:32px 20px 80px}
+
+.hero{
+    background:linear-gradient(135deg,var(--primary) 0%,#1a7c40 100%);
+    border-radius:var(--radius-lg);padding:40px 32px;margin-bottom:40px;
+    color:#fff;text-align:center;
+}
+.hero h1{font-size:28px;font-weight:800;margin-bottom:10px}
+.hero p{font-size:15px;opacity:.85;line-height:1.6}
+.hero .version{
+    display:inline-block;margin-top:16px;
+    padding:5px 14px;border-radius:var(--radius-full);
+    background:rgba(255,255,255,.15);font-size:13px;font-weight:500;
+}
+
+.toc{
+    background:var(--surface);border:1px solid var(--border-light);
+    border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:32px;
+}
+.toc-title{font-size:14px;font-weight:700;color:var(--text-tertiary);
+    text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;
+}
+.toc ol{padding-left:18px;display:flex;flex-direction:column;gap:8px}
+.toc li a{font-size:14px;font-weight:500;color:var(--primary)}
+
+.section{
+    background:var(--surface);border-radius:var(--radius-lg);
+    padding:32px;margin-bottom:20px;border:1px solid var(--border-light);
+}
+.section-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:32px;height:32px;border-radius:50%;
+    background:rgba(13,92,46,.1);color:var(--primary);
+    font-size:14px;font-weight:700;flex-shrink:0;
+}
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.section h2{font-size:18px;font-weight:700}
+.section p{font-size:14px;color:var(--text-secondary);line-height:1.75;margin-bottom:14px}
+.section p:last-child{margin-bottom:0}
+.section ul,.section ol{padding-left:20px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px}
+.section li{font-size:14px;color:var(--text-secondary);line-height:1.7}
+.section strong{color:var(--text-primary)}
+.highlight-box{
+    background:rgba(13,92,46,.06);border-left:4px solid var(--primary);
+    border-radius:0 var(--radius-md) var(--radius-md) 0;
+    padding:14px 18px;margin-bottom:14px;
+}
+.highlight-box p{margin-bottom:0;color:var(--primary);font-weight:500}
+.warning-box{
+    background:rgba(245,158,11,.08);border-left:4px solid #f59e0b;
+    border-radius:0 var(--radius-md) var(--radius-md) 0;
+    padding:14px 18px;margin-bottom:14px;
+}
+.warning-box p{margin-bottom:0;color:#92400e;font-weight:500}
+
+.footer-cta{
+    text-align:center;padding:32px;
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);
+}
+.footer-cta p{font-size:14px;color:var(--text-secondary);margin-bottom:20px}
+.footer-cta .btn-group{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-primary{
+    padding:12px 28px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:14px;font-weight:700;border:none;cursor:pointer;
+    text-decoration:none;display:inline-block;
+    transition:background var(--tr),transform var(--tr);
+}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);text-decoration:none;color:#fff}
+.btn-outline{
+    padding:12px 28px;border-radius:var(--radius-md);
+    background:transparent;color:var(--primary);
+    font-size:14px;font-weight:700;
+    border:1.5px solid var(--primary);cursor:pointer;
+    text-decoration:none;display:inline-block;
+    transition:all var(--tr);
+}
+.btn-outline:hover{background:rgba(13,92,46,.06);text-decoration:none}
+
+.effective-date{
+    text-align:center;font-size:13px;color:var(--text-tertiary);
+    padding:20px 0;
+}
+    </style>
+</head>
+<body>
+
+<header class="page-header">
+    <button class="back-btn" onclick="history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="header-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span class="header-brand">DealXanh</span>
+    </div>
+</header>
+
+<div class="page-wrap">
+
+    <div class="hero">
+        <h1>📋 Điều khoản & Chính sách</h1>
+        <p>Vui lòng đọc kỹ trước khi đăng ký sử dụng nền tảng DealXanh.<br>Bằng cách tạo tài khoản, bạn đồng ý với toàn bộ các điều khoản dưới đây.</p>
+        <span class="version">Phiên bản 1.0 — Hiệu lực từ 01/05/2026</span>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+        <div class="toc-title">Mục lục</div>
+        <ol>
+            <li><a href="#section-1">Giới thiệu về DealXanh</a></li>
+            <li><a href="#section-2">Điều kiện sử dụng</a></li>
+            <li><a href="#section-3">Tài khoản và bảo mật</a></li>
+            <li><a href="#section-4">Quyền và nghĩa vụ của Buyer</a></li>
+            <li><a href="#section-5">Quyền và nghĩa vụ của Seller</a></li>
+            <li><a href="#section-6">Chính sách hoa hồng & Thanh toán</a></li>
+            <li><a href="#section-7">Chính sách bảo mật dữ liệu</a></li>
+            <li><a href="#section-8">Hành vi bị nghiêm cấm</a></li>
+            <li><a href="#section-9">Giới hạn trách nhiệm</a></li>
+            <li><a href="#section-10">Thay đổi điều khoản</a></li>
+            <li><a href="#section-11">Liên hệ & Hỗ trợ</a></li>
+        </ol>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="section" id="section-1">
+        <div class="section-header">
+            <span class="section-num">1</span>
+            <h2>Giới thiệu về DealXanh</h2>
+        </div>
+        <p><strong>DealXanh</strong> là nền tảng kết nối người tiêu dùng (Buyer) với các cửa hàng thực phẩm, đồ uống (Seller) thông qua các deal giảm giá cuối ngày, giúp giảm thiểu lãng phí thực phẩm và mang lại giá trị tốt nhất cho cả hai bên.</p>
+        <p>Nền tảng hoạt động theo mô hình <strong>pickup tại chỗ</strong>: Buyer đặt deal trực tuyến, sau đó đến lấy hàng trực tiếp tại cửa hàng Seller trong khung giờ đã chọn.</p>
+        <div class="highlight-box">
+            <p>🌱 Sứ mệnh của chúng tôi: Không có thực phẩm nào bị lãng phí khi vẫn còn người cần nó.</p>
+        </div>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="section" id="section-2">
+        <div class="section-header">
+            <span class="section-num">2</span>
+            <h2>Điều kiện sử dụng</h2>
+        </div>
+        <p>Để sử dụng nền tảng DealXanh, bạn phải:</p>
+        <ul>
+            <li>Đủ <strong>16 tuổi trở lên</strong> (đối với Buyer) hoặc đủ <strong>18 tuổi trở lên</strong> (đối với Seller)</li>
+            <li>Cung cấp thông tin đăng ký <strong>chính xác, trung thực và đầy đủ</strong></li>
+            <li>Có địa chỉ email hợp lệ và số điện thoại liên hệ được</li>
+            <li>Đồng ý tuân thủ toàn bộ các quy định và điều khoản của nền tảng</li>
+            <li>Không sử dụng tài khoản để thực hiện các hành vi gian lận hoặc bất hợp pháp</li>
+        </ul>
+        <p>DealXanh có quyền từ chối hoặc chấm dứt tài khoản nếu phát hiện thông tin giả mạo hoặc vi phạm điều khoản.</p>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="section" id="section-3">
+        <div class="section-header">
+            <span class="section-num">3</span>
+            <h2>Tài khoản và bảo mật</h2>
+        </div>
+        <p>Bạn chịu trách nhiệm bảo mật thông tin tài khoản của mình, bao gồm mật khẩu và các thông tin đăng nhập khác.</p>
+        <ul>
+            <li>Không chia sẻ thông tin đăng nhập với bất kỳ ai</li>
+            <li>Thông báo ngay cho DealXanh nếu phát hiện có truy cập trái phép vào tài khoản của bạn</li>
+            <li>Mật khẩu phải có <strong>tối thiểu 8 ký tự</strong>, bao gồm chữ hoa, chữ thường và số</li>
+            <li>DealXanh không bao giờ yêu cầu bạn cung cấp mật khẩu qua email hoặc điện thoại</li>
+        </ul>
+        <div class="warning-box">
+            <p>⚠️ DealXanh không chịu trách nhiệm về các thiệt hại do bạn không bảo mật thông tin tài khoản của mình.</p>
+        </div>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="section" id="section-4">
+        <div class="section-header">
+            <span class="section-num">4</span>
+            <h2>Quyền và nghĩa vụ của Buyer</h2>
+        </div>
+        <p><strong>Quyền của Buyer:</strong></p>
+        <ul>
+            <li>Được mua deal với giá ưu đãi đã niêm yết công khai</li>
+            <li>Được hoàn tiền nếu Seller hủy deal hoặc không có hàng theo cam kết</li>
+            <li>Được đánh giá và phản hồi về chất lượng sản phẩm/dịch vụ</li>
+            <li>Được bảo vệ thông tin cá nhân theo chính sách bảo mật của DealXanh</li>
+        </ul>
+        <p><strong>Nghĩa vụ của Buyer:</strong></p>
+        <ul>
+            <li>Đến pickup đúng khung giờ đã chọn. <strong>Không đến đúng giờ = mất deal, không hoàn tiền</strong></li>
+            <li>Không yêu cầu hoàn tiền với lý do không hợp lệ hoặc gian lận</li>
+            <li>Đối xử lịch sự và tôn trọng Seller</li>
+            <li>Không chia sẻ mã deal cho người khác nếu chỉ mua cho bản thân</li>
+        </ul>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="section" id="section-5">
+        <div class="section-header">
+            <span class="section-num">5</span>
+            <h2>Quyền và nghĩa vụ của Seller</h2>
+        </div>
+        <p><strong>Quyền của Seller:</strong></p>
+        <ul>
+            <li>Được quảng bá cửa hàng và deal trên nền tảng DealXanh miễn phí</li>
+            <li>Được nhận thanh toán hàng tuần sau khi trừ hoa hồng nền tảng</li>
+            <li>Được sử dụng Dashboard quản lý đơn hàng, doanh thu và thống kê</li>
+            <li>Được hỗ trợ kỹ thuật từ đội ngũ DealXanh</li>
+        </ul>
+        <p><strong>Nghĩa vụ của Seller:</strong></p>
+        <ul>
+            <li>Chỉ đăng deal với sản phẩm <strong>thực sự có sẵn</strong> trong ngày</li>
+            <li>Đảm bảo chất lượng sản phẩm, vệ sinh an toàn thực phẩm</li>
+            <li>Chuẩn bị đơn hàng đúng hạn theo khung giờ pickup đã thiết lập</li>
+            <li>Không gian lận số lượng, giá cả hoặc chất lượng sản phẩm</li>
+            <li>Cung cấp giấy tờ pháp lý hợp lệ khi đăng ký và khi có yêu cầu</li>
+        </ul>
+        <div class="warning-box">
+            <p>⚠️ Seller vi phạm 3 lần trở lên sẽ bị khóa tài khoản vĩnh viễn và không được hoàn lại số dư.</p>
+        </div>
+    </div>
+
+    <!-- Section 6 -->
+    <div class="section" id="section-6">
+        <div class="section-header">
+            <span class="section-num">6</span>
+            <h2>Chính sách hoa hồng & Thanh toán</h2>
+        </div>
+        <p>DealXanh áp dụng mức hoa hồng <strong>12% – 15%</strong> trên tổng giá trị mỗi deal được bán thành công. Mức hoa hồng cụ thể phụ thuộc vào danh mục sản phẩm và gói dịch vụ Seller lựa chọn.</p>
+        <ul>
+            <li><strong>Thanh toán hàng tuần:</strong> Mỗi thứ Sáu, DealXanh chuyển doanh thu (sau hoa hồng) vào tài khoản ngân hàng đã đăng ký</li>
+            <li><strong>Số dư tối thiểu để rút:</strong> 100.000 VNĐ</li>
+            <li><strong>Rút thủ công:</strong> Có thể yêu cầu bất cứ lúc nào qua Dashboard, xử lý trong 1–3 ngày làm việc</li>
+            <li><strong>Hoàn tiền Buyer:</strong> Trong trường hợp lỗi từ Seller, DealXanh sẽ hoàn tiền cho Buyer và trừ vào doanh thu của Seller</li>
+        </ul>
+        <div class="highlight-box">
+            <p>💳 Tất cả giao dịch được mã hóa SSL và tuân thủ tiêu chuẩn bảo mật PCI DSS.</p>
+        </div>
+    </div>
+
+    <!-- Section 7 -->
+    <div class="section" id="section-7">
+        <div class="section-header">
+            <span class="section-num">7</span>
+            <h2>Chính sách bảo mật dữ liệu</h2>
+        </div>
+        <p>DealXanh cam kết bảo vệ thông tin cá nhân của người dùng theo Luật An toàn thông tin mạng 2015 và các quy định hiện hành.</p>
+        <p><strong>Dữ liệu chúng tôi thu thập:</strong></p>
+        <ul>
+            <li>Thông tin cá nhân: họ tên, email, số điện thoại, địa chỉ</li>
+            <li>Thông tin thanh toán: số tài khoản ngân hàng (được mã hóa)</li>
+            <li>Dữ liệu hoạt động: lịch sử mua hàng, đánh giá, hành vi sử dụng ứng dụng</li>
+            <li>Đối với Seller: giấy tờ pháp lý (CCCD, giấy phép kinh doanh, chứng nhận VSATTP)</li>
+        </ul>
+        <p><strong>Chúng tôi KHÔNG:</strong></p>
+        <ul>
+            <li>Bán hoặc cho thuê thông tin cá nhân của bạn cho bên thứ ba</li>
+            <li>Sử dụng thông tin ngoài mục đích vận hành nền tảng</li>
+            <li>Lưu trữ mật khẩu dưới dạng văn bản thuần</li>
+        </ul>
+    </div>
+
+    <!-- Section 8 -->
+    <div class="section" id="section-8">
+        <div class="section-header">
+            <span class="section-num">8</span>
+            <h2>Hành vi bị nghiêm cấm</h2>
+        </div>
+        <p>Các hành vi sau đây bị nghiêm cấm và có thể dẫn đến khóa tài khoản vĩnh viễn:</p>
+        <ul>
+            <li>Tạo tài khoản giả mạo hoặc sử dụng thông tin của người khác</li>
+            <li>Gian lận đánh giá (tự đánh giá hoặc nhờ người đánh giá ảo)</li>
+            <li>Hack, tấn công hoặc cố ý làm gián đoạn hoạt động của nền tảng</li>
+            <li>Đăng deal sản phẩm không đảm bảo vệ sinh, đã hết hạn sử dụng</li>
+            <li>Sử dụng nền tảng để phân phối hàng giả, hàng nhái</li>
+            <li>Quấy rối, đe dọa hoặc có hành vi phân biệt đối xử</li>
+            <li>Thu thập dữ liệu người dùng khác trái phép</li>
+        </ul>
+    </div>
+
+    <!-- Section 9 -->
+    <div class="section" id="section-9">
+        <div class="section-header">
+            <span class="section-num">9</span>
+            <h2>Giới hạn trách nhiệm</h2>
+        </div>
+        <p>DealXanh là <strong>nền tảng trung gian kết nối</strong> Buyer và Seller. Chúng tôi không trực tiếp sản xuất, kinh doanh thực phẩm hay chịu trách nhiệm về chất lượng sản phẩm của Seller.</p>
+        <p>DealXanh không chịu trách nhiệm về:</p>
+        <ul>
+            <li>Chất lượng thực phẩm hoặc dịch vụ của Seller (Seller hoàn toàn chịu trách nhiệm)</li>
+            <li>Tổn thất phát sinh do sự cố kỹ thuật ngoài tầm kiểm soát (thiên tai, mất điện, v.v.)</li>
+            <li>Quyết định mua hàng của Buyer dựa trên thông tin Seller cung cấp</li>
+        </ul>
+    </div>
+
+    <!-- Section 10 -->
+    <div class="section" id="section-10">
+        <div class="section-header">
+            <span class="section-num">10</span>
+            <h2>Thay đổi điều khoản</h2>
+        </div>
+        <p>DealXanh có quyền cập nhật điều khoản và chính sách bất cứ lúc nào. Khi có thay đổi quan trọng, chúng tôi sẽ:</p>
+        <ul>
+            <li>Gửi thông báo qua email đến địa chỉ đã đăng ký</li>
+            <li>Hiển thị thông báo nổi bật trên ứng dụng</li>
+            <li>Cập nhật ngày hiệu lực ở đầu trang này</li>
+        </ul>
+        <p>Việc tiếp tục sử dụng nền tảng sau khi điều khoản được cập nhật đồng nghĩa với việc bạn chấp nhận những thay đổi đó.</p>
+    </div>
+
+    <!-- Section 11 -->
+    <div class="section" id="section-11">
+        <div class="section-header">
+            <span class="section-num">11</span>
+            <h2>Liên hệ & Hỗ trợ</h2>
+        </div>
+        <p>Nếu bạn có bất kỳ câu hỏi nào về điều khoản, chính sách hoặc cần hỗ trợ:</p>
+        <ul>
+            <li><strong>Email:</strong> support@dealxanh.vn</li>
+            <li><strong>Hotline:</strong> 1900 1234 (8:00 – 22:00, tất cả các ngày)</li>
+            <li><strong>Địa chỉ:</strong> Lô E2a-7, Đường D1, Khu Công nghệ cao, Q.9, TP. HCM</li>
+        </ul>
+        <div class="highlight-box">
+            <p>📧 Thời gian phản hồi email thông thường: trong vòng 24 giờ làm việc.</p>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="footer-cta">
+        <p>Bạn đã đọc và hiểu rõ các điều khoản của DealXanh.<br>Hãy bắt đầu hành trình săn deal thực phẩm ngay hôm nay!</p>
+        <div class="btn-group">
+            <a href="/register" class="btn-primary">🛒 Đăng ký Buyer</a>
+            <a href="/seller/register" class="btn-outline">🏪 Đăng ký Seller</a>
+        </div>
+    </div>
+
+    <p class="effective-date">© 2026 DealXanh. Tài liệu này được cập nhật lần cuối ngày 25/04/2026.</p>
+
+</div>
+</body>
+</html>

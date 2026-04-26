@@ -1,0 +1,43 @@
+package com.dealxanh.app.entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "cart_items")
+public class CartItem {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long cartItemId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    private Integer quantity;
+    
+    // Giá tại thời điểm cho vào giỏ (nếu deal thay đổi giá thì có thể cập nhật hoặc nhắc nhở khách)
+    private Double unitPrice; 
+
+    public CartItem() {}
+
+    // Getters & Setters
+    public Long getCartItemId() { return cartItemId; }
+    public void setCartItemId(Long cartItemId) { this.cartItemId = cartItemId; }
+
+    public Cart getCart() { return cart; }
+    public void setCart(Cart cart) { this.cart = cart; }
+
+    public Product getProduct() { return product; }
+    public void setProduct(Product product) { this.product = product; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public Double getUnitPrice() { return unitPrice; }
+    public void setUnitPrice(Double unitPrice) { this.unitPrice = unitPrice; }
+}

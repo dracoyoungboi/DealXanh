@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký Seller - DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff;--background:#f5f6f8;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--text-inverse:#fff;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.12);
+    --status-success:#10b981;--status-success-bg:rgba(16,185,129,.1);
+    --status-danger:#ef4444;--status-danger-bg:rgba(239,68,68,.1);
+    --status-warning:#f59e0b;--status-warning-bg:rgba(245,158,11,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--background);color:var(--text-primary);min-height:100vh}
+button{cursor:pointer;border:none;font-family:inherit}
+input,select{font-family:inherit}
+
+.page-wrap{min-height:100vh;display:flex;flex-direction:column}
+
+/* Header */
+.reg-header{
+    padding:16px 20px;background:var(--surface);
+    display:flex;align-items:center;gap:12px;
+    border-bottom:1px solid var(--border-light);
+    position:sticky;top:0;z-index:10;
+}
+.back-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;
+    background:var(--background);transition:background var(--tr);flex-shrink:0;
+}
+.back-btn:hover{background:var(--border-light)}
+.back-btn svg{width:18px;height:18px}
+.reg-header__logo{display:flex;align-items:center;gap:8px}
+.reg-header__logo svg{color:var(--primary)}
+.reg-header__brand{font-size:18px;font-weight:800;color:var(--primary)}
+.reg-header__step{margin-left:auto;font-size:13px;color:var(--text-secondary);font-weight:500;white-space:nowrap}
+
+/* Step indicator dots */
+.step-dots{
+    display:flex;justify-content:center;gap:8px;
+    padding:16px 20px 0;
+}
+.step-dot{
+    width:8px;height:8px;border-radius:4px;
+    background:var(--border);transition:all .3s;
+}
+.step-dot.active{background:var(--primary);width:24px}
+.step-dot.done{background:var(--status-success)}
+
+/* Progress */
+.progress-bar{height:3px;background:var(--border-light)}
+.progress-bar__fill{height:100%;background:var(--primary);transition:width .4s ease;border-radius:0 2px 2px 0}
+
+/* Body */
+.reg-body{flex:1;padding:24px 20px 48px;max-width:520px;margin:0 auto;width:100%}
+
+/* Step header */
+.step-header{margin-bottom:28px}
+.step-header__badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 12px;border-radius:var(--radius-full);
+    background:rgba(13,92,46,.08);color:var(--primary);
+    font-size:12px;font-weight:600;margin-bottom:12px;
+}
+.step-header__badge svg{width:13px;height:13px}
+.step-header__title{font-size:24px;font-weight:800;margin-bottom:6px}
+.step-header__sub{font-size:14px;color:var(--text-secondary);line-height:1.6}
+
+/* Form elements */
+.form-row{display:flex;gap:14px}
+.form-row .form-group{flex:1}
+.form-group{margin-bottom:20px}
+.form-label{display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:8px}
+.form-label span{color:var(--status-danger);margin-left:2px}
+.form-label em{font-style:normal;font-weight:400;color:var(--text-secondary);font-size:12px}
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);display:flex;align-items:center;color:var(--text-tertiary);pointer-events:none}
+.input-icon svg{width:18px;height:18px}
+.form-input{
+    width:100%;padding:13px 14px 13px 44px;
+    border:1.5px solid var(--border);border-radius:var(--radius-md);
+    font-size:15px;background:var(--surface);
+    transition:border-color var(--tr),box-shadow var(--tr);-webkit-appearance:none;
+}
+.form-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,92,46,.1)}
+.form-input--no-icon{padding-left:14px}
+.form-select{
+    width:100%;padding:13px 36px 13px 14px;
+    border:1.5px solid var(--border);border-radius:var(--radius-md);
+    font-size:15px;background:var(--surface);appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
+    transition:border-color var(--tr);cursor:pointer;
+}
+.form-select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,92,46,.1)}
+.form-hint{margin-top:6px;font-size:12px;color:var(--text-secondary)}
+.form-error{margin-top:6px;font-size:12px;color:var(--status-danger);display:none}
+.form-error.show{display:block}
+
+/* Upload area */
+.upload-area{
+    border:2px dashed var(--border);border-radius:var(--radius-lg);
+    padding:28px 20px;text-align:center;cursor:pointer;
+    transition:all var(--tr);background:var(--surface);
+    position:relative;
+}
+.upload-area:hover{border-color:var(--primary);background:rgba(13,92,46,.02)}
+.upload-area.has-file{border-color:var(--status-success);background:var(--status-success-bg);border-style:solid}
+.upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-area__icon{
+    width:48px;height:48px;border-radius:var(--radius-lg);
+    background:rgba(13,92,46,.08);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 12px;color:var(--primary);
+}
+.upload-area__icon svg{width:24px;height:24px}
+.upload-area__title{font-size:14px;font-weight:600;margin-bottom:4px}
+.upload-area__sub{font-size:12px;color:var(--text-secondary)}
+
+/* Doc list */
+.doc-item{
+    display:flex;align-items:center;gap:12px;
+    padding:14px;border-radius:var(--radius-md);
+    border:1.5px solid var(--border-light);background:var(--surface);
+    margin-bottom:12px;
+}
+.doc-item.uploaded{border-color:var(--status-success);background:var(--status-success-bg)}
+.doc-item.required{border-color:rgba(245,158,11,.3);background:var(--status-warning-bg)}
+.doc-icon{
+    width:40px;height:40px;border-radius:var(--radius-md);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--background);
+}
+.doc-icon svg{width:20px;height:20px}
+.doc-info{flex:1;min-width:0}
+.doc-name{font-size:14px;font-weight:600}
+.doc-desc{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.doc-status{font-size:12px;font-weight:600}
+.doc-status.uploaded{color:var(--status-success)}
+.doc-upload-btn{
+    padding:7px 14px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:13px;font-weight:600;
+    display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.doc-upload-btn svg{width:14px;height:14px}
+
+/* Slot time grid */
+.slot-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+    margin-bottom:20px;
+}
+.slot-chip{
+    padding:10px 6px;text-align:center;border-radius:var(--radius-md);
+    border:1.5px solid var(--border);cursor:pointer;
+    font-size:13px;font-weight:500;transition:all var(--tr);
+    background:var(--surface);
+}
+.slot-chip.selected{background:rgba(13,92,46,.08);border-color:var(--primary);color:var(--primary);font-weight:600}
+
+/* Pickup setup */
+.pickup-config{
+    background:var(--surface);border:1px solid var(--border-light);
+    border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;
+}
+.pickup-config__label{font-size:14px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.pickup-config__label svg{width:18px;height:18px;color:var(--primary)}
+
+/* Phone prefix row */
+.phone-row{display:flex;gap:10px}
+.phone-prefix{
+    flex-shrink:0;padding:13px 14px;
+    border:1.5px solid var(--border);border-radius:var(--radius-md);
+    font-size:15px;font-weight:600;background:var(--background);
+    color:var(--text-secondary);white-space:nowrap;
+}
+
+/* CTA button */
+.btn-submit{
+    width:100%;padding:15px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:16px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:all var(--tr);box-shadow:0 4px 16px rgba(13,92,46,.3);
+    margin-bottom:16px;
+}
+.btn-submit:hover:not(:disabled){background:var(--primary-dark);transform:translateY(-1px)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.btn-submit svg{width:18px;height:18px}
+
+/* Info callout */
+.info-callout{
+    display:flex;gap:12px;align-items:flex-start;
+    padding:14px;border-radius:var(--radius-md);
+    background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);
+    margin-bottom:20px;
+}
+.info-callout svg{width:18px;height:18px;color:#3b82f6;flex-shrink:0;margin-top:1px}
+.info-callout p{font-size:13px;color:var(--text-secondary);line-height:1.55}
+.info-callout strong{color:var(--text-primary)}
+
+/* Warning callout */
+.warn-callout{
+    display:flex;gap:12px;align-items:flex-start;
+    padding:14px;border-radius:var(--radius-md);
+    background:var(--status-warning-bg);border:1px solid rgba(245,158,11,.2);
+    margin-bottom:20px;
+}
+.warn-callout svg{width:18px;height:18px;color:var(--status-warning);flex-shrink:0;margin-top:1px}
+.warn-callout p{font-size:13px;color:var(--text-secondary);line-height:1.55}
+
+/* Step pages */
+.step-page{display:none}
+.step-page.active{display:block}
+
+/* Terms */
+.terms-check{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:14px;border-radius:var(--radius-md);
+    background:rgba(13,92,46,.04);margin-bottom:20px;
+}
+.terms-check input{margin-top:2px;width:18px;height:18px;accent-color:var(--primary);cursor:pointer;flex-shrink:0}
+.terms-check label{font-size:13px;color:var(--text-secondary);line-height:1.5;cursor:pointer}
+.terms-check a{color:var(--primary);font-weight:600;text-decoration:none}
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+
+    <!-- Header -->
+    <header class="reg-header">
+        <button class="back-btn" id="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <div class="reg-header__logo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span class="reg-header__brand">DealXanh</span>
+        </div>
+        <span class="reg-header__step" id="step-indicator">Bước 1 / 5</span>
+    </header>
+
+    <!-- Progress -->
+    <div class="progress-bar">
+        <div class="progress-bar__fill" id="progress-fill" style="width:20%"></div>
+    </div>
+
+    <!-- Step dots -->
+    <div class="step-dots">
+        <div class="step-dot active" id="dot-1"></div>
+        <div class="step-dot" id="dot-2"></div>
+        <div class="step-dot" id="dot-3"></div>
+        <div class="step-dot" id="dot-4"></div>
+        <div class="step-dot" id="dot-5"></div>
+    </div>
+
+    <!-- Body -->
+    <main class="reg-body">
+
+        <!-- STEP 1: Account info -->
+        <div class="step-page active" id="step-1">
+            <div class="step-header">
+                <div class="step-header__badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Tạo tài khoản Seller
+                </div>
+                <h1 class="step-header__title">Thông tin chủ cửa hàng</h1>
+                <p class="step-header__sub">Thông tin cá nhân của bạn với tư cách là chủ sở hữu (Owner). Không hiển thị công khai.</p>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Họ <span>*</span></label>
+                    <input type="text" class="form-input form-input--no-icon" id="firstName" placeholder="Nguyễn">
+                    <div class="form-error" id="err-firstName">Vui lòng nhập họ</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tên <span>*</span></label>
+                    <input type="text" class="form-input form-input--no-icon" id="lastName" placeholder="Văn Bình">
+                    <div class="form-error" id="err-lastName">Vui lòng nhập tên</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email đăng nhập <span>*</span></label>
+                <div class="input-wrap">
+                    <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+                    <input type="email" class="form-input" id="email" placeholder="owner@example.com">
+                </div>
+                <div class="form-error" id="err-email">Email không hợp lệ</div>
+                <p class="form-hint">Email này dùng để đăng nhập Seller Portal</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Số điện thoại liên hệ <span>*</span></label>
+                <div class="phone-row">
+                    <span class="phone-prefix">🇻🇳 +84</span>
+                    <input type="tel" class="form-input form-input--no-icon" id="phone" style="flex:1" placeholder="0912 345 678">
+                </div>
+                <div class="form-error" id="err-phone">Số điện thoại không hợp lệ</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Mật khẩu <span>*</span></label>
+                <div class="input-wrap">
+                    <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                    <input type="password" class="form-input" id="password" placeholder="Ít nhất 8 ký tự" oninput="updatePwdStrength(this.value)">
+                    <button type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-tertiary);display:flex" onclick="var i=document.getElementById('password');i.type=i.type==='password'?'text':'password'">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <!-- Password strength bar -->
+                <div id="pwd-strength-wrap" style="display:none;margin-top:10px">
+                    <div style="display:flex;gap:4px;margin-bottom:6px">
+                        <div id="pws1" style="flex:1;height:4px;border-radius:2px;background:var(--border-light);transition:background .3s"></div>
+                        <div id="pws2" style="flex:1;height:4px;border-radius:2px;background:var(--border-light);transition:background .3s"></div>
+                        <div id="pws3" style="flex:1;height:4px;border-radius:2px;background:var(--border-light);transition:background .3s"></div>
+                        <div id="pws4" style="flex:1;height:4px;border-radius:2px;background:var(--border-light);transition:background .3s"></div>
+                    </div>
+                    <div id="pwd-strength-text" style="font-size:12px;color:var(--text-secondary)"></div>
+                    <ul style="font-size:11px;color:var(--text-tertiary);padding-left:16px;margin-top:6px;line-height:1.8">
+                        <li id="req-len" style="color:#ef4444">✕ Ít nhất 8 ký tự</li>
+                        <li id="req-upper" style="color:#ef4444">✕ Có chữ in hoa (A-Z)</li>
+                        <li id="req-lower" style="color:#ef4444">✕ Có chữ thường (a-z)</li>
+                        <li id="req-digit" style="color:#ef4444">✕ Có chữ số (0-9)</li>
+                        <li id="req-special" style="color:#ef4444">✕ Có ký tự đặc biệt (!@#$...)</li>
+                    </ul>
+                </div>
+                <div class="form-error" id="err-password">Mật khẩu tối thiểu 8 ký tự, gồm chữ và số</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Xác nhận mật khẩu <span>*</span></label>
+                <div class="input-wrap">
+                    <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                    <input type="password" class="form-input" id="confirmPassword" placeholder="Nhập lại mật khẩu">
+                </div>
+                <div class="form-error" id="err-confirmPassword">Mật khẩu xác nhận không khớp</div>
+            </div>
+
+            <div class="terms-check">
+                <input type="checkbox" id="agree-terms">
+                <label for="agree-terms">Tôi đồng ý với <a href="/terms" target="_blank">Điều khoản dành cho Seller</a>, <a href="/terms#section-6" target="_blank">Chính sách hoa hồng</a> (12–15%) và <a href="/terms#section-7" target="_blank">Chính sách bảo mật</a> của DealXanh.</label>
+            </div>
+            <div class="form-error" id="err-terms" style="margin-bottom:12px">Vui lòng đọc và đồng ý với điều khoản sử dụng</div>
+
+            <button class="btn-submit" onclick="validateStep1()">
+                <span>Tiếp tục</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <p style="text-align:center;font-size:14px;color:var(--text-secondary)">Đã có tài khoản? <a href='/seller/login' style="color:var(--primary);font-weight:600;text-decoration:none">Đăng nhập</a></p>
+        </div>
+
+        <!-- STEP 2: Business info -->
+        <div class="step-page" id="step-2">
+            <div class="step-header">
+                <div class="step-header__badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Thông tin cửa hàng
+                </div>
+                <h1 class="step-header__title">Hồ sơ kinh doanh</h1>
+                <p class="step-header__sub">Thông tin này sẽ hiển thị công khai cho Buyer. Hãy điền chính xác và đầy đủ.</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tên cửa hàng <span>*</span></label>
+                <div class="input-wrap">
+                    <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+                    <input type="text" class="form-input" id="storeName" placeholder="VD: Tiệm Bánh Mì Hương Việt">
+                </div>
+                <div class="form-error" id="err-storeName">Vui lòng nhập tên cửa hàng</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Loại hình kinh doanh <span>*</span></label>
+                <select class="form-select" id="businessType">
+                    <option value="">-- Chọn loại hình --</option>
+                    <option value="Nhà hàng / Quán ăn">Nhà hàng / Quán ăn</option>
+                    <option value="Tiệm bánh / Bakery">Tiệm bánh / Bakery</option>
+                    <option value="Cửa hàng cà phê">Cửa hàng cà phê</option>
+                    <option value="Trà sữa / Nước uống">Trà sữa / Nước uống</option>
+                    <option value="Supermarket / Tạp hóa">Supermarket / Tạp hóa</option>
+                    <option value="Bếp gia đình / Home chef">Bếp gia đình / Home chef</option>
+                    <option value="Khác">Khác</option>
+                </select>
+                <div class="form-error" id="err-businessType">Vui lòng chọn loại hình kinh doanh</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Danh mục thực phẩm chính <span>*</span></label>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="cat-chip">
+                        <input type="checkbox" style="display:none" value="Đồ ăn mặn" name="cat"> Đồ ăn mặn
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="cat-chip">
+                        <input type="checkbox" style="display:none" value="Đồ ngọt / Bánh" name="cat"> Đồ ngọt / Bánh
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="cat-chip">
+                        <input type="checkbox" style="display:none" value="Đồ uống" name="cat"> Đồ uống
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="cat-chip">
+                        <input type="checkbox" style="display:none" value="Ăn vặt / Snack" name="cat"> Ăn vặt / Snack
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="cat-chip">
+                        <input type="checkbox" style="display:none" value="Thực phẩm đóng gói" name="cat"> Thực phẩm đóng gói
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Địa chỉ cửa hàng <span>*</span></label>
+                <div class="input-wrap" style="margin-bottom:10px">
+                    <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+                    <input type="text" class="form-input" id="address" placeholder="Số nhà, tên đường">
+                </div>
+                <div class="form-error" id="err-address" style="margin-bottom:8px">Vui lòng nhập số nhà, tên đường</div>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom:0">
+                        <select class="form-select" id="city">
+                            <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                        </select>
+                        <div class="form-error" id="err-city">Vui lòng chọn tỉnh/thành phố</div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <select class="form-select" id="district" disabled>
+                            <option value="">-- Chọn Quận/Huyện --</option>
+                        </select>
+                        <div class="form-error" id="err-district">Vui lòng chọn quận/huyện</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Mô tả cửa hàng <em>(tùy chọn)</em></label>
+                <textarea class="form-input form-input--no-icon" id="description" style="min-height:100px;resize:vertical;padding:13px 14px" placeholder="Mô tả ngắn về cửa hàng, specialties, giờ hoạt động..."></textarea>
+                <p class="form-hint">Tối đa 300 ký tự. Hiển thị trên trang Store profile</p>
+            </div>
+
+            <button class="btn-submit" onclick="validateStep2()">
+                <span>Tiếp tục</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+
+        <!-- STEP 3: Documents -->
+        <div class="step-page" id="step-3">
+            <div class="step-header">
+                <div class="step-header__badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Giấy tờ xác minh
+                </div>
+                <h1 class="step-header__title">Tải lên giấy tờ</h1>
+                <p class="step-header__sub">Admin sẽ xét duyệt hồ sơ trong 1–2 ngày làm việc. Đảm bảo file rõ nét, hợp lệ.</p>
+            </div>
+
+            <div class="warn-callout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <p>Thông tin giấy tờ được <strong>bảo mật tuyệt đối</strong> theo Luật An toàn thông tin mạng 2015. Chỉ Admin DealXanh có thể xem để xét duyệt.</p>
+            </div>
+
+            <!-- Required docs -->
+            <div style="margin-bottom:8px">
+                <div style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Bắt buộc</div>
+
+                <div class="doc-item required" id="doc-cccd">
+                    <div class="doc-icon" style="background:var(--status-warning-bg)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--status-warning)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    </div>
+                    <div class="doc-info">
+                        <div class="doc-name">CCCD / CMND</div>
+                        <div class="doc-desc" id="cccd-filename">2 mặt, JPG/PDF, tối đa 5MB</div>
+                    </div>
+                    <label class="doc-upload-btn" style="cursor:pointer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Tải lên
+                        <input type="file" id="fileCccd" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="markUploadedWithPreview('doc-cccd', this, 'prev-cccd', 'cccd-filename')">
+                    </label>
+                </div>
+                <div id="prev-cccd" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)"></div>
+
+                <div class="doc-item required" id="doc-license">
+                    <div class="doc-icon" style="background:var(--status-warning-bg)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--status-warning)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </div>
+                    <div class="doc-info">
+                        <div class="doc-name">Giấy phép kinh doanh</div>
+                        <div class="doc-desc" id="license-filename">GPKD còn hiệu lực, JPG/PDF</div>
+                    </div>
+                    <label class="doc-upload-btn" style="cursor:pointer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Tải lên
+                        <input type="file" id="fileLicense" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="markUploadedWithPreview('doc-license', this, 'prev-license', 'license-filename')">
+                    </label>
+                </div>
+                <div id="prev-license" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)"></div>
+
+                <div class="doc-item required" id="doc-vsattp">
+                    <div class="doc-icon" style="background:var(--status-warning-bg)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--status-warning)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div class="doc-info">
+                        <div class="doc-name">Giấy chứng nhận VSATTP</div>
+                        <div class="doc-desc" id="vsattp-filename">Vệ sinh an toàn thực phẩm</div>
+                    </div>
+                    <label class="doc-upload-btn" style="cursor:pointer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Tải lên
+                        <input type="file" id="fileVsattp" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="markUploadedWithPreview('doc-vsattp', this, 'prev-vsattp', 'vsattp-filename')">
+                    </label>
+                </div>
+                <div id="prev-vsattp" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)"></div>
+            </div>
+
+            <!-- Optional docs -->
+            <div style="margin-top:20px;margin-bottom:8px">
+                <div style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Tùy chọn (tăng uy tín)</div>
+
+                <div class="doc-item" id="doc-logo">
+                    <div class="doc-icon" style="background:rgba(13,92,46,.08)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </div>
+                    <div class="doc-info">
+                        <div class="doc-name">Logo cửa hàng</div>
+                        <div class="doc-desc" id="logo-filename">PNG/JPG, tối thiểu 200×200px</div>
+                    </div>
+                    <label class="doc-upload-btn" style="background:var(--background);color:var(--primary);border:1.5px solid var(--primary);cursor:pointer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Tải lên
+                        <input type="file" id="fileLogo" style="display:none" accept=".jpg,.jpeg,.png" onchange="markUploadedWithPreview('doc-logo', this, 'prev-logo', 'logo-filename')">
+                    </label>
+                </div>
+                <div id="prev-logo" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)"></div>
+            </div>
+
+            <button class="btn-submit" onclick="validateStep3()" style="margin-top:24px">
+                <span>Tiếp tục</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+
+        <!-- STEP 4: Bank account -->
+        <div class="step-page" id="step-4">
+            <div class="step-header">
+                <div class="step-header__badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    Tài khoản thanh toán
+                </div>
+                <h1 class="step-header__title">Liên kết tài khoản ngân hàng</h1>
+                <p class="step-header__sub">DealXanh sẽ chuyển tiền vào tài khoản này sau khi trừ hoa hồng nền tảng (12–15%).</p>
+            </div>
+
+            <div class="info-callout" style="cursor:pointer" onclick="window.open('/terms#section-6','_blank')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                <p>Tiền được chuyển <strong>hàng tuần</strong> vào Thứ Sáu. Số tiền tối thiểu để rút là <strong>100.000đ</strong>. Xem chi tiết → <a href="/terms#section-6" target="_blank" style="color:var(--primary);font-weight:600">Chính sách hoa hồng</a></p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Ngân hàng <span>*</span></label>
+                <select class="form-select" id="bankName" onchange="onBankChange()">
+                    <option value="">-- Chọn ngân hàng --</option>
+                    <option value="Vietcombank" data-digits="13-16" data-prefix="">Vietcombank (VCB)</option>
+                    <option value="VietinBank" data-digits="14" data-prefix="">VietinBank (CTG)</option>
+                    <option value="BIDV" data-digits="14" data-prefix="">BIDV</option>
+                    <option value="Techcombank" data-digits="9,14" data-prefix="">Techcombank (TCB)</option>
+                    <option value="MB Bank" data-digits="10-15" data-prefix="">MB Bank</option>
+                    <option value="ACB" data-digits="9-13" data-prefix="">ACB</option>
+                    <option value="TPBank" data-digits="8-14" data-prefix="">TPBank</option>
+                    <option value="VPBank" data-digits="10-13" data-prefix="">VPBank</option>
+                    <option value="Sacombank" data-digits="9-16" data-prefix="">Sacombank</option>
+                    <option value="HDBank" data-digits="9-16" data-prefix="">HDBank</option>
+                    <option value="Agribank" data-digits="13" data-prefix="">Agribank</option>
+                    <option value="SHB" data-digits="9-13" data-prefix="">SHB</option>
+                    <option value="LienVietPostBank" data-digits="13-15" data-prefix="">LienVietPostBank</option>
+                    <option value="NCB" data-digits="10-14" data-prefix="">NCB</option>
+                </select>
+                <div class="form-error" id="err-bankName">Vui lòng chọn ngân hàng</div>
+                <div id="bank-hint" style="margin-top:6px;font-size:12px;color:var(--text-secondary);display:none"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Số tài khoản <span>*</span></label>
+                <div class="input-wrap">
+                    <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+                    <input type="text" class="form-input" id="bankAccountNumber" placeholder="Nhập số tài khoản" inputmode="numeric" oninput="validateBankAccount()">
+                </div>
+                <div class="form-error" id="err-bankAccountNumber">Số tài khoản không hợp lệ</div>
+                <div id="bank-account-hint" style="margin-top:6px;font-size:12px;color:var(--status-success);display:none">✅ Định dạng hợp lệ</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tên chủ tài khoản <span>*</span></label>
+                <div class="input-wrap">
+                    <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                    <input type="text" class="form-input" id="bankAccountOwner" placeholder="NGUYEN VAN BINH" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+                </div>
+                <div class="form-error" id="err-bankAccountOwner">Vui lòng nhập tên chủ tài khoản</div>
+                <p class="form-hint">Viết IN HOA, đúng như tên in trên thẻ ngân hàng</p>
+            </div>
+
+            <div style="background:rgba(13,92,46,.04);border:1px solid rgba(13,92,46,.12);border-radius:var(--radius-md);padding:16px;margin-bottom:24px">
+                <div style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Cấu trúc hoa hồng DealXanh
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;justify-content:space-between;font-size:13px">
+                        <span style="color:var(--text-secondary)">Doanh thu đơn hàng</span><span style="font-weight:600">100%</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px">
+                        <span style="color:var(--text-secondary)">Hoa hồng nền tảng</span><span style="font-weight:600;color:var(--status-danger)">- 12–15%</span>
+                    </div>
+                    <div style="height:1px;background:var(--border-light)"></div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700">
+                        <span>Bạn nhận được</span><span style="color:var(--primary)">85–88%</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-submit" onclick="validateStep4()">
+                <span>Tiếp tục</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+
+        <!-- STEP 5: Pickup slots -->
+        <div class="step-page" id="step-5">
+            <div class="step-header">
+                <div class="step-header__badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Cấu hình vận hành
+                </div>
+                <h1 class="step-header__title">Thiết lập khung giờ pickup</h1>
+                <p class="step-header__sub">Buyer sẽ chọn pickup trong các khung giờ bạn cấu hình. Nên chọn khung giờ cận cuối ngày để tối ưu thanh lý.</p>
+            </div>
+
+            <div class="pickup-config">
+                <div class="pickup-config__label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Ngày hoạt động
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="day-chip">
+                        <input type="checkbox" style="display:none" value="T2" name="opDay" checked> T2
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="day-chip">
+                        <input type="checkbox" style="display:none" value="T3" name="opDay" checked> T3
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="day-chip">
+                        <input type="checkbox" style="display:none" value="T4" name="opDay" checked> T4
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="day-chip">
+                        <input type="checkbox" style="display:none" value="T5" name="opDay" checked> T5
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="day-chip">
+                        <input type="checkbox" style="display:none" value="T6" name="opDay" checked> T6
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="day-chip">
+                        <input type="checkbox" style="display:none" value="T7" name="opDay" checked> T7
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:13px;font-weight:500;transition:all var(--tr);user-select:none" class="day-chip">
+                        <input type="checkbox" style="display:none" value="CN" name="opDay"> CN
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-label" style="margin-bottom:12px">Khung giờ pickup <span style="color:var(--status-danger)">*</span></div>
+            <div class="slot-grid">
+                <label class="slot-chip"><input type="checkbox" style="display:none" value="14:00-16:00" name="slot"> 14:00–16:00</label>
+                <label class="slot-chip selected"><input type="checkbox" style="display:none" value="16:00-18:00" name="slot" checked> 16:00–18:00</label>
+                <label class="slot-chip selected"><input type="checkbox" style="display:none" value="17:00-19:00" name="slot" checked> 17:00–19:00</label>
+                <label class="slot-chip selected"><input type="checkbox" style="display:none" value="18:00-20:00" name="slot" checked> 18:00–20:00</label>
+                <label class="slot-chip selected"><input type="checkbox" style="display:none" value="19:00-21:00" name="slot" checked> 19:00–21:00</label>
+                <label class="slot-chip"><input type="checkbox" style="display:none" value="20:00-22:00" name="slot"> 20:00–22:00</label>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Slot tối đa / khung giờ</label>
+                    <input type="number" class="form-input form-input--no-icon" id="maxSlotsPerTime" value="20" min="1" max="999">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Thời gian pickup (phút)</label>
+                    <select class="form-select" id="pickupDurationMinutes">
+                        <option value="15">15 phút</option>
+                        <option value="30" selected>30 phút</option>
+                        <option value="45">45 phút</option>
+                        <option value="60">60 phút</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Chế độ duyệt deal</label>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                    <label style="display:flex;gap:12px;align-items:flex-start;padding:14px;border:1.5px solid var(--primary);border-radius:var(--radius-md);cursor:pointer;background:rgba(13,92,46,.04)">
+                        <input type="radio" name="approval" value="manual" checked style="margin-top:3px;accent-color:var(--primary);width:18px;height:18px">
+                        <div>
+                            <div style="font-size:14px;font-weight:600">Duyệt thủ công (Manual)</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:3px">Nhân viên tạo deal → bạn nhận notification → duyệt → live. Kiểm soát tốt hơn.</div>
+                        </div>
+                    </label>
+                    <label style="display:flex;gap:12px;align-items:flex-start;padding:14px;border:1.5px solid var(--border);border-radius:var(--radius-md);cursor:pointer">
+                        <input type="radio" name="approval" value="auto" style="margin-top:3px;accent-color:var(--primary);width:18px;height:18px">
+                        <div>
+                            <div style="font-size:14px;font-weight:600">Tự động (Auto-approve)</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:3px">Deal được tạo → live ngay. Tốc độ nhanh hơn, phù hợp khi bạn tin tưởng đội ngũ.</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn-submit" id="btn-submit-all" onclick="submitSellerRegistration()" style="margin-top:8px">
+                <span>Gửi hồ sơ xét duyệt</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+            <p style="text-align:center;font-size:12px;color:var(--text-tertiary)">Hồ sơ sẽ được Admin xét duyệt trong 1–2 ngày làm việc.</p>
+        </div>
+
+    </main>
+</div>
+
+<script>
+let currentStep = 1;
+const totalSteps = 5;
+
+function goTo(n) {
+    document.getElementById('step-'+currentStep).classList.remove('active');
+    document.getElementById('dot-'+currentStep).classList.remove('active');
+    document.getElementById('dot-'+currentStep).classList.add('done');
+    currentStep = n;
+    document.getElementById('step-'+currentStep).classList.add('active');
+    document.getElementById('dot-'+currentStep).classList.remove('done');
+    document.getElementById('dot-'+currentStep).classList.add('active');
+    document.getElementById('progress-fill').style.width = (currentStep/totalSteps*100) + '%';
+    document.getElementById('step-indicator').textContent = 'Bước ' + currentStep + ' / ' + totalSteps;
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.getElementById('back-btn').onclick = () => {
+    if (currentStep > 1) goTo(currentStep-1);
+    else window.history.back();
+};
+
+// ===== VALIDATION HELPERS =====
+function showErr(id, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (msg) el.textContent = msg;
+    el.classList.add('show');
+}
+function clearErr(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+}
+function setInputError(inputId, errId, hasError) {
+    const input = document.getElementById(inputId);
+    if (input) input.classList.toggle('error', hasError);
+    if (hasError) showErr(errId); else clearErr(errId);
+}
+
+// ===== STEP 1 VALIDATION =====
+function validateStep1() {
+    let valid = true;
+    const fn = document.getElementById('firstName')?.value.trim();
+    const ln = document.getElementById('lastName')?.value.trim();
+    const email = document.getElementById('email')?.value.trim();
+    const phone = document.getElementById('phone')?.value.trim();
+    const pwd = document.getElementById('password')?.value;
+    const cpwd = document.getElementById('confirmPassword')?.value;
+    const terms = document.getElementById('agree-terms')?.checked;
+
+    if (!fn) { showErr('err-firstName', 'Vui lòng nhập họ'); valid = false; } else clearErr('err-firstName');
+    if (!ln) { showErr('err-lastName', 'Vui lòng nhập tên'); valid = false; } else clearErr('err-lastName');
+
+    const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailReg.test(email)) { showErr('err-email', 'Email không hợp lệ'); valid = false; } else clearErr('err-email');
+
+    const phoneReg = /^(0[3|5|7|8|9])[0-9]{8}$/;
+    if (!phone || !phoneReg.test(phone)) { showErr('err-phone', 'Số điện thoại không hợp lệ (10 số, bắt đầu 03/05/07/08/09)'); valid = false; } else clearErr('err-phone');
+
+    const pwdReg = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+    if (!pwd || !pwdReg.test(pwd)) { showErr('err-password', 'Mật khẩu tối thiểu 8 ký tự, phải có chữ và số'); valid = false; } else clearErr('err-password');
+
+    if (!cpwd || cpwd !== pwd) { showErr('err-confirmPassword', 'Mật khẩu xác nhận không khớp'); valid = false; } else clearErr('err-confirmPassword');
+
+    if (!terms) { showErr('err-terms', 'Vui lòng đọc và đồng ý với điều khoản sử dụng'); valid = false; } else clearErr('err-terms');
+
+    if (valid) goTo(2);
+}
+
+// ===== STEP 2 VALIDATION =====
+function validateStep2() {
+    let valid = true;
+    const storeName = document.getElementById('storeName')?.value.trim();
+    const businessType = document.getElementById('businessType')?.value;
+    const address = document.getElementById('address')?.value.trim();
+    const city = document.getElementById('city')?.value;
+    const district = document.getElementById('district')?.value;
+
+    if (!storeName) { showErr('err-storeName', 'Vui lòng nhập tên cửa hàng'); valid = false; } else clearErr('err-storeName');
+    if (!businessType) { showErr('err-businessType', 'Vui lòng chọn loại hình kinh doanh'); valid = false; } else clearErr('err-businessType');
+    if (!address) { showErr('err-address', 'Vui lòng nhập số nhà, tên đường'); valid = false; } else clearErr('err-address');
+    if (!city) { showErr('err-city', 'Vui lòng chọn tỉnh/thành phố'); valid = false; } else clearErr('err-city');
+    if (!district) { showErr('err-district', 'Vui lòng chọn quận/huyện'); valid = false; } else clearErr('err-district');
+
+    if (valid) goTo(3);
+}
+
+function markUploaded(id, input) {
+    if (!input.files.length) return;
+    const item = document.getElementById(id);
+    item.classList.add('uploaded');
+    item.classList.remove('required');
+    const btn = item.querySelector('.doc-upload-btn');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Đã tải`;
+    btn.style.background = 'var(--status-success)';
+    item.querySelector('.doc-icon').style.background = 'var(--status-success-bg)';
+}
+
+// markUploaded extended with image preview
+function markUploadedWithPreview(id, input, previewId, filenameId) {
+    markUploaded(id, input);
+    if (!input.files.length) return;
+    const file = input.files[0];
+    // Update filename display
+    const fnEl = document.getElementById(filenameId);
+    if (fnEl) fnEl.textContent = '✅ ' + file.name + ' (' + (file.size/1024).toFixed(0) + ' KB)';
+    // Show image preview (only for images)
+    const prevEl = document.getElementById(previewId);
+    if (!prevEl) return;
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            prevEl.innerHTML = `<img src="${e.target.result}" style="width:100%;max-height:220px;object-fit:contain;background:#f0f0f0;padding:8px">`;
+            prevEl.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // PDF: show filename badge
+        prevEl.innerHTML = `<div style="padding:14px;display:flex;align-items:center;gap:10px;background:#f9f9f9">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span style="font-size:13px;font-weight:600">${file.name}</span>
+        </div>`;
+        prevEl.style.display = 'block';
+    }
+}
+
+// Password strength meter
+function updatePwdStrength(v) {
+    const wrap = document.getElementById('pwd-strength-wrap');
+    if (!v) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    const segs = ['pws1','pws2','pws3','pws4'].map(id => document.getElementById(id));
+    segs.forEach(s => s.style.background = 'var(--border-light)');
+    const checks = {
+        len: v.length >= 8,
+        upper: /[A-Z]/.test(v),
+        lower: /[a-z]/.test(v),
+        digit: /[0-9]/.test(v),
+        special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v)
+    };
+    // Update requirement list
+    const setReq = (id, ok) => {
+        const el = document.getElementById(id);
+        if (el) { el.style.color = ok ? 'var(--status-success)' : '#ef4444'; el.textContent = (ok?'✓':'✕') + el.textContent.substring(1); }
+    };
+    setReq('req-len', checks.len);
+    setReq('req-upper', checks.upper);
+    setReq('req-lower', checks.lower);
+    setReq('req-digit', checks.digit);
+    setReq('req-special', checks.special);
+    const score = Object.values(checks).filter(Boolean).length;
+    const colors = ['#ef4444','#f59e0b','#f59e0b','var(--status-success)','var(--status-success)'];
+    const labels = ['Rất yếu','Yếu','Trung bình','Đủ mạnh','Mạnh '];
+    for (let i = 0; i < score; i++) segs[i].style.background = colors[score-1];
+    document.getElementById('pwd-strength-text').innerHTML = `<span style="color:${colors[score-1]};font-weight:600">${labels[score-1]}</span>`;
+}
+
+// Bank account format validation per bank
+const bankFormats = {
+    'Vietcombank': {min:13, max:16, hint:'13-16 chữ số'},
+    'VietinBank':  {min:14, max:14, hint:'14 chữ số'},
+    'BIDV':        {min:14, max:14, hint:'14 chữ số'},
+    'Techcombank': {min:9,  max:14, hint:'9 hoặc 14 chữ số'},
+    'MB Bank':     {min:10, max:15, hint:'10-15 chữ số'},
+    'ACB':         {min:9,  max:13, hint:'9-13 chữ số'},
+    'TPBank':      {min:8,  max:14, hint:'8-14 chữ số'},
+    'VPBank':      {min:10, max:13, hint:'10-13 chữ số'},
+    'Sacombank':   {min:9,  max:16, hint:'9-16 chữ số'},
+    'HDBank':      {min:9,  max:16, hint:'9-16 chữ số'},
+    'Agribank':    {min:13, max:13, hint:'13 chữ số'},
+    'SHB':         {min:9,  max:13, hint:'9-13 chữ số'},
+    'LienVietPostBank': {min:13, max:15, hint:'13-15 chữ số'},
+    'NCB':         {min:10, max:14, hint:'10-14 chữ số'}
+};
+function onBankChange() {
+    const bank = document.getElementById('bankName').value;
+    const hintEl = document.getElementById('bank-hint');
+    const fmt = bankFormats[bank];
+    if (fmt) {
+        hintEl.textContent = 'Định dạng số tài khoản ' + bank + ': ' + fmt.hint;
+        hintEl.style.display = 'block';
+    } else { hintEl.style.display = 'none'; }
+    clearErr('err-bankName');
+    validateBankAccount();
+}
+function validateBankAccount() {
+    const acc = document.getElementById('bankAccountNumber').value.replace(/\s/g,'');
+    const bank = document.getElementById('bankName').value;
+    const hintEl = document.getElementById('bank-account-hint');
+    if (!acc) { hintEl.style.display = 'none'; return; }
+    if (!/^\d+$/.test(acc)) {
+        clearErr('err-bankAccountNumber');
+        showErr('err-bankAccountNumber', 'Số tài khoản chỉ gồm chữ số (0-9)');
+        hintEl.style.display = 'none'; return;
+    }
+    const fmt = bankFormats[bank];
+    if (fmt) {
+        if (acc.length >= fmt.min && acc.length <= fmt.max) {
+            clearErr('err-bankAccountNumber');
+            hintEl.style.display = 'block';
+        } else {
+            showErr('err-bankAccountNumber', `${bank} yêu cầu ${fmt.hint}. Bạn đặng nhập ${acc.length} số`);
+            hintEl.style.display = 'none';
+        }
+    }
+}
+
+// ===== STEP 3 VALIDATION (docs) =====
+function validateStep3() {
+    const cccd = document.getElementById('fileCccd');
+    const license = document.getElementById('fileLicense');
+    const vsattp = document.getElementById('fileVsattp');
+    const errors = [];
+    if (!cccd || !cccd.files.length) errors.push('CCCD / CMND');
+    if (!license || !license.files.length) errors.push('Giấy phép kinh doanh');
+    if (!vsattp || !vsattp.files.length) errors.push('Giấy chứng nhận VSATTP');
+    if (errors.length) {
+        alert('Bạn chưa tải lên: ' + errors.join(', '));
+        return;
+    }
+    goTo(4);
+}
+
+// ===== STEP 4 VALIDATION (bank) =====
+function validateStep4() {
+    let valid = true;
+    const bank = document.getElementById('bankName').value;
+    const acc = document.getElementById('bankAccountNumber').value.replace(/\s/g,'');
+    const owner = document.getElementById('bankAccountOwner').value.trim();
+
+    if (!bank) { showErr('err-bankName', 'Vui lòng chọn ngân hàng'); valid = false; } else clearErr('err-bankName');
+
+    if (!acc || !/^\d+$/.test(acc)) {
+        showErr('err-bankAccountNumber', 'Số tài khoản không hợp lệ (chỉ gồm số)');
+        valid = false;
+    } else {
+        const fmt = bankFormats[bank];
+        if (fmt && (acc.length < fmt.min || acc.length > fmt.max)) {
+            showErr('err-bankAccountNumber', `${bank} yêu cầu ${fmt.hint}. Hiện tại: ${acc.length} số`);
+            valid = false;
+        } else clearErr('err-bankAccountNumber');
+    }
+
+    if (!owner || owner.length < 3) {
+        showErr('err-bankAccountOwner', 'Vui lòng nhập tên chủ tài khoản (ít nhất 3 ký tự)');
+        valid = false;
+    } else if (!/^[A-Z\s]+$/.test(owner)) {
+        showErr('err-bankAccountOwner', 'Tên chủ tài khoản phải viết IN HOA, không dấu');
+        valid = false;
+    } else clearErr('err-bankAccountOwner');
+
+    if (valid) goTo(5);
+}
+
+// Category chips
+document.querySelectorAll('.cat-chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+        const cb = this.querySelector('input');
+        this.style.background = cb.checked ? 'rgba(13,92,46,.08)' : 'var(--surface)';
+        this.style.borderColor = cb.checked ? 'var(--primary)' : 'var(--border)';
+        this.style.color = cb.checked ? 'var(--primary)' : 'var(--text-primary)';
+        this.style.fontWeight = cb.checked ? '600' : '500';
+    });
+});
+
+// Day chips
+document.querySelectorAll('.day-chip').forEach(chip => {
+    const cb = chip.querySelector('input');
+    if (cb.checked) {
+        chip.style.background = 'rgba(13,92,46,.08)';
+        chip.style.borderColor = 'var(--primary)';
+        chip.style.color = 'var(--primary)';
+        chip.style.fontWeight = '600';
+    }
+    chip.addEventListener('click', function() {
+        this.style.background = cb.checked ? 'rgba(13,92,46,.08)' : 'var(--surface)';
+        this.style.borderColor = cb.checked ? 'var(--primary)' : 'var(--border)';
+        this.style.color = cb.checked ? 'var(--primary)' : 'var(--text-primary)';
+        this.style.fontWeight = cb.checked ? '600' : '500';
+    });
+});
+
+// Slot chips
+document.querySelectorAll('.slot-chip').forEach(chip => {
+    const cb = chip.querySelector('input');
+    if (cb.checked) {
+        chip.style.background = 'rgba(13,92,46,.08)';
+        chip.style.borderColor = 'var(--primary)';
+        chip.style.color = 'var(--primary)';
+        chip.style.fontWeight = '600';
+    }
+    chip.addEventListener('click', function() {
+        setTimeout(() => {
+            const isChecked = this.querySelector('input').checked;
+            this.style.background = isChecked ? 'rgba(13,92,46,.08)' : 'var(--surface)';
+            this.style.borderColor = isChecked ? 'var(--primary)' : 'var(--border)';
+            this.style.color = isChecked ? 'var(--primary)' : 'var(--text-primary)';
+            this.style.fontWeight = isChecked ? '600' : '500';
+        }, 0);
+    });
+});
+
+// Load Provinces & Districts
+let provincesData = [];
+fetch('https://provinces.open-api.vn/api/?depth=2')
+    .then(res => res.json())
+    .then(data => {
+        provincesData = data;
+        const citySelect = document.getElementById('city');
+        data.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.name;
+            opt.textContent = p.name;
+            opt.dataset.code = p.code;
+            citySelect.appendChild(opt);
+        });
+    })
+    .catch(err => console.error("Không tải được dữ liệu tỉnh thành", err));
+
+document.getElementById('city').addEventListener('change', function() {
+    const districtSelect = document.getElementById('district');
+    districtSelect.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
+    
+    if(!this.value) {
+        districtSelect.disabled = true;
+        return;
+    }
+    districtSelect.disabled = false;
+    
+    const selectedOpt = this.options[this.selectedIndex];
+    const code = selectedOpt.dataset.code;
+    const province = provincesData.find(p => p.code == code);
+    
+    if(province && province.districts) {
+        province.districts.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.name;
+            opt.textContent = d.name;
+            districtSelect.appendChild(opt);
+        });
+    }
+});
+
+function submitSellerRegistration() {
+    const btn = document.getElementById('btn-submit-all');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.innerHTML = 'Đang xử lý...';
+
+    try {
+        // Get checked categories
+        const categories = Array.from(document.querySelectorAll('input[name="cat"]:checked')).map(cb => cb.value).join(', ');
+        // Get checked days
+        const operatingDays = Array.from(document.querySelectorAll('input[name="opDay"]:checked')).map(cb => cb.value).join(',');
+        // Get checked slots
+        const pickupSlots = Array.from(document.querySelectorAll('input[name="slot"]:checked')).map(cb => cb.value).join(', ');
+        // Get approval mode
+        const approvalMode = document.querySelector('input[name="approval"]:checked')?.value || 'manual';
+
+        const formData = new FormData();
+        
+        const safeGet = (id) => {
+            const el = document.getElementById(id);
+            if (!el) throw new Error("Không tìm thấy phần tử HTML với ID: " + id);
+            return el.value.trim();
+        };
+
+        formData.append('firstName', safeGet('firstName'));
+        formData.append('lastName', safeGet('lastName'));
+        formData.append('email', safeGet('email'));
+        formData.append('phone', safeGet('phone'));
+        formData.append('password', document.getElementById('password').value);
+        
+        formData.append('storeName', safeGet('storeName'));
+        formData.append('businessType', safeGet('businessType'));
+        formData.append('categories', categories);
+        formData.append('address', safeGet('address'));
+        formData.append('city', safeGet('city'));
+        formData.append('district', safeGet('district'));
+        formData.append('description', safeGet('description'));
+        
+        formData.append('bankName', safeGet('bankName'));
+        formData.append('bankAccountNumber', safeGet('bankAccountNumber'));
+        formData.append('bankAccountOwner', safeGet('bankAccountOwner'));
+        
+        formData.append('operatingDays', operatingDays);
+        formData.append('pickupSlots', pickupSlots);
+        formData.append('maxSlotsPerTime', parseInt(document.getElementById('maxSlotsPerTime').value) || 20);
+        formData.append('pickupDurationMinutes', parseInt(document.getElementById('pickupDurationMinutes').value) || 30);
+        formData.append('approvalMode', approvalMode);
+
+        // Append Files - thử nhiều cách tìm kiếm khác nhau
+        const getFileInput = (id, onchangeVal) => {
+            let el = document.getElementById(id);
+            if (!el) el = document.querySelector('input[onchange="' + onchangeVal + '"]');
+            if (!el) el = document.querySelector('input[onchange*="' + id.replace('file', 'doc-').replace('Cccd','cccd').replace('License','license').replace('Vsattp','vsattp').replace('Logo','logo') + '"]');
+            return el ? (el.files[0] || null) : null;
+        };
+
+        const fileCccd = getFileInput('fileCccd', "markUploaded('doc-cccd', this)");
+        if (fileCccd) formData.append('cccdFile', fileCccd);
+
+        const fileLicense = getFileInput('fileLicense', "markUploaded('doc-license', this)");
+        if (fileLicense) formData.append('licenseFile', fileLicense);
+
+        const fileVsattp = getFileInput('fileVsattp', "markUploaded('doc-vsattp', this)");
+        if (fileVsattp) formData.append('vsattpFile', fileVsattp);
+
+        const fileLogo = getFileInput('fileLogo', "markUploaded('doc-logo', this)");
+        if (fileLogo) formData.append('logoFile', fileLogo);
+
+        fetch('/api/auth/register-seller', {
+            method: 'POST',
+            body: formData
+        })
+        .then(async res => {
+            const text = await res.text();
+            try {
+                return JSON.parse(text);
+            } catch(e) {
+                console.error('Server returned non-JSON:', text);
+                throw new Error('Máy chủ phản hồi không hợp lệ (' + res.status + ')');
+            }
+        })
+        .then(data => {
+            if(data && data.success) {
+                window.location.href = '/seller/onboarding-pending';
+            } else {
+                alert('Lỗi từ máy chủ: ' + (data ? data.message : 'Không rõ nguyên nhân'));
+            }
+        })
+        .catch(err => {
+            console.error("Fetch error:", err);
+            alert('Lỗi mạng hoặc server: ' + err.message);
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = `<span>Gửi hồ sơ xét duyệt</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+        });
+
+    } catch (error) {
+        console.error("JS Exception:", error);
+        alert('Lỗi hệ thống: ' + error.message);
+        btn.disabled = false;
+        btn.innerHTML = `<span>Gửi hồ sơ xét duyệt</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+    }
+}
+</script>
+</body>
+</html>
+
+<script th:inline="javascript">
+/*<![CDATA[*/
+    var userObj = /*[[${userObj}]]*/ null;
+    var storeObj = /*[[${storeObj}]]*/ null;
+    
+    if (userObj) {
+        if(document.getElementById('email')) {
+            document.getElementById('email').value = userObj.email || '';
+            document.getElementById('email').readOnly = true;
+            document.getElementById('email').style.background = '#f0f0f0';
+        }
+        if(document.getElementById('phone')) document.getElementById('phone').value = userObj.phone || '';
+        if (userObj.fullName) {
+            let parts = userObj.fullName.split(' ');
+            if(parts.length > 1) {
+                if(document.getElementById('lastName')) document.getElementById('lastName').value = parts.pop();
+                if(document.getElementById('firstName')) document.getElementById('firstName').value = parts.join(' ');
+            } else {
+                if(document.getElementById('firstName')) document.getElementById('firstName').value = userObj.fullName;
+            }
+        }
+    }
+    
+    if (storeObj) {
+        if(document.getElementById('storeName')) document.getElementById('storeName').value = storeObj.storeName || '';
+        if(document.getElementById('businessType')) document.getElementById('businessType').value = storeObj.businessType || '';
+        if(document.getElementById('address')) document.getElementById('address').value = storeObj.address || '';
+        if(document.getElementById('description')) document.getElementById('description').value = storeObj.description || '';
+        
+        if(document.getElementById('bankName')) document.getElementById('bankName').value = storeObj.bankName || '';
+        if(document.getElementById('bankAccountNumber')) document.getElementById('bankAccountNumber').value = storeObj.bankAccountNumber || '';
+        if(document.getElementById('bankAccountOwner')) document.getElementById('bankAccountOwner').value = storeObj.bankAccountOwner || '';
+        
+        if (storeObj.maxSlotsPerTime && document.getElementById('maxSlotsPerTime')) document.getElementById('maxSlotsPerTime').value = storeObj.maxSlotsPerTime;
+        if (storeObj.pickupDurationMinutes && document.getElementById('pickupDurationMinutes')) document.getElementById('pickupDurationMinutes').value = storeObj.pickupDurationMinutes;
+        
+        if (storeObj.approvalMode) {
+            const approvalRadios = document.querySelectorAll('input[name="approval"]');
+            approvalRadios.forEach(r => {
+                if(r.value === storeObj.approvalMode) r.checked = true;
+            });
+        }
+        
+        if (storeObj.categories) {
+            const cats = storeObj.categories.split(', ');
+            document.querySelectorAll('input[name="cat"]').forEach(cb => {
+                if (cats.includes(cb.value)) {
+                    cb.checked = true;
+                    // Trigger style update
+                    cb.parentElement.style.background = 'rgba(13,92,46,.08)';
+                    cb.parentElement.style.borderColor = 'var(--primary)';
+                    cb.parentElement.style.color = 'var(--primary)';
+                    cb.parentElement.style.fontWeight = '600';
+                }
+            });
+        }
+        
+        if (storeObj.operatingDays) {
+            const days = storeObj.operatingDays.split(',');
+            document.querySelectorAll('input[name="opDay"]').forEach(cb => {
+                cb.checked = days.includes(cb.value);
+                if(cb.checked) {
+                    cb.parentElement.style.background = 'rgba(13,92,46,.08)';
+                    cb.parentElement.style.borderColor = 'var(--primary)';
+                    cb.parentElement.style.color = 'var(--primary)';
+                    cb.parentElement.style.fontWeight = '600';
+                } else {
+                    cb.parentElement.style.background = 'var(--surface)';
+                    cb.parentElement.style.borderColor = 'var(--border)';
+                    cb.parentElement.style.color = 'var(--text-primary)';
+                    cb.parentElement.style.fontWeight = '500';
+                }
+            });
+        }
+        
+        if (storeObj.pickupSlots) {
+            const slots = storeObj.pickupSlots.split(', ');
+            document.querySelectorAll('input[name="slot"]').forEach(cb => {
+                cb.checked = slots.includes(cb.value);
+                if(cb.checked) {
+                    cb.parentElement.style.background = 'rgba(13,92,46,.08)';
+                    cb.parentElement.style.borderColor = 'var(--primary)';
+                    cb.parentElement.style.color = 'var(--primary)';
+                    cb.parentElement.style.fontWeight = '600';
+                } else {
+                    cb.parentElement.style.background = 'var(--surface)';
+                    cb.parentElement.style.borderColor = 'var(--border)';
+                    cb.parentElement.style.color = 'var(--text-primary)';
+                    cb.parentElement.style.fontWeight = '500';
+                }
+            });
+        }
+        
+        setTimeout(() => {
+            if (storeObj.city && document.getElementById('city')) {
+                document.getElementById('city').value = storeObj.city;
+                document.getElementById('city').dispatchEvent(new Event('change'));
+                
+                setTimeout(() => {
+                    if(storeObj.district && document.getElementById('district')) {
+                        document.getElementById('district').value = storeObj.district;
+                    }
+                }, 500);
+            }
+        }, 1000);
+    }
+/*]]>*/
+</script>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lọc nâng cao — DealXanh</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#0d5c2e;--primary-dark:#08421f;
+  --surface:#fff;--background:#f5f6f8;
+  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+  --border:#e0e0e0;--border-light:#f0f0f0;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.11);
+  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
+  --primary-bg:rgba(13,92,46,.07);
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--background);min-height:100vh;color:var(--text-primary)}
+button,input,select{font-family:inherit;background:none;border:none;cursor:pointer}
+img{display:block;max-width:100%}
+
+/* ===== HEADER ===== */
+.page-header{
+  position:sticky;top:0;z-index:50;
+  background:var(--surface);
+  border-bottom:1px solid var(--border-light);
+  padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.back-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-md);color:var(--text-primary);transition:background var(--tr)}
+.back-btn:hover{background:var(--background)}
+.back-btn svg{width:20px;height:20px}
+.header-title{font-size:17px;font-weight:700;flex:1}
+.reset-btn{font-size:14px;font-weight:600;color:var(--danger);padding:4px 8px;border-radius:var(--radius-sm);transition:background var(--tr)}
+.reset-btn:hover{background:rgba(239,68,68,.08)}
+
+/* ===== BODY ===== */
+.filter-body{padding:0 0 100px}
+
+/* Section */
+.filter-section{padding:20px 16px;border-bottom:1px solid var(--border-light)}
+.filter-section:last-child{border-bottom:none}
+.filter-section-title{font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.filter-section-title svg{width:16px;height:16px;color:var(--primary)}
+
+/* Tab switcher (food type header) */
+.view-tabs{display:flex;gap:2px;padding:0 16px 0;background:var(--surface);border-bottom:1px solid var(--border-light)}
+.view-tab{flex:1;padding:12px 8px;font-size:13px;font-weight:600;color:var(--text-tertiary);border-bottom:2px solid transparent;text-align:center;transition:all var(--tr)}
+.view-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* Range slider group */
+.range-group{display:flex;flex-direction:column;gap:10px}
+.range-labels{display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary)}
+.range-val-badge{
+  font-weight:700;color:var(--primary);
+  padding:3px 10px;background:var(--primary-bg);border-radius:var(--radius-full);
+}
+input[type=range]{
+  width:100%;height:6px;-webkit-appearance:none;outline:none;cursor:pointer;
+  background:linear-gradient(to right,var(--primary) 20%,var(--border-light) 20%);
+  border-radius:var(--radius-full);
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+  background:var(--primary);cursor:pointer;
+  border:2.5px solid #fff;box-shadow:0 2px 6px rgba(13,92,46,.35);
+}
+#radius-range{background:linear-gradient(to right,var(--primary) 20%,var(--border-light) 20%)}
+#discount-range{background:linear-gradient(to right,var(--primary) 40%,var(--border-light) 40%)}
+
+/* Chip selects */
+.chip-grid{display:flex;flex-wrap:wrap;gap:8px}
+.sel-chip{
+  display:flex;align-items:center;gap:5px;
+  padding:7px 14px;border-radius:var(--radius-full);
+  border:1.5px solid var(--border);
+  font-size:13px;font-weight:500;color:var(--text-secondary);
+  transition:all var(--tr);white-space:nowrap;
+}
+.sel-chip:hover{border-color:var(--primary);color:var(--primary)}
+.sel-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.sel-chip svg{width:14px;height:14px}
+
+/* Price dual inputs */
+.price-inputs{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.price-inp{
+  padding:11px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);
+  font-size:14px;outline:none;transition:border-color var(--tr);text-align:center;
+}
+.price-inp:focus{border-color:var(--primary)}
+.price-dash{font-size:16px;font-weight:600;color:var(--text-tertiary);text-align:center}
+
+/* Time slots grid */
+.time-slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.time-slot{
+  padding:12px 14px;border-radius:var(--radius-md);
+  border:1.5px solid var(--border);
+  text-align:center;transition:all var(--tr);
+}
+.time-slot:hover:not(.disabled){border-color:var(--primary)}
+.time-slot.active{border-color:var(--primary);background:var(--primary-bg)}
+.time-slot.disabled{opacity:.4;cursor:not-allowed}
+.ts-range{font-size:13px;font-weight:700;color:var(--text-primary)}
+.ts-slot.active .ts-range{color:var(--primary)}
+.ts-left{font-size:11px;color:var(--text-tertiary);margin-top:3px}
+
+/* Sort options */
+.sort-list{display:flex;flex-direction:column;gap:7px}
+.sort-opt{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:var(--radius-md);
+  border:1.5px solid var(--border);cursor:pointer;transition:all var(--tr);
+}
+.sort-opt:hover{border-color:var(--primary)}
+.sort-opt.active{border-color:var(--primary);background:var(--primary-bg)}
+.sort-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all var(--tr)}
+.sort-opt.active .sort-radio{border-color:var(--primary);background:var(--primary)}
+.sort-radio-dot{width:7px;height:7px;border-radius:50%;background:#fff;display:none}
+.sort-opt.active .sort-radio-dot{display:block}
+.sort-label{font-size:14px;font-weight:500;color:var(--text-primary)}
+.sort-opt.active .sort-label{font-weight:600;color:var(--primary)}
+
+/* Toggle switch */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:2px 0}
+.toggle-label-wrap{flex:1}
+.toggle-label{font-size:14px;font-weight:500;color:var(--text-primary)}
+.toggle-sub{font-size:12px;color:var(--text-tertiary);margin-top:2px}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:var(--radius-full);transition:background .25s;cursor:pointer}
+.toggle input:checked+.toggle-track{background:var(--primary)}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle input:checked~.toggle-thumb{transform:translateX(20px)}
+
+/* ===== CATEGORY PAGE ===== */
+.cat-view{display:none}
+.cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:16px}
+@media(min-width:600px){.cat-grid{grid-template-columns:repeat(3,1fr)}}
+.cat-card{
+  position:relative;border-radius:var(--radius-lg);overflow:hidden;
+  aspect-ratio:4/3;cursor:pointer;
+  box-shadow:var(--shadow-sm);transition:transform .2s;
+}
+.cat-card:hover{transform:scale(1.02)}
+.cat-card img{width:100%;height:100%;object-fit:cover}
+.cat-card-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to bottom,transparent 20%,rgba(0,0,0,.65) 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding:12px 10px;
+  text-align:center;
+}
+.cat-card-icon{font-size:24px;margin-bottom:4px}
+.cat-card-name{font-size:14px;font-weight:700;color:#fff}
+.cat-card-count{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
+
+/* ===== FOOTER ===== */
+.filter-footer{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  background:var(--surface);
+  border-top:1px solid var(--border-light);
+  padding:14px 16px;
+  box-shadow:0 -4px 16px rgba(0,0,0,.08);
+}
+.footer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:13px}
+.footer-summary{color:var(--text-secondary)}
+.footer-summary strong{color:var(--primary)}
+.footer-clear{color:var(--danger);font-weight:600}
+.footer-btns{display:flex;gap:10px}
+.btn-apply{
+  flex:1;padding:13px;
+  background:var(--primary);color:#fff;
+  font-size:15px;font-weight:700;
+  border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:all var(--tr);box-shadow:0 3px 10px rgba(13,92,46,.3);
+}
+.btn-apply:hover{background:var(--primary-dark)}
+.btn-apply svg{width:16px;height:16px}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="page-header">
+  <button class="back-btn" onclick="history.back()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+  <span class="header-title" id="page-title">Bộ lọc nâng cao</span>
+  <button class="reset-btn" onclick="resetAll()">Đặt lại</button>
+</header>
+
+<!-- View tabs -->
+<div class="view-tabs">
+  <button class="view-tab active" onclick="switchView('filter',this)">🎚 Bộ lọc</button>
+  <button class="view-tab" onclick="switchView('category',this)">📂 Danh mục</button>
+</div>
+
+<!-- FILTER VIEW -->
+<div id="filter-view" class="filter-body">
+
+  <!-- Sort -->
+  <div class="filter-section">
+    <div class="filter-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>Sắp xếp theo</div>
+    <div class="sort-list">
+      <div class="sort-opt active" onclick="selSort(this)"><div class="sort-radio"><div class="sort-radio-dot"></div></div><span class="sort-label">📍 Gần nhất</span></div>
+      <div class="sort-opt" onclick="selSort(this)"><div class="sort-radio"><div class="sort-radio-dot"></div></div><span class="sort-label">⏰ Sắp hết hạn (Urgency)</span></div>
+      <div class="sort-opt" onclick="selSort(this)"><div class="sort-radio"><div class="sort-radio-dot"></div></div><span class="sort-label">💸 Giảm giá nhiều nhất</span></div>
+      <div class="sort-opt" onclick="selSort(this)"><div class="sort-radio"><div class="sort-radio-dot"></div></div><span class="sort-label">⭐ Đánh giá cao nhất</span></div>
+      <div class="sort-opt" onclick="selSort(this)"><div class="sort-radio"><div class="sort-radio-dot"></div></div><span class="sort-label">🔥 Phổ biến nhất</span></div>
+    </div>
+  </div>
+
+  <!-- Radius -->
+  <div class="filter-section">
+    <div class="filter-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>Bán kính tìm kiếm</div>
+    <div class="range-group">
+      <div class="range-labels">
+        <span>0.5 km</span>
+        <span class="range-val-badge" id="radius-lbl">1 km</span>
+        <span>5 km</span>
+      </div>
+      <input type="range" id="radius-range" min="0.5" max="5" step="0.5" value="1"
+        oninput="updateRange('radius-lbl',this.value+' km');updateSliderBg(this,0.5,5)">
+    </div>
+    <div class="chip-grid" style="margin-top:12px">
+      <button class="sel-chip active" onclick="setRadius(this,'0.5')">0.5km</button>
+      <button class="sel-chip" onclick="setRadius(this,'1')">1km</button>
+      <button class="sel-chip" onclick="setRadius(this,'2')">2km</button>
+      <button class="sel-chip" onclick="setRadius(this,'3')">3km</button>
+      <button class="sel-chip" onclick="setRadius(this,'5')">5km+</button>
+    </div>
+  </div>
+
+  <!-- Category -->
+  <div class="filter-section">
+    <div class="filter-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>Loại thực phẩm</div>
+    <div class="chip-grid">
+      <button class="sel-chip active" onclick="this.classList.toggle('active')">🍜 Đồ ăn</button>
+      <button class="sel-chip active" onclick="this.classList.toggle('active')">🧋 Đồ uống</button>
+      <button class="sel-chip" onclick="this.classList.toggle('active')">🎁 Blind Box</button>
+      <button class="sel-chip" onclick="this.classList.toggle('active')">🍰 Bánh ngọt</button>
+      <button class="sel-chip" onclick="this.classList.toggle('active')">🍟 Ăn vặt</button>
+      <button class="sel-chip" onclick="this.classList.toggle('active')">🍱 Cơm hộp</button>
+    </div>
+  </div>
+
+  <!-- Price range -->
+  <div class="filter-section">
+    <div class="filter-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Khoảng giá (sau giảm)</div>
+    <div class="price-inputs">
+      <div><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px">Từ (đ)</div><input type="number" class="price-inp" id="price-min" value="0" placeholder="0"></div>
+      <div class="price-dash">—</div>
+      <div><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px">Đến (đ)</div><input type="number" class="price-inp" id="price-max" value="100000" placeholder="100,000"></div>
+    </div>
+    <div class="chip-grid" style="margin-top:12px">
+      <button class="sel-chip" onclick="setPriceRange(this,0,25000)">< 25k</button>
+      <button class="sel-chip" onclick="setPriceRange(this,25000,50000)">25k–50k</button>
+      <button class="sel-chip active" onclick="setPriceRange(this,50000,100000)">50k–100k</button>
+      <button class="sel-chip" onclick="setPriceRange(this,100000,999999)">100k+</button>
+    </div>
+  </div>
+
+  <!-- Discount -->
+  <div class="filter-section">
+    <div class="filter-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Mức giảm giá tối thiểu</div>
+    <div class="range-group">
+      <div class="range-labels">
+        <span>0%</span>
+        <span class="range-val-badge" id="discount-lbl">≥ 40%</span>
+        <span>70%</span>
+      </div>
+      <input type="range" id="discount-range" min="0" max="70" step="10" value="40"
+        oninput="updateRange('discount-lbl','≥ '+this.value+'%');updateSliderBg(this,0,70)">
+    </div>
+  </div>
+
+  <!-- Shelf life / time left -->
+  <div class="filter-section">
+    <div class="filter-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Thời gian còn lại</div>
+    <div class="chip-grid">
+      <button class="sel-chip" onclick="this.classList.toggle('active')">🔥 < 30 phút</button>
+      <button class="sel-chip" onclick="this.classList.toggle('active')">⚡ < 1 giờ</button>
+      <button class="sel-chip active" onclick="this.classList.toggle('active')">🟡 < 3 giờ</button>
+      <button class="sel-chip" onclick="this.classList.toggle('active')">✅ > 3 giờ</button>
+    </div>
+  </div>
+
+  <!-- Pickup slots -->
+  <div class="filter-section">
+    <div class="filter-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Khung giờ pickup</div>
+    <div class="time-slots">
+      <div class="time-slot" onclick="this.classList.toggle('active')"><div class="ts-range">11:00–13:00</div><div class="ts-left">Bữa trưa</div></div>
+      <div class="time-slot active" onclick="this.classList.toggle('active')"><div class="ts-range">17:00–18:00</div><div class="ts-left">Chiều sớm</div></div>
+      <div class="time-slot active" onclick="this.classList.toggle('active')"><div class="ts-range">18:00–19:00</div><div class="ts-left">Chiều muộn</div></div>
+      <div class="time-slot" onclick="this.classList.toggle('active')"><div class="ts-range">19:00–20:00</div><div class="ts-left">Tối</div></div>
+      <div class="time-slot" onclick="this.classList.toggle('active')"><div class="ts-range">20:00–21:00</div><div class="ts-left">Tối muộn</div></div>
+      <div class="time-slot disabled"><div class="ts-range">Ngay bây giờ</div><div class="ts-left">Last Minute</div></div>
+    </div>
+  </div>
+
+  <!-- Special options -->
+  <div class="filter-section">
+    <div class="filter-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Tùy chọn đặc biệt</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="toggle-row">
+        <div class="toggle-label-wrap">
+          <div class="toggle-label">🔥 Flash Sale / Last Minute</div>
+          <div class="toggle-sub">Chỉ deal có countdown < 30 phút</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle-flash"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label-wrap">
+          <div class="toggle-label">🎁 Blind Box only</div>
+          <div class="toggle-sub">Ẩn deal thường, chỉ hiện mystery bags</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle-blind"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label-wrap">
+          <div class="toggle-label">⭐ Cửa hàng đã xác minh</div>
+          <div class="toggle-sub">Chỉ hiện cửa hàng có badge verified</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle-verified" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-label-wrap">
+          <div class="toggle-label">📦 Còn suất pickup</div>
+          <div class="toggle-sub">Ẩn deal đã hết suất</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle-stock" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /filter-view -->
+
+<!-- CATEGORY VIEW -->
+<div id="category-view" class="cat-view" style="padding-bottom:100px">
+  <div class="cat-grid">
+    <div class="cat-card" onclick="goCategory('food')">
+      <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=70" alt="Đồ ăn">
+      <div class="cat-card-overlay"><div class="cat-card-icon">🍜</div><div class="cat-card-name">Đồ ăn</div><div class="cat-card-count">256 deal</div></div>
+    </div>
+    <div class="cat-card" onclick="goCategory('beverage')">
+      <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=70" alt="Đồ uống">
+      <div class="cat-card-overlay"><div class="cat-card-icon">🧋</div><div class="cat-card-name">Đồ uống</div><div class="cat-card-count">189 deal</div></div>
+    </div>
+    <div class="cat-card" onclick="goCategory('blindbox')">
+      <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=400&q=70" alt="Blind Box">
+      <div class="cat-card-overlay"><div class="cat-card-icon">🎁</div><div class="cat-card-name">Blind Box</div><div class="cat-card-count">45 deal</div></div>
+    </div>
+    <div class="cat-card" onclick="goCategory('bakery')">
+      <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&q=70" alt="Bánh ngọt">
+      <div class="cat-card-overlay"><div class="cat-card-icon">🍰</div><div class="cat-card-name">Bánh ngọt</div><div class="cat-card-count">123 deal</div></div>
+    </div>
+    <div class="cat-card" onclick="goCategory('snack')">
+      <img src="https://images.unsplash.com/photo-1564355808539-22fda35bed7e?w=400&q=70" alt="Ăn vặt">
+      <div class="cat-card-overlay"><div class="cat-card-icon">🍟</div><div class="cat-card-name">Ăn vặt</div><div class="cat-card-count">98 deal</div></div>
+    </div>
+    <div class="cat-card" onclick="goCategory('rice')">
+      <img src="https://images.unsplash.com/photo-1516684732162-798a0062be99?w=400&q=70" alt="Cơm hộp">
+      <div class="cat-card-overlay"><div class="cat-card-icon">🍱</div><div class="cat-card-name">Cơm hộp</div><div class="cat-card-count">74 deal</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="filter-footer">
+  <div class="footer-top">
+    <span class="footer-summary">Tìm thấy <strong id="result-preview">18 deal</strong> phù hợp</span>
+    <button class="footer-clear" onclick="resetAll()">Xóa tất cả</button>
+  </div>
+  <div class="footer-btns">
+    <button class="btn-apply" onclick="applyFilters()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Xem 18 deal
+    </button>
+  </div>
+</div>
+
+<script>
+function switchView(v,tab){
+  document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('filter-view').style.display = v==='filter'?'':'none';
+  document.getElementById('category-view').style.display = v==='category'?'':'none';
+  document.getElementById('page-title').textContent = v==='filter'?'Bộ lọc nâng cao':'Danh mục';
+}
+
+function selSort(el){
+  document.querySelectorAll('.sort-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+}
+function setRadius(btn,val){
+  document.querySelectorAll('#filter-view .filter-section:nth-child(2) .sel-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  const sl=document.getElementById('radius-range');
+  sl.value=val;updateRange('radius-lbl',val+' km');updateSliderBg(sl,0.5,5);
+}
+function setPriceRange(btn,min,max){
+  document.querySelectorAll('#price-min,#price-max')[0].parentElement.parentElement.querySelectorAll('.sel-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('price-min').value=min;
+  document.getElementById('price-max').value=max;
+}
+function updateRange(id,val){document.getElementById(id).textContent=val;}
+function updateSliderBg(sl,min,max){
+  const pct=((sl.value-min)/(max-min))*100;
+  sl.style.background=`linear-gradient(to right,var(--primary) ${pct}%,var(--border-light) ${pct}%)`;
+}
+function resetAll(){
+  document.querySelectorAll('.sel-chip').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=false);
+  document.getElementById('price-min').value='0';
+  document.getElementById('price-max').value='100000';
+}
+function applyFilters(){history.back();}
+function goCategory(cat){window.location.href='search.html?cat='+cat;}
+</script>
+</body>
+</html>

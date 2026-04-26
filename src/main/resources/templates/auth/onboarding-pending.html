@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chờ xét duyệt — DealXanh</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;
+    --accent:#d4af37;
+    --surface:#fff;--background:#f5f6f8;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-md:0 4px 20px rgba(0,0,0,.1);
+    --status-success:#10b981;--status-success-bg:rgba(16,185,129,.1);
+    --status-warning:#f59e0b;--status-warning-bg:rgba(245,158,11,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--background);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+button{cursor:pointer;border:none;font-family:inherit}
+
+.wrap{width:100%;max-width:540px}
+
+/* Logo */
+.logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:32px}
+.logo-box{width:40px;height:40px;background:var(--primary);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center}
+.logo-text{font-size:22px;font-weight:800;color:var(--primary)}
+
+/* Hero animation */
+.hero-anim{
+    position:relative;
+    width:120px;height:120px;margin:0 auto 32px;
+}
+.hero-circle-outer{
+    position:absolute;inset:0;
+    border-radius:50%;
+    border:2px solid var(--status-warning-bg);
+    animation:ringPulse 2.5s ease-in-out infinite;
+}
+.hero-circle-mid{
+    position:absolute;inset:12px;
+    border-radius:50%;
+    background:var(--status-warning-bg);
+    border:2px solid rgba(245,158,11,.15);
+    animation:ringPulse 2.5s .3s ease-in-out infinite;
+}
+.hero-circle-inner{
+    position:absolute;inset:24px;
+    border-radius:50%;
+    background:var(--status-warning-bg);
+    display:flex;align-items:center;justify-content:center;
+}
+.hero-circle-inner svg{width:36px;height:36px;color:var(--status-warning)}
+@keyframes ringPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:.7}}
+
+/* Card */
+.card{
+    background:var(--surface);
+    border-radius:var(--radius-xl);
+    border:1px solid var(--border-light);
+    box-shadow:var(--shadow-md);
+    overflow:hidden;
+}
+
+.card-top{padding:36px 32px 28px;text-align:center;border-bottom:1px solid var(--border-light)}
+@media(max-width:500px){.card-top{padding:28px 20px 20px}}
+.card-title{font-size:24px;font-weight:800;color:var(--text-primary);letter-spacing:-.3px;margin-bottom:8px}
+.card-subtitle{font-size:15px;color:var(--text-secondary);line-height:1.65}
+
+/* Status badge */
+.status-badge{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:7px 16px;
+    border-radius:var(--radius-full);
+    font-size:13px;font-weight:600;
+    margin:20px 0 0;
+}
+.status-badge--pending{background:var(--status-warning-bg);color:var(--status-warning);border:1px solid rgba(245,158,11,.25)}
+.status-badge--approved{background:var(--status-success-bg);color:var(--status-success);border:1px solid rgba(16,185,129,.25)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Timeline */
+.timeline{padding:28px 32px}
+@media(max-width:500px){.timeline{padding:20px}}
+.timeline-title{font-size:13px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px}
+.timeline-steps{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:16px;padding-bottom:20px;position:relative}
+.tl-item:last-child{padding-bottom:0}
+.tl-item:last-child .tl-line{display:none}
+.tl-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:32px}
+.tl-dot{
+    width:32px;height:32px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid transparent;
+}
+.tl-dot--done{background:var(--status-success-bg);border-color:rgba(16,185,129,.25)}
+.tl-dot--done svg{color:var(--status-success);width:14px;height:14px}
+.tl-dot--active{background:var(--status-warning-bg);border-color:rgba(245,158,11,.25);animation:ringPulse 2s infinite}
+.tl-dot--active svg{color:var(--status-warning);width:14px;height:14px}
+.tl-dot--pending{background:var(--background);border-color:var(--border)}
+.tl-dot--pending svg{color:var(--text-tertiary);width:14px;height:14px}
+.tl-dot--rejected{background:var(--status-danger-bg);border-color:rgba(239,68,68,.25)}
+.tl-dot--rejected svg{color:var(--status-danger);width:14px;height:14px}
+.tl-line{flex:1;width:2px;background:var(--border-light);margin:4px auto 0;min-height:16px}
+.tl-body{flex:1;padding-top:4px;padding-bottom:0}
+.tl-label{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:3px}
+.tl-desc{font-size:13px;color:var(--text-secondary);line-height:1.5}
+.tl-time{font-size:11px;color:var(--text-tertiary);margin-top:4px;font-weight:500}
+
+/* Info box */
+.info-section{padding:0 32px 28px}
+@media(max-width:500px){.info-section{padding:0 20px 20px}}
+.info-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:400px){.info-cards{grid-template-columns:1fr}}
+.info-card{
+    padding:14px;
+    background:var(--background);
+    border-radius:var(--radius-md);
+    border:1px solid var(--border-light);
+}
+.info-card-icon{font-size:20px;margin-bottom:7px}
+.info-card-title{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:3px}
+.info-card-desc{font-size:12px;color:var(--text-secondary);line-height:1.5}
+
+/* Submission summary */
+.summary-section{padding:0 32px 28px}
+@media(max-width:500px){.summary-section{padding:0 20px 20px}}
+.summary-title{font-size:13px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.summary-rows{display:flex;flex-direction:column;gap:8px}
+.summary-row{display:flex;align-items:center;justify-content:space-between;font-size:14px}
+.summary-key{color:var(--text-secondary)}
+.summary-val{font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:5px}
+.check-icon{width:15px;height:15px;color:var(--status-success)}
+
+/* Actions */
+.card-actions{padding:20px 32px 28px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border-light)}
+@media(max-width:500px){.card-actions{padding:20px}}
+.btn-primary{
+    width:100%;padding:14px;
+    background:var(--primary);color:#fff;
+    font-size:15px;font-weight:700;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:all var(--tr);box-shadow:0 4px 14px rgba(13,92,46,.3);
+}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.btn-secondary{
+    width:100%;padding:13px;
+    border:1.5px solid var(--border);border-radius:var(--radius-md);
+    background:var(--surface);color:var(--text-primary);
+    font-size:14px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    transition:all var(--tr);
+}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+.btn-secondary svg,.btn-primary svg{width:16px;height:16px}
+.edit-link{text-align:center;font-size:13px;color:var(--text-tertiary)}
+.edit-link a{color:var(--primary);font-weight:600;text-decoration:none}
+.edit-link a:hover{text-decoration:underline}
+
+/* Alert banner */
+.alert-banner{
+    padding:12px 16px;
+    background:var(--status-warning-bg);
+    border-left:4px solid var(--status-warning);
+    border-radius:0 var(--radius-md) var(--radius-md) 0;
+    margin:0 32px 20px;
+    display:flex;gap:10px;align-items:flex-start;
+    font-size:13px;color:#92400e;line-height:1.5;
+}
+@media(max-width:500px){.alert-banner{margin:0 20px 16px}}
+.alert-banner svg{width:15px;height:15px;flex-shrink:0;margin-top:1px}
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+    <!-- Logo -->
+    <div class="logo-row">
+        <div class="logo-box">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <span class="logo-text">DealXanh</span>
+    </div>
+
+    <div class="card">
+
+        <!-- Top -->
+        <div class="card-top">
+            <div class="hero-anim" id="hero-icon-wrap">
+                <div class="hero-circle-outer"></div>
+                <div class="hero-circle-mid"></div>
+                <div class="hero-circle-inner">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+            </div>
+            <h1 class="card-title" id="card-title" th:text="${storeStatus == 'REJECTED' ? 'Không phê duyệt' : 'Hồ sơ đang được xét duyệt'}">Hồ sơ đang được xét duyệt</h1>
+            <p class="card-subtitle" th:if="${storeStatus != 'REJECTED'}">Chúng tôi đã nhận được hồ sơ đăng ký của bạn.<br>Quá trình xét duyệt thường mất <strong>1–3 ngày làm việc</strong>.</p>
+            <p class="card-subtitle" th:if="${storeStatus == 'REJECTED'}" style="color: var(--status-danger);">Hồ sơ của bạn không đáp ứng đủ yêu cầu hoặc giấy tờ không hợp lệ. Vui lòng kiểm tra lại.</p>
+            
+            <div id="status-badge-wrap">
+                <div class="status-badge status-badge--pending" th:if="${storeStatus == 'PENDING' or storeStatus == null}">
+                    <span class="status-dot"></span>
+                    Đang chờ xét duyệt
+                </div>
+                <div class="status-badge" style="background:var(--status-danger-bg);color:var(--status-danger);border:1px solid rgba(239,68,68,.25)" th:if="${storeStatus == 'REJECTED'}">
+                    Bị từ chối
+                </div>
+                <div class="status-badge status-badge--approved" th:if="${storeStatus == 'APPROVED' or storeStatus == 'ACTIVE'}">
+                    <span class="status-dot"></span>
+                    Đã được phê duyệt 🎉
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert -->
+        <div class="alert-banner" style="margin-top:20px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span>Bạn sẽ nhận thông báo qua <strong>email và SMS</strong> ngay khi có kết quả. Vui lòng kiểm tra hòm thư.</span>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline">
+            <div class="timeline-title">Tiến trình xét duyệt</div>
+            <div class="timeline-steps">
+                <div class="tl-item">
+                    <div class="tl-left">
+                        <div class="tl-dot tl-dot--done">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="tl-line"></div>
+                    </div>
+                    <div class="tl-body">
+                        <div class="tl-label">✅ Hồ sơ đã được gửi</div>
+                        <div class="tl-desc">Tất cả thông tin và tài liệu đã được tiếp nhận thành công</div>
+                        <div class="tl-time">Vừa xong</div>
+                    </div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-left">
+                        <div th:classappend="${storeStatus == 'REJECTED' ? 'tl-dot tl-dot--rejected' : 'tl-dot tl-dot--active'}">
+                            <svg th:if="${storeStatus != 'REJECTED'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <svg th:if="${storeStatus == 'REJECTED'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </div>
+                        <div class="tl-line"></div>
+                    </div>
+                    <div class="tl-body">
+                        <div class="tl-label">⏳ Kiểm tra pháp lý</div>
+                        <div class="tl-desc">Đội ngũ xác minh ĐKKD, giấy phép VSATTP và thông tin ngân hàng</div>
+                        <div class="tl-time" th:text="${storeStatus == 'REJECTED' ? 'Đã từ chối' : 'Đang xử lý — 1–3 ngày làm việc'}">Đang xử lý — 1–3 ngày làm việc</div>
+                    </div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-left">
+                        <div class="tl-dot tl-dot--pending">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                        <div class="tl-line"></div>
+                    </div>
+                    <div class="tl-body">
+                        <div class="tl-label">Phê duyệt & Kích hoạt</div>
+                        <div class="tl-desc">Tài khoản Seller được kích hoạt, cửa hàng xuất hiện trên DealXanh</div>
+                        <div class="tl-time">Chưa bắt đầu</div>
+                    </div>
+                </div>
+                <div class="tl-item">
+                    <div class="tl-left">
+                        <div class="tl-dot tl-dot--pending">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        </div>
+                    </div>
+                    <div class="tl-body">
+                        <div class="tl-label">Bắt đầu đăng deal</div>
+                        <div class="tl-desc">Tạo deal đầu tiên và bắt đầu bán trên nền tảng</div>
+                        <div class="tl-time">Chưa bắt đầu</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submission summary — lấy từ DB qua Thymeleaf -->
+        <div class="summary-section">
+            <div class="summary-title">Hồ sơ đã nộp</div>
+            <div id="summary-store-name" style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:12px" th:text="${storeName}">—</div>
+            <div class="summary-rows">
+                <div class="summary-row">
+                    <span class="summary-key">Chủ cửa hàng</span>
+                    <span class="summary-val" th:text="${ownerName}">—</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">CCCD / CMND</span>
+                    <span class="summary-val" th:if="${hasCccd}">
+                        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Đã tải lên
+                    </span>
+                    <span class="summary-val" style="color:#ef4444" th:unless="${hasCccd}">⚠ Chưa có</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">Giấy ĐKKD</span>
+                    <span class="summary-val" th:if="${hasLicense}">
+                        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Đã tải lên
+                    </span>
+                    <span class="summary-val" style="color:#ef4444" th:unless="${hasLicense}">⚠ Chưa có</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">Giấy VSATTP</span>
+                    <span class="summary-val" th:if="${hasVsattp}">
+                        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Đã tải lên
+                    </span>
+                    <span class="summary-val" style="color:#ef4444" th:unless="${hasVsattp}">⚠ Chưa có</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">Tài khoản ngân hàng</span>
+                    <span class="summary-val" th:if="${hasBank}">
+                        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Đã xác nhận
+                    </span>
+                    <span class="summary-val" style="color:#ef4444" th:unless="${hasBank}">⚠ Chưa có</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">Khung giờ pickup</span>
+                    <span class="summary-val" id="pickup-slots-display" th:text="${pickupSlots != null ? pickupSlots : 'Chưa cấu hình'}">—</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-key">Thời gian nộp</span>
+                    <span class="summary-val" id="submitted-at" th:text="${submittedAt != null ? #temporals.format(submittedAt, 'dd/MM/yyyy HH:mm') : '—'}">—</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- While you wait -->
+        <div class="info-section">
+            <div class="info-cards">
+                <div class="info-card">
+                    <div class="info-card-icon">📖</div>
+                    <div class="info-card-title">Chuẩn bị deal đầu tiên</div>
+                    <div class="info-card-desc">Đọc hướng dẫn tạo deal hiệu quả để tối ưu doanh thu</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">💬</div>
+                    <div class="info-card-title">Hỗ trợ Seller</div>
+                    <div class="info-card-desc">Liên hệ hotline 1900 1234 hoặc chat trực tiếp với team</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">📱</div>
+                    <div class="info-card-title">Tải app DealXanh</div>
+                    <div class="info-card-desc">Nhận thông báo ngay khi hồ sơ được duyệt</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">⚙️</div>
+                    <div class="info-card-title">Cài đặt sẵn nhân viên</div>
+                    <div class="info-card-desc">Chuẩn bị danh sách staff để phân quyền ngay khi được duyệt</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card-actions">
+            <button class="btn-primary" onclick="window.location.href='/seller/logout'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Về trang Đăng nhập Seller
+            </button>
+            <button class="btn-secondary" id="btn-check-status" onclick="checkStatusFromDB()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Kiểm tra trạng thái hồ sơ
+            </button>
+            <div class="edit-link">Cần chỉnh sửa? <a href="/seller/register">Quay lại chỉnh sửa hồ sơ</a></div>
+        </div>
+
+    </div><!-- /card -->
+</div>
+
+<script th:inline="javascript">
+// Dữ liệu từ server (Thymeleaf)
+const OWNER_EMAIL = /*[[${ownerEmail}]]*/ '';
+let currentStatus = /*[[${storeStatus}]]*/ 'PENDING';
+
+// Update timestamp khi load
+document.addEventListener('DOMContentLoaded', function() {
+    updateTimeline(currentStatus);
+    // Tự động kiểm tra mỗi 60 giây
+    setInterval(checkStatusFromDB, 60000);
+});
+
+function updateTimeline(status) {
+    const tl2dot = document.getElementById('tl-dot-2');
+    const tl2time = document.getElementById('tl-time-2');
+    const tl3dot = document.getElementById('tl-dot-3');
+    const tl3label = document.getElementById('tl-label-3');
+    const tl3time = document.getElementById('tl-time-3');
+    const tl4dot = document.getElementById('tl-dot-4');
+    const tl4label = document.getElementById('tl-label-4');
+    const heroIcon = document.getElementById('hero-icon-wrap');
+    const statusBadge = document.getElementById('status-badge-wrap');
+    const cardTitle = document.getElementById('card-title');
+
+    if (status === 'APPROVED' || status === 'ACTIVE') {
+        if (tl2dot) { tl2dot.className = 'tl-dot tl-dot--done'; tl2dot.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'; }
+        if (tl2time) tl2time.textContent = 'Đã hoàn thành';
+        if (tl3dot) { tl3dot.className = 'tl-dot tl-dot--done'; tl3dot.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'; }
+        if (tl3label) tl3label.textContent = '✅ Phê duyệt & Kích hoạt';
+        if (tl3time) tl3time.textContent = 'Hoàn tất — Tài khoản đã kích hoạt!';
+        if (tl4dot) { tl4dot.className = 'tl-dot tl-dot--active'; }
+        if (tl4label) tl4label.textContent = '🚀 Bắt đầu đăng deal!';
+        if (statusBadge) statusBadge.innerHTML = '<div class="status-badge status-badge--approved"><span class="status-dot"></span> Đã được phê duyệt 🎉</div>';
+        if (cardTitle) cardTitle.textContent = 'Hồ sơ đã được phê duyệt!';
+        // Change hero to success
+        if (heroIcon) {
+            heroIcon.querySelector('.hero-circle-outer').style.borderColor = 'rgba(16,185,129,.2)';
+            heroIcon.querySelector('.hero-circle-mid').style.background = 'rgba(16,185,129,.1)';
+            heroIcon.querySelector('.hero-circle-inner').style.background = 'rgba(16,185,129,.15)';
+            heroIcon.querySelector('.hero-circle-inner svg').style.color = 'var(--status-success)';
+        }
+    } else if (status === 'REJECTED') {
+        if (tl2dot) { tl2dot.className = 'tl-dot tl-dot--rejected'; tl2dot.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'; }
+        if (tl2time) tl2time.textContent = 'Đã từ chối';
+        if (statusBadge) statusBadge.innerHTML = '<div class="status-badge" style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.25)">Bị từ chối</div>';
+        if (cardTitle) cardTitle.textContent = 'Hồ sơ bị từ chối';
+    }
+    // PENDING — giữ nguyên giao diện mặc định
+}
+
+async function checkStatusFromDB() {
+    const btn = document.getElementById('btn-check-status');
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin .7s linear infinite"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Đang kiểm tra...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/auth/seller-status?email=' + encodeURIComponent(OWNER_EMAIL));
+        const data = await res.json();
+        if (data.success) {
+            const newStatus = data.status;
+            if (newStatus !== currentStatus) {
+                currentStatus = newStatus;
+                updateTimeline(newStatus);
+            }
+            // Update summary
+            if (data.storeName) document.getElementById('summary-store-name').textContent = data.storeName;
+
+            const statusText = {PENDING:'⏳ Đang chờ xét duyệt',APPROVED:'✅ Đã phê duyệt',ACTIVE:'✅ Đã kích hoạt',REJECTED:'❌ Bị từ chối'}[newStatus] || newStatus;
+            showToast('Trạng thái: ' + statusText);
+        } else {
+            showToast('Không thể kiểm tra: ' + data.message);
+        }
+    } catch(e) {
+        showToast('Lỗi kết nối, thử lại sau');
+    } finally {
+        btn.innerHTML = origHTML;
+        btn.disabled = false;
+    }
+}
+
+function showToast(msg) {
+    const t = document.createElement('div');
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:999;white-space:nowrap;transition:opacity .3s';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3500);
+}
+</script>
+
+<style>
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-badge--approved{background:var(--status-success-bg);color:var(--status-success);border:1px solid rgba(16,185,129,.25)}
+</style>
+</body>
+</html>

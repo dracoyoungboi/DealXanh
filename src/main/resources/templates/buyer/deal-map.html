@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bản đồ deal — DealXanh</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{
+  --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+  --accent:#d4af37;
+  --surface:#fff;--background:#f5f6f8;
+  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+  --border:#e0e0e0;--border-light:#f0f0f0;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.12);--shadow-lg:0 8px 32px rgba(0,0,0,.18);
+  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+  --header:56px; --bottom-sheet-peek:200px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;overflow:hidden}
+button{cursor:pointer;border:none;font-family:inherit;background:none}
+
+/* ===== MAP FULL SCREEN ===== */
+#map{position:fixed;inset:0;z-index:0}
+
+/* ===== HEADER ===== */
+.map-header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:var(--header);
+  padding:0 12px;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border-light);
+  box-shadow:var(--shadow-sm);
+}
+.header-back{
+  width:38px;height:38px;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-primary);transition:background var(--tr);flex-shrink:0;
+}
+.header-back:hover{background:var(--background)}
+.header-back svg{width:20px;height:20px}
+.header-search{
+  flex:1;display:flex;align-items:center;gap:8px;
+  padding:8px 14px;
+  background:var(--background);
+  border-radius:var(--radius-full);
+  border:1.5px solid var(--border-light);
+  transition:border-color var(--tr);cursor:pointer;
+}
+.header-search:focus-within{border-color:var(--primary)}
+.header-search svg{width:16px;height:16px;color:var(--text-tertiary);flex-shrink:0}
+.header-search input{
+  flex:1;border:none;background:none;outline:none;
+  font-size:14px;color:var(--text-primary);font-family:var(--font);
+}
+.header-search input::placeholder{color:var(--text-tertiary)}
+.header-filter-btn{
+  width:38px;height:38px;border-radius:var(--radius-md);
+  background:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;flex-shrink:0;transition:background var(--tr);
+  position:relative;
+}
+.header-filter-btn:hover{background:var(--primary-dark)}
+.header-filter-btn svg{width:18px;height:18px}
+.filter-dot{
+  position:absolute;top:6px;right:6px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent);border:1.5px solid var(--primary);
+}
+
+/* ===== FLOATING CONTROLS ===== */
+.map-controls{
+  position:fixed;right:12px;top:calc(var(--header) + 12px);
+  z-index:100;display:flex;flex-direction:column;gap:8px;
+}
+.ctrl-btn{
+  width:42px;height:42px;
+  background:var(--surface);
+  border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-md);
+  color:var(--text-primary);transition:all var(--tr);
+  border:1px solid var(--border-light);
+}
+.ctrl-btn:hover{background:var(--background);color:var(--primary)}
+.ctrl-btn svg{width:18px;height:18px}
+.ctrl-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* Category pills */
+.category-pills{
+  position:fixed;top:calc(var(--header) + 8px);left:0;right:60px;
+  z-index:100;
+  display:flex;gap:6px;padding:0 12px;
+  overflow-x:auto;scrollbar-width:none;
+}
+.category-pills::-webkit-scrollbar{display:none}
+.pill{
+  flex-shrink:0;display:flex;align-items:center;gap:5px;
+  padding:6px 14px;
+  background:var(--surface);
+  border:1.5px solid var(--border-light);
+  border-radius:var(--radius-full);
+  font-size:12px;font-weight:600;color:var(--text-secondary);
+  box-shadow:var(--shadow-sm);
+  transition:all var(--tr);white-space:nowrap;
+}
+.pill:hover{border-color:var(--primary);color:var(--primary)}
+.pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.pill svg{width:13px;height:13px}
+
+/* Radius ring legend */
+.radius-legend{
+  position:fixed;left:12px;bottom:calc(var(--bottom-sheet-peek) + 14px);
+  z-index:100;
+  display:flex;gap:8px;align-items:center;
+  background:rgba(255,255,255,.9);
+  backdrop-filter:blur(8px);
+  padding:6px 12px;
+  border-radius:var(--radius-full);
+  box-shadow:var(--shadow-sm);
+  border:1px solid var(--border-light);
+}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ===== CUSTOM MARKER STYLES ===== */
+.custom-pin{
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.25));
+  transition:transform .15s;
+}
+.custom-pin:hover{transform:scale(1.12) translateY(-2px)}
+.pin-bubble{
+  padding:5px 10px;
+  border-radius:var(--radius-full);
+  font-size:12px;font-weight:700;color:#fff;
+  white-space:nowrap;line-height:1;
+  border:2px solid rgba(255,255,255,.5);
+}
+.pin-tail{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;margin:-1px auto 0}
+
+/* Pin urgency colors */
+.pin-danger .pin-bubble{background:#ef4444}
+.pin-danger .pin-tail{border-top:7px solid #ef4444}
+.pin-warning .pin-bubble{background:#f59e0b}
+.pin-warning .pin-tail{border-top:7px solid #f59e0b}
+.pin-safe .pin-bubble{background:#10b981}
+.pin-safe .pin-tail{border-top:7px solid #10b981}
+.pin-sold .pin-bubble{background:#9ca3af}
+.pin-sold .pin-tail{border-top:7px solid #9ca3af}
+
+/* Blind box pin */
+.pin-blind .pin-bubble{background:linear-gradient(135deg,#7c3aed,#4f46e5)}
+.pin-blind .pin-tail{border-top:7px solid #7c3aed}
+
+/* ===== BOTTOM SHEET ===== */
+.bottom-sheet{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:var(--surface);
+  border-radius:24px 24px 0 0;
+  box-shadow:0 -4px 32px rgba(0,0,0,.15);
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+  max-height:85vh;
+  display:flex;flex-direction:column;
+}
+.bottom-sheet.collapsed{transform:translateY(calc(100% - var(--bottom-sheet-peek)))}
+.bottom-sheet.expanded{transform:translateY(0)}
+
+.sheet-handle-wrap{
+  padding:10px 0 4px;
+  display:flex;justify-content:center;align-items:center;
+  cursor:grab;flex-shrink:0;
+}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:var(--radius-full)}
+
+.sheet-peek{padding:0 16px 12px;flex-shrink:0}
+.sheet-peek-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sheet-count{font-size:15px;font-weight:700;color:var(--text-primary)}
+.sheet-count span{color:var(--primary)}
+.sheet-sort{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:500;color:var(--text-secondary);padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius-full)}
+.sheet-sort svg{width:13px;height:13px}
+
+/* Deal cards scroll */
+.sheet-deals{
+  overflow-y:auto;padding:0 16px 100px;flex:1;
+  scroll-snap-type:y mandatory;
+  scrollbar-width:thin;
+}
+.sheet-deals::-webkit-scrollbar{width:3px}
+.sheet-deals::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* Deal row card */
+.deal-row{
+  display:flex;gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid var(--border-light);
+  scroll-snap-align:start;
+  cursor:pointer;
+  transition:background var(--tr);
+  border-radius:var(--radius-md);
+}
+.deal-row:hover{background:var(--background)}
+.deal-row:last-child{border-bottom:none}
+.deal-row-img{
+  width:80px;height:80px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0;position:relative;
+  background:var(--border-light);
+}
+.deal-row-img img{width:100%;height:100%;object-fit:cover}
+.deal-row-badge{
+  position:absolute;top:4px;left:4px;
+  padding:2px 7px;border-radius:var(--radius-full);
+  font-size:10px;font-weight:700;color:#fff;
+  line-height:1.4;
+}
+.deal-row-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+.deal-row-store{font-size:11px;color:var(--text-tertiary);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deal-row-name{font-size:13px;font-weight:700;color:var(--text-primary);line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.deal-row-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.deal-row-price{display:flex;align-items:baseline;gap:5px}
+.price-new{font-size:14px;font-weight:800;color:var(--primary)}
+.price-old{font-size:11px;color:var(--text-tertiary);text-decoration:line-through}
+.deal-row-meta{display:flex;align-items:center;gap:5px}
+.meta-chip{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:var(--radius-full)}
+.meta-chip svg{width:10px;height:10px}
+.chip-danger{background:rgba(239,68,68,.1);color:#ef4444}
+.chip-warning{background:rgba(245,158,11,.1);color:#f59e0b}
+.chip-safe{background:rgba(16,185,129,.1);color:#10b981}
+.chip-dist{background:var(--background);color:var(--text-secondary);border:1px solid var(--border-light)}
+
+/* ===== FILTER PANEL ===== */
+.filter-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;
+  opacity:0;visibility:hidden;transition:all var(--tr);
+}
+.filter-overlay.show{opacity:1;visibility:visible}
+.filter-panel{
+  position:fixed;top:0;right:0;bottom:0;width:320px;max-width:100vw;
+  background:var(--surface);z-index:501;
+  transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:var(--shadow-lg);
+}
+.filter-panel.show{transform:translateX(0)}
+.filter-header{
+  padding:16px 20px;border-bottom:1px solid var(--border-light);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.filter-header h3{font-size:17px;font-weight:700}
+.filter-close{width:34px;height:34px;border-radius:var(--radius-md);background:var(--background);display:flex;align-items:center;justify-content:center;color:var(--text-secondary)}
+.filter-close:hover{color:var(--primary)}
+.filter-close svg{width:18px;height:18px}
+.filter-body{flex:1;overflow-y:auto;padding:20px}
+.filter-section{margin-bottom:24px}
+.filter-section:last-child{margin-bottom:0}
+.filter-label{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.filter-label svg{width:14px;height:14px;color:var(--primary)}
+
+/* Range slider */
+.range-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:13px;color:var(--text-secondary)}
+.range-val{font-weight:700;color:var(--primary)}
+input[type=range]{
+  width:100%;height:5px;border-radius:var(--radius-full);
+  -webkit-appearance:none;background:var(--border-light);outline:none;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+  background:var(--primary);cursor:pointer;border:2px solid #fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+
+/* Check chips */
+.check-chips{display:flex;flex-wrap:wrap;gap:7px}
+.check-chip{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:var(--radius-full);
+  border:1.5px solid var(--border);font-size:12px;font-weight:600;
+  color:var(--text-secondary);cursor:pointer;transition:all var(--tr);
+  background:var(--surface);
+}
+.check-chip:hover{border-color:var(--primary);color:var(--primary)}
+.check-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.check-chip input{display:none}
+
+/* Price inputs */
+.price-range-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.price-input{
+  padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);
+  font-size:13px;outline:none;transition:border-color var(--tr);background:var(--surface);font-family:var(--font);
+}
+.price-input:focus{border-color:var(--primary)}
+.price-input-label{font-size:11px;color:var(--text-tertiary);margin-bottom:4px}
+
+/* Sort row */
+.sort-options{display:flex;flex-direction:column;gap:7px}
+.sort-opt{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--radius-md);
+  border:1.5px solid var(--border);cursor:pointer;transition:all var(--tr);
+}
+.sort-opt:hover{border-color:var(--primary)}
+.sort-opt.active{border-color:var(--primary);background:rgba(13,92,46,.04)}
+.sort-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all var(--tr)}
+.sort-opt.active .sort-radio{border-color:var(--primary);background:var(--primary)}
+.sort-radio-dot{width:6px;height:6px;border-radius:50%;background:#fff;display:none}
+.sort-opt.active .sort-radio-dot{display:block}
+.sort-opt-text{font-size:13px;font-weight:500;color:var(--text-primary)}
+.sort-opt.active .sort-opt-text{font-weight:600;color:var(--primary)}
+
+.filter-footer{
+  padding:16px 20px;border-top:1px solid var(--border-light);
+  display:flex;gap:10px;flex-shrink:0;
+}
+.btn-reset{flex:1;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-md);font-size:14px;font-weight:600;color:var(--text-secondary);transition:all var(--tr)}
+.btn-reset:hover{border-color:var(--primary);color:var(--primary)}
+.btn-apply{flex:2;padding:12px;background:var(--primary);color:#fff;border-radius:var(--radius-md);font-size:14px;font-weight:700;transition:all var(--tr);box-shadow:0 3px 10px rgba(13,92,46,.3)}
+.btn-apply:hover{background:var(--primary-dark)}
+
+/* ===== DEAL POPUP (clicking pin) ===== */
+.leaflet-popup-content-wrapper{border-radius:var(--radius-lg)!important;box-shadow:var(--shadow-lg)!important;border:1px solid var(--border-light);padding:0!important;overflow:hidden;min-width:260px}
+.leaflet-popup-content{margin:0!important;width:100%!important}
+.leaflet-popup-tip-container{display:none}
+.deal-popup{font-family:var(--font);cursor:pointer}
+.deal-popup-img{width:100%;height:140px;object-fit:cover;display:block}
+.deal-popup-body{padding:12px 14px 14px}
+.deal-popup-store{font-size:11px;color:var(--text-tertiary);margin-bottom:3px}
+.deal-popup-name{font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:8px;line-height:1.3}
+.deal-popup-row{display:flex;align-items:center;justify-content:space-between}
+.deal-popup-price{display:flex;align-items:baseline;gap:6px}
+.popup-price-new{font-size:18px;font-weight:800;color:var(--primary)}
+.popup-price-old{font-size:12px;color:var(--text-tertiary);text-decoration:line-through}
+.deal-popup-cta{
+  padding:7px 14px;background:var(--primary);color:#fff;
+  border-radius:var(--radius-full);font-size:12px;font-weight:700;
+  display:flex;align-items:center;gap:4px;
+}
+.deal-popup-cta svg{width:12px;height:12px}
+.deal-popup-tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.popup-tag{padding:2px 8px;border-radius:var(--radius-full);font-size:10px;font-weight:600}
+
+/* Mobile bottom nav */
+.mobile-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:300;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border-light);
+  display:flex;height:64px;
+}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-tertiary);font-size:10px;font-weight:500;transition:color var(--tr);position:relative}
+.nav-item.active{color:var(--primary)}
+.nav-item svg{width:22px;height:22px}
+.nav-badge{position:absolute;top:8px;right:calc(50% - 16px);width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+/* Toast */
+.map-toast{
+  position:fixed;top:calc(var(--header) + 56px);left:50%;transform:translateX(-50%);
+  background:rgba(13,26,15,.9);color:#fff;
+  padding:10px 18px;border-radius:var(--radius-full);
+  font-size:13px;font-weight:500;
+  box-shadow:var(--shadow-md);
+  z-index:1000;white-space:nowrap;
+  animation:fadeUp .3s ease-out;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* GPS locating */
+.locating-pulse{
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(59,130,246,.3);
+  border:2px solid #3b82f6;
+  position:relative;
+}
+.locating-pulse::after{
+  content:'';position:absolute;inset:-4px;border-radius:50%;
+  border:2px solid rgba(59,130,246,.4);
+  animation:locPulse 1.5s ease-out infinite;
+}
+@keyframes locPulse{0%{transform:scale(1);opacity:1}100%{transform:scale(1.8);opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- Map -->
+<div id="map"></div>
+
+<!-- Header -->
+<header class="map-header">
+  <button class="header-back" onclick="history.back()" aria-label="Quay lại">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+  </button>
+  <div class="header-search" onclick="window.location.href='search.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" placeholder="Tìm deal quanh đây..." readonly style="cursor:pointer">
+  </div>
+  <button class="header-filter-btn" onclick="openFilter()" aria-label="Bộ lọc">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+    <span class="filter-dot"></span>
+  </button>
+</header>
+
+<!-- Category pills (below header) -->
+<div class="category-pills" id="cat-pills" style="top:calc(56px + 8px)">
+  <button class="pill active" data-cat="all" onclick="filterCat(this,'all')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Tất cả
+  </button>
+  <button class="pill" data-cat="food" onclick="filterCat(this,'food')">🍜 Đồ ăn</button>
+  <button class="pill" data-cat="beverage" onclick="filterCat(this,'beverage')">🧋 Đồ uống</button>
+  <button class="pill" data-cat="blindbox" onclick="filterCat(this,'blindbox')">🎁 Blind Box</button>
+  <button class="pill" data-cat="bakery" onclick="filterCat(this,'bakery')">🍰 Bánh ngọt</button>
+  <button class="pill" data-cat="snack" onclick="filterCat(this,'snack')">🍟 Ăn vặt</button>
+</div>
+
+<!-- Map Controls -->
+<div class="map-controls">
+  <button class="ctrl-btn" id="locate-btn" onclick="locateUser()" title="Vị trí của tôi">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+  </button>
+  <button class="ctrl-btn" onclick="map.zoomIn()" title="Phóng to">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button class="ctrl-btn" onclick="map.zoomOut()" title="Thu nhỏ">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button class="ctrl-btn" id="radius-btn" onclick="toggleRadius()" title="Bán kính 1km">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
+</div>
+
+<!-- Radius legend -->
+<div class="radius-legend" id="radius-legend" style="display:none">
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Sắp hết (<1h)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Cận date (<3h)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Còn thời gian</div>
+</div>
+
+<!-- Bottom Sheet -->
+<div class="bottom-sheet collapsed" id="bottom-sheet">
+  <div class="sheet-handle-wrap" id="sheet-handle">
+    <div class="sheet-handle"></div>
+  </div>
+  <div class="sheet-peek">
+    <div class="sheet-peek-row">
+      <div class="sheet-count"><span id="deal-count">18</span> deal quanh đây</div>
+      <button class="sheet-sort" onclick="openFilter()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Gần nhất
+      </button>
+    </div>
+  </div>
+  <div class="sheet-deals" id="deal-list"></div>
+</div>
+
+<!-- Filter Panel -->
+<div class="filter-overlay" id="filter-overlay" onclick="closeFilter()"></div>
+<div class="filter-panel" id="filter-panel">
+  <div class="filter-header">
+    <h3>Bộ lọc & Sắp xếp</h3>
+    <button class="filter-close" onclick="closeFilter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div class="filter-body">
+
+    <!-- Sắp xếp -->
+    <div class="filter-section">
+      <div class="filter-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>Sắp xếp theo</div>
+      <div class="sort-options">
+        <div class="sort-opt active" onclick="selectSort(this)"><div class="sort-radio"><div class="sort-radio-dot"></div></div><span class="sort-opt-text">Gần nhất</span></div>
+        <div class="sort-opt" onclick="selectSort(this)"><div class="sort-radio"><div class="sort-radio-dot"></div></div><span class="sort-opt-text">Sắp hết hạn (Urgency)</span></div>
+        <div class="sort-opt" onclick="selectSort(this)"><div class="sort-radio"><div class="sort-radio-dot"></div></div><span class="sort-opt-text">Giảm giá nhiều nhất</span></div>
+        <div class="sort-opt" onclick="selectSort(this)"><div class="sort-radio"><div class="sort-radio-dot"></div></div><span class="sort-opt-text">Đánh giá cao nhất</span></div>
+      </div>
+    </div>
+
+    <!-- Bán kính -->
+    <div class="filter-section">
+      <div class="filter-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>Bán kính tìm kiếm</div>
+      <div class="range-row"><span>Bán kính</span><span class="range-val" id="radius-val">1 km</span></div>
+      <input type="range" min="0.5" max="5" step="0.5" value="1" oninput="document.getElementById('radius-val').textContent=this.value+' km'">
+    </div>
+
+    <!-- Thời gian còn lại -->
+    <div class="filter-section">
+      <div class="filter-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Thời gian còn lại</div>
+      <div class="check-chips">
+        <label class="check-chip active"><input type="checkbox" checked>⏰ Tất cả</label>
+        <label class="check-chip"><input type="checkbox">🔥 < 30 phút</label>
+        <label class="check-chip"><input type="checkbox">⚡ < 1 giờ</label>
+        <label class="check-chip"><input type="checkbox">🟡 < 3 giờ</label>
+        <label class="check-chip"><input type="checkbox">✅ > 3 giờ</label>
+      </div>
+    </div>
+
+    <!-- Loại thực phẩm -->
+    <div class="filter-section">
+      <div class="filter-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>Loại thực phẩm</div>
+      <div class="check-chips">
+        <label class="check-chip active"><input type="checkbox" checked>🍜 Đồ ăn</label>
+        <label class="check-chip active"><input type="checkbox" checked>🧋 Đồ uống</label>
+        <label class="check-chip"><input type="checkbox">🎁 Blind Box</label>
+        <label class="check-chip"><input type="checkbox">🍰 Bánh ngọt</label>
+        <label class="check-chip"><input type="checkbox">🍟 Ăn vặt</label>
+      </div>
+    </div>
+
+    <!-- Khoảng giá -->
+    <div class="filter-section">
+      <div class="filter-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Khoảng giá (sau giảm)</div>
+      <div class="price-range-inputs">
+        <div><div class="price-input-label">Từ</div><input type="number" class="price-input" placeholder="0" value="0"></div>
+        <div><div class="price-input-label">Đến</div><input type="number" class="price-input" placeholder="100,000" value="100000"></div>
+      </div>
+    </div>
+
+    <!-- Mức giảm giá -->
+    <div class="filter-section">
+      <div class="filter-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Mức giảm giá tối thiểu</div>
+      <div class="check-chips">
+        <label class="check-chip active"><input type="checkbox" checked>Tất cả</label>
+        <label class="check-chip"><input type="checkbox">≥ 30%</label>
+        <label class="check-chip"><input type="checkbox">≥ 50%</label>
+        <label class="check-chip"><input type="checkbox">≥ 70%</label>
+      </div>
+    </div>
+
+  </div>
+  <div class="filter-footer">
+    <button class="btn-reset" onclick="resetFilter()">Đặt lại</button>
+    <button class="btn-apply" onclick="applyFilter()">Áp dụng (18 deal)</button>
+  </div>
+</div>
+
+<!-- Mobile Nav -->
+<nav class="mobile-nav">
+  <a class="nav-item" href="../home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Trang chủ</span></a>
+  <a class="nav-item active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg><span>Bản đồ</span></a>
+  <a class="nav-item" href='cart.html'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span>Giỏ hàng</span></a>
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Đơn hàng</span></a>
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Tài khoản</span></a>
+</nav>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ===== MOCK DATA =====
+const DEALS = [
+  {id:1,name:'Bánh mì pate nóng hổi',store:'Bánh mì Hòa Mai',cat:'food',lat:21.0285,lng:105.8542,price:12500,original:25000,discount:50,urgency:'warning',timeLeft:'1h 45m',dist:350,img:'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=300&q=70',slots:5},
+  {id:2,name:'Bún bò Huế cận date',store:'Bún bò Thảo',cat:'food',lat:21.0325,lng:105.8512,price:27000,original:45000,discount:40,urgency:'warning',timeLeft:'55m',dist:520,img:'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300&q=70',slots:2},
+  {id:3,name:'Blind Box Mystery 3 món',store:'Cơm Niêu Nhà',cat:'blindbox',lat:21.0255,lng:105.8582,price:48000,original:80000,discount:40,urgency:'safe',timeLeft:'3h 10m',dist:780,img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&q=70',slots:10},
+  {id:4,name:'Trà sữa trân châu đường đen',store:'Mixue Hòa Lạc',cat:'beverage',lat:21.0305,lng:105.8502,price:15000,original:30000,discount:50,urgency:'danger',timeLeft:'28m',dist:1200,img:'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=300&q=70',slots:20},
+  {id:5,name:'Gà rán KFC 2 miếng',store:'KFC Hòa Lạc',cat:'food',lat:21.0225,lng:105.8562,price:33000,original:55000,discount:40,urgency:'safe',timeLeft:'4h',dist:1500,img:'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=300&q=70',slots:7},
+  {id:6,name:'Blind Box Sweet 3 bánh',store:'Bánh Mousse',cat:'blindbox',lat:21.0280,lng:105.8522,price:36000,original:60000,discount:40,urgency:'safe',timeLeft:'5h',dist:950,img:'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=300&q=70',slots:8},
+  {id:7,name:'Cà phê sữa đá cận date',store:'Coffee House',cat:'beverage',lat:21.0298,lng:105.8558,price:18000,original:35000,discount:49,urgency:'warning',timeLeft:'2h 20m',dist:430,img:'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=300&q=70',slots:15},
+  {id:8,name:'Sushi combo 10 miếng',store:'Sushi Yuki',cat:'food',lat:21.0242,lng:105.8530,price:45000,original:90000,discount:50,urgency:'danger',timeLeft:'35m',dist:860,img:'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=300&q=70',slots:3},
+];
+
+const urgencyColor = {danger:'#ef4444',warning:'#f59e0b',safe:'#10b981'};
+const urgencyClass = {danger:'pin-danger',warning:'pin-warning',safe:'pin-safe',blindbox:'pin-blind'};
+
+// ===== MAP INIT =====
+const USER_LAT = 21.0270, USER_LNG = 105.8540;
+const map = L.map('map',{zoomControl:false,attributionControl:false}).setView([USER_LAT,USER_LNG],15);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+
+// User location marker
+const userIcon = L.divIcon({
+  html:`<div style="width:18px;height:18px;background:#3b82f6;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(59,130,246,.5)"></div>`,
+  className:'',iconSize:[18,18],iconAnchor:[9,9]
+});
+const userMarker = L.marker([USER_LAT,USER_LNG],{icon:userIcon,zIndexOffset:1000}).addTo(map);
+userMarker.bindTooltip('Vị trí của bạn',{permanent:false,direction:'top'});
+
+// Radius circle
+let radiusCircle = null;
+let radiusOn = false;
+
+// Add deal pins
+const markers = [];
+let activeFilter = 'all';
+
+function buildPinHtml(d){
+  const cls = d.cat === 'blindbox' ? 'pin-blind' : `pin-${d.urgency}`;
+  const color = d.cat === 'blindbox' ? '#7c3aed' : urgencyColor[d.urgency];
+  return `<div class="custom-pin">
+    <div class="pin-bubble ${cls}" style="border-color:rgba(255,255,255,.6)">${d.cat==='blindbox'?'🎁':'-'+d.discount+'%'}</div>
+    <div class="pin-tail" style="border-top:7px solid ${color};border-left:5px solid transparent;border-right:5px solid transparent"></div>
+  </div>`;
+}
+
+function addMarkers(deals){
+  markers.forEach(m=>map.removeLayer(m));
+  markers.length=0;
+  deals.forEach(d=>{
+    const icon = L.divIcon({html:buildPinHtml(d),className:'',iconSize:[60,36],iconAnchor:[30,36]});
+    const m = L.marker([d.lat,d.lng],{icon}).addTo(map);
+    m.on('click',()=>showDealPopup(d,m));
+    markers.push(m);
+  });
+}
+
+function showDealPopup(d,marker){
+  const timeColor = d.urgency==='danger'?'#ef4444':d.urgency==='warning'?'#f59e0b':'#10b981';
+  const popup = L.popup({maxWidth:280,className:'deal-popup-container'})
+    .setLatLng([d.lat,d.lng])
+    .setContent(`
+      <div class="deal-popup" onclick="window.location.href='deal-detail.html?id=${d.id}'">
+        <img class="deal-popup-img" src="${d.img}" alt="${d.name}" loading="lazy">
+        <div class="deal-popup-body">
+          <div class="deal-popup-store">${d.store}</div>
+          <div class="deal-popup-name">${d.name}</div>
+          <div class="deal-popup-row">
+            <div class="deal-popup-price">
+              <span class="popup-price-new">${d.price.toLocaleString('vi-VN')}đ</span>
+              <span class="popup-price-old">${d.original.toLocaleString('vi-VN')}đ</span>
+            </div>
+            <button class="deal-popup-cta">Mua <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+          </div>
+          <div class="deal-popup-tags">
+            <span class="popup-tag" style="background:rgba(239,68,68,.1);color:${timeColor}">⏰ ${d.timeLeft}</span>
+            <span class="popup-tag" style="background:var(--background);color:var(--text-secondary)">📍 ${d.dist}m</span>
+            <span class="popup-tag" style="background:rgba(13,92,46,.1);color:var(--primary)">Còn ${d.slots} suất</span>
+          </div>
+        </div>
+      </div>`);
+  popup.openOn(map);
+}
+
+// Init markers
+addMarkers(DEALS);
+
+// ===== BOTTOM SHEET DRAG =====
+let sheetExpanded = false;
+const sheet = document.getElementById('bottom-sheet');
+const handle = document.getElementById('sheet-handle');
+let startY=0,startScrollTop=0;
+
+handle.addEventListener('pointerdown',e=>{
+  startY=e.clientY;
+  handle.setPointerCapture(e.pointerId);
+});
+handle.addEventListener('pointermove',e=>{
+  const dy = e.clientY-startY;
+  if(dy<-30){expandSheet()}
+  else if(dy>30){collapseSheet()}
+});
+handle.addEventListener('pointerup',()=>{});
+
+function expandSheet(){if(!sheetExpanded){sheetExpanded=true;sheet.classList.replace('collapsed','expanded');}}
+function collapseSheet(){if(sheetExpanded){sheetExpanded=false;sheet.classList.replace('expanded','collapsed');}}
+
+// Click handle to toggle
+handle.addEventListener('click',()=>{sheetExpanded?collapseSheet():expandSheet()});
+
+// ===== RENDER DEAL LIST =====
+function renderDeals(deals){
+  const list = document.getElementById('deal-list');
+  document.getElementById('deal-count').textContent = deals.length;
+  list.innerHTML = deals.map(d=>`
+    <div class="deal-row" onclick="window.location.href='deal-detail.html?id=${d.id}'">
+      <div class="deal-row-img">
+        <img src="${d.img}" alt="${d.name}" loading="lazy">
+        <span class="deal-row-badge" style="background:${d.urgency==='danger'?'#ef4444':d.urgency==='warning'?'#f59e0b':'#10b981'}">-${d.discount}%</span>
+      </div>
+      <div class="deal-row-body">
+        <div class="deal-row-store">${d.store}</div>
+        <div class="deal-row-name">${d.name}</div>
+        <div class="deal-row-bottom">
+          <div class="deal-row-price">
+            <span class="price-new">${d.price.toLocaleString('vi-VN')}đ</span>
+            <span class="price-old">${d.original.toLocaleString('vi-VN')}đ</span>
+          </div>
+          <div class="deal-row-meta">
+            <span class="meta-chip chip-dist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${d.dist}m</span>
+            <span class="meta-chip chip-${d.urgency}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${d.timeLeft}</span>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+renderDeals(DEALS);
+
+// ===== CATEGORY FILTER =====
+function filterCat(btn, cat){
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = cat;
+  const filtered = cat==='all' ? DEALS : DEALS.filter(d=>d.cat===cat);
+  renderDeals(filtered);
+  addMarkers(filtered);
+}
+
+// ===== LOCATE =====
+function locateUser(){
+  const btn = document.getElementById('locate-btn');
+  btn.classList.add('active');
+  showToast('📍 Đang xác định vị trí...');
+  setTimeout(()=>{
+    map.flyTo([USER_LAT,USER_LNG],16,{animate:true,duration:1.2});
+    btn.classList.remove('active');
+    showToast('✅ Đã tìm thấy vị trí của bạn');
+  },1200);
+}
+
+// ===== RADIUS TOGGLE =====
+function toggleRadius(){
+  const btn = document.getElementById('radius-btn');
+  const legend = document.getElementById('radius-legend');
+  radiusOn = !radiusOn;
+  if(radiusOn){
+    btn.classList.add('active');
+    legend.style.display='flex';
+    radiusCircle = L.circle([USER_LAT,USER_LNG],{
+      radius:1000,color:'#0d5c2e',fillColor:'rgba(13,92,46,.06)',
+      fillOpacity:1,weight:1.5,dashArray:'6 4'
+    }).addTo(map);
+  } else {
+    btn.classList.remove('active');
+    legend.style.display='none';
+    if(radiusCircle){map.removeLayer(radiusCircle);radiusCircle=null;}
+  }
+}
+
+// ===== FILTER PANEL =====
+function openFilter(){
+  document.getElementById('filter-overlay').classList.add('show');
+  document.getElementById('filter-panel').classList.add('show');
+}
+function closeFilter(){
+  document.getElementById('filter-overlay').classList.remove('show');
+  document.getElementById('filter-panel').classList.remove('show');
+}
+function selectSort(el){
+  document.querySelectorAll('.sort-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+}
+function resetFilter(){
+  document.querySelectorAll('.check-chip').forEach(c=>c.classList.remove('active'));
+  document.querySelector('.check-chip').classList.add('active');
+  showToast('Đã đặt lại bộ lọc');
+}
+function applyFilter(){
+  closeFilter();
+  showToast('✅ Đã áp dụng bộ lọc');
+}
+
+// ===== TOAST =====
+function showToast(msg,dur=2200){
+  document.querySelector('.map-toast')?.remove();
+  const t=document.createElement('div');
+  t.className='map-toast';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},dur);
+}
+
+// Map click closes popup & collapses sheet
+map.on('click',()=>{map.closePopup();collapseSheet();});
+
+// Chip toggle
+document.querySelectorAll('.check-chip').forEach(chip=>{
+  chip.addEventListener('click',()=>{
+    if(chip.textContent.trim()==='⏰ Tất cả'||chip.textContent.trim()==='Tất cả') return;
+    chip.classList.toggle('active');
+  });
+});
+</script>
+</body>
+</html>

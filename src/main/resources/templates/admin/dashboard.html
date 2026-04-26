@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - DealXanh</title>
+
+    <!-- CSS Fragment -->
+    <div th:replace="common/admin/css :: css"></div>
+</head>
+<body>
+<div class="layout">
+
+    <!-- Sidebar Fragment -->
+    <div th:replace="common/admin/sidebar :: sidebar"></div>
+
+    <div class="main">
+        <!-- Header Fragment -->
+        <div th:replace="common/admin/header :: header"></div>
+
+        <div class="content">
+            <h1>Admin Dashboard</h1>
+            <p>Welcome to Admin portal.</p>
+        </div>
+    </div>
+</div>
+
+<!-- JS Fragment -->
+<div th:replace="common/admin/js :: js"></div>
+
+</body>
+</html>

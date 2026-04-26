@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  common/buyer/search-overlay.html
+-->
+<body th:fragment="searchOverlay">
+<div id="search-overlay" class="search-overlay" style="display:none;" aria-hidden="true">
+    <div class="search-overlay__container">
+        <div class="search-overlay__input-wrapper">
+            <svg class="search-overlay__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" class="search-overlay__input" placeholder="Tìm kiếm món ăn, quán ăn..." aria-label="Tìm kiếm">
+            <button id="search-close" class="search-overlay__close" aria-label="Đóng tìm kiếm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="search-overlay__suggestions">
+            <div class="search-overlay__title">Tìm kiếm phổ biến</div>
+            <div class="search-suggestions">
+                <button class="search-suggestion__chip">Bánh mì</button>
+                <button class="search-suggestion__chip">Cà phê</button>
+                <button class="search-suggestion__chip">Bún phở</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

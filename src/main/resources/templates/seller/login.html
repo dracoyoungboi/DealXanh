@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập Đối tác - DealXanh Partner</title>
+    <meta name="description" content="Đăng nhập để quản lý cửa hàng, đơn hàng và doanh thu trên DealXanh">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <!-- Left Side - Hero Section -->
+        <div class="login-hero">
+            <div class="login-hero__overlay" style="background: linear-gradient(135deg, rgba(217, 119, 6, 0.9), rgba(180, 83, 9, 0.8));"></div>
+            <div class="login-hero__content">
+                <!-- Logo -->
+                <div class="login-hero__logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span class="login-hero__brand">DealXanh Partner</span>
+                </div>
+
+                <!-- Hero Text -->
+                <h1 class="login-hero__title">Tăng doanh thu<br><span class="text-accent" style="color:#fde68a;">Quản lý dễ dàng</span></h1>
+                <p class="login-hero__subtitle">
+                    Kênh bán đồ ăn cận date hiệu quả nhất dành cho Chủ Cửa Hàng và Nhân viên vận hành.
+                </p>
+
+                <!-- Features -->
+                <div class="login-features">
+                    <div class="login-feature">
+                        <div class="login-feature__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="login-feature__text">
+                            <div class="login-feature__title">Thống kê Real-time</div>
+                            <div class="login-feature__desc">Theo dõi đơn hàng liên tục</div>
+                        </div>
+                    </div>
+                    <div class="login-feature">
+                        <div class="login-feature__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="login-feature__text">
+                            <div class="login-feature__title">Tạo Deal Nhanh</div>
+                            <div class="login-feature__desc">Chỉ từ 15 giây</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Background Image -->
+            <div class="login-hero__bg">
+                <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=800&fit=crop&q=80" alt="Restaurant Management" loading="lazy">
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="login-form-container">
+            <div class="login-card">
+                <!-- Mobile Logo (hidden on desktop) -->
+                <div class="login-card__mobile-logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    </svg>
+                    <span class="login-card__mobile-brand">DealXanh Partner</span>
+                </div>
+
+                <div id="login-view">
+                    <!-- Header -->
+                    <div class="login-card__header">
+                        <h2 class="login-card__title">Cổng Đăng Nhập Cửa Hàng</h2>
+                        <p class="login-card__subtitle">Dành cho Chủ cửa hàng (Owner) và Nhân viên (Staff)</p>
+                    </div>
+
+                    <!-- Email Login Form -->
+                    <div id="tab-email">
+                        <div class="login-card__body">
+                            <form action="/perform_login" method="post" id="email-form" class="login-card__form">
+                                <div class="form-group">
+                                    <label class="form-label" for="username">Tài khoản (Email hoặc Số điện thoại)</label>
+                                    <div class="input-with-icon">
+                                        <span class="input-with-icon__icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                        </span>
+                                        <input type="text" id="username" name="username" class="form-input" placeholder="Tên đăng nhập..." required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="password">Mật khẩu</label>
+                                    <div class="input-with-icon">
+                                        <span class="input-with-icon__icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                            </svg>
+                                        </span>
+                                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                                        <button type="button" id="toggle-password" class="input-with-icon__toggle">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-options">
+                                    <label class="form-check">
+                                        <input type="checkbox" name="rememberme" id="remember" class="form-check__input">
+                                        <span class="form-check__label">Ghi nhớ phiên đăng nhập</span>
+                                    </label>
+                                    <a href="/seller/forgot-password" class="forgot-link">Quên mật khẩu?</a>
+                                </div>
+
+                                <button type="submit" class="login-submit">Đăng nhập</button>
+                            </form>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div class="login-card__footer" style="margin-top: 24px;">
+                            <p class="login-card__footer-text">
+                                Bạn là đối tác mới? <br>
+                                Cửa hàng đăng ký bằng việc <a href="/seller/register" class="login-card__footer-link">Tạo tài khoản Chủ Cửa Hàng ngay</a>.<br>
+                                <span style="font-size: 0.8rem; color: var(--text-tertiary); display: block; margin-top: 10px;">
+                                    *Nhân viên (Staff) cần xin tài khoản từ Chủ cửa hàng, không tự đăng ký.
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.getElementById('toggle-password').addEventListener('click', function() {
+            var passInput = document.getElementById('password');
+            if(passInput.type === 'password') {
+                passInput.type = 'text';
+            } else {
+                passInput.type = 'password';
+            }
+        });
+    </script>
+</body>
+</html>
