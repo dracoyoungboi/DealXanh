@@ -88,7 +88,7 @@ public class AuthApiController {
     }
 
     @PostMapping("/register-buyer")
-    public ResponseEntity<?> registerBuyer(@RequestBody RegisterBuyerRequest request) {
+    public ResponseEntity<?> registerBuyer(@org.springframework.web.bind.annotation.ModelAttribute RegisterBuyerRequest request) {
         Map<String, Object> response = new HashMap<>();
         
         // 1. Verify OTP
@@ -118,6 +118,17 @@ public class AuthApiController {
             newUser.setProvider("local");
             newUser.setActive(true);
             newUser.setCreatedAt(LocalDateTime.now());
+            
+            // Handle avatar upload
+            try {
+                String avatarUrl = saveFile(request.getAvatarFile());
+                if (avatarUrl != null) {
+                    newUser.setAvatarUrl(avatarUrl);
+                }
+            } catch (Exception e) {
+                // Log error but don't fail registration
+                System.err.println("Error saving avatar: " + e.getMessage());
+            }
             
             // Assign Role USER
             Role userRole = roleRepository.findByName("USER")
