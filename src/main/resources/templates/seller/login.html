@@ -88,6 +88,15 @@
                     <!-- Email Login Form -->
                     <div id="tab-email">
                         <div class="login-card__body">
+                            <!-- Error Message Display -->
+                            <div th:if="${param.error}" class="alert alert-danger" style="margin-bottom: 15px; padding: 10px; border-radius: 5px; background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
+                                <span th:if="${param.error[0] == 'true'}">Tài khoản hoặc mật khẩu không chính xác!</span>
+                                <span th:if="${param.error[0] == 'access_denied'}">Bạn không có quyền truy cập trang này!</span>
+                                <span th:if="${param.logout}" style="color: #155724; background-color: #d4edda; border-color: #c3e6cb; display: block; padding: 5px; margin-top: 5px; border-radius: 3px;">
+                                    Bạn đã đăng xuất thành công!
+                                </span>
+                            </div>
+                            
                             <form action="/perform_login" method="post" id="email-form" class="login-card__form">
                                 <div class="form-group">
                                     <label class="form-label" for="username">Tài khoản (Email hoặc Số điện thoại)</label>

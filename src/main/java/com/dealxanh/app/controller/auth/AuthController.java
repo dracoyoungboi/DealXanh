@@ -46,7 +46,14 @@ public class AuthController {
             if (user != null) {
                 model.addAttribute("userObj", user);
                 java.util.Optional<com.dealxanh.app.entity.Store> storeOpt = storeRepository.findByOwner(user);
-                storeOpt.ifPresent(store -> model.addAttribute("storeObj", store));
+                storeOpt.ifPresent(store -> {
+                    model.addAttribute("storeObj", store);
+                    // Add document URLs for file pre-loading
+                    model.addAttribute("cccdUrl", store.getCccdUrl());
+                    model.addAttribute("licenseUrl", store.getBusinessLicenseUrl());
+                    model.addAttribute("vsattpUrl", store.getVsattpUrl());
+                    model.addAttribute("logoUrl", store.getLogoUrl());
+                });
             }
         }
         return "auth/register-seller";

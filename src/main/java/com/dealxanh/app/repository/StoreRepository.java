@@ -14,6 +14,8 @@ import java.util.Optional;
 @Repository
 public interface StoreRepository extends JpaRepository<Store, Long> {
 
+    Optional<Store> findByStoreName(String storeName);
+
     Optional<Store> findByOwnerUserId(Long ownerId);
 
     Optional<Store> findByOwner(com.dealxanh.app.entity.User owner);

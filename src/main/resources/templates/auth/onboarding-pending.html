@@ -468,7 +468,63 @@ function showToast(msg) {
 
 <style>
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Fix alignment issues */
 .status-badge--approved{background:var(--status-success-bg);color:var(--status-success);border:1px solid rgba(16,185,129,.25)}
+
+/* Ensure consistent spacing and alignment */
+.info-cards {
+    justify-items: stretch;
+}
+
+.info-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-height: 100%;
+}
+
+.summary-row {
+    align-items: center;
+    justify-content: space-between;
+    min-height: 20px;
+}
+
+.summary-val {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+/* Mobile responsiveness fixes */
+@media (max-width: 400px) {
+    .summary-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .summary-val {
+        justify-content: flex-start;
+    }
+}
+
+/* Ensure proper button alignment */
+.card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.btn-primary, .btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
 </style>
 </body>
 </html>

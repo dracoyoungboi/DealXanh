@@ -49,7 +49,7 @@ public class SecurityConfig {
                     "/login", "/admin/login", "/seller/login", "/register", "/register/buyer",
                     "/seller/register", "/forgot-password", "/admin/forgot-password",
                     "/seller/forgot-password", "/reset-password", "/terms",
-                    "/logout", "/oauth2/**", "/login/oauth2/**", "/api/auth/**"
+                    "/logout", "/oauth2/**", "/login/oauth2/**", "/api/auth/**", "/perform_login"
                 ).permitAll()
 
                 // Admin routes - ADMIN và MODERATOR
@@ -98,12 +98,12 @@ public class SecurityConfig {
                 .rememberMeCookieName("remember-me")
             )
             .userDetailsService(customUserDetailsService)
-            // Tắt CSRF cho các API endpoint AJAX
+            // Tắt CSRF cho các API endpoint AJAX và login
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers(
                     "/cart/add", "/cart/update", "/cart/remove",
                     "/cart/clear", "/cart/apply-coupon", "/cart/remove-coupon",
-                    "/api/**"
+                    "/api/**", "/perform_login"
                 )
             )
                 .exceptionHandling(exceptions -> exceptions

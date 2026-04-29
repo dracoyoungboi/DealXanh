@@ -42,6 +42,7 @@ public class Store {
     private String district;
     
     // Documents
+    @Column(length = 1000)
     private String cccdUrl;
     private String businessLicenseUrl;
     private String vsattpUrl;

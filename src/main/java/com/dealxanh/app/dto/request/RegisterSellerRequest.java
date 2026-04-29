@@ -90,13 +90,18 @@ public class RegisterSellerRequest {
     public String getApprovalMode() { return approvalMode; }
     public void setApprovalMode(String approvalMode) { this.approvalMode = approvalMode; }
 
-    private org.springframework.web.multipart.MultipartFile cccdFile;
+    private org.springframework.web.multipart.MultipartFile[] cccdFiles;
     private org.springframework.web.multipart.MultipartFile licenseFile;
     private org.springframework.web.multipart.MultipartFile vsattpFile;
     private org.springframework.web.multipart.MultipartFile logoFile;
 
-    public org.springframework.web.multipart.MultipartFile getCccdFile() { return cccdFile; }
-    public void setCccdFile(org.springframework.web.multipart.MultipartFile cccdFile) { this.cccdFile = cccdFile; }
+    public org.springframework.web.multipart.MultipartFile[] getCccdFiles() { return cccdFiles; }
+    public void setCccdFiles(org.springframework.web.multipart.MultipartFile[] cccdFiles) { this.cccdFiles = cccdFiles; }
+    
+    // Keep single file method for backward compatibility
+    public org.springframework.web.multipart.MultipartFile getCccdFile() { 
+        return (cccdFiles != null && cccdFiles.length > 0) ? cccdFiles[0] : null; 
+    }
 
     public org.springframework.web.multipart.MultipartFile getLicenseFile() { return licenseFile; }
     public void setLicenseFile(org.springframework.web.multipart.MultipartFile licenseFile) { this.licenseFile = licenseFile; }

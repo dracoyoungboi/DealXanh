@@ -35,7 +35,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         if (userOpt.isEmpty()) {
-            throw new UsernameNotFoundException("Không tìm thấy user: " + usernameOrEmail);
+            throw new UsernameNotFoundException("Không tìm thấy tài khoản với thông tin: " + usernameOrEmail);
         }
 
         User user = userOpt.get();
@@ -52,7 +52,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
-                .password(user.getPassword() != null ? user.getPassword() : "")
+                .password(user.getPassword())
                 .authorities(getAuthorities(user))
                 .build();
     }

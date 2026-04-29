@@ -310,8 +310,10 @@ input,select{font-family:inherit}
                 <div class="form-error" id="err-phone">Số điện thoại không hợp lệ</div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Mật khẩu <span>*</span></label>
+            <!-- Password Section - Hide in edit mode -->
+            <div id="password-section" th:if="${userObj == null}">
+                <div class="form-group">
+                    <label class="form-label">Mật khẩu <span>*</span></label>
                 <div class="input-wrap">
                     <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
                     <input type="password" class="form-input" id="password" placeholder="Ít nhất 8 ký tự" oninput="updatePwdStrength(this.value)">
@@ -347,6 +349,25 @@ input,select{font-family:inherit}
                 </div>
                 <div class="form-error" id="err-confirmPassword">Mật khẩu xác nhận không khớp</div>
             </div>
+            </div>
+            
+            <!-- Edit Mode Notice -->
+            <div th:if="${userObj != null}" class="form-group" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:var(--radius-md);padding:12px;margin-bottom:20px">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <div>
+                        <div style="font-weight:600;color:#0ea5e9;margin-bottom:4px">Chế độ chỉnh sửa hồ sơ</div>
+                        <div style="font-size:13px;color:#64748b;line-height:1.4">
+                            Bạn đang chỉnh sửa thông tin đã đăng ký. Mật khẩu sẽ không được thay đổi. 
+                            Các tài liệu đã tải lên sẽ được giữ nguyên. Chỉ tải lên lại tài liệu cần thay đổi.
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="terms-check">
                 <input type="checkbox" id="agree-terms">
@@ -354,7 +375,7 @@ input,select{font-family:inherit}
             </div>
             <div class="form-error" id="err-terms" style="margin-bottom:12px">Vui lòng đọc và đồng ý với điều khoản sử dụng</div>
 
-            <button class="btn-submit" onclick="validateStep1()">
+            <button class="btn-submit" onclick="console.log('DEBUG: Continue button clicked'); validateStep1()">
                 <span>Tiếp tục</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
@@ -478,15 +499,20 @@ input,select{font-family:inherit}
                     </div>
                     <div class="doc-info">
                         <div class="doc-name">CCCD / CMND</div>
-                        <div class="doc-desc" id="cccd-filename">2 mặt, JPG/PDF, tối đa 5MB</div>
+                        <div class="doc-desc" id="cccd-filename">Mặt trước & Mặt sau, JPG/PDF, tối đa 5MB mỗi file</div>
                     </div>
-                    <label class="doc-upload-btn" style="cursor:pointer">
+                    <label class="doc-upload-btn" style="cursor:pointer" id="upload-cccd-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                         Tải lên
-                        <input type="file" id="fileCccd" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="markUploadedWithPreview('doc-cccd', this, 'prev-cccd', 'cccd-filename')">
+                        <input type="file" id="fileCccd" style="display:none" accept=".jpg,.jpeg,.png,.pdf" multiple onchange="handleCccdUpload(this)">
                     </label>
                 </div>
-                <div id="prev-cccd" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)"></div>
+                <div id="prev-cccd" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)">
+                    <div style="padding:8px;background:var(--background);border-bottom:1px solid var(--border)">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px">CCCD đã tải lên:</div>
+                        <div id="cccd-file-list"></div>
+                    </div>
+                </div>
 
                 <div class="doc-item required" id="doc-license">
                     <div class="doc-icon" style="background:var(--status-warning-bg)">
@@ -496,13 +522,18 @@ input,select{font-family:inherit}
                         <div class="doc-name">Giấy phép kinh doanh</div>
                         <div class="doc-desc" id="license-filename">GPKD còn hiệu lực, JPG/PDF</div>
                     </div>
-                    <label class="doc-upload-btn" style="cursor:pointer">
+                    <label class="doc-upload-btn" style="cursor:pointer" id="upload-license-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                         Tải lên
-                        <input type="file" id="fileLicense" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="markUploadedWithPreview('doc-license', this, 'prev-license', 'license-filename')">
+                        <input type="file" id="fileLicense" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="handleLicenseUpload(this)">
                     </label>
                 </div>
-                <div id="prev-license" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)"></div>
+                <div id="prev-license" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)">
+                    <div style="padding:8px;background:var(--background);border-bottom:1px solid var(--border)">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px">Giấy phép kinh doanh đã tải lên:</div>
+                        <div id="license-file-info"></div>
+                    </div>
+                </div>
 
                 <div class="doc-item required" id="doc-vsattp">
                     <div class="doc-icon" style="background:var(--status-warning-bg)">
@@ -510,15 +541,20 @@ input,select{font-family:inherit}
                     </div>
                     <div class="doc-info">
                         <div class="doc-name">Giấy chứng nhận VSATTP</div>
-                        <div class="doc-desc" id="vsattp-filename">Vệ sinh an toàn thực phẩm</div>
+                        <div class="doc-desc" id="vsattp-filename">Vệ sinh an toàn thực phẩm (tùy chọn)</div>
                     </div>
-                    <label class="doc-upload-btn" style="cursor:pointer">
+                    <label class="doc-upload-btn" style="cursor:pointer" id="upload-vsattp-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                         Tải lên
-                        <input type="file" id="fileVsattp" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="markUploadedWithPreview('doc-vsattp', this, 'prev-vsattp', 'vsattp-filename')">
+                        <input type="file" id="fileVsattp" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="handleVsattpUpload(this)">
                     </label>
                 </div>
-                <div id="prev-vsattp" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)"></div>
+                <div id="prev-vsattp" style="display:none;margin-bottom:12px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)">
+                    <div style="padding:8px;background:var(--background);border-bottom:1px solid var(--border)">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px">Giấy chứng nhận VSATTP đã tải lên:</div>
+                        <div id="vsattp-file-info"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Optional docs -->
@@ -734,16 +770,69 @@ let currentStep = 1;
 const totalSteps = 5;
 
 function goTo(n) {
-    document.getElementById('step-'+currentStep).classList.remove('active');
-    document.getElementById('dot-'+currentStep).classList.remove('active');
-    document.getElementById('dot-'+currentStep).classList.add('done');
-    currentStep = n;
-    document.getElementById('step-'+currentStep).classList.add('active');
-    document.getElementById('dot-'+currentStep).classList.remove('done');
-    document.getElementById('dot-'+currentStep).classList.add('active');
-    document.getElementById('progress-fill').style.width = (currentStep/totalSteps*100) + '%';
-    document.getElementById('step-indicator').textContent = 'Bước ' + currentStep + ' / ' + totalSteps;
-    window.scrollTo({top:0,behavior:'smooth'});
+    console.log('DEBUG: goTo() called with step', n, 'from current step', currentStep);
+    
+    try {
+        console.log('DEBUG: Removing active class from step-', currentStep);
+        const currentStepEl = document.getElementById('step-'+currentStep);
+        if (currentStepEl) {
+            currentStepEl.classList.remove('active');
+        } else {
+            console.log('DEBUG: Step element not found: step-', currentStep);
+        }
+        
+        console.log('DEBUG: Updating dots for step', currentStep);
+        const currentDotEl = document.getElementById('dot-'+currentStep);
+        if (currentDotEl) {
+            currentDotEl.classList.remove('active');
+            currentDotEl.classList.add('done');
+        } else {
+            console.log('DEBUG: Dot element not found: dot-', currentStep);
+        }
+        
+        console.log('DEBUG: Setting current step to', n);
+        currentStep = n;
+        
+        console.log('DEBUG: Adding active class to step-', currentStep);
+        const newStepEl = document.getElementById('step-'+currentStep);
+        if (newStepEl) {
+            newStepEl.classList.add('active');
+        } else {
+            console.log('DEBUG: New step element not found: step-', currentStep);
+        }
+        
+        console.log('DEBUG: Updating dots for new step', currentStep);
+        const newDotEl = document.getElementById('dot-'+currentStep);
+        if (newDotEl) {
+            newDotEl.classList.remove('done');
+            newDotEl.classList.add('active');
+        } else {
+            console.log('DEBUG: New dot element not found: dot-', currentStep);
+        }
+        
+        console.log('DEBUG: Updating progress bar');
+        const progressEl = document.getElementById('progress-fill');
+        if (progressEl) {
+            progressEl.style.width = (currentStep/totalSteps*100) + '%';
+        } else {
+            console.log('DEBUG: Progress element not found');
+        }
+        
+        console.log('DEBUG: Updating step indicator');
+        const indicatorEl = document.getElementById('step-indicator');
+        if (indicatorEl) {
+            indicatorEl.textContent = 'Bước ' + currentStep + ' / ' + totalSteps;
+        } else {
+            console.log('DEBUG: Step indicator element not found');
+        }
+        
+        console.log('DEBUG: Scrolling to top');
+        window.scrollTo({top:0,behavior:'smooth'});
+        
+        console.log('DEBUG: goTo() completed successfully');
+    } catch (error) {
+        console.log('DEBUG: Error in goTo():', error);
+    }
 }
 
 document.getElementById('back-btn').onclick = () => {
@@ -770,14 +859,37 @@ function setInputError(inputId, errId, hasError) {
 
 // ===== STEP 1 VALIDATION =====
 function validateStep1() {
+    console.log('DEBUG: validateStep1() called');
     let valid = true;
-    const fn = document.getElementById('firstName')?.value.trim();
-    const ln = document.getElementById('lastName')?.value.trim();
-    const email = document.getElementById('email')?.value.trim();
-    const phone = document.getElementById('phone')?.value.trim();
-    const pwd = document.getElementById('password')?.value;
-    const cpwd = document.getElementById('confirmPassword')?.value;
-    const terms = document.getElementById('agree-terms')?.checked;
+    
+    // Check if elements exist
+    const firstNameEl = document.getElementById('firstName');
+    const lastNameEl = document.getElementById('lastName');
+    const emailEl = document.getElementById('email');
+    const phoneEl = document.getElementById('phone');
+    const passwordEl = document.getElementById('password');
+    const confirmPasswordEl = document.getElementById('confirmPassword');
+    const termsEl = document.getElementById('agree-terms');
+    
+    console.log('DEBUG: Elements found:', {
+        firstName: !!firstNameEl,
+        lastName: !!lastNameEl,
+        email: !!emailEl,
+        phone: !!phoneEl,
+        password: !!passwordEl,
+        confirmPassword: !!confirmPasswordEl,
+        terms: !!termsEl
+    });
+    
+    const fn = firstNameEl?.value.trim();
+    const ln = lastNameEl?.value.trim();
+    const email = emailEl?.value.trim();
+    const phone = phoneEl?.value.trim();
+    const pwd = passwordEl?.value;
+    const cpwd = confirmPasswordEl?.value;
+    const terms = termsEl?.checked;
+    
+    console.log('DEBUG: userObj =', typeof userObj !== 'undefined' ? userObj : 'undefined');
 
     if (!fn) { showErr('err-firstName', 'Vui lòng nhập họ'); valid = false; } else clearErr('err-firstName');
     if (!ln) { showErr('err-lastName', 'Vui lòng nhập tên'); valid = false; } else clearErr('err-lastName');
@@ -788,14 +900,51 @@ function validateStep1() {
     const phoneReg = /^(0[3|5|7|8|9])[0-9]{8}$/;
     if (!phone || !phoneReg.test(phone)) { showErr('err-phone', 'Số điện thoại không hợp lệ (10 số, bắt đầu 03/05/07/08/09)'); valid = false; } else clearErr('err-phone');
 
-    const pwdReg = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
-    if (!pwd || !pwdReg.test(pwd)) { showErr('err-password', 'Mật khẩu tối thiểu 8 ký tự, phải có chữ và số'); valid = false; } else clearErr('err-password');
+    // Skip password validation in edit mode (when userObj exists)
+    const isEditMode = typeof userObj !== 'undefined' && userObj !== null;
+    console.log('DEBUG: isEditMode =', isEditMode);
+    
+    if (!isEditMode) {
+        console.log('DEBUG: Validating password');
+        const pwdReg = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+        if (!pwd || !pwdReg.test(pwd)) { 
+            console.log('DEBUG: Password validation failed');
+            showErr('err-password', 'Mật khẩu tối thiểu 8 ký tự, phải có chữ và số'); 
+            valid = false; 
+        } else {
+            console.log('DEBUG: Password validation passed');
+            clearErr('err-password');
+        }
 
-    if (!cpwd || cpwd !== pwd) { showErr('err-confirmPassword', 'Mật khẩu xác nhận không khớp'); valid = false; } else clearErr('err-confirmPassword');
+        if (!cpwd || cpwd !== pwd) { 
+            console.log('DEBUG: Confirm password validation failed');
+            showErr('err-confirmPassword', 'Mật khẩu xác nhận không khớp'); 
+            valid = false; 
+        } else {
+            console.log('DEBUG: Confirm password validation passed');
+            clearErr('err-confirmPassword');
+        }
+    } else {
+        console.log('DEBUG: Skipping password validation (edit mode)');
+    }
 
-    if (!terms) { showErr('err-terms', 'Vui lòng đọc và đồng ý với điều khoản sử dụng'); valid = false; } else clearErr('err-terms');
+    console.log('DEBUG: Checking terms checkbox');
+    if (!terms) { 
+        console.log('DEBUG: Terms not checked');
+        showErr('err-terms', 'Vui lòng đọc và đồng ý với điều khoản sử dụng'); 
+        valid = false; 
+    } else {
+        console.log('DEBUG: Terms checked');
+        clearErr('err-terms');
+    }
 
-    if (valid) goTo(2);
+    console.log('DEBUG: Final validation result =', valid);
+    if (valid) {
+        console.log('DEBUG: Moving to step 2');
+        goTo(2);
+    } else {
+        console.log('DEBUG: Validation failed, staying on step 1');
+    }
 }
 
 // ===== STEP 2 VALIDATION =====
@@ -936,15 +1085,506 @@ function validateBankAccount() {
     }
 }
 
+// ===== CCCD FILE HANDLING =====
+function handleCccdUpload(input) {
+    const files = input.files;
+    const maxFiles = 2;
+    const maxSize = 5 * 1024 * 1024; // 5MB per file
+    
+    if (files.length > maxFiles) {
+        alert('Chỉ được tải lên tối đa ' + maxFiles + ' file cho CCCD (mặt trước & mặt sau)');
+        input.value = ''; // Clear selection
+        return;
+    }
+    
+    // Validate each file
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > maxSize) {
+            alert('File ' + file.name + ' vượt quá kích thước 5MB');
+            input.value = '';
+            return;
+        }
+        
+        if (!file.type.match(/image\/(jpeg|jpg|png)|application\/pdf/)) {
+            alert('File ' + file.name + ' không đúng định dạng. Chỉ chấp nhận JPG, PNG, PDF');
+            input.value = '';
+            return;
+        }
+    }
+    
+    // Update UI
+    updateCccdDisplay(files);
+    
+    // Hide upload button, show edit functionality in preview
+    document.getElementById('upload-cccd-btn').style.display = 'none';
+}
+
+function updateCccdDisplay(files) {
+    const fileListEl = document.getElementById('cccd-file-list');
+    const previewEl = document.getElementById('prev-cccd');
+    const filenameEl = document.getElementById('cccd-filename');
+    
+    if (files.length > 0) {
+        previewEl.style.display = 'block';
+        
+        // Update filename display
+        const fileNames = Array.from(files).map(f => f.name).join(', ');
+        filenameEl.textContent = `Đã tải lên ${files.length} file: ${fileNames}`;
+        
+        // Create file list with previews
+        let html = '<div style="display:flex;flex-direction:column;gap:8px">';
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const isImage = file.type.startsWith('image/');
+            const sideLabel = i === 0 ? 'Mặt trước' : 'Mặt sau';
+            
+            html += `
+                <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border-radius:var(--radius-md)">
+                    <div style="flex-shrink:0;width:40px;height:40px;border-radius:var(--radius-sm);overflow:hidden;background:var(--border-light);display:flex;align-items:center;justify-content:center">
+                        ${isImage ? 
+                            `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover">` :
+                            `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8  y2="17"/></svg>`
+                        }
+                    </div>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-primary)">${sideLabel}</div>
+                        <div style="font-size:11px;color:var(--text-secondary);word-break:break-all;white-space:normal;line-height:1.3">${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)</div>
+                    </div>
+                    <div style="display:flex;gap:4px;flex-shrink:0">
+                        <button type="button" onclick="editCccdFile(${i})" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button type="button" onclick="removeCccdFile(${i})" style="padding:4px 8px;border:1px solid var(--status-danger);background:var(--status-danger);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                            Xóa
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        
+        // Add upload button if less than 2 files
+        if (files.length < 2) {
+            html += `
+                <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border-radius:var(--radius-md);border:2px dashed var(--border-light);">
+                    <div style="flex-shrink:0;width:40px;height:40px;border-radius:var(--radius-sm);overflow:hidden;background:var(--border-light);display:flex;align-items:center;justify-content:center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v8z"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div style="flex:1;min-width:0;text-align:center">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-secondary)">Thêm ${files.length === 1 ? 'mặt sau' : 'ảnh khác'}</div>
+                        <div style="font-size:11px;color:var(--text-tertiary)">Tối đa 2 ảnh</div>
+                    </div>
+                    <button type="button" onclick="document.getElementById('fileCccd').click()" style="padding:8px 16px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v8z"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Tải lên thêm ảnh
+                    </button>
+                </div>
+            `;
+        }
+        
+        fileListEl.innerHTML = html;
+        
+        // Mark as uploaded
+        document.getElementById('doc-cccd').classList.add('uploaded');
+    } else {
+        previewEl.style.display = 'none';
+        filenameEl.textContent = 'Mặt trước & Mặt sau, JPG/PDF, tối đa 5MB mỗi file';
+        document.getElementById('doc-cccd').classList.remove('uploaded');
+        // Show upload button again when all files are removed
+        document.getElementById('upload-cccd-btn').style.display = 'inline-block';
+    }
+}
+
+function editCccdFile(index) {
+    // Create a temporary file input for editing specific file
+    const tempInput = document.createElement('input');
+    tempInput.type = 'file';
+    tempInput.accept = '.jpg,.jpeg,.png,.pdf';
+    tempInput.multiple = true; // Allow multiple files
+    tempInput.onchange = function(e) {
+        const newFiles = e.target.files;
+        if (!newFiles || newFiles.length === 0) return;
+        
+        // Validate new files
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        for (let i = 0; i < newFiles.length; i++) {
+            if (newFiles[i].size > maxSize) {
+                alert('File ' + (i+1) + ' vượt quá kích thước 5MB');
+                return;
+            }
+            
+            if (!newFiles[i].type.match(/image\/(jpeg|jpg|png)|application\/pdf/)) {
+                alert('File ' + (i+1) + ' không đúng định dạng. Chỉ chấp nhận JPG, PNG, PDF');
+                return;
+            }
+        }
+        
+        // Get existing URLs from cccdUrl global variable
+        let existingUrls = [];
+        if (cccdUrl) {
+            existingUrls = cccdUrl.split(';').filter(url => url.trim() !== '');
+        }
+        
+        // Replace the specific file or add new files
+        const input = document.getElementById('fileCccd');
+        const dt = new DataTransfer();
+        
+        // If editing existing file at specific index
+        if (index < existingUrls.length) {
+            // Keep existing files except the one being edited
+            for (let i = 0; i < existingUrls.length; i++) {
+                if (i !== index) {
+                    // Create a dummy file for existing URLs (they won't be uploaded again)
+                    // We'll handle this in the backend by merging URLs
+                }
+            }
+        }
+        
+        // Add the new files
+        for (let i = 0; i < newFiles.length; i++) {
+            dt.items.add(newFiles[i]);
+        }
+        
+        // Update the file input
+        input.files = dt.files;
+        updateCccdDisplay(input.files);
+        
+        // Update cccdUrl to reflect changes
+        let newUrls = [...existingUrls];
+        if (index < newUrls.length) {
+            // Replace existing URL
+            newUrls.splice(index, 1);
+        }
+        // Add new files (we'll handle URL assignment in backend)
+        for (let i = 0; i < newFiles.length && newUrls.length < 2; i++) {
+            newUrls.splice(index + i, 0, 'new_file_' + i); // Placeholder for new file
+        }
+
+        // Update global cccdUrl for validation
+        window.cccdUrl = newUrls.join(';');
+    };
+    
+    tempInput.click();
+}
+
+function removeCccdFile(index) {
+    const input = document.getElementById('fileCccd');
+    const dt = new DataTransfer();
+    
+    // Add all files except the one to remove
+    for (let i = 0; i < input.files.length; i++) {
+        if (i !== index) {
+            dt.items.add(input.files[i]);
+        }
+    }
+    
+    input.files = dt.files;
+    updateCccdDisplay(input.files);
+}
+
+// ===== LICENSE FILE HANDLING =====
+function handleLicenseUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        alert('File vượt quá kích thước 5MB');
+        input.value = '';
+        return;
+    }
+    
+    if (!file.type.match(/image\/(jpeg|jpg|png)|application\/pdf/)) {
+        alert('File không đúng định dạng. Chỉ chấp nhận JPG, PNG, PDF');
+        input.value = '';
+        return;
+    }
+    
+    updateLicenseDisplay(file);
+    document.getElementById('upload-license-btn').style.display = 'none';
+}
+
+function updateLicenseDisplay(file) {
+    const fileInfoEl = document.getElementById('license-file-info');
+    const previewEl = document.getElementById('prev-license');
+    const filenameEl = document.getElementById('license-filename');
+    
+    if (file) {
+        previewEl.style.display = 'block';
+        
+        // Update filename display
+        filenameEl.textContent = `Đã tải lên: ${file.name}`;
+        
+        // Create file info with preview
+        const isImage = file.type.startsWith('image/');
+        
+        fileInfoEl.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border-radius:var(--radius-md)">
+                <div style="flex-shrink:0;width:40px;height:40px;border-radius:var(--radius-sm);overflow:hidden;background:var(--border-light);display:flex;align-items:center;justify-content:center">
+                    ${isImage ? 
+                        `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover">` :
+                        `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8  y2="17"/></svg>`
+                    }
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:12px;font-weight:600;color:var(--text-primary)">Giấy phép kinh doanh</div>
+                    <div style="font-size:11px;color:var(--text-secondary);word-break:break-all;white-space:normal;line-height:1.3">${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)</div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0">
+                    <button type="button" onclick="editLicenseFile()" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button type="button" onclick="removeLicenseFile()" style="padding:4px 8px;border:1px solid var(--status-danger);background:var(--status-danger);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        Xóa
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('doc-license').classList.add('uploaded');
+    } else {
+        previewEl.style.display = 'none';
+        filenameEl.textContent = 'GPKD còn hiệu lực, JPG/PDF';
+        document.getElementById('doc-license').classList.remove('uploaded');
+        document.getElementById('upload-license-btn').style.display = 'inline-block';
+    }
+}
+
+function editLicenseFile() {
+    const tempInput = document.createElement('input');
+    tempInput.type = 'file';
+    tempInput.accept = '.jpg,.jpeg,.png,.pdf';
+    tempInput.onchange = function(e) {
+        const newFile = e.target.files[0];
+        if (!newFile) return;
+        
+        const maxSize = 5 * 1024 * 1024;
+        if (newFile.size > maxSize) {
+            alert('File vượt quá kích thước 5MB');
+            return;
+        }
+        
+        if (!newFile.type.match(/image\/(jpeg|jpg|png)|application\/pdf/)) {
+            alert('File không đúng định dạng. Chỉ chấp nhận JPG, PNG, PDF');
+            return;
+        }
+        
+        const input = document.getElementById('fileLicense');
+        input.files = tempInput.files;
+        updateLicenseDisplay(newFile);
+    };
+    tempInput.click();
+}
+
+function removeLicenseFile() {
+    const input = document.getElementById('fileLicense');
+    input.value = '';
+    updateLicenseDisplay(null);
+}
+
+// ===== VSATTP FILE HANDLING =====
+function handleVsattpUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        alert('File vượt quá kích thước 5MB');
+        input.value = '';
+        return;
+    }
+    
+    if (!file.type.match(/image\/(jpeg|jpg|png)|application\/pdf/)) {
+        alert('File không đúng định dạng. Chỉ chấp nhận JPG, PNG, PDF');
+        input.value = '';
+        return;
+    }
+    
+    updateVsattpDisplay(file);
+    document.getElementById('upload-vsattp-btn').style.display = 'none';
+}
+
+function updateVsattpDisplay(file) {
+    const fileInfoEl = document.getElementById('vsattp-file-info');
+    const previewEl = document.getElementById('prev-vsattp');
+    const filenameEl = document.getElementById('vsattp-filename');
+    
+    if (file) {
+        previewEl.style.display = 'block';
+        
+        // Update filename display
+        filenameEl.textContent = `Đã tải lên: ${file.name}`;
+        
+        // Create file info with preview
+        const isImage = file.type.startsWith('image/');
+        
+        fileInfoEl.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border-radius:var(--radius-md)">
+                <div style="flex-shrink:0;width:40px;height:40px;border-radius:var(--radius-sm);overflow:hidden;background:var(--border-light);display:flex;align-items:center;justify-content:center">
+                    ${isImage ? 
+                        `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover">` :
+                        `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
+                    }
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:12px;font-weight:600;color:var(--text-primary)">Giấy chứng nhận VSATTP</div>
+                    <div style="font-size:11px;color:var(--text-secondary);word-break:break-all;white-space:normal;line-height:1.3">${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)</div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0">
+                    <button type="button" onclick="editVsattpFile()" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button type="button" onclick="removeVsattpFile()" style="padding:4px 8px;border:1px solid var(--status-danger);background:var(--status-danger);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        Xóa
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('doc-vsattp').classList.add('uploaded');
+    } else {
+        previewEl.style.display = 'none';
+        filenameEl.textContent = 'Vệ sinh an toàn thực phẩm (tùy chọn)';
+        document.getElementById('doc-vsattp').classList.remove('uploaded');
+        document.getElementById('upload-vsattp-btn').style.display = 'inline-block';
+    }
+}
+
+function editVsattpFile() {
+    const tempInput = document.createElement('input');
+    tempInput.type = 'file';
+    tempInput.accept = '.jpg,.jpeg,.png,.pdf';
+    tempInput.onchange = function(e) {
+        const newFile = e.target.files[0];
+        if (!newFile) return;
+        
+        const maxSize = 5 * 1024 * 1024;
+        if (newFile.size > maxSize) {
+            alert('File vượt quá kích thước 5MB');
+            return;
+        }
+        
+        if (!newFile.type.match(/image\/(jpeg|jpg|png)|application\/pdf/)) {
+            alert('File không đúng định dạng. Chỉ chấp nhận JPG, PNG, PDF');
+            return;
+        }
+        
+        const input = document.getElementById('fileVsattp');
+        input.files = tempInput.files;
+        updateVsattpDisplay(newFile);
+    };
+    tempInput.click();
+}
+
+function removeVsattpFile() {
+    const input = document.getElementById('fileVsattp');
+    input.value = '';
+    updateVsattpDisplay(null);
+}
+
+function editLicenseFile() {
+    // Create a temporary file input for editing license
+    const tempInput = document.createElement('input');
+    tempInput.type = 'file';
+    tempInput.accept = '.jpg,.jpeg,.png,pdf';
+    tempInput.onchange = function(e) {
+        const newFile = e.target.files[0];
+        if (!newFile) return;
+        
+        const maxSize = 5 * 1024 * 1024;
+        if (newFile.size > maxSize) {
+            alert('File vượt quá kích thước 5MB');
+            return;
+        }
+        
+        if (!newFile.type.match(/image\/(jpeg|jpg|png)|application\/pdf/)) {
+            alert('File không đúng định dạng. Chỉ chấp nhận JPG, PNG, PDF');
+            return;
+        }
+        
+        const input = document.getElementById('fileLicense');
+        input.files = tempInput.files;
+        updateLicenseDisplay(newFile);
+    };
+    tempInput.click();
+}
+
+function editVsattpFile() {
+    // Create a temporary file input for editing VSATTP
+    const tempInput = document.createElement('input');
+    tempInput.type = 'file';
+    tempInput.accept = '.jpg,.jpeg,.png,pdf';
+    tempInput.onchange = function(e) {
+        const newFile = e.target.files[0];
+        if (!newFile) return;
+        
+        const maxSize = 5 * 1024 * 1024;
+        if (newFile.size > maxSize) {
+            alert('File vượt quá kích thước 5MB');
+            return;
+        }
+        
+        if (!newFile.type.match(/image\/(jpeg|jpg|png)|application\/pdf/)) {
+            alert('File không đúng định dạng. Chỉ chấp nhận JPG, PNG, PDF');
+            return;
+        }
+        
+        const input = document.getElementById('fileVsattp');
+        input.files = tempInput.files;
+        updateVsattpDisplay(newFile);
+    };
+    tempInput.click();
+}
+
+function editLogoFile() {
+    // Create a temporary file input for editing logo
+    const tempInput = document.createElement('input');
+    tempInput.type = 'file';
+    tempInput.accept = '.jpg,.jpeg,.png';
+    tempInput.onchange = function(e) {
+        const newFile = e.target.files[0];
+        if (!newFile) return;
+        
+        const maxSize = 5 * 1024 * 1024;
+        if (newFile.size > maxSize) {
+            alert('File vượt quá kích thước 5MB');
+            return;
+        }
+        
+        if (!newFile.type.match(/image\/(jpeg|jpg|png)/)) {
+            alert('File không đúng định dạng. Chỉ chấp nhận JPG, PNG');
+            return;
+        }
+        
+        const input = document.getElementById('fileLogo');
+        input.files = tempInput.files;
+        markUploadedWithPreview('doc-logo', input, 'prev-logo', 'logo-filename');
+    };
+    tempInput.click();
+}
+
 // ===== STEP 3 VALIDATION (docs) =====
 function validateStep3() {
     const cccd = document.getElementById('fileCccd');
     const license = document.getElementById('fileLicense');
     const vsattp = document.getElementById('fileVsattp');
     const errors = [];
-    if (!cccd || !cccd.files.length) errors.push('CCCD / CMND');
-    if (!license || !license.files.length) errors.push('Giấy phép kinh doanh');
-    if (!vsattp || !vsattp.files.length) errors.push('Giấy chứng nhận VSATTP');
+    
+    // Check CCCD - require at least 1 file, max 2 files
+    const hasCccdFile = cccd && cccd.files.length > 0;
+    const hasCccdUrl = cccdUrl && cccdUrl.trim() !== '';
+    if (!hasCccdFile && !hasCccdUrl) {
+        errors.push('CCCD / CMND (cần ít nhất 1 file - mặt trước)');
+    } else if (hasCccdFile && cccd.files.length > 2) {
+        errors.push('CCCD / CMND (tối đa 2 file - mặt trước & mặt sau)');
+    }
+    
+    // Check license file - either new file uploaded or existing URL in edit mode
+    const hasLicenseFile = license && license.files.length > 0;
+    const hasLicenseUrl = licenseUrl && licenseUrl.trim() !== '';
+    if (!hasLicenseFile && !hasLicenseUrl) errors.push('Giấy phép kinh doanh');
+    // VSATTP is now optional - no validation needed
     if (errors.length) {
         alert('Bạn chưa tải lên: ' + errors.join(', '));
         return;
@@ -1073,12 +1713,57 @@ document.getElementById('city').addEventListener('change', function() {
 });
 
 function submitSellerRegistration() {
+    console.log('DEBUG: submitSellerRegistration called');
+    console.log('DEBUG: Global licenseUrl =', licenseUrl);
+    console.log('DEBUG: typeof licenseUrl =', typeof licenseUrl);
+    
     const btn = document.getElementById('btn-submit-all');
     if (!btn) return;
     btn.disabled = true;
     btn.innerHTML = 'Đang xử lý...';
 
     try {
+        // Validate required documents before submission
+        const cccdInput = document.getElementById('fileCccd');
+        const licenseInput = document.getElementById('fileLicense');
+        const errors = [];
+        
+        // Check CCCD - either new file or existing URL
+        const hasCccdFile = cccdInput && cccdInput.files.length > 0;
+        const hasCccdUrl = cccdUrl && cccdUrl.trim() !== '';
+        if (!hasCccdFile && !hasCccdUrl) {
+            errors.push('CCCD / CMND');
+        }
+        
+        // Check License - either new file or existing URL
+        const hasLicenseFile = licenseInput && licenseInput.files.length > 0;
+        
+        // Check license URL from global variable or DOM
+        let hasLicenseUrl = false;
+        if (licenseUrl && licenseUrl.trim() !== '') {
+            hasLicenseUrl = true;
+            console.log('DEBUG: licenseUrl from global =', licenseUrl);
+        } else {
+            // Fallback: check if license preview is visible (DOM-based check)
+            const licensePreview = document.getElementById('prev-license');
+            if (licensePreview && licensePreview.style.display !== 'none') {
+                hasLicenseUrl = true;
+                console.log('DEBUG: licenseUrl from DOM preview visible');
+            }
+        }
+        
+        console.log('DEBUG: hasLicenseFile =', hasLicenseFile);
+        console.log('DEBUG: hasLicenseUrl =', hasLicenseUrl);
+        if (!hasLicenseFile && !hasLicenseUrl) {
+            errors.push('Giấy phép kinh doanh');
+        }
+        
+        if (errors.length > 0) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>Gửi hồ sơ xét duyệt</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+            alert('Vui lòng tải lên: ' + errors.join(', '));
+            return;
+        }
         // Get checked categories
         const categories = Array.from(document.querySelectorAll('input[name="cat"]:checked')).map(cb => cb.value).join(', ');
         // Get checked days
@@ -1092,7 +1777,10 @@ function submitSellerRegistration() {
         
         const safeGet = (id) => {
             const el = document.getElementById(id);
-            if (!el) throw new Error("Không tìm thấy phần tử HTML với ID: " + id);
+            if (!el) {
+                console.warn("Element not found with ID: " + id + ", using empty value");
+                return '';
+            }
             return el.value.trim();
         };
 
@@ -1100,7 +1788,15 @@ function submitSellerRegistration() {
         formData.append('lastName', safeGet('lastName'));
         formData.append('email', safeGet('email'));
         formData.append('phone', safeGet('phone'));
-        formData.append('password', document.getElementById('password').value);
+        
+        // Only append password if it's not empty and not in edit mode
+        const passwordEl = document.getElementById('password');
+        if (passwordEl && !userObj) {
+            const passwordValue = passwordEl.value;
+            if (passwordValue) {
+                formData.append('password', passwordValue);
+            }
+        }
         
         formData.append('storeName', safeGet('storeName'));
         formData.append('businessType', safeGet('businessType'));
@@ -1128,8 +1824,13 @@ function submitSellerRegistration() {
             return el ? (el.files[0] || null) : null;
         };
 
-        const fileCccd = getFileInput('fileCccd', "markUploaded('doc-cccd', this)");
-        if (fileCccd) formData.append('cccdFile', fileCccd);
+        // Reuse existing cccdInput variable from validation section
+        if (cccdInput && cccdInput.files.length > 0) {
+            // Append each CCCD file separately
+            for (let i = 0; i < cccdInput.files.length; i++) {
+                formData.append('cccdFiles', cccdInput.files[i]);
+            }
+        }
 
         const fileLicense = getFileInput('fileLicense', "markUploaded('doc-license', this)");
         if (fileLicense) formData.append('licenseFile', fileLicense);
@@ -1155,7 +1856,9 @@ function submitSellerRegistration() {
         })
         .then(data => {
             if(data && data.success) {
-                window.location.href = '/seller/onboarding-pending';
+                // Use redirectUrl from backend response, fallback to default
+                const redirectUrl = data.redirectUrl || '/auth/onboarding-pending';
+                window.location.href = redirectUrl;
             } else {
                 alert('Lỗi từ máy chủ: ' + (data ? data.message : 'Không rõ nguyên nhân'));
             }
@@ -1184,6 +1887,17 @@ function submitSellerRegistration() {
 /*<![CDATA[*/
     var userObj = /*[[${userObj}]]*/ null;
     var storeObj = /*[[${storeObj}]]*/ null;
+    var cccdUrl = /*[[${cccdUrl}]]*/ null;
+    var licenseUrl = /*[[${licenseUrl}]]*/ null;
+    var vsattpUrl = /*[[${vsattpUrl}]]*/ null;
+    var logoUrl = /*[[${logoUrl}]]*/ null;
+    
+    // Debug logging for initialization
+    console.log('DEBUG: Initialization - userObj =', userObj);
+    console.log('DEBUG: Initialization - storeObj =', storeObj);
+    console.log('DEBUG: Initialization - cccdUrl =', cccdUrl);
+    console.log('DEBUG: Initialization - licenseUrl =', licenseUrl);
+    console.log('DEBUG: Initialization - typeof userObj =', typeof userObj);
     
     if (userObj) {
         if(document.getElementById('email')) {
@@ -1201,6 +1915,142 @@ function submitSellerRegistration() {
                 if(document.getElementById('firstName')) document.getElementById('firstName').value = userObj.fullName;
             }
         }
+    }
+    
+    // Load existing documents
+    if (cccdUrl) {
+        const cccdPreview = document.getElementById('prev-cccd');
+        const cccdFileList = document.getElementById('cccd-file-list');
+        const cccdFilename = document.getElementById('cccd-filename');
+        
+        // Parse multiple URLs separated by semicolon
+        const cccdUrls = cccdUrl.split(';').filter(url => url.trim() !== '');
+        
+        cccdPreview.style.display = 'block';
+        
+        let fileListHtml = '';
+        cccdUrls.forEach((url, index) => {
+            const label = index === 0 ? 'Mặt trước' : 'Mặt sau';
+            fileListHtml += `
+                <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border-radius:var(--radius-md);margin-bottom:8px">
+                    <div style="flex-shrink:0;width:40px;height:40px;background:var(--primary);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600">${index + 1}</div>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px">CCCD ${label}</div>
+                        <div style="font-size:11px;color:var(--text-secondary);word-break:break-all;white-space:normal;line-height:1.3">${url}</div>
+                    </div>
+                    <div style="display:flex;gap:4px;flex-shrink:0">
+                        <button type="button" onclick="window.open('${url}', '_blank')" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                            Xem
+                        </button>
+                        <button type="button" onclick="editCccdFile(${index})" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                            Sửa
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        // Add "Add more" button if less than 2 files
+        if (cccdUrls.length < 2) {
+            fileListHtml += `
+                <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border-radius:var(--radius-md)">
+                    <div style="flex-shrink:0;width:40px;height:40px;background:var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:12px;font-weight:600">+</div>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Thêm ảnh ${cccdUrls.length === 0 ? 'mặt trước' : 'mặt sau'}</div>
+                        <div style="font-size:11px;color:var(--text-secondary)">Nhấn để thêm ảnh CCCD</div>
+                    </div>
+                    <div style="display:flex;gap:4px;flex-shrink:0">
+                        <button type="button" onclick="editCccdFile(${cccdUrls.length})" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                            Thêm ảnh
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        cccdFileList.innerHTML = fileListHtml;
+        cccdFilename.textContent = `CCCD đã tải lên (${cccdUrls.length}/2 ảnh)`;
+        document.getElementById('upload-cccd-btn').style.display = 'none';
+    }
+    
+    if (licenseUrl) {
+        const licensePreview = document.getElementById('prev-license');
+        const licenseFileInfo = document.getElementById('license-file-info');
+        const licenseFilename = document.getElementById('license-filename');
+        
+        licensePreview.style.display = 'block';
+        licenseFileInfo.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border-radius:var(--radius-md)">
+                <div style="flex-shrink:0;width:40px;height:40px;background:var(--primary);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600">GPL</div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Giấy phép kinh doanh</div>
+                    <div style="font-size:11px;color:var(--text-secondary);word-break:break-all;white-space:normal;line-height:1.3">${licenseUrl}</div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0">
+                    <button type="button" onclick="window.open('${licenseUrl}', '_blank')" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        Xem
+                    </button>
+                    <button type="button" onclick="editLicenseFile()" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        Sửa
+                    </button>
+                </div>
+            </div>
+        `;
+        licenseFilename.textContent = 'Đã tải lên (nhấn "Sửa" để thay đổi)';
+        document.getElementById('upload-license-btn').style.display = 'none';
+    }
+    
+    if (vsattpUrl) {
+        const vsattpPreview = document.getElementById('prev-vsattp');
+        const vsattpFileInfo = document.getElementById('vsattp-file-info');
+        const vsattpFilename = document.getElementById('vsattp-filename');
+        
+        vsattpPreview.style.display = 'block';
+        vsattpFileInfo.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border-radius:var(--radius-md)">
+                <div style="flex-shrink:0;width:40px;height:40px;background:var(--primary);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600">VSAT</div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Văn sinh ATTP</div>
+                    <div style="font-size:11px;color:var(--text-secondary);word-break:break-all;white-space:normal;line-height:1.3">${vsattpUrl}</div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0">
+                    <button type="button" onclick="window.open('${vsattpUrl}', '_blank')" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        Xem
+                    </button>
+                    <button type="button" onclick="editVsattpFile()" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        Sửa
+                    </button>
+                </div>
+            </div>
+        `;
+        vsattpFilename.textContent = 'Đã tải lên (nhấn "Sửa" để thay đổi)';
+        document.getElementById('upload-vsattp-btn').style.display = 'none';
+    }
+    
+    if (logoUrl) {
+        const logoPreview = document.getElementById('prev-logo');
+        const logoFileInfo = document.getElementById('logo-file-info');
+        const logoFilename = document.getElementById('logo-filename');
+        
+        logoPreview.style.display = 'block';
+        logoFileInfo.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border-radius:var(--radius-md)">
+                <img src="${logoUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:var(--radius-sm)" />
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px">Logo cửa hàng</div>
+                    <div style="font-size:11px;color:var(--text-secondary);word-break:break-all;white-space:normal;line-height:1.3">${logoUrl}</div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0">
+                    <button type="button" onclick="window.open('${logoUrl}', '_blank')" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        Xem
+                    </button>
+                    <button type="button" onclick="editLogoFile()" style="padding:4px 8px;border:1px solid var(--primary);background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:10px;cursor:pointer">
+                        Sửa
+                    </button>
+                </div>
+            </div>
+        `;
+        logoFilename.textContent = 'Đã tải lên (nhấn "Sửa" để thay đổi)';
     }
     
     if (storeObj) {
