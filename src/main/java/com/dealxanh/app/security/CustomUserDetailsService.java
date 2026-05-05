@@ -65,6 +65,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                 roleName = "ROLE_" + roleName;
             }
             authorities.add(new SimpleGrantedAuthority(roleName));
+        } else {
+            // Default role if no role assigned
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
         return authorities;
     }

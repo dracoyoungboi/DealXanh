@@ -38,6 +38,15 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                 String username = authentication.getName();
                 com.dealxanh.app.entity.User user = userRepository.findByUsername(username)
                         .orElse(userRepository.findByEmail(username).orElse(null));
+
+                // If still not found, try searching by email using the list method
+                if (user == null) {
+                    java.util.List<com.dealxanh.app.entity.User> users = userRepository.findAllByEmailWithRole(username);
+                    if (!users.isEmpty()) {
+                        user = users.get(0);
+                    }
+                }
+
                 if (user != null) {
                     java.util.Optional<com.dealxanh.app.entity.Store> storeOpt = storeRepository.findByOwner(user);
                     if (storeOpt.isPresent()) {
@@ -46,6 +55,10 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                             redirectUrl = "/seller/onboarding-pending";
                             break;
                         }
+                    } else {
+                        // No store yet, go to registration
+                        redirectUrl = "/seller/register";
+                        break;
                     }
                 }
                 redirectUrl = "/seller/dashboard";

@@ -128,6 +128,8 @@
                                             </svg>
                                         </button>
                                     </div>
+                                    <!-- Error message placeholder -->
+                                    <div id="password-error" class="error-message" style="display:none; color:#ef4444; font-size:13px; margin-top:5px;"></div>
                                 </div>
 
                                 <div class="form-options">
@@ -160,6 +162,39 @@
 
     <!-- JavaScript -->
     <script>
+        // Check for error parameter on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('error') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = 'Tài khoản hoặc mật khẩu không chính xác';
+                errorDiv.style.display = 'block';
+
+                // Focus on password field and clear it
+                const passwordField = document.getElementById('password');
+                passwordField.value = '';
+                passwordField.focus();
+            }
+
+            // Store username in sessionStorage for recovery after redirect
+            const form = document.getElementById('email-form');
+            const usernameField = document.getElementById('username');
+
+            form.addEventListener('submit', function() {
+                if (usernameField.value.trim()) {
+                    sessionStorage.setItem('login_username', usernameField.value.trim());
+                }
+            });
+
+            // Restore username if available
+            const savedUsername = sessionStorage.getItem('login_username');
+            if (savedUsername && !usernameField.value) {
+                usernameField.value = savedUsername;
+                sessionStorage.removeItem('login_username');
+            }
+        });
+
+        // Toggle password visibility
         document.getElementById('toggle-password').addEventListener('click', function() {
             var passInput = document.getElementById('password');
             if(passInput.type === 'password') {

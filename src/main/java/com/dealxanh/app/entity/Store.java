@@ -44,7 +44,11 @@ public class Store {
     // Documents
     @Column(length = 1000)
     private String cccdUrl;
+
+    @Column(length = 1000)
     private String businessLicenseUrl;
+
+    @Column(length = 1000)
     private String vsattpUrl;
     
     // Bank details
