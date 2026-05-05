@@ -341,24 +341,34 @@ public class AuthApiController {
                     return ResponseEntity.badRequest().body(response);
                 }
             }
-            
+
             // 3. Setup Owner (User)
             java.util.Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
             User newOwner;
             boolean isNewUser = false;
             if (existingUserOpt.isPresent()) {
                 newOwner = existingUserOpt.get();
-                // Chỉ update các thông tin cơ bản
+                // Update thông tin cơ bản
                 newOwner.setFullName(request.getFirstName() + " " + request.getLastName());
                 newOwner.setPhone(request.getPhone());
                 newOwner.setAddress(request.getAddress() + ", " + request.getDistrict() + ", " + request.getCity());
                 if (request.getPassword() != null && !request.getPassword().isEmpty()) {
                     newOwner.setPassword(passwordEncoder.encode(request.getPassword()));
                 }
+                // IMPORTANT: Update role to STORE_OWNER if not already
+                if (newOwner.getRole() == null || !"STORE_OWNER".equals(newOwner.getRole().getName())) {
+                    Role ownerRole = roleRepository.findByName("STORE_OWNER")
+                        .orElseGet(() -> {
+                            Role r = new Role();
+                            r.setName("STORE_OWNER");
+                            return roleRepository.save(r);
+                        });
+                    newOwner.setRole(ownerRole);
+                }
             } else {
                 newOwner = new User();
                 newOwner.setEmail(request.getEmail());
-                newOwner.setUsername(request.getEmail().split("@")[0]); 
+                newOwner.setUsername(request.getEmail().split("@")[0]);
                 newOwner.setFullName(request.getFirstName() + " " + request.getLastName());
                 newOwner.setPhone(request.getPhone());
                 newOwner.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -366,7 +376,7 @@ public class AuthApiController {
                 newOwner.setProvider("local");
                 newOwner.setActive(true);
                 newOwner.setCreatedAt(LocalDateTime.now());
-                
+
                 Role ownerRole = roleRepository.findByName("STORE_OWNER")
                     .orElseGet(() -> {
                         Role r = new Role();
@@ -469,11 +479,6 @@ public class AuthApiController {
                 
                 if (cccdUrls.length() > 0) {
                     String cccdUrlString = cccdUrls.toString();
-                    // Truncate if too long (temporary fix until DB schema is updated)
-                    if (cccdUrlString.length() > 255) {
-                        System.out.println("WARNING: CCCD URL too long (" + cccdUrlString.length() + " chars), truncating to 255");
-                        cccdUrlString = cccdUrlString.substring(0, 252) + "...";
-                    }
                     newStore.setCccdUrl(cccdUrlString);
                 }
             }
@@ -495,7 +500,7 @@ public class AuthApiController {
             
             response.put("success", true);
             response.put("message", isNewUser ? "Gửi hồ sơ xét duyệt thành công!" : "Cập nhật hồ sơ thành công!");
-            response.put("redirectUrl", "/auth/onboarding-pending");
+            response.put("redirectUrl", "/seller/onboarding-pending");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);

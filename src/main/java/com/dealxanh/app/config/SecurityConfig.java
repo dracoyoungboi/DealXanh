@@ -22,6 +22,9 @@ public class SecurityConfig {
     private com.dealxanh.app.security.CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
     @Autowired
+    private com.dealxanh.app.security.CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
+
+    @Autowired
     private com.dealxanh.app.security.CustomOAuth2UserService customOAuth2UserService;
 
     @Bean
@@ -52,6 +55,9 @@ public class SecurityConfig {
                     "/logout", "/oauth2/**", "/login/oauth2/**", "/api/auth/**", "/perform_login"
                 ).permitAll()
 
+                // Onboarding pending page - allow authenticated users (role may be pending update)
+                .requestMatchers("/seller/onboarding-pending", "/auth/onboarding-pending").authenticated()
+
                 // Admin routes - ADMIN và MODERATOR
                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MODERATOR")
 
@@ -79,7 +85,7 @@ public class SecurityConfig {
                 .usernameParameter("username")
                 .passwordParameter("password")
                 .successHandler(customAuthenticationSuccessHandler)
-                .failureUrl("/login?error=true")
+                .failureHandler(customAuthenticationFailureHandler)
                 .permitAll()
             )
             .logout(logout -> logout

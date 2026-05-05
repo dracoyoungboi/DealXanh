@@ -88,31 +88,44 @@ public class AuthController {
     @org.springframework.beans.factory.annotation.Autowired
     private com.dealxanh.app.repository.StoreRepository storeRepository;
 
-    @GetMapping("/seller/onboarding-pending")
+    @GetMapping({"/seller/onboarding-pending", "/auth/onboarding-pending"})
     public String onboardingPending(java.security.Principal principal, org.springframework.ui.Model model) {
         if (principal == null) {
             return "redirect:/seller/login";
         }
-        
+
+        // Set default values to avoid null issues in template
+        model.addAttribute("storeStatus", "PENDING");
+        model.addAttribute("storeName", "");
+        model.addAttribute("submittedAt", null);
+        model.addAttribute("hasCccd", false);
+        model.addAttribute("hasLicense", false);
+        model.addAttribute("hasVsattp", false);
+        model.addAttribute("hasBank", false);
+        model.addAttribute("pickupSlots", "");
+        model.addAttribute("ownerEmail", "");
+        model.addAttribute("ownerName", "");
+
         String username = principal.getName();
         com.dealxanh.app.entity.User user = userRepository.findByUsername(username)
                 .orElse(userRepository.findByEmail(username).orElse(null));
-                
+
         if (user != null) {
+            model.addAttribute("ownerEmail", user.getEmail() != null ? user.getEmail() : "");
+            model.addAttribute("ownerName", user.getFullName() != null ? user.getFullName() : "");
+
             java.util.Optional<com.dealxanh.app.entity.Store> storeOpt = storeRepository.findByOwner(user);
             if (storeOpt.isPresent()) {
                 com.dealxanh.app.entity.Store store = storeOpt.get();
-                model.addAttribute("storeStatus", store.getStatus());
-                model.addAttribute("storeName", store.getStoreName());
+                model.addAttribute("storeStatus", store.getStatus() != null ? store.getStatus() : "PENDING");
+                model.addAttribute("storeName", store.getStoreName() != null ? store.getStoreName() : "");
                 model.addAttribute("submittedAt", store.getCreatedAt());
                 model.addAttribute("hasCccd", store.getCccdUrl() != null && !store.getCccdUrl().isEmpty());
                 model.addAttribute("hasLicense", store.getBusinessLicenseUrl() != null && !store.getBusinessLicenseUrl().isEmpty());
                 model.addAttribute("hasVsattp", store.getVsattpUrl() != null && !store.getVsattpUrl().isEmpty());
                 model.addAttribute("hasBank", store.getBankAccountNumber() != null && !store.getBankAccountNumber().isEmpty());
-                model.addAttribute("pickupSlots", store.getPickupSlots());
+                model.addAttribute("pickupSlots", store.getPickupSlots() != null ? store.getPickupSlots() : "");
             }
-            model.addAttribute("ownerEmail", user.getEmail());
-            model.addAttribute("ownerName", user.getFullName());
         }
         return "auth/onboarding-pending";
     }
