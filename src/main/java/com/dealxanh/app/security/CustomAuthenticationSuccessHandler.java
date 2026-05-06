@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
@@ -23,15 +24,29 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
-                                            
-        String redirectUrl = "/home";
+
+        System.out.println("=== AUTH SUCCESS START ===");
+        System.out.println("DEBUG: Authentication success for user: " + authentication.getName());
+
+        // Explicitly set authentication in security context
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String redirectUrl = "/home"; // Default for buyers
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        
+
+        System.out.println("DEBUG: Authorities: " + authorities);
+        System.out.println("DEBUG: Session ID before redirect: " + request.getSession(false) != null ? request.getSession().getId() : "null");
+
+        boolean roleFound = false;
+
         for (GrantedAuthority authority : authorities) {
             String role = authority.getAuthority();
-            
+            System.out.println("DEBUG: Checking role: " + role);
+
             if (role.equals("ROLE_ADMIN") || role.equals("ROLE_MODERATOR")) {
                 redirectUrl = "/admin/dashboard";
+                roleFound = true;
+                System.out.println("DEBUG: Admin/Moderator role, redirecting to: " + redirectUrl);
                 break;
             } else if (role.equals("ROLE_STORE_OWNER")) {
                 // Check store status
@@ -53,25 +68,44 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                         String status = storeOpt.get().getStatus();
                         if ("PENDING".equals(status) || "REJECTED".equals(status)) {
                             redirectUrl = "/seller/onboarding-pending";
-                            break;
+                            System.out.println("DEBUG: Store status: " + status + ", redirecting to: " + redirectUrl);
+                        } else {
+                            redirectUrl = "/seller/dashboard";
+                            System.out.println("DEBUG: Store approved, redirecting to: " + redirectUrl);
                         }
                     } else {
                         // No store yet, go to registration
                         redirectUrl = "/seller/register";
-                        break;
+                        System.out.println("DEBUG: No store found, redirecting to: " + redirectUrl);
                     }
+                } else {
+                    redirectUrl = "/seller/register";
+                    System.out.println("DEBUG: User not found, redirecting to: " + redirectUrl);
                 }
-                redirectUrl = "/seller/dashboard";
+                roleFound = true;
                 break;
             } else if (role.equals("ROLE_STORE_STAFF")) {
                 redirectUrl = "/seller/dashboard";
+                roleFound = true;
+                System.out.println("DEBUG: Staff role, redirecting to: " + redirectUrl);
                 break;
             } else if (role.equals("ROLE_USER") || role.equals("ROLE_CUSTOMER")) {
                 redirectUrl = "/home";
+                roleFound = true;
+                System.out.println("DEBUG: Buyer role, redirecting to: " + redirectUrl);
                 break;
             }
         }
 
+        if (!roleFound) {
+            System.out.println("DEBUG: No matching role found, defaulting to /home");
+            redirectUrl = "/home";
+        }
+
+        System.out.println("DEBUG: Final redirect URL: " + redirectUrl);
+        System.out.println("DEBUG: Redirecting...");
+
         response.sendRedirect(redirectUrl);
+        System.out.println("=== AUTH SUCCESS END ===");
     }
 }

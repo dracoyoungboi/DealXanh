@@ -58,44 +58,18 @@
 </nav>
 
 <script>
-function handleAccountClick(event) {
+// Define function globally to ensure it's available when onclick fires
+window.handleAccountClick = function(event) {
     event.preventDefault();
+    event.stopPropagation();
 
-    // Check if user is authenticated by checking for session data or making API call
-    fetch('/api/auth/check-auth', {
-        method: 'GET',
-        credentials: 'same-origin'
-    })
-    .then(response => {
-        if (response.ok) {
-            return response.json();
-        }
-        throw new Error('Not authenticated');
-    })
-    .then(data => {
-        if (data.authenticated) {
-            // User is logged in, redirect to profile page
-            window.location.href = '/profile';
-        } else {
-            // User is not logged in, redirect to login page
-            window.location.href = '/login';
-        }
-    })
-    .catch(error => {
-        // If API fails, check client-side storage as fallback
-        const hasUserData = sessionStorage.getItem('login_username') ||
-                           localStorage.getItem('userEmail') ||
-                           document.cookie.includes('JSESSIONID');
+    console.log('=== ACCOUNT CLICK START ===');
 
-        if (hasUserData) {
-            // Likely logged in, redirect to profile
-            window.location.href = '/profile';
-        } else {
-            // Not logged in, redirect to login
-            window.location.href = '/login';
-        }
-    });
-}
+    // Always try to go to profile first
+    // Server will check authentication and redirect if needed
+    console.log('Redirecting to /profile...');
+    window.location.href = '/profile';
+};
 </script>
 </body>
 </html>

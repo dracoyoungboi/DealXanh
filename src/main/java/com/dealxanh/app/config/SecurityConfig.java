@@ -88,6 +88,11 @@ public class SecurityConfig {
                 .failureHandler(customAuthenticationFailureHandler)
                 .permitAll()
             )
+            .sessionManagement(session -> session
+                .sessionFixation().migrateSession()
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
+            )
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .invalidateHttpSession(true)

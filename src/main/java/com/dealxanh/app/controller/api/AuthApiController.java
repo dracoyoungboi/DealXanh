@@ -184,12 +184,15 @@ public class AuthApiController {
             }
             
             // Assign Role USER
-            Role userRole = roleRepository.findByName("USER")
+            Role userRole = roleRepository.findByName("ROLE_USER")
                 .orElseGet(() -> {
                     Role r = new Role();
-                    r.setName("USER");
+                    r.setName("ROLE_USER");
                     return roleRepository.save(r);
                 });
+
+            System.out.println("DEBUG: Assigning ROLE_USER to new buyer: " + newUser.getEmail());
+
             newUser.setRole(userRole);
 
             userRepository.save(newUser);
@@ -678,9 +681,9 @@ public class AuthApiController {
     
     private boolean isValidPassword(String password) {
         if (password == null || password.trim().isEmpty()) return false;
-        // Strong password: min 8 chars, uppercase, lowercase, digit, special char
-        String pwdRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$";
-        return password.matches(pwdRegex);
+        // Only require minimum 8 characters
+        // Strength meter will classify as weak/strong but won't block
+        return password.length() >= 8;
     }
     
     private boolean isValidName(String name) {
@@ -708,7 +711,7 @@ public class AuthApiController {
                 if (!isValidPhone(value)) return "Số điện thoại không hợp lệ (10 số, bắt đầu 03/05/07/08/09)";
                 break;
             case "password":
-                if (!isValidPassword(value)) return "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt";
+                if (!isValidPassword(value)) return "Mật khẩu tối thiểu 8 ký tự, gồm chữ và số";
                 break;
             case "fullName":
             case "firstName":
@@ -735,21 +738,185 @@ public class AuthApiController {
     }
 
     @GetMapping("/check-auth")
-    public ResponseEntity<Map<String, Object>> checkAuth() {
+    public ResponseEntity<Map<String, Object>> checkAuth(jakarta.servlet.http.HttpServletRequest request) {
         Map<String, Object> response = new HashMap<>();
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        boolean isAuthenticated = authentication != null &&
-                               authentication.isAuthenticated() &&
-                               !"anonymousUser".equals(authentication.getPrincipal());
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        response.put("authenticated", isAuthenticated);
+            System.out.println("=== DEBUG CHECK-AUTH START ===");
+            System.out.println("DEBUG: Request URI: " + request.getRequestURI());
+            System.out.println("DEBUG: RemoteAddr: " + request.getRemoteAddr());
+            System.out.println("DEBUG: Session ID: " + request.getSession(false) != null ? request.getSession().getId() : "No session");
+            System.out.println("DEBUG: Authentication object: " + (authentication != null ? authentication.getClass().getName() : "null"));
 
-        if (isAuthenticated) {
-            response.put("username", authentication.getName());
-            response.put("roles", authentication.getAuthorities());
+            if (authentication != null) {
+                System.out.println("DEBUG: Auth.name: " + authentication.getName());
+                System.out.println("DEBUG: Auth.isAuthenticated: " + authentication.isAuthenticated());
+                System.out.println("DEBUG: Auth.principal: " + authentication.getPrincipal());
+                System.out.println("DEBUG: Auth.principal type: " + authentication.getPrincipal().getClass().getName());
+                System.out.println("DEBUG: Auth.credentials: " + (authentication.getCredentials() != null ? "present" : "null"));
+                System.out.println("DEBUG: Auth.details: " + authentication.getDetails());
+                System.out.println("DEBUG: Auth.authorities: " + authentication.getAuthorities());
+            }
+
+            // Check multiple conditions
+            boolean hasAuthentication = authentication != null;
+            boolean isAuthenticatedFlag = hasAuthentication && authentication.isAuthenticated();
+            boolean isNotAnonymous = hasAuthentication && !"anonymousUser".equals(String.valueOf(authentication.getPrincipal()));
+
+            boolean isAuthenticated = isAuthenticatedFlag && isNotAnonymous;
+
+            System.out.println("DEBUG: hasAuthentication: " + hasAuthentication);
+            System.out.println("DEBUG: isAuthenticatedFlag: " + isAuthenticatedFlag);
+            System.out.println("DEBUG: isNotAnonymous: " + isNotAnonymous);
+            System.out.println("DEBUG: Final isAuthenticated: " + isAuthenticated);
+
+            response.put("authenticated", isAuthenticated);
+
+            if (isAuthenticated) {
+                response.put("username", authentication.getName());
+                response.put("principal", authentication.getPrincipal().toString());
+                response.put("roles", authentication.getAuthorities().toString());
+            }
+
+            System.out.println("=== DEBUG CHECK-AUTH END ===");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // If any error occurs, consider user not authenticated
+            System.out.println("DEBUG: Exception in check-auth: " + e.getMessage());
+            e.printStackTrace();
+            response.put("authenticated", false);
+            response.put("error", e.getMessage());
+            System.out.println("=== DEBUG CHECK-AUTH END (ERROR) ===");
+            return ResponseEntity.ok(response);
         }
+    }
 
-        return ResponseEntity.ok(response);
+    // ========== PASSWORD RESET ENDPOINTS ==========
+
+    @PostMapping("/send-reset-otp")
+    public ResponseEntity<?> sendResetOtp(@RequestParam String email) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            System.out.println("=== PASSWORD RESET OTP START ===");
+            System.out.println("DEBUG: Email: " + email);
+
+            // Check if email exists in database
+            java.util.Optional<User> userOpt = userRepository.findByEmail(email);
+            if (!userOpt.isPresent()) {
+                System.out.println("DEBUG: Email not found in database");
+                // For security, still return success but don't send email
+                response.put("success", true);
+                response.put("message", "Nếu email tồn tại, bạn sẽ nhận được mã OTP.");
+                return ResponseEntity.ok(response);
+            }
+
+            User user = userOpt.get();
+            System.out.println("DEBUG: User found: " + user.getUsername());
+
+            // Generate OTP for password reset
+            String otp = otpService.generateAndStoreOtp(email);
+            System.out.println("DEBUG: OTP generated: " + otp);
+
+            // Send password reset email
+            emailService.sendPasswordResetOtpEmail(email, otp);
+            System.out.println("DEBUG: Password reset email sent to: " + email);
+
+            response.put("success", true);
+            response.put("message", "Đã gửi mã OTP đến email: " + email);
+            System.out.println("=== PASSWORD RESET OTP END ===");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("ERROR in send-reset-otp: " + e.getMessage());
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("message", "Không thể gửi email: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/verify-reset-otp")
+    public ResponseEntity<?> verifyResetOtp(@RequestParam String email, @RequestParam String otp) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            System.out.println("=== VERIFY RESET OTP START ===");
+            System.out.println("DEBUG: Email: " + email);
+            System.out.println("DEBUG: OTP: " + otp);
+
+            boolean isValid = otpService.verifyOtp(email, otp);
+            System.out.println("DEBUG: OTP valid: " + isValid);
+
+            if (isValid) {
+                response.put("success", true);
+                response.put("message", "Xác thực OTP thành công");
+                System.out.println("=== VERIFY RESET OTP END (SUCCESS) ===");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "Mã OTP không chính xác hoặc đã hết hạn");
+                System.out.println("=== VERIFY RESET OTP END (INVALID) ===");
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (Exception e) {
+            System.err.println("ERROR in verify-reset-otp: " + e.getMessage());
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestParam String email,
+            @RequestParam String newPassword) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            System.out.println("=== RESET PASSWORD START ===");
+            System.out.println("DEBUG: Email: " + email);
+
+            // Find user by email
+            java.util.Optional<User> userOpt = userRepository.findByEmail(email);
+            if (!userOpt.isPresent()) {
+                System.out.println("DEBUG: User not found");
+                response.put("success", false);
+                response.put("message", "Không tìm thấy tài khoản với email này");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            User user = userOpt.get();
+            System.out.println("DEBUG: User found: " + user.getUsername());
+
+            // Validate new password
+            if (newPassword == null || newPassword.length() < 8) {
+                response.put("success", false);
+                response.put("message", "Mật khẩu phải có ít nhất 8 ký tự");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Encode and set new password
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            user.setPassword(encodedPassword);
+            userRepository.save(user);
+
+            System.out.println("DEBUG: Password updated successfully");
+            System.out.println("=== RESET PASSWORD END ===");
+
+            response.put("success", true);
+            response.put("message", "Đặt lại mật khẩu thành công!");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("ERROR in reset-password: " + e.getMessage());
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("message", "Lỗi khi đặt lại mật khẩu: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
     }
 }

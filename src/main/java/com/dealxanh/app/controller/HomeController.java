@@ -20,6 +20,12 @@ public class HomeController {
         model.addAttribute("totalDeals", "95K");
 
         // Thymeleaf sẽ tìm file d:\exe201\deal xanh\DealXanh\src\main\resources\templates\buyer\home.html
-        return "buyer/home"; 
+        return "buyer/home";
+    }
+
+    @GetMapping("/home")
+    public String homePage(Model model) {
+        // Redirect to root or serve same content
+        return home(model);
     }
 }
