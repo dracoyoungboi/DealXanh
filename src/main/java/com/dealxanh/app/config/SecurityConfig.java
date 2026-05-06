@@ -74,7 +74,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/home", "/shop/**", "/product/**", "/store/**").permitAll()
 
                 // Profile - cần đăng nhập
-                .requestMatchers("/profile/**").authenticated()
+                .requestMatchers("/profile").authenticated()
 
                 // Mặc định - cho phép tất cả
                 .anyRequest().permitAll()

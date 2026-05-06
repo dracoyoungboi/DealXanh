@@ -4,6 +4,9 @@ import com.dealxanh.app.service.EmailService;
 import com.dealxanh.app.service.OtpService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -277,56 +280,97 @@ public class AuthApiController {
                 response.put("message", errorMsg);
                 return ResponseEntity.badRequest().body(response);
             }
-            
+
             // Validate required document files
             org.springframework.web.multipart.MultipartFile[] cccdFiles = request.getCccdFiles();
-            if (cccdFiles == null || cccdFiles.length == 0) {
+
+            // Check if user has existing CCCD URLs or is uploading new files
+            java.util.Optional<User> userForValidation = userRepository.findByEmail(request.getEmail());
+            java.util.Optional<Store> existingStoreForValidation = userForValidation.flatMap(user -> storeRepository.findByOwner(user));
+
+            boolean hasExistingCccd = existingStoreForValidation.isPresent() &&
+                existingStoreForValidation.get().getCccdUrl() != null &&
+                !existingStoreForValidation.get().getCccdUrl().trim().isEmpty();
+
+            boolean hasNewCccdFiles = cccdFiles != null && cccdFiles.length > 0;
+
+            // Debug logging
+            System.out.println("DEBUG: Email = " + request.getEmail());
+            System.out.println("DEBUG: hasExistingCccd = " + hasExistingCccd);
+            System.out.println("DEBUG: hasNewCccdFiles = " + hasNewCccdFiles);
+            if (hasExistingCccd) {
+                System.out.println("DEBUG: existingCccdUrl = " + existingStoreForValidation.get().getCccdUrl());
+            }
+            if (hasNewCccdFiles) {
+                System.out.println("DEBUG: newCccdFiles count = " + cccdFiles.length);
+            }
+
+            if (!hasExistingCccd && !hasNewCccdFiles) {
                 response.put("success", false);
                 response.put("message", "Vui lòng tải lên ít nhất 1 file CCCD/CMND (mặt trước)");
                 return ResponseEntity.badRequest().body(response);
             }
-            
-            if (cccdFiles.length > 2) {
+
+            if (cccdFiles != null && cccdFiles.length > 2) {
                 response.put("success", false);
                 response.put("message", "Chỉ được tải lên tối đa 2 file CCCD/CMND (mặt trước & mặt sau)");
                 return ResponseEntity.badRequest().body(response);
             }
-            
-            // Validate each CCCD file
-            for (int i = 0; i < cccdFiles.length; i++) {
-                org.springframework.web.multipart.MultipartFile file = cccdFiles[i];
-                if (!isValidFileSize(file, 5 * 1024 * 1024)) {
-                    response.put("success", false);
-                    response.put("message", "File CCCD thứ " + (i + 1) + " vượt quá kích thước 5MB");
-                    return ResponseEntity.badRequest().body(response);
-                }
-                
-                if (!isImageFile(file) && !file.getContentType().equals("application/pdf")) {
-                    response.put("success", false);
-                    response.put("message", "File CCCD thứ " + (i + 1) + " phải là ảnh (JPG, PNG) hoặc PDF");
-                    return ResponseEntity.badRequest().body(response);
+
+            // Validate each CCCD file (only if files are being uploaded)
+            if (hasNewCccdFiles) {
+                for (int i = 0; i < cccdFiles.length; i++) {
+                    org.springframework.web.multipart.MultipartFile file = cccdFiles[i];
+                    if (!isValidFileSize(file, 5 * 1024 * 1024)) {
+                        response.put("success", false);
+                        response.put("message", "File CCCD thứ " + (i + 1) + " vượt quá kích thước 5MB");
+                        return ResponseEntity.badRequest().body(response);
+                    }
+
+                    if (!isImageFile(file) && !file.getContentType().equals("application/pdf")) {
+                        response.put("success", false);
+                        response.put("message", "File CCCD thứ " + (i + 1) + " phải là ảnh (JPG, PNG) hoặc PDF");
+                        return ResponseEntity.badRequest().body(response);
+                    }
                 }
             }
-            
-            if (request.getLicenseFile() == null || request.getLicenseFile().isEmpty()) {
+
+            // Check if user has existing License URL or is uploading new file
+            boolean hasExistingLicense = existingStoreForValidation.isPresent() &&
+                existingStoreForValidation.get().getBusinessLicenseUrl() != null &&
+                !existingStoreForValidation.get().getBusinessLicenseUrl().trim().isEmpty();
+
+            org.springframework.web.multipart.MultipartFile licenseFileReq = request.getLicenseFile();
+            boolean hasNewLicenseFile = licenseFileReq != null && licenseFileReq.getOriginalFilename() != null && !licenseFileReq.getOriginalFilename().trim().isEmpty();
+
+            System.out.println("DEBUG: hasExistingLicense = " + hasExistingLicense);
+            System.out.println("DEBUG: hasNewLicenseFile = " + hasNewLicenseFile);
+            System.out.println("DEBUG: licenseFileReq = " + (licenseFileReq != null ? licenseFileReq.getOriginalFilename() : "null"));
+            if (hasExistingLicense) {
+                System.out.println("DEBUG: existingLicenseUrl = " + existingStoreForValidation.get().getBusinessLicenseUrl());
+            }
+
+            if (!hasExistingLicense && !hasNewLicenseFile) {
                 response.put("success", false);
                 response.put("message", "Vui lòng tải lên Giấy phép kinh doanh");
                 return ResponseEntity.badRequest().body(response);
             }
-            
-            // Validate license file
-            if (!isValidFileSize(request.getLicenseFile(), 5 * 1024 * 1024)) {
-                response.put("success", false);
-                response.put("message", "Kích thước file Giấy phép kinh doanh không được vượt quá 5MB");
-                return ResponseEntity.badRequest().body(response);
+
+            // Validate license file (only if new file is being uploaded)
+            if (hasNewLicenseFile) {
+                if (!isValidFileSize(licenseFileReq, 5 * 1024 * 1024)) {
+                    response.put("success", false);
+                    response.put("message", "Kích thước file Giấy phép kinh doanh không được vượt quá 5MB");
+                    return ResponseEntity.badRequest().body(response);
+                }
+
+                if (!isImageFile(licenseFileReq) && !licenseFileReq.getContentType().equals("application/pdf")) {
+                    response.put("success", false);
+                    response.put("message", "Giấy phép kinh doanh phải là ảnh (JPG, PNG) hoặc PDF");
+                    return ResponseEntity.badRequest().body(response);
+                }
             }
-            
-            if (!isImageFile(request.getLicenseFile()) && !request.getLicenseFile().getContentType().equals("application/pdf")) {
-                response.put("success", false);
-                response.put("message", "Giấy phép kinh doanh phải là ảnh (JPG, PNG) hoặc PDF");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
+
             // Validate optional VSATTP file
             if (request.getVsattpFile() != null && !request.getVsattpFile().isEmpty()) {
                 if (!isValidFileSize(request.getVsattpFile(), 5 * 1024 * 1024)) {
@@ -443,31 +487,36 @@ public class AuthApiController {
             newStore.setApprovalMode(request.getApprovalMode());
             
             // Handle Files (Chỉ cập nhật nếu có file upload lên)
+            System.out.println("DEBUG: Processing CCCD files - cccdFiles = " + (cccdFiles != null ? cccdFiles.length : "null"));
             if (cccdFiles != null && cccdFiles.length > 0) {
                 // Merge existing URLs with new files
-                String existingCccdUrl = existingStoreOpt.isPresent() ? 
+                String existingCccdUrl = existingStoreOpt.isPresent() ?
                     existingStoreOpt.get().getCccdUrl() : null;
-                
+
+                System.out.println("DEBUG: Existing CCCD URL = " + existingCccdUrl);
                 List<String> urlList = new ArrayList<>();
-                
+
                 // Parse existing URLs
                 if (existingCccdUrl != null && !existingCccdUrl.trim().isEmpty()) {
                     String[] existingUrls = existingCccdUrl.split(";");
+                    System.out.println("DEBUG: Parsed " + existingUrls.length + " existing URLs");
                     for (String url : existingUrls) {
                         if (url != null && !url.trim().isEmpty() && !url.startsWith("new_file_")) {
+                            System.out.println("DEBUG: Adding existing URL to list: " + url.trim());
                             urlList.add(url.trim());
                         }
                     }
                 }
-                
+
                 // Save new files and add to list
                 for (int i = 0; i < cccdFiles.length; i++) {
                     String fileUrl = saveFile(cccdFiles[i]);
                     if (fileUrl != null) {
+                        System.out.println("DEBUG: Adding new file URL to list: " + fileUrl);
                         urlList.add(fileUrl);
                     }
                 }
-                
+
                 // Create combined URL string (max 2 files)
                 StringBuilder cccdUrls = new StringBuilder();
                 for (int i = 0; i < Math.min(urlList.size(), 2); i++) {
@@ -476,19 +525,69 @@ public class AuthApiController {
                     }
                     cccdUrls.append(urlList.get(i));
                 }
-                
+
                 if (cccdUrls.length() > 0) {
                     String cccdUrlString = cccdUrls.toString();
+                    System.out.println("DEBUG: Final CCCD URL string = " + cccdUrlString);
                     newStore.setCccdUrl(cccdUrlString);
                 }
+            } else if (existingStoreOpt.isPresent()) {
+                // Preserve existing CCCD URLs if no new files uploaded
+                Store existingStore = existingStoreOpt.get();
+                if (existingStore.getCccdUrl() != null && !existingStore.getCccdUrl().trim().isEmpty()) {
+                    System.out.println("DEBUG: Preserving existing CCCD URL = " + existingStore.getCccdUrl());
+                    newStore.setCccdUrl(existingStore.getCccdUrl());
+                }
             }
-            
-            String licenseUrl = saveFile(request.getLicenseFile());
-            if (licenseUrl != null) newStore.setBusinessLicenseUrl(licenseUrl);
-            
-            String vsattpUrl = saveFile(request.getVsattpFile());
-            if (vsattpUrl != null) newStore.setVsattpUrl(vsattpUrl);
-            
+
+            // Handle License file (preserve existing URL if no new file)
+            org.springframework.web.multipart.MultipartFile licenseFile = request.getLicenseFile();
+            System.out.println("DEBUG: Processing license file - licenseFile = " + (licenseFile != null ? licenseFile.getOriginalFilename() : "null"));
+            if (licenseFile != null && licenseFile.getOriginalFilename() != null && !licenseFile.getOriginalFilename().trim().isEmpty()) {
+                String licenseUrl = saveFile(licenseFile);
+                System.out.println("DEBUG: Saved new license URL = " + licenseUrl);
+                if (licenseUrl != null) newStore.setBusinessLicenseUrl(licenseUrl);
+            } else if (existingStoreOpt.isPresent()) {
+                // Keep existing URL if no new file uploaded
+                Store existingStore = existingStoreOpt.get();
+                if (existingStore.getBusinessLicenseUrl() != null && !existingStore.getBusinessLicenseUrl().trim().isEmpty()) {
+                    System.out.println("DEBUG: Preserving existing license URL = " + existingStore.getBusinessLicenseUrl());
+                    newStore.setBusinessLicenseUrl(existingStore.getBusinessLicenseUrl());
+                }
+            }
+
+            // Handle VSATTP file (preserve existing URL if no new file)
+            org.springframework.web.multipart.MultipartFile vsattpFile = request.getVsattpFile();
+            System.out.println("DEBUG: Processing vsattp file - vsattpFile = " + (vsattpFile != null ? vsattpFile.getOriginalFilename() : "null"));
+            if (vsattpFile != null && vsattpFile.getOriginalFilename() != null && !vsattpFile.getOriginalFilename().trim().isEmpty()) {
+                String vsattpUrl = saveFile(vsattpFile);
+                System.out.println("DEBUG: Saved new vsattp URL = " + vsattpUrl);
+                if (vsattpUrl != null) newStore.setVsattpUrl(vsattpUrl);
+            } else if (existingStoreOpt.isPresent()) {
+                // Keep existing URL if no new file uploaded
+                Store existingStore = existingStoreOpt.get();
+                if (existingStore.getVsattpUrl() != null && !existingStore.getVsattpUrl().trim().isEmpty()) {
+                    System.out.println("DEBUG: Preserving existing vsattp URL = " + existingStore.getVsattpUrl());
+                    newStore.setVsattpUrl(existingStore.getVsattpUrl());
+                }
+            }
+
+            // Handle Logo file (preserve existing URL if no new file)
+            org.springframework.web.multipart.MultipartFile logoFile = request.getLogoFile();
+            System.out.println("DEBUG: Processing logo file - logoFile = " + (logoFile != null ? logoFile.getOriginalFilename() : "null"));
+            if (logoFile != null && logoFile.getOriginalFilename() != null && !logoFile.getOriginalFilename().trim().isEmpty()) {
+                String logoUrl = saveFile(logoFile);
+                System.out.println("DEBUG: Saved new logo URL = " + logoUrl);
+                if (logoUrl != null) newStore.setLogoUrl(logoUrl);
+            } else if (existingStoreOpt.isPresent()) {
+                // Keep existing URL if no new file uploaded
+                Store existingStore = existingStoreOpt.get();
+                if (existingStore.getLogoUrl() != null && !existingStore.getLogoUrl().trim().isEmpty()) {
+                    System.out.println("DEBUG: Preserving existing logo URL = " + existingStore.getLogoUrl());
+                    newStore.setLogoUrl(existingStore.getLogoUrl());
+                }
+            }
+
             if (!existingStoreOpt.isPresent()) {
                 newStore.setCreatedAt(LocalDateTime.now());
                 newStore.setOwner(newOwner);
@@ -633,5 +732,24 @@ public class AuthApiController {
                 return "Dữ liệu không hợp lệ";
         }
         return null;
+    }
+
+    @GetMapping("/check-auth")
+    public ResponseEntity<Map<String, Object>> checkAuth() {
+        Map<String, Object> response = new HashMap<>();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        boolean isAuthenticated = authentication != null &&
+                               authentication.isAuthenticated() &&
+                               !"anonymousUser".equals(authentication.getPrincipal());
+
+        response.put("authenticated", isAuthenticated);
+
+        if (isAuthenticated) {
+            response.put("username", authentication.getName());
+            response.put("roles", authentication.getAuthorities());
+        }
+
+        return ResponseEntity.ok(response);
     }
 }

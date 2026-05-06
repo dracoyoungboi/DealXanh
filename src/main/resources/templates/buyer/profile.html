@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin tài khoản - DealXanh</title>
+
+    <!-- CSS Fragment -->
+    <div th:replace="common/buyer/css :: css"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/profile.css}">
+</head>
+<body>
+    <!-- Header Fragment -->
+    <div th:replace="common/buyer/header :: header"></div>
+
+    <!-- Main Content -->
+    <main class="profile-container">
+        <div class="container">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="profile-info">
+                    <h1 class="profile-name" th:text="${user != null ? user.fullName : 'Người dùng'}">Người dùng</h1>
+                    <p class="profile-email" th:text="${user != null ? user.email : ''}">email@example.com</p>
+                </div>
+            </div>
+
+            <!-- Profile Menu -->
+            <div class="profile-menu">
+                <div class="profile-menu__item">
+                    <a th:href="@{/buyer/orders}" class="profile-menu__link">
+                        <div class="profile-menu__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                        </div>
+                        <div class="profile-menu__text">
+                            <div class="profile-menu__title">Đơn hàng của tôi</div>
+                            <div class="profile-menu__desc">Xem lịch sử đặt hàng</div>
+                        </div>
+                        <div class="profile-menu__arrow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="profile-menu__item">
+                    <a href="/logout" class="profile-menu__link profile-menu__link--danger">
+                        <div class="profile-menu__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                        </div>
+                        <div class="profile-menu__text">
+                            <div class="profile-menu__title">Đăng xuất</div>
+                            <div class="profile-menu__desc">Đăng xuất khỏi tài khoản</div>
+                        </div>
+                        <div class="profile-menu__arrow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mobile Nav Fragment -->
+    <div th:replace="common/buyer/mobile-nav :: mobileNav"></div>
+
+    <!-- JS Fragment -->
+    <div th:replace="common/buyer/js :: js"></div>
+
+    <style>
+        .profile-container {
+            min-height: 100vh;
+            background: var(--bg-light);
+            padding: 80px 0 100px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 60px 0 100px;
+            }
+        }
+
+        .profile-header {
+            background: white;
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .profile-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 4px 0;
+        }
+
+        .profile-email {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .profile-menu {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .profile-menu__item:not(:last-child) {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .profile-menu__link {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.2s;
+        }
+
+        .profile-menu__link:hover {
+            background: var(--bg-light);
+        }
+
+        .profile-menu__link--danger {
+            color: var(--status-danger);
+        }
+
+        .profile-menu__link--danger:hover {
+            background: #fee;
+        }
+
+        .profile-menu__icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .profile-menu__text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-menu__title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .profile-menu__desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .profile-menu__arrow {
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+        }
+    </style>
+</body>
+</html>

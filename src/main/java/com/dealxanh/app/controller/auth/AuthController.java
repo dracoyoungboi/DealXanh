@@ -138,4 +138,22 @@ public class AuthController {
         }
         return "redirect:/seller/login";
     }
+
+    // Trang thông tin tài khoản (Profile)
+    @GetMapping("/profile")
+    public String profilePage(java.security.Principal principal, org.springframework.ui.Model model) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+
+        String username = principal.getName();
+        com.dealxanh.app.entity.User user = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (user != null) {
+            model.addAttribute("user", user);
+        }
+
+        return "buyer/profile";
+    }
 }

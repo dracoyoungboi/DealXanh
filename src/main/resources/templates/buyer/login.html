@@ -122,6 +122,20 @@
                     <div id="tab-email">
                         <div class="login-card__body">
                             <form action="/perform_login" method="post" id="email-form" class="login-card__form">
+                                <!-- Success Message for Registration Complete -->
+                                <div id="registration-success-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                        </svg>
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 2px;">Gửi hồ sơ thành công!</div>
+                                            <div style="font-size: 13px;">Hồ sơ của bạn đã được gửi và đang chờ xét duyệt. Vui lòng đăng nhập lại để tiếp tục.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="form-group">
                                     <label class="form-label" for="email">Tài khoản (Email)</label>
                                     <div class="input-with-icon">
@@ -292,6 +306,27 @@
 
     <!-- JavaScript -->
     <script>
+        // Check for registration_complete parameter to show success message
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('registration_complete') === 'true') {
+                const successAlert = document.getElementById('registration-success-alert');
+                if (successAlert) {
+                    successAlert.style.display = 'block';
+                    // Auto-hide after 5 seconds
+                    setTimeout(() => {
+                        successAlert.style.transition = 'opacity 0.5s';
+                        successAlert.style.opacity = '0';
+                        setTimeout(() => {
+                            successAlert.style.display = 'none';
+                        }, 500);
+                    }, 5000);
+                }
+                // Clean URL without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+
         document.getElementById('toggle-password').addEventListener('click', function() {
             var passInput = document.getElementById('password');
             if(passInput.type === 'password') {

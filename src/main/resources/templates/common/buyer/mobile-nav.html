@@ -46,7 +46,7 @@
             </a>
         </li>
         <li>
-             <a th:href="${#authorization.expression('isAuthenticated()') ? '/auth/role-select' : '/login'}" class="mobile-nav__link" th:classappend="${activeNav == 'account'} ? ' mobile-nav__link--active' : ''">
+             <a href="#" onclick="handleAccountClick(event)" class="mobile-nav__link" th:classappend="${activeNav == 'account'} ? ' mobile-nav__link--active' : ''">
                 <svg class="mobile-nav__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
@@ -56,5 +56,46 @@
         </li>
     </ul>
 </nav>
+
+<script>
+function handleAccountClick(event) {
+    event.preventDefault();
+
+    // Check if user is authenticated by checking for session data or making API call
+    fetch('/api/auth/check-auth', {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Not authenticated');
+    })
+    .then(data => {
+        if (data.authenticated) {
+            // User is logged in, redirect to profile page
+            window.location.href = '/profile';
+        } else {
+            // User is not logged in, redirect to login page
+            window.location.href = '/login';
+        }
+    })
+    .catch(error => {
+        // If API fails, check client-side storage as fallback
+        const hasUserData = sessionStorage.getItem('login_username') ||
+                           localStorage.getItem('userEmail') ||
+                           document.cookie.includes('JSESSIONID');
+
+        if (hasUserData) {
+            // Likely logged in, redirect to profile
+            window.location.href = '/profile';
+        } else {
+            // Not logged in, redirect to login
+            window.location.href = '/login';
+        }
+    });
+}
+</script>
 </body>
 </html>
