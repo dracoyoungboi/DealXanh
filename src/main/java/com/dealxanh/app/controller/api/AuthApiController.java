@@ -815,6 +815,18 @@ public class AuthApiController {
 
             User user = userOpt.get();
             System.out.println("DEBUG: User found: " + user.getUsername());
+            System.out.println("DEBUG: User role: " + (user.getRole() != null ? user.getRole().getName() : "null"));
+
+            // Check if user has admin role - block password reset for admin accounts
+            if (user.getRole() != null) {
+                String roleName = user.getRole().getName();
+                if ("ROLE_ADMIN".equals(roleName)) {
+                    System.out.println("DEBUG: Admin account detected - blocking password reset");
+                    response.put("success", false);
+                    response.put("message", "Tài khoản Admin không được phép đặt lại mật khẩu qua trang web. Vui lòng liên hệ quản trị viên hệ thống.");
+                    return ResponseEntity.badRequest().body(response);
+                }
+            }
 
             // Generate OTP for password reset
             String otp = otpService.generateAndStoreOtp(email);

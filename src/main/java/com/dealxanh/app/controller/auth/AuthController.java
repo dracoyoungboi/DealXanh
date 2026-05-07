@@ -129,19 +129,40 @@ public class AuthController {
     }
 
     @GetMapping("/forgot-password")
-    public String forgotPasswordUser() {
+    public String forgotPasswordUser(jakarta.servlet.http.HttpServletRequest request, org.springframework.ui.Model model) {
+        // Store referer for back button
+        String referer = request.getHeader("Referer");
+        if (referer != null && referer.contains("/login")) {
+            model.addAttribute("backUrl", "/login");
+        } else {
+            model.addAttribute("backUrl", "/login");
+        }
         return "auth/forgot-password";
     }
 
     // Trang Quên mật khẩu của Chủ Cửa hàng / Nhân viên
     @GetMapping("/seller/forgot-password")
-    public String forgotPasswordSeller() {
+    public String forgotPasswordSeller(jakarta.servlet.http.HttpServletRequest request, org.springframework.ui.Model model) {
+        // Store referer for back button
+        String referer = request.getHeader("Referer");
+        if (referer != null && referer.contains("/seller/login")) {
+            model.addAttribute("backUrl", "/seller/login");
+        } else {
+            model.addAttribute("backUrl", "/seller/login");
+        }
         return "auth/forgot-password";
     }
 
     // Trang Quên mật khẩu của Admin / Moderator
     @GetMapping("/admin/forgot-password")
-    public String forgotPasswordAdmin() {
+    public String forgotPasswordAdmin(jakarta.servlet.http.HttpServletRequest request, org.springframework.ui.Model model) {
+        // Store referer for back button
+        String referer = request.getHeader("Referer");
+        if (referer != null && referer.contains("/admin/login")) {
+            model.addAttribute("backUrl", "/admin/login");
+        } else {
+            model.addAttribute("backUrl", "/admin/login");
+        }
         return "auth/forgot-password";
     }
 
