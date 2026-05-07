@@ -102,7 +102,7 @@
 
                             <form action="/perform_login" method="post" id="email-form" class="login-card__form">
                                 <div class="form-group">
-                                    <label class="form-label" for="username">Tài khoản (Email)</label>
+                                    <label class="form-label" for="username">Tài khoản (Username hoặc Email)</label>
                                     <div class="input-with-icon">
                                         <span class="input-with-icon__icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
@@ -114,8 +114,8 @@
                                                 <polyline points="22,6 12,13 2,6"></polyline>
                                             </svg>
                                         </span>
-                                        <input type="email" id="username" name="username" class="form-input"
-                                            placeholder="admin@dealxanh.com" autocomplete="email" required>
+                                        <input type="text" id="username" name="username" class="form-input"
+                                            placeholder="admin hoặc admin@dealxanh.com" autocomplete="username" required>
                                     </div>
                                 </div>
 
@@ -141,6 +141,8 @@
                                             </svg>
                                         </button>
                                     </div>
+                                    <!-- Error message placeholder -->
+                                    <div id="password-error" class="error-message" style="display:none; color:#ef4444; font-size:13px; margin-top:5px;"></div>
                                 </div>
 
                                 <div class="form-options">
@@ -190,6 +192,45 @@
                         wrongLoginAlert.style.display = 'block';
                     }
                 }
+            }
+
+            // Check for error parameter on page load
+            if (urlParams.get('error') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = 'Sai tài khoản hoặc mật khẩu';
+                errorDiv.style.display = 'block';
+
+                // Restore username if available (from sessionStorage)
+                const savedUsername = sessionStorage.getItem('login_username');
+                if (savedUsername) {
+                    const usernameField = document.getElementById('username');
+                    if (usernameField && !usernameField.value) {
+                        usernameField.value = savedUsername;
+                        sessionStorage.removeItem('login_username');
+                    }
+                }
+
+                // Focus on password field and clear it
+                const passwordField = document.getElementById('password');
+                passwordField.value = '';
+                passwordField.focus();
+            }
+
+            // Store username in sessionStorage for recovery after redirect
+            const form = document.getElementById('email-form');
+            const usernameField = document.getElementById('username');
+
+            form.addEventListener('submit', function() {
+                if (usernameField.value.trim()) {
+                    sessionStorage.setItem('login_username', usernameField.value.trim());
+                }
+            });
+
+            // Restore username if available
+            const savedUsername = sessionStorage.getItem('login_username');
+            if (savedUsername && !usernameField.value) {
+                usernameField.value = savedUsername;
+                sessionStorage.removeItem('login_username');
             }
         });
 
