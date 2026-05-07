@@ -50,4 +50,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> searchUsersWithRole(@Param("search") String search, Pageable pageable);
 
     long countByRoleName(String roleName);
+
+    // Find users by role object
+    List<User> findByRole(com.dealxanh.app.entity.Role role);
+
+    // Find top 5 users by created date
+    List<User> findTop5ByOrderByCreatedAtDesc();
 }
