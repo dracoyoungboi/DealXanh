@@ -49,32 +49,30 @@ public class SecurityConfig {
 
                 // Auth routes - public
                 .requestMatchers(
-                    "/login", "/admin/login", "/seller/login", "/register", "/register/buyer",
-                    "/seller/register", "/forgot-password", "/admin/forgot-password",
-                    "/seller/forgot-password", "/reset-password", "/terms",
-                    "/logout", "/oauth2/**", "/login/oauth2/**", "/api/auth/**", "/perform_login"
+                    "/login", "/admin/login", "/seller/login",
+                    "/register", "/register/buyer", "/seller/register",
+                    "/forgot-password", "/admin/forgot-password", "/seller/forgot-password",
+                    "/reset-password", "/terms", "/logout",
+                    "/oauth2/**", "/login/oauth2/**", "/api/auth/**", "/perform_login"
                 ).permitAll()
 
                 // Onboarding pending page - allow authenticated users (role may be pending update)
                 .requestMatchers("/seller/onboarding-pending", "/auth/onboarding-pending").authenticated()
 
-                // Admin routes - ADMIN và MODERATOR
+                // Admin routes - chỉ ADMIN và MODERATOR
                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MODERATOR")
 
-                // Seller routes - STORE_OWNER và STORE_STAFF
+                // Seller routes - chỉ STORE_OWNER và STORE_STAFF
                 .requestMatchers("/seller/**", "/store/dashboard/**").hasAnyRole("STORE_OWNER", "STORE_STAFF")
 
-                // Checkout, giỏ hàng, đơn hàng - cần đăng nhập
-                .requestMatchers("/checkout/**", "/my-orders/**").authenticated()
-
-                // Cart - public (có thể xem giỏ hàng không cần đăng nhập)
-                .requestMatchers("/cart/**").permitAll()
-
-                // Trang chủ và shop - public
+                // Buyer routes - public (không cần đăng nhập)
                 .requestMatchers("/", "/home", "/shop/**", "/product/**", "/store/**").permitAll()
 
-                // Profile - cần đăng nhập
-                .requestMatchers("/profile").authenticated()
+                // Buyer routes - cần đăng nhập (ROLE_USER)
+                .requestMatchers("/profile", "/checkout/**", "/my-orders/**", "/buyer/**").hasRole("USER")
+
+                // Cart - public
+                .requestMatchers("/cart/**").permitAll()
 
                 // Mặc định - cho phép tất cả
                 .anyRequest().permitAll()

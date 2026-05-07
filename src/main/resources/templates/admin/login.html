@@ -70,6 +70,36 @@
                     <!-- Email Login Form Only (No tabs for phone needed for Admin) -->
                     <div id="tab-email">
                         <div class="login-card__body">
+                            <!-- Error Message for Wrong Login Page - Seller -->
+                            <div id="wrong-login-seller-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 2px;">Đăng nhập tại trang không đúng!</div>
+                                        <div style="font-size: 13px;">Tài khoản Seller vui lòng đăng nhập tại <a href="/seller/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Seller</a>.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error Message for Wrong Login Page - Buyer -->
+                            <div id="wrong-login-buyer-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 2px;">Đăng nhập tại trang không đúng!</div>
+                                        <div style="font-size: 13px;">Tài khoản Buyer vui lòng đăng nhập tại <a href="/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Buyer</a>.</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <form action="/perform_login" method="post" id="email-form" class="login-card__form">
                                 <div class="form-group">
                                     <label class="form-label" for="username">Tài khoản (Email)</label>
@@ -142,6 +172,27 @@
     </div>
 
     <script>
+        // Check for wrong_login_page error
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Check for wrong_login_page error
+            if (urlParams.get('error') === 'please_use_correct_login') {
+                // Check if this is seller or buyer trying to login from wrong page
+                if (urlParams.get('from') === 'seller') {
+                    const wrongLoginAlert = document.getElementById('wrong-login-seller-alert');
+                    if (wrongLoginAlert) {
+                        wrongLoginAlert.style.display = 'block';
+                    }
+                } else if (urlParams.get('from') === 'buyer') {
+                    const wrongLoginAlert = document.getElementById('wrong-login-buyer-alert');
+                    if (wrongLoginAlert) {
+                        wrongLoginAlert.style.display = 'block';
+                    }
+                }
+            }
+        });
+
         // Simple password toggle logic for the admin page
         document.getElementById('toggle-password').addEventListener('click', function () {
             var passInput = document.getElementById('password');

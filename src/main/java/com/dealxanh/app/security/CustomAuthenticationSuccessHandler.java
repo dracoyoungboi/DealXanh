@@ -37,24 +37,34 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         System.out.println("DEBUG: Authorities: " + authorities);
         System.out.println("DEBUG: Session ID before redirect: " + request.getSession(false) != null ? request.getSession().getId() : "null");
 
+        // Check which login page was used
+        String requestURI = request.getRequestURI();
+        String referer = request.getHeader("referer");
+        System.out.println("DEBUG: Request URI: " + requestURI);
+        System.out.println("DEBUG: Referer: " + referer);
+
         boolean roleFound = false;
+        boolean isAdmin = false;
+        boolean isSeller = false;
+        boolean isBuyer = false;
 
         for (GrantedAuthority authority : authorities) {
             String role = authority.getAuthority();
             System.out.println("DEBUG: Checking role: " + role);
 
             if (role.equals("ROLE_ADMIN") || role.equals("ROLE_MODERATOR")) {
+                isAdmin = true;
                 redirectUrl = "/admin/dashboard";
                 roleFound = true;
                 System.out.println("DEBUG: Admin/Moderator role, redirecting to: " + redirectUrl);
                 break;
             } else if (role.equals("ROLE_STORE_OWNER")) {
+                isSeller = true;
                 // Check store status
                 String username = authentication.getName();
                 com.dealxanh.app.entity.User user = userRepository.findByUsername(username)
                         .orElse(userRepository.findByEmail(username).orElse(null));
 
-                // If still not found, try searching by email using the list method
                 if (user == null) {
                     java.util.List<com.dealxanh.app.entity.User> users = userRepository.findAllByEmailWithRole(username);
                     if (!users.isEmpty()) {
@@ -74,7 +84,6 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                             System.out.println("DEBUG: Store approved, redirecting to: " + redirectUrl);
                         }
                     } else {
-                        // No store yet, go to registration
                         redirectUrl = "/seller/register";
                         System.out.println("DEBUG: No store found, redirecting to: " + redirectUrl);
                     }
@@ -85,16 +94,48 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                 roleFound = true;
                 break;
             } else if (role.equals("ROLE_STORE_STAFF")) {
+                isSeller = true;
                 redirectUrl = "/seller/dashboard";
                 roleFound = true;
                 System.out.println("DEBUG: Staff role, redirecting to: " + redirectUrl);
                 break;
             } else if (role.equals("ROLE_USER") || role.equals("ROLE_CUSTOMER")) {
+                isBuyer = true;
                 redirectUrl = "/home";
                 roleFound = true;
                 System.out.println("DEBUG: Buyer role, redirecting to: " + redirectUrl);
                 break;
             }
+        }
+
+        // Check if user logged in from WRONG login page - redirect to correct login page
+        if ((isAdmin && referer != null && referer.contains("/login") && !referer.contains("/admin/login")) ||
+            (isSeller && referer != null && referer.contains("/login") && !referer.contains("/seller/login"))) {
+            System.out.println("DEBUG: Admin/Seller logged in from BUYER login page - redirecting to correct login page");
+
+            // Logout this session
+            SecurityContextHolder.clearContext();
+
+            // Redirect to correct login page with hint about which role tried to login
+            String correctLoginPage = isAdmin ? "/admin/login" : "/seller/login";
+            response.sendRedirect(correctLoginPage + "?error=please_use_correct_login&from=buyer");
+            return;
+        }
+
+        // Buyer logged in from admin/seller login page - redirect to buyer login
+        if (isBuyer && (referer != null && referer.contains("/admin/login") || referer.contains("/seller/login"))) {
+            System.out.println("DEBUG: Buyer logged in from ADMIN/SELLER login page - redirecting to buyer login");
+
+            // Logout this session
+            SecurityContextHolder.clearContext();
+
+            // Determine which wrong login page was used
+            String fromParam = referer != null && referer.contains("/admin/login") ? "admin" : "seller";
+
+            // Redirect to correct login page with hint
+            String correctLoginPage = "/login"; // Buyer login page
+            response.sendRedirect(correctLoginPage + "?error=please_use_correct_login&from=" + fromParam);
+            return;
         }
 
         if (!roleFound) {

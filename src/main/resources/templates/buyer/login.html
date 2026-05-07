@@ -127,6 +127,21 @@
                                         <div style="font-size: 13px;">Hồ sơ của bạn đã được gửi và đang chờ xét duyệt. Vui lòng đăng nhập lại để tiếp tục.</div>
                                     </div>
                                 </div>
+
+                                <!-- Error Message for Wrong Login Page -->
+                                <div id="wrong-login-page-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 2px;">Đăng nhập tại trang không đúng!</div>
+                                            <div style="font-size: 13px;">Vui lòng sử dụng <a href="/admin/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Admin</a> hoặc <a href="/seller/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Seller</a>.</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-group">
@@ -227,13 +242,7 @@
     <script>
         // Check for registration_complete parameter to show success message
         window.addEventListener('DOMContentLoaded', function() {
-            // Clear all client-side storage to ensure clean state
-            console.log('Clearing buyer session data...');
-
-            // Clear sessionStorage completely
-            sessionStorage.clear();
-
-            // Clear localStorage except essential app settings
+            // Clear localStorage except essential app settings and login_username
             const keepKeys = ['theme', 'language'];
             const tempStorage = {};
             keepKeys.forEach(key => {
@@ -244,8 +253,6 @@
             Object.keys(tempStorage).forEach(key => {
                 localStorage.setItem(key, tempStorage[key]);
             });
-
-            console.log('Buyer session data cleared');
 
             // Check for registration_complete parameter to show success message
             const urlParams = new URLSearchParams(window.location.search);
@@ -266,11 +273,40 @@
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
+            // Check for wrong_login_page error
+            if (urlParams.get('error') === 'please_use_correct_login') {
+                // Check which role tried to login from wrong page
+                const fromParam = urlParams.get('from');
+                if (fromParam === 'admin' || fromParam === 'seller') {
+                    const wrongLoginAlert = document.getElementById('wrong-login-page-alert');
+                    if (wrongLoginAlert) {
+                        // Update message based on which role tried to login
+                        const messageDiv = wrongLoginAlert.querySelector('div div:last-child div:last-child');
+                        if (fromParam === 'admin') {
+                            messageDiv.innerHTML = 'Tài khoản Admin vui lòng đăng nhập tại <a href="/admin/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Admin</a>.';
+                        } else if (fromParam === 'seller') {
+                            messageDiv.innerHTML = 'Tài khoản Seller vui lòng đăng nhập tại <a href="/seller/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Seller</a>.';
+                        }
+                        wrongLoginAlert.style.display = 'block';
+                    }
+                }
+            }
+
             // Check for error parameter on page load
             if (urlParams.get('error') === 'true') {
                 const errorDiv = document.getElementById('password-error');
                 errorDiv.textContent = 'Sai tài khoản mật khẩu';
                 errorDiv.style.display = 'block';
+
+                // Restore username if available (from sessionStorage)
+                const savedUsername = sessionStorage.getItem('login_username');
+                if (savedUsername) {
+                    const usernameField = document.getElementById('username');
+                    if (usernameField && !usernameField.value) {
+                        usernameField.value = savedUsername;
+                        sessionStorage.removeItem('login_username');
+                    }
+                }
 
                 // Focus on password field and clear it
                 const passwordField = document.getElementById('password');

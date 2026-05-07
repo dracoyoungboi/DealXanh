@@ -16,6 +16,31 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
 
+        System.out.println("=== AUTH FAILURE START ===");
+        System.out.println("DEBUG: Auth failed: " + exception.getMessage());
+
+        // Check if this is a wrong_login_page error
+        String wrongLoginPage = request.getParameter("error");
+        if ("wrong_login_page".equals(wrongLoginPage)) {
+            System.out.println("DEBUG: Wrong login page error - redirecting to correct login");
+
+            // Determine correct login page based on referer
+            String referer = request.getHeader("Referer");
+            String correctLoginPage = "/login"; // Default to buyer
+
+            if (referer != null) {
+                if (referer.contains("/seller/login")) {
+                    correctLoginPage = "/seller/login";
+                } else if (referer.contains("/admin/login")) {
+                    correctLoginPage = "/admin/login";
+                }
+            }
+
+            response.sendRedirect(correctLoginPage + "?error=please_use_correct_login");
+            System.out.println("=== AUTH FAILURE END ===");
+            return;
+        }
+
         String failureUrl = "/login?error=true"; // Default to buyer login
 
         // Check Referer header first
@@ -38,6 +63,8 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
             }
         }
 
+        System.out.println("DEBUG: Redirecting to: " + failureUrl);
         response.sendRedirect(failureUrl);
+        System.out.println("=== AUTH FAILURE END ===");
     }
 }
