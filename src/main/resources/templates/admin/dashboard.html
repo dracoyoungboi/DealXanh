@@ -253,6 +253,73 @@ a{text-decoration:none;color:inherit}
     cursor:pointer;
 }
 .topbar-period svg{width:14px;height:14px}
+.topbar-period:hover{border-color:var(--primary);color:var(--primary)}
+
+/* Date Picker Modal */
+.date-picker-modal{
+    display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;
+}
+.date-picker-modal.active{display:flex}
+.date-picker-content{
+    background:var(--surface);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-md);width:400px;max-width:90vw;
+    overflow:hidden;
+}
+.date-picker-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;border-bottom:1px solid var(--border-light);
+}
+.date-picker-header h3{
+    font-size:16px;font-weight:700;margin:0;
+}
+.date-picker-close{
+    width:32px;height:32px;border-radius:var(--radius-sm);
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;color:var(--text-secondary);cursor:pointer;
+    transition:all var(--tr);
+}
+.date-picker-close:hover{background:var(--bg);color:var(--text-primary)}
+.date-picker-body{padding:20px}
+.date-picker-presets{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;
+}
+.preset-btn{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:12px 8px;border-radius:var(--radius-md);
+    border:1px solid var(--border-light);background:var(--surface);
+    font-size:12px;font-weight:600;color:var(--text-secondary);cursor:pointer;
+    transition:all var(--tr);
+}
+.preset-btn svg{width:20px;height:20px}
+.preset-btn:hover{border-color:var(--primary);color:var(--primary)}
+.preset-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.preset-btn.active svg{color:#fff}
+.date-picker-divider{
+    display:flex;align-items:center;margin:16px 0;
+}
+.date-picker-divider::before,.date-picker-divider::after{
+    content:'';flex:1;height:1px;background:var(--border-light);
+}
+.date-picker-divider span{
+    padding:0 12px;font-size:11px;color:var(--text-tertiary);font-weight:600;text-transform:uppercase;
+}
+.date-picker-input{display:flex;flex-direction:column;gap:8px}
+.date-picker-input label{
+    font-size:13px;font-weight:600;color:var(--text-secondary);
+}
+.custom-date-input{
+    padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);
+    font-size:14px;font-family:inherit;background:var(--surface);
+}
+.custom-date-input:focus{outline:none;border-color:var(--primary)}
+.apply-date-btn{
+    padding:10px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:13px;font-weight:600;cursor:pointer;
+    margin-top:4px;transition:all var(--tr);
+}
+.apply-date-btn:hover{background:var(--primary-dark)}
     </style>
 </head>
 <body>
@@ -359,7 +426,7 @@ a{text-decoration:none;color:inherit}
         <div class="sidebar-footer">
             <div class="sidebar-user">
                 <div class="sidebar-user__avatar">
-                    <img src="/img/default-avatar.png" alt="Admin">
+                    <img src="/img/default-avatar.svg" alt="Admin">
                 </div>
                 <div>
                     <div class="sidebar-user__name">Admin Name</div>
@@ -375,11 +442,45 @@ a{text-decoration:none;color:inherit}
         <header class="topbar">
             <div class="topbar__title">Dashboard Tổng quan</div>
             <div class="topbar__right">
-                <button class="topbar-period" onclick="showDatePicker()">
+                <button class="topbar-period" onclick="toggleDatePicker()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    <span id="currentDate">Hôm nay · <span th:text="${#temporals.format(#temporals.createToday(), 'dd/MM/yyyy')}">18/01/2025</span></span>
+                    <span id="currentDate">Hôm nay · <span th:text="${#temporals.format(#temporals.createToday(), 'dd/MM/yyyy')}">08/05/2026</span></span>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
+
+                <!-- Date Picker Modal -->
+                <div class="date-picker-modal" id="datePickerModal">
+                    <div class="date-picker-content" onclick="event.stopPropagation()">
+                        <div class="date-picker-header">
+                            <h3>Chọn ngày xem thống kê</h3>
+                            <button class="date-picker-close" onclick="toggleDatePicker()">✕</button>
+                        </div>
+                        <div class="date-picker-body">
+                            <div class="date-picker-presets">
+                                <button class="preset-btn active" data-preset="today" onclick="selectPreset('today')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                    Hôm nay
+                                </button>
+                                <button class="preset-btn" data-preset="yesterday" onclick="selectPreset('yesterday')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                                    Hôm qua
+                                </button>
+                                <button class="preset-btn" data-preset="week" onclick="selectPreset('week')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
+                                    7 ngày qua
+                                </button>
+                            </div>
+                            <div class="date-picker-divider">
+                                <span>Hoặc chọn ngày cụ thể</span>
+                            </div>
+                            <div class="date-picker-input">
+                                <label for="customDate">Chọn ngày:</label>
+                                <input type="date" id="customDate" class="custom-date-input">
+                                <button class="apply-date-btn" onclick="applyCustomDate()">Áp dụng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <button class="topbar-btn" onclick="showNotifications()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                     <span class="topbar-notif" th:if="${stats.pendingStores > 0}"></span>
@@ -484,7 +585,7 @@ a{text-decoration:none;color:inherit}
                     <div th:if="${recentPendingStores != null and !recentPendingStores.isEmpty()}">
                         <div class="seller-row" th:each="store : ${recentPendingStores}" th:onclick="'window.location.href=\'/admin/seller-verify/detail/' + ${store.storeId} + '\''">
                             <div class="seller-avatar">
-                                <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.png'}" alt="" onerror="this.src='/img/default-store.png'">
+                                <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt="" onerror="this.onerror=null;this.src='/img/default-store.svg';">
                             </div>
                             <div class="seller-info">
                                 <div class="seller-name" th:text="${store.storeName}">Store Name</div>
@@ -527,7 +628,7 @@ a{text-decoration:none;color:inherit}
                         <div class="seller-row" style="padding:8px 0;cursor:pointer" th:each="store, iter : ${topStores}" th:onclick="'window.location.href=\'/admin/seller-verify?storeId=' + ${store.storeId} + '\''">
                             <div style="width:22px;text-align:center;font-weight:800;" th:style="${iter.index == 0 ? 'color:var(--accent);font-size:13px' : 'color:var(--text-secondary);font-size:13px'}" th:text="${iter.index + 1}">1</div>
                             <div class="seller-avatar">
-                                <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.png'}" alt="" onerror="this.src='/img/default-store.png'">
+                                <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt="" onerror="this.onerror=null;this.src='/img/default-store.svg';">
                             </div>
                             <div class="seller-info">
                                 <div class="seller-name" th:text="${store.storeName}">Store Name</div>
@@ -631,40 +732,192 @@ function updateChart(data) {
     }
 }
 
-// Date picker function
-function showDatePicker() {
-    const date = prompt('Nhập ngày bạn muốn xem (dd/mm/yyyy):');
-    if (date) {
-        // Validate and process date
-        const parts = date.split('/');
-        if (parts.length === 3) {
-            const day = parts[0].padStart(2, '0');
-            const month = parts[1].padStart(2, '0');
-            const year = parts[2];
+// Date picker functions
+let selectedDate = null;
+let selectedPreset = 'today';
 
-            // Update display
-            document.getElementById('currentDate').innerHTML = `Ngày ${day}/${month}/${year}`;
+function toggleDatePicker() {
+    const modal = document.getElementById('datePickerModal');
+    modal.classList.toggle('active');
 
-            // Fetch data for selected date
-            fetch(`/admin/api/dashboard/stats?date=${year}-${month}-${day}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Update UI with selected date's data
-                    if (data.todayGMV !== undefined) {
-                        document.querySelector('.kpi-card:nth-child(1) .kpi-value').textContent =
-                            (data.todayGMV / 1000000).toFixed(1) + 'tr';
-                    }
-                    if (data.todayOrders !== undefined) {
-                        document.querySelector('.kpi-card:nth-child(2) .kpi-value').textContent =
-                            data.todayOrders.toLocaleString('vi-VN');
-                    }
-                })
-                .catch(error => console.error('Error fetching date data:', error));
+    // Set max date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('customDate').max = today;
+
+    // If opening, set current preset
+    if (modal.classList.contains('active')) {
+        if (selectedDate) {
+            document.getElementById('customDate').value = selectedDate;
+            // Clear preset selection
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
         } else {
-            alert('Định dạng ngày không đúng. Vui lòng nhập dd/mm/yyyy');
+            document.getElementById('customDate').value = today;
         }
     }
 }
+
+function selectPreset(preset) {
+    selectedPreset = preset;
+    selectedDate = null;
+
+    // Update active state
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-preset="${preset}"]`).classList.add('active');
+
+    // Apply preset
+    applyDatePreset(preset);
+}
+
+function applyDatePreset(preset) {
+    let date = new Date();
+    let label = '';
+
+    switch(preset) {
+        case 'today':
+            label = 'Hôm nay';
+            break;
+        case 'yesterday':
+            date.setDate(date.getDate() - 1);
+            label = 'Hôm qua';
+            break;
+        case 'week':
+            date.setDate(date.getDate() - 7);
+            label = '7 ngày qua';
+            break;
+    }
+
+    const formattedDate = formatDate(date);
+    updateCurrentDate(label, formattedDate);
+    fetchDashboardData(preset, null);
+    toggleDatePicker();
+}
+
+function applyCustomDate() {
+    const dateInput = document.getElementById('customDate').value;
+    if (!dateInput) {
+        alert('Vui lòng chọn ngày');
+        return;
+    }
+
+    selectedDate = dateInput;
+    selectedPreset = null;
+
+    // Clear preset selection
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+
+    const date = new Date(dateInput);
+    const formattedDate = formatDate(date);
+    const label = 'Ngày ' + formattedDate;
+
+    updateCurrentDate(label, formattedDate);
+    fetchDashboardData(null, dateInput);
+    toggleDatePicker();
+}
+
+function formatDate(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+function updateCurrentDate(label, date) {
+    const currentDateEl = document.getElementById('currentDate');
+    currentDateEl.innerHTML = `${label} · <span>${date}</span>`;
+}
+
+function fetchDashboardData(preset, customDate) {
+    let url = '/admin/api/dashboard/stats?';
+
+    if (preset) {
+        url += `period=${preset}`;
+    } else if (customDate) {
+        url += `date=${customDate}`;
+    } else {
+        url += 'period=today';
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            updateDashboardUI(data);
+        })
+        .catch(error => {
+            console.error('Error fetching dashboard data:', error);
+            // Fallback to today's data
+            if (preset || customDate) {
+                alert('Không thể tải dữ liệu cho ngày đã chọn. Hiển thị dữ liệu hôm nay.');
+            }
+        });
+}
+
+function updateDashboardUI(data) {
+    // Update KPI cards
+    if (data.todayGMV !== undefined) {
+        document.querySelector('.kpi-card:nth-child(1) .kpi-value').textContent =
+            (data.todayGMV / 1000000).toFixed(1) + 'tr';
+    }
+    if (data.todayOrders !== undefined) {
+        document.querySelector('.kpi-card:nth-child(2) .kpi-value').textContent =
+            data.todayOrders.toLocaleString('vi-VN');
+    }
+    if (data.todayCommission !== undefined) {
+        document.querySelector('.kpi-card:nth-child(4) .kpi-value').textContent =
+            (data.todayCommission / 1000000).toFixed(1) + 'tr';
+    }
+
+    // Update chart data if available
+    if (data.weeklyGMV) {
+        updateChart(data.weeklyGMV);
+    }
+
+    // Update 7-day totals if available
+    if (data.weeklyGMV) {
+        const totalGMV = Object.values(data.weeklyGMV).reduce((a, b) => a + b, 0);
+        document.getElementById('totalGMV7d').textContent =
+            (totalGMV / 1000000).toFixed(1) + 'tr';
+        document.getElementById('commission7d').textContent =
+            (totalGMV * 0.10 / 1000000).toFixed(1) + 'tr';
+    }
+}
+
+function updateChart(weeklyData) {
+    // Update chart bars
+    const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+    const values = Object.values(weeklyData);
+    const maxValue = Math.max(...values);
+
+    const bars = document.querySelectorAll('.c-bar');
+    bars.forEach((bar, index) => {
+        if (values[index] !== undefined) {
+            const height = (values[index] / maxValue * 100).toFixed(0);
+            bar.style.height = height + '%';
+        }
+    });
+}
+
+// Legacy function name for backward compatibility
+function showDatePicker() {
+    toggleDatePicker();
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('datePickerModal');
+    if (event.target === modal) {
+        toggleDatePicker();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('datePickerModal');
+        if (modal.classList.contains('active')) {
+            toggleDatePicker();
+        }
+    }
+});
 
 // Auto-refresh data every 30 seconds
 setInterval(() => {

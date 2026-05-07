@@ -32,8 +32,22 @@ public class Store {
     private Double averageRating = 0.0;
     private Integer totalReviews = 0;
 
-    // Status: PENDING, ACTIVE, SUSPENDED
+    // Status: PENDING, ACTIVE, SUSPENDED, REJECTED
     private String status = "PENDING";
+
+    // Approval tracking
+    @ManyToOne
+    @JoinColumn(name = "approved_by")
+    private User approvedBy;
+
+    @ManyToOne
+    @JoinColumn(name = "rejected_by")
+    private User rejectedBy;
+
+    @Column(length = 500)
+    private String rejectionReason;
+
+    private LocalDateTime reviewedAt;
 
     // --- New Fields for Registration Flow ---
     private String businessType;
@@ -189,4 +203,17 @@ public class Store {
 
     public String getApprovalMode() { return approvalMode; }
     public void setApprovalMode(String approvalMode) { this.approvalMode = approvalMode; }
+
+    // Approval tracking getters and setters
+    public User getApprovedBy() { return approvedBy; }
+    public void setApprovedBy(User approvedBy) { this.approvedBy = approvedBy; }
+
+    public User getRejectedBy() { return rejectedBy; }
+    public void setRejectedBy(User rejectedBy) { this.rejectedBy = rejectedBy; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public LocalDateTime getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
 }

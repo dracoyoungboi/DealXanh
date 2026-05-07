@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xét duyệt Seller - Moderator DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff;--bg:#f0f2f5;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.1);
+    --danger:#ef4444;--danger-bg:rgba(239,68,68,.1);
+    --warning:#f59e0b;--warning-bg:rgba(245,158,11,.1);
+    --success:#10b981;--success-bg:rgba(16,185,129,.1);
+    --info:#3b82f6;--info-bg:rgba(59,130,246,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+    --sidebar:240px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary);height:100%}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+img{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+
+/* Layout */
+.layout{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{
+    width:var(--sidebar);flex-shrink:0;
+    background:var(--primary);
+    display:flex;flex-direction:column;
+    position:fixed;top:0;bottom:0;left:0;z-index:30;
+    overflow-y:auto;scrollbar-width:none;
+}
+.sidebar::-webkit-scrollbar{display:none}
+.sidebar-header{
+    padding:20px 16px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;gap:10px;
+}
+.sidebar-header__logo{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:rgba(255,255,255,.15);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sidebar-header__logo svg{width:18px;height:18px;color:#fff}
+.sidebar-header__text{overflow:hidden}
+.sidebar-header__brand{font-size:16px;font-weight:800;color:#fff}
+.sidebar-header__sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px}
+
+.nav-section{padding:16px 10px 0}
+.nav-section__label{
+    font-size:10px;font-weight:700;color:rgba(255,255,255,.4);
+    text-transform:uppercase;letter-spacing:.8px;
+    padding:0 8px;margin-bottom:6px;
+}
+.nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 10px;border-radius:var(--radius-md);
+    color:rgba(255,255,255,.65);font-size:13px;font-weight:500;
+    margin-bottom:2px;cursor:pointer;transition:all var(--tr);
+    position:relative;
+}
+.nav-item:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
+.nav-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
+.nav-item.active::before{
+    content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:3px;height:20px;border-radius:0 2px 2px 0;background:#fff;
+}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.nav-badge{
+    margin-left:auto;min-width:18px;height:18px;border-radius:9px;
+    background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+    padding:0 4px;display:flex;align-items:center;justify-content:center;
+}
+.sidebar-footer{
+    margin-top:auto;padding:14px 10px;
+    border-top:1px solid rgba(255,255,255,.1);
+}
+.sidebar-user{
+    display:flex;align-items:center;gap:10px;padding:8px;
+    border-radius:var(--radius-md);cursor:pointer;
+    transition:background var(--tr);
+}
+.sidebar-user:hover{background:rgba(255,255,255,.1)}
+.sidebar-user__avatar{
+    width:34px;height:34px;border-radius:50%;overflow:hidden;
+    border:2px solid rgba(255,255,255,.2);flex-shrink:0;
+}
+.sidebar-user__avatar img{width:100%;height:100%;object-fit:cover}
+.sidebar-user__name{font-size:13px;font-weight:600;color:#fff}
+.sidebar-user__role{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
+
+/* Main content */
+.main{
+    margin-left:var(--sidebar);flex:1;
+    display:flex;flex-direction:column;min-height:100vh;
+}
+
+/* Top bar */
+.topbar{
+    background:var(--surface);
+    padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--border-light);
+    position:sticky;top:0;z-index:20;
+}
+.topbar__title{font-size:18px;font-weight:800}
+.topbar__right{display:flex;align-items:center;gap:12px}
+.topbar-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    transition:background var(--tr);position:relative;
+}
+.topbar-btn:hover{background:var(--border-light)}
+.topbar-btn svg{width:18px;height:18px;color:var(--text-secondary)}
+
+/* Content area */
+.content{padding:24px}
+
+/* Alert Messages */
+.alert-message{
+    margin-bottom:20px;padding:14px 18px;border-radius:var(--radius-md);
+    display:flex;align-items:center;gap:10px;
+}
+.alert-success{background:var(--success-bg);color:var(--success);border:1px solid var(--success)}
+.alert-error{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+
+/* Filter tabs */
+.verify-tabs{display:flex;gap:8px;margin-bottom:24px}
+.verify-tab{
+    padding:10px 20px;border-radius:var(--radius-full);
+    font-size:14px;font-weight:600;cursor:pointer;
+    border:1px solid var(--border);background:var(--surface);
+    color:var(--text-secondary);text-decoration:none;
+    transition:all var(--tr);
+}
+.verify-tab:hover{border-color:var(--primary);color:var(--primary)}
+.verify-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* Seller grid */
+.seller-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));
+    gap:20px;
+}
+
+.seller-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);
+    transition:all var(--tr);overflow:hidden;
+}
+.seller-card:hover{box-shadow:var(--shadow-md);border-color:var(--border)}
+
+.seller-card__header{
+    display:flex;gap:16px;padding:20px;border-bottom:1px solid var(--border-light);
+}
+.seller-logo{
+    width:70px;height:70px;border-radius:var(--radius-md);overflow:hidden;
+    flex-shrink:0;border:1px solid var(--border-light);background:var(--bg);
+}
+.seller-logo img{width:100%;height:100%;object-fit:cover}
+.seller-info{flex:1;min-width:0}
+.seller-name{font-size:16px;font-weight:700;margin-bottom:4px}
+.seller-type{font-size:13px;color:var(--text-secondary);margin-bottom:8px}
+.seller-meta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--text-tertiary)}
+.seller-meta svg{width:14px;height:14px;margin-right:4px}
+
+.seller-status{
+    padding:6px 14px;border-radius:var(--radius-full);
+    font-size:12px;font-weight:700;flex-shrink:0;
+}
+.seller-status.pending{background:var(--warning-bg);color:var(--warning)}
+.seller-status.approved{background:var(--success-bg);color:var(--success)}
+.seller-status.rejected{background:var(--danger-bg);color:var(--danger)}
+
+.seller-card__body{padding:20px}
+.info-row{
+    display:flex;justify-content:space-between;padding:8px 0;
+    font-size:13px;border-bottom:1px solid var(--border-light);
+}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--text-secondary)}
+.info-value{font-weight:600;text-align:right;max-width:60%}
+
+.seller-card__approval{
+    padding:16px 20px;background:var(--bg);border-top:1px solid var(--border-light);
+}
+
+.action-buttons{display:flex;gap:10px}
+.btn-action{
+    flex:1;padding:12px;border-radius:var(--radius-md);
+    font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;
+    transition:all var(--tr);cursor:pointer;
+}
+.btn-approve{
+    background:var(--primary);color:#fff;
+}
+.btn-approve:hover{background:var(--primary-dark)}
+.btn-reject{
+    background:var(--bg);color:var(--danger);
+    border:1px solid var(--danger-bg);
+}
+.btn-reject:hover{background:var(--danger-bg)}
+
+.reject-form{
+    margin-top:12px;padding:12px;background:var(--surface);
+    border:1px solid var(--border-light);border-radius:var(--radius-md);
+    display:none;
+}
+.reject-form.show{display:block}
+.reject-form textarea{
+    width:100%;padding:10px;border:1px solid var(--border);
+    border-radius:var(--radius-md);font-size:13px;resize:none;
+    min-height:80px;font-family:inherit;margin-bottom:10px;
+}
+.reject-form textarea:focus{outline:none;border-color:var(--danger)}
+.btn-submit-reject{
+    width:100%;padding:10px;border-radius:var(--radius-md);
+    background:var(--danger);color:#fff;font-size:14px;font-weight:700;
+}
+.btn-submit-reject:hover{background:#dc2626}
+
+.empty-state{
+    text-align:center;padding:80px 20px;color:var(--text-secondary);
+}
+.empty-state svg{width:80px;height:80px;margin-bottom:16px;opacity:0.5}
+.empty-state h3{font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text-primary)}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <!-- Hardcoded Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-header__logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <div class="sidebar-header__text">
+                <div class="sidebar-header__brand">DealXanh</div>
+                <div class="sidebar-header__sub">Moderator Portal</div>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section__label">Tổng quan</div>
+            <a class="nav-item" href="/moderator/dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                    <path d="M14 14h7v7h-7z"/>
+                </svg>
+                Dashboard
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section__label">Quản lý</div>
+            <a class="nav-item active" href="/moderator/seller-verify">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Duyệt Seller
+                <span class="nav-badge" th:if="${pendingSellerCount != null and pendingSellerCount > 0}" th:text="${pendingSellerCount}">0</span>
+            </a>
+            <a class="nav-item" href="#">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                Xem Deals
+            </a>
+            <a class="nav-item" href="#">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                Đơn hàng
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-user__avatar">
+                    <img src="/img/default-avatar.svg" alt="Moderator">
+                </div>
+                <div>
+                    <div class="sidebar-user__name" th:text="${#authentication != null ? #authentication.name : 'Moderator'}">Moderator Name</div>
+                    <div class="sidebar-user__role">Moderator</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar__title">Duyệt Seller</div>
+            <div class="topbar__right">
+                <button class="topbar-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- Alert Messages -->
+            <div th:if="${success}" class="alert-message alert-success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span th:text="${success}">Success message</span>
+            </div>
+
+            <div th:if="${error}" class="alert-message alert-error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+                <span th:text="${error}">Error message</span>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="verify-tabs">
+                <a href="/moderator/seller-verify?status=pending" class="verify-tab" th:classappend="${currentStatus == null or currentStatus == '' or currentStatus == 'pending'} ? 'active' : ''">
+                    Chờ duyệt
+                    <span class="nav-badge" style="margin-left:6px;background:currentColor;opacity:0.3" th:if="${pendingSellerCount != null}" th:text="${pendingSellerCount}">0</span>
+                </a>
+                <a href="/moderator/seller-verify?status=approved" class="verify-tab" th:classappend="${currentStatus == 'approved'} ? 'active' : ''">
+                    Đã duyệt
+                    <span class="nav-badge" style="margin-left:6px;background:currentColor;opacity:0.3" th:if="${approvedSellerCount != null}" th:text="${approvedSellerCount}">0</span>
+                </a>
+                <a href="/moderator/seller-verify?status=rejected" class="verify-tab" th:classappend="${currentStatus == 'rejected'} ? 'active' : ''">
+                    Từ chối
+                    <span class="nav-badge" style="margin-left:6px;background:currentColor;opacity:0.3" th:if="${rejectedSellerCount != null}" th:text="${rejectedSellerCount}">0</span>
+                </a>
+            </div>
+
+            <!-- Seller Grid -->
+            <div class="seller-grid" th:if="${stores != null and !stores.isEmpty()}">
+                <div class="seller-card" th:each="store : ${stores}">
+                    <div class="seller-card__header">
+                        <div class="seller-logo">
+                            <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt="Store Logo">
+                        </div>
+                        <div class="seller-info">
+                            <div class="seller-name" th:text="${store.storeName}">Store Name</div>
+                            <div class="seller-type" th:text="${store.businessType != null ? store.businessType : 'Business'}">Business Type</div>
+                            <div class="seller-meta">
+                                <span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <span th:text="${store.district != null ? store.district : 'N/A'}">District</span>
+                                </span>
+                                <span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    <span th:text="${store.createdAt != null ? #temporals.format(store.createdAt, 'dd/MM/yyyy') : 'N/A'}">Date</span>
+                                </span>
+                            </div>
+                        </div>
+                        <span class="seller-status" th:class="${store.status}"
+                              th:text="${store.status == 'PENDING' ? 'Chờ duyệt' : (store.status == 'ACTIVE' ? 'Đã duyệt' : (store.status == 'REJECTED' ? 'Từ chối' : store.status))}">Status</span>
+                    </div>
+
+                    <div class="seller-card__body">
+                        <div class="info-row">
+                            <span class="info-label">Chủ cửa hàng</span>
+                            <span class="info-value" th:text="${store.owner != null ? (store.owner.fullName != null ? store.owner.fullName : store.owner.username) : 'N/A'}">Owner</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email</span>
+                            <span class="info-value" th:text="${store.owner != null ? store.owner.email : 'N/A'}">Email</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">SĐT</span>
+                            <span class="info-value" th:text="${store.phone != null ? store.phone : 'N/A'}">Phone</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Địa chỉ</span>
+                            <span class="info-value" th:text="${store.address != null ? store.address : 'N/A'}">Address</span>
+                        </div>
+                    </div>
+
+                    <!-- Approval Actions (Only for pending stores) -->
+                    <div class="seller-card__approval" th:if="${store.status == 'PENDING'}">
+                        <div class="action-buttons">
+                            <form th:action="@{/moderator/seller-verify/{storeId}/approve(storeId=${store.storeId})}" method="post" style="flex:1;">
+                                <input type="hidden" name="currentStatus" th:value="${currentStatus != null ? currentStatus : ''}"/>
+                                <button type="submit" class="btn-action btn-approve">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                        <polyline points="22 4 12 14.01 9 11.01"/>
+                                    </svg>
+                                    Duyệt
+                                </button>
+                            </form>
+
+                            <button type="button" class="btn-action btn-reject" th:onclick="'toggleRejectForm(' + ${store.storeId} + ')'">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="15" y1="9" x2="9" y2="15"/>
+                                    <line x1="9" y1="9" x2="15" y2="15"/>
+                                </svg>
+                                Từ chối
+                            </button>
+                        </div>
+
+                        <!-- Reject Form -->
+                        <div class="reject-form" th:id="'reject-form-' + ${store.storeId}">
+                            <form th:action="@{/moderator/seller-verify/{storeId}/reject(storeId=${store.storeId})}" method="post">
+                                <input type="hidden" name="currentStatus" th:value="${currentStatus != null ? currentStatus : ''}"/>
+                                <textarea name="rejectionReason" placeholder="Nhập lý do từ chối..." required></textarea>
+                                <button type="submit" class="btn-submit-reject">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px">
+                                        <line x1="22" y1="2" x2="11" y2="13"/>
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                    </svg>
+                                    Gửi phản hồi
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${stores == null or stores.isEmpty()}" class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <h3>Không tìm thấy cửa hàng nào</h3>
+                <p>Thử thay đổi bộ lọc để xem kết quả khác</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleRejectForm(storeId) {
+    const form = document.getElementById('reject-form-' + storeId);
+    form.classList.toggle('show');
+    if (form.classList.contains('show')) {
+        const textarea = form.querySelector('textarea');
+        textarea.focus();
+    }
+}
+</script>
+</body>
+</html>

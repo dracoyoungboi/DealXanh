@@ -29,17 +29,17 @@ public class AdminDashboardApiController {
 
     @GetMapping("/stats")
     public Map<String, Object> getDashboardStats(
-            @RequestParam(defaultValue = "today") String period,
+            @RequestParam(required = false) String period,
             @RequestParam(required = false) String date) {
 
         Map<String, Object> result = new HashMap<>();
-
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startDate;
         LocalDateTime endDate;
 
-        // Handle specific date request
+        // Determine date range based on parameter
         if (date != null && !date.isEmpty()) {
+            // Handle specific date request
             try {
                 String[] parts = date.split("-");
                 int year = Integer.parseInt(parts[0]);
@@ -51,62 +51,61 @@ public class AdminDashboardApiController {
 
                 Double specificDateGMV = orderRepository.sumRevenueByPeriod(startDate, endDate);
                 Long specificDateOrders = orderRepository.countOrdersByPeriod(startDate, endDate);
+                Double commission = (specificDateGMV != null ? specificDateGMV : 0.0) * 0.10;
 
                 result.put("todayGMV", specificDateGMV != null ? specificDateGMV : 0.0);
                 result.put("todayOrders", specificDateOrders != null ? specificDateOrders : 0L);
+                result.put("todayCommission", commission);
+
+                // Get 7-day GMV data for chart
+                result.put("weeklyGMV", getWeeklyGMV(now));
+                result.put("weeklyOrders", getWeeklyOrders(now));
 
                 return result;
             } catch (Exception e) {
                 // If date parsing fails, fall back to default behavior
-                startDate = now.toLocalDate().atStartOfDay();
+                period = "today";
             }
         }
 
+        // Handle period requests
+        if (period == null || period.isEmpty()) {
+            period = "today";
+        }
+
         switch (period) {
+            case "yesterday":
+                startDate = now.minusDays(1).toLocalDate().atStartOfDay();
+                endDate = startDate.plusDays(1).minusSeconds(1);
+                break;
+            case "week":
+                endDate = now.toLocalDate().atStartOfDay().minusSeconds(1);
+                startDate = endDate.minusDays(6).toLocalDate().atStartOfDay();
+                break;
             case "7d":
-                startDate = now.minusDays(7);
-                break;
             case "30d":
-                startDate = now.minusDays(30);
-                break;
             case "3m":
-                startDate = now.minusMonths(3);
-                break;
-            default:
+                // These are for chart data, still return today's stats
                 startDate = now.toLocalDate().atStartOfDay();
+                endDate = startDate.plusDays(1).minusSeconds(1);
+                break;
+            default: // today
+                startDate = now.toLocalDate().atStartOfDay();
+                endDate = startDate.plusDays(1).minusSeconds(1);
                 break;
         }
 
-        // Get daily data for chart
-        List<Map<String, Object>> dailyData = new ArrayList<>();
-        int days = period.equals("7d") ? 7 : (period.equals("30d") ? 30 : 1);
+        Double periodGMV = orderRepository.sumRevenueByPeriod(startDate, endDate);
+        Long periodOrders = orderRepository.countOrdersByPeriod(startDate, endDate);
+        Double commission = (periodGMV != null ? periodGMV : 0.0) * 0.10;
 
-        for (int i = days - 1; i >= 0; i--) {
-            LocalDateTime dayStart = now.minusDays(i).toLocalDate().atStartOfDay();
-            LocalDateTime dayEnd = dayStart.plusDays(1).minusSeconds(1);
+        result.put("todayGMV", periodGMV != null ? periodGMV : 0.0);
+        result.put("todayOrders", periodOrders != null ? periodOrders : 0L);
+        result.put("todayCommission", commission);
 
-            Double dayGMV = orderRepository.sumRevenueByPeriod(dayStart, dayEnd);
-            Long dayOrders = orderRepository.countOrdersByPeriod(dayStart, dayEnd);
-
-            Map<String, Object> dayData = new HashMap<>();
-            dayData.put("date", dayStart.toLocalDate().toString());
-            dayData.put("gmv", dayGMV != null ? dayGMV : 0.0);
-            dayData.put("orders", dayOrders != null ? dayOrders : 0L);
-
-            dailyData.add(dayData);
-        }
-
-        result.put("dailyData", dailyData);
-
-        // Today's stats
-        LocalDateTime todayStart = now.toLocalDate().atStartOfDay();
-        LocalDateTime todayEnd = todayStart.plusDays(1).minusSeconds(1);
-
-        Double todayGMV = orderRepository.sumRevenueByPeriod(todayStart, todayEnd);
-        Long todayOrders = orderRepository.countOrdersByPeriod(todayStart, todayEnd);
-
-        result.put("todayGMV", todayGMV != null ? todayGMV : 0.0);
-        result.put("todayOrders", todayOrders != null ? todayOrders : 0L);
+        // Get 7-day GMV data for chart
+        result.put("weeklyGMV", getWeeklyGMV(now));
+        result.put("weeklyOrders", getWeeklyOrders(now));
 
         // Overall stats
         result.put("totalOrders", orderRepository.count());
@@ -120,5 +119,35 @@ public class AdminDashboardApiController {
         result.put("totalSellers", totalSellers);
 
         return result;
+    }
+
+    private Map<String, Double> getWeeklyGMV(LocalDateTime now) {
+        Map<String, Double> weeklyGMV = new HashMap<>();
+        String[] days = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
+
+        for (int i = 6; i >= 0; i--) {
+            LocalDateTime dayStart = now.minusDays(i).toLocalDate().atStartOfDay();
+            LocalDateTime dayEnd = dayStart.plusDays(1).minusSeconds(1);
+
+            Double dayGMV = orderRepository.sumRevenueByPeriod(dayStart, dayEnd);
+            weeklyGMV.put(days[6 - i], dayGMV != null ? dayGMV : 0.0);
+        }
+
+        return weeklyGMV;
+    }
+
+    private Map<String, Long> getWeeklyOrders(LocalDateTime now) {
+        Map<String, Long> weeklyOrders = new HashMap<>();
+        String[] days = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
+
+        for (int i = 6; i >= 0; i--) {
+            LocalDateTime dayStart = now.minusDays(i).toLocalDate().atStartOfDay();
+            LocalDateTime dayEnd = dayStart.plusDays(1).minusSeconds(1);
+
+            Long dayOrders = orderRepository.countOrdersByPeriod(dayStart, dayEnd);
+            weeklyOrders.put(days[6 - i], dayOrders != null ? dayOrders : 0L);
+        }
+
+        return weeklyOrders;
     }
 }

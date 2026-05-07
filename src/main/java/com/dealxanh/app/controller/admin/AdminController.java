@@ -13,8 +13,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -137,32 +140,115 @@ public class AdminController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public String sellerVerify(
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             Model model) {
 
-        // Get stores based on status filter
-        List<Store> stores;
+        // Get all stores first
+        List<Store> allStores = storeRepository.findAll();
+
+        // Filter by status
+        List<Store> filteredStores;
         if (status != null && !status.isEmpty()) {
             if ("pending".equals(status)) {
-                stores = storeRepository.findByStatus("PENDING");
+                filteredStores = allStores.stream()
+                        .filter(s -> "PENDING".equals(s.getStatus()))
+                        .collect(java.util.stream.Collectors.toList());
             } else if ("approved".equals(status)) {
-                stores = storeRepository.findByStatus("ACTIVE");
+                filteredStores = allStores.stream()
+                        .filter(s -> "ACTIVE".equals(s.getStatus()))
+                        .collect(java.util.stream.Collectors.toList());
             } else if ("rejected".equals(status)) {
-                stores = storeRepository.findByStatus("REJECTED");
+                filteredStores = allStores.stream()
+                        .filter(s -> "REJECTED".equals(s.getStatus()))
+                        .collect(java.util.stream.Collectors.toList());
             } else {
-                stores = storeRepository.findAll();
+                filteredStores = allStores;
             }
         } else {
             // Default: show pending stores first
-            stores = storeRepository.findByStatus("PENDING");
+            filteredStores = allStores.stream()
+                    .filter(s -> "PENDING".equals(s.getStatus()))
+                    .collect(java.util.stream.Collectors.toList());
         }
 
-        // Count pending stores for badge
-        long pendingCount = storeRepository.countByStatus("PENDING");
-        model.addAttribute("pendingSellerCount", pendingCount);
+        // Apply search filter (store name, owner email)
+        if (search != null && !search.trim().isEmpty()) {
+            final String searchLower = search.toLowerCase().trim();
+            filteredStores = filteredStores.stream()
+                    .filter(s -> (s.getStoreName() != null && s.getStoreName().toLowerCase().contains(searchLower)) ||
+                               (s.getOwner() != null && s.getOwner().getEmail() != null && s.getOwner().getEmail().toLowerCase().contains(searchLower)) ||
+                               (s.getOwner() != null && s.getOwner().getFullName() != null && s.getOwner().getFullName().toLowerCase().contains(searchLower)))
+                    .collect(java.util.stream.Collectors.toList());
+        }
 
-        model.addAttribute("stores", stores);
+        // Apply city filter
+        if (city != null && !city.trim().isEmpty() && !"Tất cả thành phố".equals(city)) {
+            final String cityFilter = city.trim();
+            filteredStores = filteredStores.stream()
+                    .filter(s -> s.getCity() != null && s.getCity().equals(cityFilter))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        // Apply sort
+        if ("oldest".equals(sort)) {
+            filteredStores.sort((s1, s2) -> s1.getCreatedAt().compareTo(s2.getCreatedAt()));
+        } else {
+            // Default: newest first
+            filteredStores.sort((s1, s2) -> s2.getCreatedAt().compareTo(s1.getCreatedAt()));
+        }
+
+        // Calculate pagination
+        int totalStores = filteredStores.size();
+        int totalPages = (int) Math.ceil((double) totalStores / size);
+        int currentPage = page;
+
+        // Ensure page is within valid range
+        if (currentPage < 0) currentPage = 0;
+        if (currentPage >= totalPages && totalPages > 0) currentPage = totalPages - 1;
+
+        // Get paginated stores
+        int startIndex = currentPage * size;
+        int endIndex = Math.min(startIndex + size, totalStores);
+
+        List<Store> paginatedStores = filteredStores.subList(startIndex, endIndex);
+
+        // Count stores by status for filter tabs
+        long pendingCount = storeRepository.countByStatus("PENDING");
+        long approvedCount = storeRepository.countByStatus("ACTIVE");
+        long rejectedCount = storeRepository.countByStatus("REJECTED");
+
+        // Get unique cities for filter dropdown
+        List<String> cities = allStores.stream()
+                .map(Store::getCity)
+                .filter(c -> c != null && !c.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(java.util.stream.Collectors.toList());
+
+        model.addAttribute("pendingSellerCount", pendingCount);
+        model.addAttribute("approvedSellerCount", approvedCount);
+        model.addAttribute("rejectedSellerCount", rejectedCount);
+        model.addAttribute("stores", paginatedStores);
         model.addAttribute("currentStatus", status);
         model.addAttribute("activeSidebar", "seller-verify");
+
+        // Pagination attributes
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalStores", totalStores);
+        model.addAttribute("pageSize", size);
+        model.addAttribute("hasPrevious", currentPage > 0);
+        model.addAttribute("hasNext", currentPage < totalPages - 1);
+
+        // Filter attributes
+        model.addAttribute("searchQuery", search);
+        model.addAttribute("selectedCity", city);
+        model.addAttribute("selectedSort", sort);
+        model.addAttribute("cities", cities);
 
         return "admin/seller-verify";
     }
@@ -171,13 +257,32 @@ public class AdminController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public String users(
             @RequestParam(required = false) String role,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
             Model model) {
 
+        // Get pending sellers count for sidebar badge
+        long pendingSellers = storeRepository.countByStatus("PENDING");
+
         List<User> users;
+        boolean hasSearchFilter = search != null && !search.isEmpty();
+
+        // First filter by role
         if (role != null && !role.isEmpty()) {
             if ("buyer".equals(role)) {
                 Role userRole = roleRepository.findByName("ROLE_USER").orElse(null);
                 users = userRole != null ? userRepository.findByRole(userRole) : new java.util.ArrayList<>();
+
+                // Then filter by active status if specified
+                if ("active".equals(status)) {
+                    users = users.stream()
+                        .filter(User::getActive)
+                        .collect(Collectors.toList());
+                } else if ("inactive".equals(status)) {
+                    users = users.stream()
+                        .filter(u -> !u.getActive())
+                        .collect(Collectors.toList());
+                }
             } else if ("seller".equals(role)) {
                 Role ownerRole = roleRepository.findByName("ROLE_STORE_OWNER").orElse(null);
                 Role staffRole = roleRepository.findByName("ROLE_STORE_STAFF").orElse(null);
@@ -205,11 +310,108 @@ public class AdminController {
             users = userRepository.findAll();
         }
 
+        // Apply search filter
+        if (hasSearchFilter && "buyer".equals(role)) {
+            final String searchLower = search.toLowerCase();
+            users = users.stream()
+                .filter(u -> (u.getUsername() != null && u.getUsername().toLowerCase().contains(searchLower)) ||
+                           (u.getEmail() != null && u.getEmail().toLowerCase().contains(searchLower)) ||
+                           (u.getFullName() != null && u.getFullName().toLowerCase().contains(searchLower)))
+                .collect(Collectors.toList());
+        }
+
+        // Calculate statistics
+        long totalBuyers = userRepository.countByRoleName("ROLE_USER");
+        long activeBuyers = userRepository.countByRoleAndActive(true);
+        long inactiveBuyers = userRepository.countByRoleAndActive(false);
+
         model.addAttribute("users", users);
-        model.addAttribute("currentRole", role);
+        model.addAttribute("currentRole", role != null ? role : "");
+        model.addAttribute("currentStatus", status != null ? status : "");
+        model.addAttribute("searchQuery", search != null ? search : "");
         model.addAttribute("activeSidebar", "users");
+        model.addAttribute("pendingSellerCount", pendingSellers);
+
+        // Add statistics
+        Map<String, Object> userStats = new HashMap<>();
+        userStats.put("totalBuyers", totalBuyers);
+        userStats.put("activeBuyers", activeBuyers);
+        userStats.put("inactiveBuyers", inactiveBuyers);
+        model.addAttribute("userStats", userStats);
 
         return "admin/users";
+    }
+
+    @PostMapping("/users/{userId}/toggle-active")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String toggleUserActive(
+            @PathVariable Long userId,
+            @RequestParam String currentRole,
+            @RequestParam String currentStatus,
+            RedirectAttributes redirectAttributes) {
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("error", "Người dùng không tồn tại");
+            return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
+        }
+
+        // Prevent admin from deactivating themselves
+        Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = auth.getName();
+        if (currentUsername.equals(user.getUsername()) || currentUsername.equals(user.getEmail())) {
+            redirectAttributes.addFlashAttribute("error", "Bạn không thể thay đổi trạng thái của chính mình");
+            return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
+        }
+
+        // Toggle active status
+        user.setActive(!user.getActive());
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        String action = user.getActive() ? "kích hoạt" : "vô hiệu hóa";
+        redirectAttributes.addFlashAttribute("success", "Đã " + action + " người dùng " + user.getUsername() + " thành công");
+
+        return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "") +
+               (currentStatus != null && !currentStatus.isEmpty() ? "&status=" + currentStatus : "");
+    }
+
+    @PostMapping("/users/{userId}/delete")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String deleteUser(
+            @PathVariable Long userId,
+            @RequestParam String currentRole,
+            RedirectAttributes redirectAttributes) {
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("error", "Người dùng không tồn tại");
+            return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
+        }
+
+        // Prevent admin from deleting themselves
+        Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = auth.getName();
+        if (currentUsername.equals(user.getUsername()) || currentUsername.equals(user.getEmail())) {
+            redirectAttributes.addFlashAttribute("error", "Bạn không thể xóa tài khoản của chính mình");
+            return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
+        }
+
+        String username = user.getUsername() != null ? user.getUsername() : user.getEmail();
+
+        // Check if user has orders
+        if (user.getOrders() != null && !user.getOrders().isEmpty()) {
+            // Instead of deleting, just deactivate
+            user.setActive(false);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+            redirectAttributes.addFlashAttribute("success", "Đã vô hiệu hóa người dùng " + username + " (có đơn hàng, không thể xóa hoàn toàn)");
+        } else {
+            userRepository.delete(user);
+            redirectAttributes.addFlashAttribute("success", "Đã xóa người dùng " + username + " thành công");
+        }
+
+        return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
     }
 
     @GetMapping("/dispute")
@@ -220,11 +422,119 @@ public class AdminController {
         return "admin/dispute";
     }
 
-    @GetMapping("/finance")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String finance(Model model) {
-        // Placeholder for finance page
-        model.addAttribute("activeSidebar", "finance");
-        return "admin/finance";
+    @PostMapping("/seller-verify/{storeId}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String approveStore(
+            @PathVariable Long storeId,
+            @RequestParam(required = false) String currentStatus,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) Integer page,
+            RedirectAttributes redirectAttributes) {
+
+        Store store = storeRepository.findById(storeId).orElse(null);
+        if (store == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy cửa hàng");
+            return buildRedirectUrl(currentStatus, search, city, sort, page);
+        }
+
+        if (!"PENDING".equals(store.getStatus())) {
+            redirectAttributes.addFlashAttribute("error", "Cửa hàng này đã được xử lý rồi");
+            return buildRedirectUrl(currentStatus, search, city, sort, page);
+        }
+
+        // Get current user info
+        Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = auth.getName();
+        User reviewer = userRepository.findByUsername(currentUsername)
+                .orElse(userRepository.findByEmail(currentUsername).orElse(null));
+
+        // Update store status
+        store.setStatus("ACTIVE");
+        store.setApprovedBy(reviewer);
+        store.setReviewedAt(LocalDateTime.now());
+        store.setUpdatedAt(LocalDateTime.now());
+        storeRepository.save(store);
+
+        redirectAttributes.addFlashAttribute("success", "Đã duyệt cửa hàng " + store.getStoreName() + " thành công");
+        return buildRedirectUrl(currentStatus, search, city, sort, page);
+    }
+
+    private String buildRedirectUrl(String status, String search, String city, String sort, Integer page) {
+        StringBuilder url = new StringBuilder("redirect:/admin/seller-verify");
+        boolean hasParam = false;
+
+        if (status != null && !status.isEmpty()) {
+            url.append("?status=").append(status);
+            hasParam = true;
+        }
+
+        if (search != null && !search.trim().isEmpty()) {
+            url.append(hasParam ? "&" : "?").append("search=").append(search.trim());
+            hasParam = true;
+        }
+
+        if (city != null && !city.trim().isEmpty()) {
+            url.append(hasParam ? "&" : "?").append("city=").append(city.trim());
+            hasParam = true;
+        }
+
+        if (sort != null && !sort.trim().isEmpty()) {
+            url.append(hasParam ? "&" : "?").append("sort=").append(sort.trim());
+            hasParam = true;
+        }
+
+        if (page != null && page > 0) {
+            url.append(hasParam ? "&" : "?").append("page=").append(page);
+        }
+
+        return url.toString();
+    }
+
+    @PostMapping("/seller-verify/{storeId}/reject")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String rejectStore(
+            @PathVariable Long storeId,
+            @RequestParam String rejectionReason,
+            @RequestParam(required = false) String currentStatus,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) Integer page,
+            RedirectAttributes redirectAttributes) {
+
+        Store store = storeRepository.findById(storeId).orElse(null);
+        if (store == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy cửa hàng");
+            return buildRedirectUrl(currentStatus, search, city, sort, page);
+        }
+
+        if (!"PENDING".equals(store.getStatus())) {
+            redirectAttributes.addFlashAttribute("error", "Cửa hàng này đã được xử lý rồi");
+            return buildRedirectUrl(currentStatus, search, city, sort, page);
+        }
+
+        if (rejectionReason == null || rejectionReason.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Vui lòng nhập lý do từ chối");
+            return buildRedirectUrl(currentStatus, search, city, sort, page);
+        }
+
+        // Get current user info
+        Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = auth.getName();
+        User reviewer = userRepository.findByUsername(currentUsername)
+                .orElse(userRepository.findByEmail(currentUsername).orElse(null));
+
+        // Update store status
+        store.setStatus("REJECTED");
+        store.setRejectedBy(reviewer);
+        store.setRejectionReason(rejectionReason.trim());
+        store.setReviewedAt(LocalDateTime.now());
+        store.setUpdatedAt(LocalDateTime.now());
+        storeRepository.save(store);
+
+        redirectAttributes.addFlashAttribute("success", "Đã từ chối cửa hàng " + store.getStoreName() + " thành công");
+        return buildRedirectUrl(currentStatus, search, city, sort, page);
     }
 }

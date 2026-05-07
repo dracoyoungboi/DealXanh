@@ -194,7 +194,7 @@ a{text-decoration:none;color:inherit}
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
                 Xét duyệt Seller
-                <span class="nav-badge" id="sidebar-pending-count">12</span>
+                <span class="nav-badge" id="sidebar-pending-count" th:if="${pendingSellerCount != null and pendingSellerCount > 0}" th:text="${pendingSellerCount}">0</span>
             </a>
             <a class="nav-item active" href="/admin/users">
                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -260,7 +260,7 @@ a{text-decoration:none;color:inherit}
         <div class="sidebar-footer">
             <div class="sidebar-user">
                 <div class="sidebar-user__avatar">
-                    <img src="/img/default-avatar.png" alt="Admin">
+                    <img src="/img/default-avatar.svg" alt="Admin">
                 </div>
                 <div>
                     <div class="sidebar-user__name">Admin Name</div>
@@ -297,12 +297,120 @@ a{text-decoration:none;color:inherit}
                 <p class="text-secondary">Xem và quản lý tất cả người dùng trong hệ thống</p>
             </div>
 
+            <!-- Buyer Statistics (only show when viewing buyers) -->
+            <div th:if="${currentRole == 'buyer' or currentRole == null or currentRole == ''}" class="stats-cards" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--primary); display: flex; align-items: center; justify-content: center;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Tổng Buyers</span>
+                    </div>
+                    <div style="font-size: 28px; font-weight: 800; color: var(--primary);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.totalBuyers, 0, 0) : '0'}">0</div>
+                </div>
+
+                <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--success); display: flex; align-items: center; justify-content: center;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                        </div>
+                        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Hoạt động</span>
+                    </div>
+                    <div style="font-size: 28px; font-weight: 800; color: var(--success);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.activeBuyers, 0, 0) : '0'}">0</div>
+                </div>
+
+                <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--danger); display: flex; align-items: center; justify-content: center;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="2" style="width: 20px; height: 20px;">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="15" y1="9" x2="9" y2="15"/>
+                                <line x1="9" y1="9" x2="15" y2="15"/>
+                            </svg>
+                        </div>
+                        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Vô hiệu</span>
+                    </div>
+                    <div style="font-size: 28px; font-weight: 800; color: var(--danger);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.inactiveBuyers, 0, 0) : '0'}">0</div>
+                </div>
+
+                <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm); cursor: pointer;" onclick="location.reload()">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--info); display: flex; align-items: center; justify-content: center;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="12" r="1"/>
+                                <circle cx="12" cy="16" r="1"/>
+                            </svg>
+                        </div>
+                        <span style="font-size: 12px; color: var(--text-secondary); font-weight:500;">Refresh</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--info); font-weight: 600;">Auto</div>
+                </div>
+            </div>
+
             <!-- Filter Tabs -->
-            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-                <a href="/admin/users" class="filter-btn" th:classappend="${currentRole == null or currentRole == ''} ? 'active' : ''">Tất cả</a>
-                <a href="/admin/users?role=buyer" class="filter-btn" th:classappend="${currentRole == 'buyer'} ? 'active' : ''">Buyer</a>
-                <a href="/admin/users?role=seller" class="filter-btn" th:classappend="${currentRole == 'seller'} ? 'active' : ''">Seller</a>
-                <a href="/admin/users?role=admin" class="filter-btn" th:classappend="${currentRole == 'admin'} ? 'active' : ''">Admin</a>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div style="display: flex; gap: 12px;">
+                    <a href="/admin/users" class="filter-btn" th:classappend="${currentRole == null or currentRole == ''} ? 'active' : ''">Tất cả</a>
+                    <a href="/admin/users?role=buyer" class="filter-btn" th:classappend="${currentRole == 'buyer'} ? 'active' : ''">Buyer</a>
+                    <a href="/admin/users?role=seller" class="filter-btn" th:classappend="${currentRole == 'seller'} ? 'active' : ''">Seller</a>
+                    <a href="/admin/users?role=admin" class="filter-btn" th:classappend="${currentRole == 'admin'} ? 'active' : ''">Admin</a>
+                </div>
+
+                <!-- Search Form (only for buyers) -->
+                <form th:if="${currentRole == 'buyer'}" method="get" action="/admin/users" style="display: flex; gap: 8px;">
+                    <input type="hidden" name="role" value="buyer"/>
+                    <div style="position: relative;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-secondary);">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <input type="text"
+                               name="search"
+                               th:value="${searchQuery}"
+                               placeholder="Tìm kiếm buyer..."
+                               style="padding: 8px 12px 8px 36px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 14px; width: 280px; outline: none; transition: border-color 0.2s;"
+                               onfocus="this.style.borderColor='var(--primary)'"
+                               onblur="this.style.borderColor='var(--border)'"/>
+                    </div>
+                    <button type="submit" class="btn-sm btn-primary">Tìm kiếm</button>
+                    <a th:if="${searchQuery != null and !searchQuery.isEmpty()}" href="/admin/users?role=buyer" class="btn-sm btn-outline">Xóa bộ lọc</a>
+                </form>
+            </div>
+
+            <!-- Buyer Status Filter (only show when viewing buyers) -->
+            <div th:if="${currentRole == 'buyer' or currentRole == null or currentRole == ''}" style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <a href="/admin/users?role=buyer" class="filter-btn" th:classappend="${currentStatus == null or currentStatus == ''} ? 'active' : ''" style="font-size: 12px; padding: 6px 12px;">Tất cả Buyers</a>
+                <a href="/admin/users?role=buyer&status=active" class="filter-btn" th:classappend="${currentStatus == 'active'} ? 'active' : ''" style="font-size: 12px; padding: 6px 12px;">Hoạt động</a>
+                <a href="/admin/users?role=buyer&status=inactive" class="filter-btn" th:classappend="${currentStatus == 'inactive'} ? 'active' : ''" style="font-size: 12px; padding: 6px 12px;">Vô hiệu</a>
+            </div>
+
+            <!-- Alert Messages -->
+            <div th:if="${success}" style="margin-bottom: 20px; padding: 14px 18px; border-radius: var(--radius-md); background: var(--success-bg); color: var(--success); border: 1px solid var(--success);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <span th:text="${success}">Success message</span>
+                </div>
+            </div>
+
+            <div th:if="${error}" style="margin-bottom: 20px; padding: 14px 18px; border-radius: var(--radius-md); background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    <span th:text="${error}">Error message</span>
+                </div>
             </div>
 
             <!-- Users Table -->
@@ -352,9 +460,41 @@ a{text-decoration:none;color:inherit}
                                     </td>
                                     <td th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">Date</td>
                                     <td>
-                                        <button style="padding: 6px 12px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
-                                            Xem chi tiết
-                                        </button>
+                                        <div style="display: flex; gap: 6px;">
+                                            <form th:action="@{/admin/users/{userId}/toggle-active(userId=${user.userId})}" method="post" style="display: inline;">
+                                                <input type="hidden" name="currentRole" th:value="${currentRole != null ? currentRole : ''}"/>
+                                                <input type="hidden" name="currentStatus" th:value="${currentStatus != null ? currentStatus : ''}"/>
+                                                <button type="submit"
+                                                        th:attr="onclick=${user.active ? '\'return confirm(\'Bạn có chắc muốn vô hiệu hóa buyer ' + (user.fullName != null ? user.fullName : user.username) + '?\')\'' : '\'return confirm(\'Bạn có chắc muốn kích hoạt buyer ' + (user.fullName != null ? user.fullName : user.username) + '?\')\''}"
+                                                        class="btn-sm"
+                                                        th:classappend="${user.active ? 'btn-outline' : 'btn-primary'}">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;">
+                                                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+                                                        <line x1="12" y1="2" x2="12" y2="12"/>
+                                                    </svg>
+                                                    <span th:text="${user.active ? 'Vô hiệu' : 'Kích hoạt'}"></span>
+                                                </button>
+                                            </form>
+
+                                            <form th:action="@{/admin/users/{userId}/delete(userId=${user.userId})}" method="post" style="display: inline;" th:if="${user.role != null and user.role.name != 'ROLE_ADMIN'}">
+                                                <input type="hidden" name="currentRole" th:value="${currentRole != null ? currentRole : ''}"/>
+                                                <button type="submit"
+                                                        onclick="return confirm('Bạn có chắc muốn xóa người dùng này? Hành động này không thể hoàn tác!')"
+                                                        class="btn-sm"
+                                                        style="background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger);">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;">
+                                                        <polyline points="3 6 5 5 18 6 22 6 22 18 19 6 19 6"/>
+                                                        <line x1="19" y1="5" x2="9" y2="15"/>
+                                                        <line x1="9" y1="5" x2="19" y2="15"/>
+                                                    </svg>
+                                                    Xóa
+                                                </button>
+                                            </form>
+
+                                            <button style="padding: 6px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+                                                Chi tiết
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -406,6 +546,15 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     background: var(--primary);
     border-color: var(--primary);
     color: white;
+}
+
+/* Input styling */
+input[type="text"] {
+    font-family: var(--font);
+}
+
+input[type="text"]::placeholder {
+    color: var(--text-tertiary);
 }
 </style>
 

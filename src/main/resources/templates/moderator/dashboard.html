@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderator Dashboard - DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+    --surface:#fff;--bg:#f0f2f5;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);
+    --success:#10b981;--warning:#f59e0b;--danger:#ef4444;
+    --radius-md:10px;--radius-lg:16px;--sidebar:240px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary);height:100%}
+.layout{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{
+    width:var(--sidebar);flex-shrink:0;
+    background:var(--primary);
+    display:flex;flex-direction:column;
+    position:fixed;top:0;bottom:0;left:0;z-index:30;
+    overflow-y:auto;scrollbar-width:none;
+}
+.sidebar::-webkit-scrollbar{display:none}
+.sidebar-header{
+    padding:20px 16px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;gap:10px;
+}
+.sidebar-header__logo{
+    width:36px;height:36px;border-radius:10px;
+    background:rgba(255,255,255,.15);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sidebar-header__logo svg{width:18px;height:18px;color:#fff}
+.sidebar-header__brand{font-size:16px;font-weight:800;color:#fff}
+.sidebar-header__sub{font-size:11px;color:rgba(255,255,255,.55)}
+
+.nav-section{padding:16px 10px 0}
+.nav-section__label{
+    font-size:10px;font-weight:700;color:rgba(255,255,255,.4);
+    text-transform:uppercase;letter-spacing:.8px;
+    padding:0 8px;margin-bottom:6px;
+}
+.nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 10px;border-radius:10px;
+    color:rgba(255,255,255,.65);font-size:13px;font-weight:500;
+    margin-bottom:2px;cursor:pointer;transition:all 0.2s;
+    text-decoration:none;
+}
+.nav-item:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
+.nav-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
+.nav-item.active::before{
+    content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:3px;height:20px;border-radius:0 2px 2px 0;background:#fff;
+}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.nav-badge{
+    margin-left:auto;min-width:18px;height:18px;border-radius:9px;
+    background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+    padding:0 4px;display:flex;align-items:center;justify-content:center;
+}
+.sidebar-footer{
+    margin-top:auto;padding:14px 10px;
+    border-top:1px solid rgba(255,255,255,.1);
+}
+.sidebar-user{
+    display:flex;align-items:center;gap:10px;padding:8px;
+    border-radius:10px;cursor:pointer;
+}
+.sidebar-user__avatar{
+    width:34px;height:34px;border-radius:50%;overflow:hidden;
+    border:2px solid rgba(255,255,255,.2);flex-shrink:0;
+}
+.sidebar-user__avatar img{width:100%;height:100%;object-fit:cover}
+.sidebar-user__name{font-size:13px;font-weight:600;color:#fff}
+.sidebar-user__role{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
+
+/* Main content */
+.main{
+    margin-left:var(--sidebar);flex:1;
+    display:flex;flex-direction:column;min-height:100vh;
+}
+
+.topbar{
+    background:var(--surface);
+    padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--border-light);
+    position:sticky;top:0;z-index:20;
+}
+.topbar__title{font-size:18px;font-weight:800}
+
+.content{padding:24px}
+.page-header h1{font-size:24px;font-weight:800;margin-bottom:8px}
+.page-header p{font-size:14px;color:var(--text-secondary)}
+
+/* Stats cards */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:24px}
+.stat-card{
+    background:var(--surface);border-radius:16px;
+    border:1px solid var(--border-light);
+    padding:20px;box-shadow:var(--shadow-sm);
+}
+.stat-card__header{
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:12px
+}
+.stat-card__icon{
+    width:40px;height:40px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+}
+.stat-card__icon svg{width:20px;height:20px;color:#fff}
+.stat-card__label{font-size:12px;color:var(--text-secondary);font-weight:500}
+.stat-card__value{font-size:28px;font-weight:800}
+.stat-card--primary .stat-card__icon{background:var(--primary)}
+.stat-card--primary .stat-card__value{color:var(--primary)}
+.stat-card--success .stat-card__icon{background:var(--success)}
+.stat-card--success .stat-card__value{color:var(--success)}
+.stat-card--warning .stat-card__icon{background:var(--warning)}
+.stat-card--warning .stat-card__value{color:var(--warning)}
+.stat-card--danger .stat-card__icon{background:var(--danger)}
+.stat-card--danger .stat-card__value{color:var(--danger)}
+
+/* Pending stores */
+.pending-section{
+    background:var(--surface);border-radius:16px;
+    border:1px solid var(--border-light);
+    padding:20px;margin-bottom:24px;
+}
+.pending-section__title{font-size:16px;font-weight:700;margin-bottom:16px}
+.pending-list{display:flex;flex-direction:column;gap:12px}
+.pending-item{
+    display:flex;align-items:center;gap:16px;
+    padding:16px;border-radius:10px;
+    border:1px solid var(--border-light);
+    transition:all 0.2s;
+}
+.pending-item:hover{border-color:var(--primary)}
+.pending-item__logo{
+    width:50px;height:50px;border-radius:8px;
+    overflow:hidden;background:var(--bg);
+}
+.pending-item__logo img{width:100%;height:100%;object-fit:cover}
+.pending-item__info{flex:1}
+.pending-item__name{font-size:14px;font-weight:600;margin-bottom:4px}
+.pending-item__meta{font-size:12px;color:var(--text-secondary)}
+.btn-approve{
+    padding:8px 16px;border-radius:8px;
+    background:var(--primary);color:#fff;
+    font-size:13px;font-weight:600;
+    transition:all 0.2s;text-decoration:none;
+}
+.btn-approve:hover{background:var(--primary-dark)}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-secondary)}
+.empty-state svg{width:60px;height:60px;margin-bottom:16px;opacity:0.3}
+.empty-state h3{font-size:16px;font-weight:600;margin-bottom:8px;color:var(--text-primary)}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-header__logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <div class="sidebar-header__text">
+                <div class="sidebar-header__brand">DealXanh</div>
+                <div class="sidebar-header__sub">Moderator Portal</div>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section__label">Tổng quan</div>
+            <a class="nav-item active" href="/moderator/dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                    <path d="M14 14h7v7h-7z"/>
+                </svg>
+                Dashboard
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section__label">Quản lý</div>
+            <a class="nav-item" href="/moderator/seller-verify">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Duyệt Seller
+                <span class="nav-badge" th:if="${pendingSellerCount != null and pendingSellerCount > 0}" th:text="${pendingSellerCount}">0</span>
+            </a>
+            <a class="nav-item" href="#">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                Xem Deals
+            </a>
+            <a class="nav-item" href="#">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                Đơn hàng
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-user__avatar">
+                    <img src="/img/default-avatar.svg" alt="Moderator">
+                </div>
+                <div>
+                    <div class="sidebar-user__name" th:text="${#authentication != null ? #authentication.name : 'Moderator'}">Moderator Name</div>
+                    <div class="sidebar-user__role">Moderator</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <div class="topbar__title">Moderator Dashboard</div>
+        </header>
+
+        <div class="content">
+            <div class="page-header">
+                <h1>Xin chào, Moderator!</h1>
+                <p>Dưới đây là tổng quan về hoạt động cần xử lý</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card stat-card--primary">
+                    <div class="stat-card__header">
+                        <div class="stat-card__icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <span class="stat-card__label">Doanh thu hôm nay</span>
+                    </div>
+                    <div class="stat-card__value" th:text="${stats != null ? #numbers.formatDecimal(stats.todayGMV, 0, 0) + '₫' : '0₫'}">0₫</div>
+                </div>
+
+                <div class="stat-card stat-card--success">
+                    <div class="stat-card__header">
+                        <div class="stat-card__icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                                <line x1="3" y1="6" x2="21" y2="6"/>
+                                <path d="M16 10a4 4 0 0 1-8 0"/>
+                            </svg>
+                        </div>
+                        <span class="stat-card__label">Đơn hàng hôm nay</span>
+                    </div>
+                    <div class="stat-card__value" th:text="${stats != null ? #numbers.formatDecimal(stats.todayOrders, 0, 0) : '0'}">0</div>
+                </div>
+
+                <div class="stat-card stat-card--warning">
+                    <div class="stat-card__header">
+                        <div class="stat-card__icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <span class="stat-card__label">Cửa hàng chờ duyệt</span>
+                    </div>
+                    <div class="stat-card__value" th:text="${stats != null ? #numbers.formatDecimal(stats.pendingStores, 0, 0) : '0'}">0</div>
+                </div>
+
+                <div class="stat-card stat-card--danger">
+                    <div class="stat-card__header">
+                        <div class="stat-card__icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <span class="stat-card__label">Hoa hồng hôm nay</span>
+                    </div>
+                    <div class="stat-card__value" th:text="${stats != null ? #numbers.formatDecimal(stats.todayCommission, 0, 0) + '₫' : '0₫'}">0₫</div>
+                </div>
+            </div>
+
+            <div class="pending-section">
+                <div class="pending-section__title">Cửa hàng cần xét duyệt gần đây</div>
+                <div class="pending-list" th:if="${recentPendingStores != null and !recentPendingStores.isEmpty()}">
+                    <div class="pending-item" th:each="store : ${recentPendingStores}">
+                        <div class="pending-item__logo">
+                            <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt="Store">
+                        </div>
+                        <div class="pending-item__info">
+                            <div class="pending-item__name" th:text="${store.storeName}">Store Name</div>
+                            <div class="pending-item__meta" th:text="${store.businessType != null ? store.businessType : 'Business'}">Business Type</div>
+                        </div>
+                        <a class="btn-approve" href="/moderator/seller-verify">Xem chi tiết</a>
+                    </div>
+                </div>
+                <div class="empty-state" th:if="${recentPendingStores == null or recentPendingStores.isEmpty()}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <h3>Không có cửa hàng nào chờ duyệt</h3>
+                    <p>Tất cả cửa hàng đã được xử lý</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

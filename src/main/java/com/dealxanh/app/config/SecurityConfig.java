@@ -107,12 +107,14 @@ public class SecurityConfig {
                 .rememberMeCookieName("remember-me")
             )
             .userDetailsService(customUserDetailsService)
-            // Tắt CSRF cho các API endpoint AJAX và login
+            // Tắt CSRF cho các API endpoint AJAX, login và admin forms
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers(
                     "/cart/add", "/cart/update", "/cart/remove",
                     "/cart/clear", "/cart/apply-coupon", "/cart/remove-coupon",
-                    "/api/**", "/perform_login"
+                    "/api/**", "/perform_login",
+                    "/admin/seller-verify/*/approve", "/admin/seller-verify/*/reject",
+                    "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )
             )
                 .exceptionHandling(exceptions -> exceptions
