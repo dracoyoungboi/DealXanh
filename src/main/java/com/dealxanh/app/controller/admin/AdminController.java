@@ -145,7 +145,17 @@ public class AdminController {
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            Model model) {
+            Model model,
+            Authentication authentication) {
+
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
 
         // Get all stores first
         List<Store> allStores = storeRepository.findAll();
@@ -259,10 +269,30 @@ public class AdminController {
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
-            Model model) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model,
+            Authentication authentication) {
+
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
 
         // Get pending sellers count for sidebar badge
         long pendingSellers = storeRepository.countByStatus("PENDING");
+
+        // DEBUG: List all available roles
+        System.out.println("=== AVAILABLE ROLES IN DATABASE ===");
+        List<com.dealxanh.app.entity.Role> allRoles = roleRepository.findAll();
+        for (com.dealxanh.app.entity.Role r : allRoles) {
+            System.out.println("Role ID: " + r.getRoleId() + ", Name: " + r.getName() + ", Description: " + r.getDescription());
+        }
+        System.out.println("=====================================");
 
         List<User> users;
         boolean hasSearchFilter = search != null && !search.isEmpty();
@@ -272,27 +302,31 @@ public class AdminController {
             if ("buyer".equals(role)) {
                 Role userRole = roleRepository.findByName("ROLE_USER").orElse(null);
                 users = userRole != null ? userRepository.findByRole(userRole) : new java.util.ArrayList<>();
-
-                // Then filter by active status if specified
-                if ("active".equals(status)) {
-                    users = users.stream()
-                        .filter(User::getActive)
-                        .collect(Collectors.toList());
-                } else if ("inactive".equals(status)) {
-                    users = users.stream()
-                        .filter(u -> !u.getActive())
-                        .collect(Collectors.toList());
-                }
             } else if ("seller".equals(role)) {
-                Role ownerRole = roleRepository.findByName("ROLE_STORE_OWNER").orElse(null);
-                Role staffRole = roleRepository.findByName("ROLE_STORE_STAFF").orElse(null);
+                // Find users who own stores or work at stores
+                List<Store> allStores = storeRepository.findAll();
                 users = new java.util.ArrayList<>();
-                if (ownerRole != null) {
-                    users.addAll(userRepository.findByRole(ownerRole));
+
+                // Add store owners
+                for (Store store : allStores) {
+                    if (store.getOwner() != null) {
+                        users.add(store.getOwner());
+                    }
                 }
-                if (staffRole != null) {
-                    users.addAll(userRepository.findByRole(staffRole));
+
+                // Add store staff (users who work at a store)
+                for (Store store : allStores) {
+                    if (store.getStaffList() != null && !store.getStaffList().isEmpty()) {
+                        users.addAll(store.getStaffList());
+                    }
                 }
+
+                // Remove duplicates
+                users = users.stream().distinct().collect(Collectors.toList());
+
+                System.out.println("=== SELLER FILTER DEBUG ===");
+                System.out.println("Total stores in DB: " + allStores.size());
+                System.out.println("Total sellers (owners + staff): " + users.size());
             } else if ("admin".equals(role)) {
                 Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElse(null);
                 Role moderatorRole = roleRepository.findByName("ROLE_MODERATOR").orElse(null);
@@ -310,33 +344,124 @@ public class AdminController {
             users = userRepository.findAll();
         }
 
-        // Apply search filter
-        if (hasSearchFilter && "buyer".equals(role)) {
+        // Then filter by active status for all roles
+        if ("active".equals(status)) {
+            users = users.stream()
+                .filter(User::getActive)
+                .collect(Collectors.toList());
+            System.out.println("After active filter: " + users.size() + " users");
+        } else if ("inactive".equals(status)) {
+            users = users.stream()
+                .filter(u -> !u.getActive())
+                .collect(Collectors.toList());
+            System.out.println("After inactive filter: " + users.size() + " users");
+        }
+
+        // Apply search filter (for all roles)
+        if (hasSearchFilter) {
             final String searchLower = search.toLowerCase();
             users = users.stream()
                 .filter(u -> (u.getUsername() != null && u.getUsername().toLowerCase().contains(searchLower)) ||
                            (u.getEmail() != null && u.getEmail().toLowerCase().contains(searchLower)) ||
-                           (u.getFullName() != null && u.getFullName().toLowerCase().contains(searchLower)))
+                           (u.getFullName() != null && u.getFullName().toLowerCase().contains(searchLower)) ||
+                           (u.getPhone() != null && u.getPhone().contains(searchLower)))
                 .collect(Collectors.toList());
+            System.out.println("After search filter: " + users.size() + " users");
         }
+
+        System.out.println("=== FINAL USERS COUNT: " + users.size() + " ===");
+        System.out.println("========================");
+
+        // Get all stores ONCE for both stats calculation and role determination
+        List<Store> allStores = storeRepository.findAll();
 
         // Calculate statistics
         long totalBuyers = userRepository.countByRoleName("ROLE_USER");
         long activeBuyers = userRepository.countByRoleAndActive(true);
         long inactiveBuyers = userRepository.countByRoleAndActive(false);
 
-        model.addAttribute("users", users);
+        // Calculate total sellers (store owners + staff) using the same allStores list
+        java.util.Set<Long> sellerIds = new java.util.HashSet<>();
+        for (Store store : allStores) {
+            if (store.getOwner() != null) {
+                sellerIds.add(store.getOwner().getUserId());
+            }
+            if (store.getStaffList() != null) {
+                for (User staff : store.getStaffList()) {
+                    sellerIds.add(staff.getUserId());
+                }
+            }
+        }
+        long totalSellers = sellerIds.size();
+
+        // Calculate total admins (ROLE_ADMIN + ROLE_MODERATOR)
+        long totalAdmins = 0L;
+        try {
+            totalAdmins += userRepository.countByRoleName("ROLE_ADMIN");
+            totalAdmins += userRepository.countByRoleName("ROLE_MODERATOR");
+        } catch (Exception e) {
+            // If roles don't exist, default to 0
+        }
+
+        // Add displayRole to each user based on their actual role AND store relationships
+        Map<Long, String> displayRoles = new HashMap<>();
+        Map<Long, String> roleDescriptions = new HashMap<>();
+
+        for (User user : users) {
+            String displayRole = determineDisplayRole(user, allStores);
+            String roleDescription = getRoleDescription(displayRole);
+            displayRoles.put(user.getUserId(), displayRole);
+            roleDescriptions.put(user.getUserId(), roleDescription);
+
+            // Debug log
+            System.out.println("User: " + user.getUsername() +
+                             " | DB Role: " + (user.getRole() != null ? user.getRole().getName() : "null") +
+                             " | Display Role: " + displayRole);
+        }
+
+        // Pagination logic
+        int totalUsers = users.size();
+        int totalPages = (int) Math.ceil((double) totalUsers / size);
+        int currentPage = page;
+
+        // Ensure page is within valid range
+        if (currentPage < 0) currentPage = 0;
+        if (currentPage >= totalPages && totalPages > 0) currentPage = totalPages - 1;
+        if (totalPages == 0) currentPage = 0;
+
+        // Get paginated users
+        int startIndex = currentPage * size;
+        int endIndex = Math.min(startIndex + size, totalUsers);
+
+        List<User> paginatedUsers = new java.util.ArrayList<>();
+        if (totalUsers > 0 && startIndex < totalUsers) {
+            paginatedUsers = users.subList(startIndex, endIndex);
+        }
+
+        model.addAttribute("users", paginatedUsers);
+        model.addAttribute("displayRoles", displayRoles);
+        model.addAttribute("roleDescriptions", roleDescriptions);
         model.addAttribute("currentRole", role != null ? role : "");
         model.addAttribute("currentStatus", status != null ? status : "");
         model.addAttribute("searchQuery", search != null ? search : "");
         model.addAttribute("activeSidebar", "users");
         model.addAttribute("pendingSellerCount", pendingSellers);
 
+        // Pagination attributes
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalUsers", totalUsers);
+        model.addAttribute("pageSize", size);
+        model.addAttribute("hasPrevious", currentPage > 0);
+        model.addAttribute("hasNext", currentPage < totalPages - 1);
+
         // Add statistics
         Map<String, Object> userStats = new HashMap<>();
         userStats.put("totalBuyers", totalBuyers);
         userStats.put("activeBuyers", activeBuyers);
         userStats.put("inactiveBuyers", inactiveBuyers);
+        userStats.put("totalSellers", totalSellers);
+        userStats.put("totalAdmins", totalAdmins);
         model.addAttribute("userStats", userStats);
 
         return "admin/users";
@@ -348,12 +473,13 @@ public class AdminController {
             @PathVariable Long userId,
             @RequestParam String currentRole,
             @RequestParam String currentStatus,
+            @RequestParam(required = false, defaultValue = "0") int page,
             RedirectAttributes redirectAttributes) {
 
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             redirectAttributes.addFlashAttribute("error", "Người dùng không tồn tại");
-            return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
+            return buildUsersRedirectUrl(currentRole, currentStatus, null, page);
         }
 
         // Prevent admin from deactivating themselves
@@ -361,7 +487,7 @@ public class AdminController {
         String currentUsername = auth.getName();
         if (currentUsername.equals(user.getUsername()) || currentUsername.equals(user.getEmail())) {
             redirectAttributes.addFlashAttribute("error", "Bạn không thể thay đổi trạng thái của chính mình");
-            return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
+            return buildUsersRedirectUrl(currentRole, currentStatus, null, page);
         }
 
         // Toggle active status
@@ -372,8 +498,7 @@ public class AdminController {
         String action = user.getActive() ? "kích hoạt" : "vô hiệu hóa";
         redirectAttributes.addFlashAttribute("success", "Đã " + action + " người dùng " + user.getUsername() + " thành công");
 
-        return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "") +
-               (currentStatus != null && !currentStatus.isEmpty() ? "&status=" + currentStatus : "");
+        return buildUsersRedirectUrl(currentRole, currentStatus, null, page);
     }
 
     @PostMapping("/users/{userId}/delete")
@@ -381,12 +506,13 @@ public class AdminController {
     public String deleteUser(
             @PathVariable Long userId,
             @RequestParam String currentRole,
+            @RequestParam(required = false, defaultValue = "0") int page,
             RedirectAttributes redirectAttributes) {
 
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             redirectAttributes.addFlashAttribute("error", "Người dùng không tồn tại");
-            return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
+            return buildUsersRedirectUrl(currentRole, null, null, page);
         }
 
         // Prevent admin from deleting themselves
@@ -394,7 +520,7 @@ public class AdminController {
         String currentUsername = auth.getName();
         if (currentUsername.equals(user.getUsername()) || currentUsername.equals(user.getEmail())) {
             redirectAttributes.addFlashAttribute("error", "Bạn không thể xóa tài khoản của chính mình");
-            return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
+            return buildUsersRedirectUrl(currentRole, null, null, page);
         }
 
         String username = user.getUsername() != null ? user.getUsername() : user.getEmail();
@@ -411,15 +537,103 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("success", "Đã xóa người dùng " + username + " thành công");
         }
 
-        return "redirect:/admin/users?role=" + (currentRole != null ? currentRole : "");
+        return buildUsersRedirectUrl(currentRole, null, null, page);
+    }
+
+    /**
+     * Helper method to build redirect URL for users page with all parameters.
+     */
+    private String buildUsersRedirectUrl(String role, String status, String search, int page) {
+        StringBuilder url = new StringBuilder("redirect:/admin/users");
+        boolean hasParam = false;
+
+        if (role != null && !role.isEmpty()) {
+            url.append("?role=").append(role);
+            hasParam = true;
+        }
+
+        if (status != null && !status.isEmpty()) {
+            url.append(hasParam ? "&" : "?").append("status=").append(status);
+            hasParam = true;
+        }
+
+        if (search != null && !search.trim().isEmpty()) {
+            url.append(hasParam ? "&" : "?").append("search=").append(search.trim());
+            hasParam = true;
+        }
+
+        if (page > 0) {
+            url.append(hasParam ? "&" : "?").append("page=").append(page);
+        }
+
+        return url.toString();
+    }
+
+    @GetMapping("/users/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String getUserDetail(
+            @PathVariable Long userId,
+            @RequestParam(required = false) String currentRole,
+            Model model,
+            Authentication authentication) {
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return "redirect:/admin/users";
+        }
+
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
+
+        // Get pending sellers count for sidebar badge
+        long pendingSellers = storeRepository.countByStatus("PENDING");
+
+        model.addAttribute("user", user);
+        model.addAttribute("currentRole", currentRole != null ? currentRole : "");
+        model.addAttribute("activeSidebar", "users");
+        model.addAttribute("pendingSellerCount", pendingSellers);
+
+        return "admin/user-detail";
     }
 
     @GetMapping("/dispute")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public String disputes(Model model) {
+    public String disputes(Model model, Authentication authentication) {
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
+
         // Placeholder for disputes page
         model.addAttribute("activeSidebar", "dispute");
         return "admin/dispute";
+    }
+
+    @GetMapping("/finance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String finance(Model model, Authentication authentication) {
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
+
+        // Placeholder for finance page
+        model.addAttribute("activeSidebar", "finance");
+        return "admin/finance";
     }
 
     @PostMapping("/seller-verify/{storeId}/approve")
@@ -536,5 +750,149 @@ public class AdminController {
 
         redirectAttributes.addFlashAttribute("success", "Đã từ chối cửa hàng " + store.getStoreName() + " thành công");
         return buildRedirectUrl(currentStatus, search, city, sort, page);
+    }
+
+    /**
+     * Determines the display role for a user based on their database role AND store relationships.
+     * This ensures that sellers (store owners/staff) are correctly identified even if their
+     * database role is just ROLE_USER.
+     */
+    private String determineDisplayRole(User user, List<Store> allStores) {
+        // First check database role for admin roles
+        if (user.getRole() != null) {
+            String roleName = user.getRole().getName();
+            if ("ROLE_ADMIN".equals(roleName)) {
+                return "ROLE_ADMIN";
+            }
+            if ("ROLE_MODERATOR".equals(roleName)) {
+                return "ROLE_MODERATOR";
+            }
+        }
+
+        // Then check store relationships for seller roles
+        for (Store store : allStores) {
+            // Check if user is store owner
+            if (store.getOwner() != null && store.getOwner().getUserId().equals(user.getUserId())) {
+                return "ROLE_STORE_OWNER";
+            }
+            // Check if user is store staff
+            if (store.getStaffList() != null) {
+                for (User staff : store.getStaffList()) {
+                    if (staff.getUserId().equals(user.getUserId())) {
+                        return "ROLE_STORE_STAFF";
+                    }
+                }
+            }
+        }
+
+        // Default to buyer role
+        return "ROLE_USER";
+    }
+
+    /**
+     * Gets the Vietnamese description for a display role.
+     */
+    private String getRoleDescription(String displayRole) {
+        switch (displayRole) {
+            case "ROLE_ADMIN":
+                return "Admin";
+            case "ROLE_MODERATOR":
+                return "Moderator";
+            case "ROLE_STORE_OWNER":
+                return "Chủ cửa hàng";
+            case "ROLE_STORE_STAFF":
+                return "Nhân viên";
+            case "ROLE_USER":
+            default:
+                return "Buyer";
+        }
+    }
+
+    // ============== PROFILE MANAGEMENT ==============
+
+    @GetMapping("/profile")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String profile(Model model, Authentication authentication) {
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsernameWithRole(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
+
+        return "admin/profile";
+    }
+
+    @PostMapping("/profile/update")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String updateProfile(
+            @RequestParam String fullName,
+            @RequestParam String phone,
+            @RequestParam(required = false) String avatarUrl,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            adminUser.setFullName(fullName);
+            adminUser.setPhone(phone);
+            if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+                adminUser.setAvatarUrl(avatarUrl);
+            }
+            userRepository.save(adminUser);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin thành công!");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy người dùng!");
+        }
+
+        return "redirect:/admin/profile";
+    }
+
+    @PostMapping("/profile/change-password")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String changePassword(
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword,
+            @RequestParam String confirmPassword,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy người dùng!");
+            return "redirect:/admin/profile";
+        }
+
+        // Validate current password
+        if (!adminUser.getPassword().equals(currentPassword)) {
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu hiện tại không đúng!");
+            return "redirect:/admin/profile";
+        }
+
+        // Validate new password
+        if (newPassword.length() < 6) {
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 6 ký tự!");
+            return "redirect:/admin/profile";
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp!");
+            return "redirect:/admin/profile";
+        }
+
+        // Update password
+        adminUser.setPassword(newPassword);
+        userRepository.save(adminUser);
+
+        redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công!");
+        return "redirect:/admin/profile";
     }
 }

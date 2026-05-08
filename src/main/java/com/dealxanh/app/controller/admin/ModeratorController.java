@@ -119,7 +119,17 @@ public class ModeratorController {
     @PreAuthorize("hasRole('MODERATOR')")
     public String sellerVerify(
             @RequestParam(required = false) String status,
-            Model model) {
+            Model model,
+            Authentication authentication) {
+
+        // Get current moderator user
+        String username = authentication.getName();
+        User moderatorUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (moderatorUser != null) {
+            model.addAttribute("adminUser", moderatorUser); // Use same key for consistency
+        }
 
         // Get stores based on status filter
         List<Store> stores;

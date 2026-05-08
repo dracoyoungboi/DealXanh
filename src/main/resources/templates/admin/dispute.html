@@ -397,11 +397,11 @@ a{text-decoration:none;color:inherit}
         <div class="sidebar-footer">
             <div class="sidebar-user">
                 <div class="sidebar-user__avatar">
-                    <img src="/img/default-avatar.svg" alt="Admin">
+                    <img th:src="${adminUser != null && adminUser.avatarUrl != null ? adminUser.avatarUrl : '/img/default-avatar.svg'}" alt="Admin">
                 </div>
                 <div>
-                    <div class="sidebar-user__name">Admin Name</div>
-                    <div class="sidebar-user__role">Super Admin</div>
+                    <div class="sidebar-user__name" th:text="${adminUser != null ? (adminUser.fullName != null ? adminUser.fullName : adminUser.username) : 'Admin'}">Admin Name</div>
+                    <div class="sidebar-user__role">Quản trị viên</div>
                 </div>
             </div>
         </div>

@@ -140,19 +140,75 @@ a{text-decoration:none;color:inherit}
 .card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light)}
 .card__body{padding:20px}
 .table{width:100%;border-collapse:collapse}
-.table th{text-align:left;padding:12px 16px;font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-light)}
-.table td{padding:16px;font-size:14px;border-bottom:1px solid var(--border-light)}
+.table th{
+    text-align:left;
+    padding:14px 20px;
+    font-size:11px;
+    font-weight:700;
+    color:var(--text-secondary);
+    text-transform:uppercase;
+    letter-spacing:.8px;
+    border-bottom:2px solid var(--border-light);
+    background:var(--bg);
+}
+.table td{
+    padding:18px 20px;
+    font-size:14px;
+    border-bottom:1px solid var(--border-light);
+    vertical-align:middle;
+}
 .table tr:last-child td{border-bottom:none}
-.table tr:hover td{background:var(--bg)}
-.badge{display:inline-flex;align-items:center;padding:4px 12px;border-radius:var(--radius-full);font-size:12px;font-weight:600}
+.table tr:hover td{background:rgba(0,0,0,.02)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:700}
+.badge svg{flex-shrink:0;opacity:0.8}
 .badge-success{background:var(--success-bg);color:var(--success)}
 .badge-warning{background:var(--warning-bg);color:var(--warning)}
 .badge-danger{background:var(--danger-bg);color:var(--danger)}
-.btn-sm{padding:6px 12px;border-radius:var(--radius-md);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--tr)}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{background:var(--primary-dark)}
+.badge-info{background:var(--info-bg);color:var(--info)}
+.btn-sm{padding:6px 12px;border-radius:var(--radius-md);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--tr);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff;border:none}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 2px 8px rgba(13,92,46,.3)}
 .btn-outline{background:var(--surface);color:var(--text-primary);border:1px solid var(--border)}
-.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary);background:rgba(13,92,46,.05)}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+.btn-danger:hover{background:var(--danger);color:#fff;transform:translateY(-1px);box-shadow:0 2px 8px rgba(239,68,68,.3)}
+.btn-sm:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* Filter button styles */
+.filter-btn {
+    padding: 10px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-block;
+}
+
+.filter-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+/* Input styling */
+input[type="text"] {
+    font-family: var(--font);
+}
+
+input[type="text"]::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* Loading spinner animation */
     </style>
 </head>
 <body>
@@ -258,15 +314,18 @@ a{text-decoration:none;color:inherit}
         </div>
 
         <div class="sidebar-footer">
-            <div class="sidebar-user">
+            <a href="/admin/profile" class="sidebar-user" style="text-decoration:none;">
                 <div class="sidebar-user__avatar">
-                    <img src="/img/default-avatar.svg" alt="Admin">
+                    <img th:src="${adminUser != null && adminUser.avatarUrl != null ? adminUser.avatarUrl : '/img/default-avatar.svg'}" alt="Admin">
                 </div>
                 <div>
-                    <div class="sidebar-user__name">Admin Name</div>
-                    <div class="sidebar-user__role">Super Admin</div>
+                    <div class="sidebar-user__name" th:text="${adminUser != null ? (adminUser.fullName != null ? adminUser.fullName : adminUser.username) : 'Admin'}">Admin Name</div>
+                    <div class="sidebar-user__role" th:text="${adminUser != null && adminUser.role != null ? (adminUser.role.name == 'ROLE_ADMIN' ? 'Quản trị viên' : 'Kiểm duyệt viên') : 'Quản trị viên'}">Quản trị viên</div>
                 </div>
-            </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:rgba(255,255,255,.55);margin-left:auto;">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </a>
         </div>
     </aside>
 
@@ -275,56 +334,93 @@ a{text-decoration:none;color:inherit}
         <header class="topbar">
             <div class="topbar__title">Quản lý Người dùng</div>
             <div class="topbar__right">
-                <button class="topbar-btn">
+                <a href="/admin/profile" class="topbar-btn" style="text-decoration:none;" title="Hồ sơ">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
                     </svg>
-                    <span class="topbar-notif"></span>
-                </button>
-                <button class="topbar-btn">
+                </a>
+                <a href="/logout" class="topbar-btn" style="text-decoration:none;" title="Đăng xuất">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="8" r="4"/>
-                        <path d="M12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z"/>
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
                     </svg>
-                </button>
+                </a>
             </div>
         </header>
 
         <div class="content">
-            <div class="page-header">
+            <div class="page-header" style="margin-bottom: 32px;">
                 <h1>Quản lý Người dùng</h1>
                 <p class="text-secondary">Xem và quản lý tất cả người dùng trong hệ thống</p>
             </div>
 
-            <!-- Buyer Statistics (only show when viewing buyers) -->
-            <div th:if="${currentRole == 'buyer' or currentRole == null or currentRole == ''}" class="stats-cards" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+            <!-- Statistics Cards -->
+            <div class="stats-cards" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px;">
+                <!-- Tổng Users -->
                 <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                         <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--primary); display: flex; align-items: center; justify-content: center;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="2" style="width: 20px; height: 20px;">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                <circle cx="12" cy="7" r="4"/>
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                             </svg>
                         </div>
-                        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Tổng Buyers</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Tổng Users</span>
                     </div>
-                    <div style="font-size: 28px; font-weight: 800; color: var(--primary);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.totalBuyers, 0, 0) : '0'}">0</div>
+                    <div style="font-size: 28px; font-weight: 800; color: var(--primary);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.totalBuyers + userStats.totalSellers, 0, 0) : '0'}">0</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">Tất cả người dùng</div>
                 </div>
 
+                <!-- Buyers -->
+                <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--info); display: flex; align-items: center; justify-content: center;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="2" style="width: 20px; height: 20px;">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                        </div>
+                        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Buyers</span>
+                    </div>
+                    <div style="font-size: 28px; font-weight: 800; color: var(--info);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.totalBuyers, 0, 0) : '0'}">0</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;" th:text="${userStats != null ? #numbers.formatDecimal(userStats.activeBuyers, 0, 0) + ' đang hoạt động' : '0 đang hoạt động'}">0 đang hoạt động</div>
+                </div>
+
+                <!-- Sellers -->
                 <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                         <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--success); display: flex; align-items: center; justify-content: center;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="2" style="width: 20px; height: 20px;">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                <polyline points="22 4 12 14.01 9 11.01"/>
+                                <path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+                                <path d="M5 21V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v12"/>
+                                <path d="M12 3v18"/>
                             </svg>
                         </div>
-                        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Hoạt động</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Sellers</span>
                     </div>
-                    <div style="font-size: 28px; font-weight: 800; color: var(--success);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.activeBuyers, 0, 0) : '0'}">0</div>
+                    <div style="font-size: 28px; font-weight: 800; color: var(--success);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.totalSellers, 0, 0) : '0'}">0</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">Chủ cửa hàng + Nhân viên</div>
                 </div>
 
+                <!-- Admins -->
+                <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--warning); display: flex; align-items: center; justify-content: center;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Admins</span>
+                    </div>
+                    <div style="font-size: 28px; font-weight: 800; color: var(--warning);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.totalAdmins, 0, 0) : '0'}">0</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">Admin + Moderator</div>
+                </div>
+
+                <!-- Inactive -->
                 <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm);">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                         <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--danger); display: flex; align-items: center; justify-content: center;">
@@ -337,20 +433,7 @@ a{text-decoration:none;color:inherit}
                         <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Vô hiệu</span>
                     </div>
                     <div style="font-size: 28px; font-weight: 800; color: var(--danger);" th:text="${userStats != null ? #numbers.formatDecimal(userStats.inactiveBuyers, 0, 0) : '0'}">0</div>
-                </div>
-
-                <div class="stat-card" style="background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm); cursor: pointer;" onclick="location.reload()">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                        <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--info); display: flex; align-items: center; justify-content: center;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--surface)" stroke-width="2" style="width: 20px; height: 20px;">
-                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2z"/>
-                                <circle cx="12" cy="12" r="1"/>
-                                <circle cx="12" cy="16" r="1"/>
-                            </svg>
-                        </div>
-                        <span style="font-size: 12px; color: var(--text-secondary); font-weight:500;">Refresh</span>
-                    </div>
-                    <div style="font-size: 12px; color: var(--info); font-weight: 600;">Auto</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">Cần kích hoạt lại</div>
                 </div>
             </div>
 
@@ -363,32 +446,31 @@ a{text-decoration:none;color:inherit}
                     <a href="/admin/users?role=admin" class="filter-btn" th:classappend="${currentRole == 'admin'} ? 'active' : ''">Admin</a>
                 </div>
 
-                <!-- Search Form (only for buyers) -->
-                <form th:if="${currentRole == 'buyer'}" method="get" action="/admin/users" style="display: flex; gap: 8px;">
-                    <input type="hidden" name="role" value="buyer"/>
+                <!-- Real-time Search -->
+                <div style="display: flex; gap: 8px; align-items: center;">
                     <div style="position: relative;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-secondary);">
                             <circle cx="11" cy="11" r="8"/>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                         </svg>
                         <input type="text"
-                               name="search"
+                               id="searchInput"
                                th:value="${searchQuery}"
-                               placeholder="Tìm kiếm buyer..."
+                               placeholder="Tìm kiếm tên, email, SĐT..."
                                style="padding: 8px 12px 8px 36px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 14px; width: 280px; outline: none; transition: border-color 0.2s;"
                                onfocus="this.style.borderColor='var(--primary)'"
                                onblur="this.style.borderColor='var(--border)'"/>
                     </div>
-                    <button type="submit" class="btn-sm btn-primary">Tìm kiếm</button>
-                    <a th:if="${searchQuery != null and !searchQuery.isEmpty()}" href="/admin/users?role=buyer" class="btn-sm btn-outline">Xóa bộ lọc</a>
-                </form>
+                    <a th:if="${searchQuery != null and !searchQuery.isEmpty()}" th:href="@{/admin/users(role=${currentRole})}" class="btn-sm btn-outline">Xóa bộ lọc</a>
+                </div>
             </div>
 
-            <!-- Buyer Status Filter (only show when viewing buyers) -->
-            <div th:if="${currentRole == 'buyer' or currentRole == null or currentRole == ''}" style="display: flex; gap: 12px; margin-bottom: 16px;">
-                <a href="/admin/users?role=buyer" class="filter-btn" th:classappend="${currentStatus == null or currentStatus == ''} ? 'active' : ''" style="font-size: 12px; padding: 6px 12px;">Tất cả Buyers</a>
-                <a href="/admin/users?role=buyer&status=active" class="filter-btn" th:classappend="${currentStatus == 'active'} ? 'active' : ''" style="font-size: 12px; padding: 6px 12px;">Hoạt động</a>
-                <a href="/admin/users?role=buyer&status=inactive" class="filter-btn" th:classappend="${currentStatus == 'inactive'} ? 'active' : ''" style="font-size: 12px; padding: 6px 12px;">Vô hiệu</a>
+            <!-- Status Filter (show for all roles) -->
+            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <span style="font-size: 13px; color: var(--text-secondary); font-weight: 500; padding: 6px 0;">Trạng thái:</span>
+                <a th:href="@{/admin/users(role=${currentRole})}" class="filter-btn" th:classappend="${currentStatus == null or currentStatus == ''} ? 'active' : ''" style="font-size: 12px; padding: 6px 12px;">Tất cả</a>
+                <a th:href="@{/admin/users(role=${currentRole},status=active)}" class="filter-btn" th:classappend="${currentStatus == 'active'} ? 'active' : ''" style="font-size: 12px; padding: 6px 12px;">Hoạt động</a>
+                <a th:href="@{/admin/users(role=${currentRole},status=inactive)}" class="filter-btn" th:classappend="${currentStatus == 'inactive'} ? 'active' : ''" style="font-size: 12px; padding: 6px 12px;">Vô hiệu</a>
             </div>
 
             <!-- Alert Messages -->
@@ -414,61 +496,95 @@ a{text-decoration:none;color:inherit}
             </div>
 
             <!-- Users Table -->
-            <div class="card">
+            <div class="card" style="border: none; box-shadow: var(--shadow-sm);">
                 <div class="card__body" style="padding: 0;">
                     <div class="table-responsive">
-                        <table class="table" th:if="${users != null and !users.isEmpty()}">
+                        <table class="table" th:if="${users != null and !users.isEmpty()}" style="border-radius: var(--radius-lg); overflow: hidden;">
                             <thead>
-                                <tr>
-                                    <th>Người dùng</th>
-                                    <th>Email</th>
-                                    <th>Số điện thoại</th>
+                                <tr style="background: var(--bg);">
+                                    <th style="width: 280px;">Người dùng</th>
+                                    <th style="width: 220px;">Email</th>
                                     <th>Vai trò</th>
                                     <th>Trạng thái</th>
-                                    <th>Ngày tham gia</th>
-                                    <th>Thao tác</th>
+                                    <th style="width: 140px;">SĐT</th>
+                                    <th style="text-align: right; width: 220px;">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr th:each="user : ${users}">
+                                <tr th:each="user : ${users}" style="transition: all 0.2s;"
+                                    th:data-user-id="${user.userId}"
+                                    th:with="displayRole=${displayRoles != null ? displayRoles[user.userId] : (user.role != null ? user.role.name : 'ROLE_USER')},roleDesc=${roleDescriptions != null ? roleDescriptions[user.userId] : 'N/A'}"
+                                    th:data-display-role="${displayRole}"
+                                    th:data-role-desc="${roleDesc}">
                                     <td>
                                         <div style="display: flex; align-items: center; gap: 12px;">
-                                            <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: var(--background); display: flex; align-items: center; justify-content: center;">
+                                            <div style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; background: var(--bg); display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-light);">
                                                 <img th:if="${user.avatarUrl != null}" th:src="${user.avatarUrl}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
-                                                <svg th:if="${user.avatarUrl == null}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: var(--text-secondary);">
+                                                <svg th:if="${user.avatarUrl == null}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px; color: var(--text-secondary);">
                                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                                     <circle cx="12" cy="7" r="4"/>
                                                 </svg>
                                             </div>
                                             <div>
-                                                <div style="font-weight: 500; color: var(--text-primary);" th:text="${user.fullName}">Full Name</div>
-                                                <div style="font-size: 12px; color: var(--text-secondary);" th:text="${user.username}">username</div>
+                                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 2px;" th:text="${user.fullName != null ? user.fullName : user.username}">Full Name</div>
+                                                <div style="font-size: 12px; color: var(--text-tertiary);" th:text="'@' + ${user.username}">@username</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td th:text="${user.email}">email@example.com</td>
-                                    <td th:text="${user.phone != null ? user.phone : 'N/A'}">0123456789</td>
                                     <td>
-                                        <span class="badge"
-                                              th:class="${user.role != null ? (user.role.name == 'ROLE_USER' ? 'badge-info' : (user.role.name == 'ROLE_STORE_OWNER' ? 'badge-success' : (user.role.name == 'ROLE_STORE_STAFF' ? 'badge-warning' : 'badge-danger'))) : 'badge-info'}"
-                                              th:text="${user.role != null ? (user.role.name == 'ROLE_USER' ? 'Buyer' : (user.role.name == 'ROLE_STORE_OWNER' ? 'Chủ cửa hàng' : (user.role.name == 'ROLE_STORE_STAFF' ? 'Nhân viên' : (user.role.name == 'ROLE_ADMIN' ? 'Admin' : 'Moderator')))) : 'N/A'}">Role</span>
+                                        <div style="font-size: 13px; color: var(--text-primary);" th:text="${user.email}">email@example.com</div>
                                     </td>
                                     <td>
                                         <span class="badge"
-                                              th:class="${user.active ? 'badge-success' : 'badge-danger'}"
-                                              th:text="${user.active ? 'Hoạt động' : 'Vô hiệu'}">Status</span>
+                                              th:class="${displayRole == 'ROLE_USER' ? 'badge-info' : (displayRole == 'ROLE_STORE_OWNER' ? 'badge-success' : (displayRole == 'ROLE_STORE_STAFF' ? 'badge-warning' : 'badge-danger'))}">
+                                            <svg th:if="${displayRole == 'ROLE_USER'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <path d="M12 6v6l4 2"/>
+                                            </svg>
+                                            <svg th:if="${displayRole == 'ROLE_STORE_OWNER'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                                <circle cx="12" cy="7" r="4"/>
+                                            </svg>
+                                            <svg th:if="${displayRole == 'ROLE_STORE_STAFF'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px">
+                                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                            </svg>
+                                            <svg th:if="${displayRole == 'ROLE_ADMIN' or displayRole == 'ROLE_MODERATOR'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px">
+                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                            </svg>
+                                            <span th:text="${roleDesc}">Role</span>
+                                        </span>
                                     </td>
-                                    <td th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'dd/MM/yyyy HH:mm') : 'N/A'}">Date</td>
                                     <td>
-                                        <div style="display: flex; gap: 6px;">
-                                            <form th:action="@{/admin/users/{userId}/toggle-active(userId=${user.userId})}" method="post" style="display: inline;">
+                                        <span class="badge"
+                                              th:class="${user.active ? 'badge-success' : 'badge-danger'}">
+                                            <svg th:if="${user.active}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px">
+                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                                <polyline points="22 4 12 14.01 9 11.01"/>
+                                            </svg>
+                                            <svg th:if="${not user.active}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <line x1="15" y1="9" x2="9" y2="15"/>
+                                                <line x1="9" y1="9" x2="15" y2="15"/>
+                                            </svg>
+                                            <span th:text="${user.active ? 'Hoạt động' : 'Vô hiệu'}">Status</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 13px; color: var(--text-secondary);" th:text="${user.phone != null ? user.phone : 'N/A'}">0123456789</div>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                                            <form th:action="@{/admin/users/{userId}/toggle-active(userId=${user.userId})}" method="post" style="display: inline;" class="toggle-form">
                                                 <input type="hidden" name="currentRole" th:value="${currentRole != null ? currentRole : ''}"/>
                                                 <input type="hidden" name="currentStatus" th:value="${currentStatus != null ? currentStatus : ''}"/>
+                                                <input type="hidden" name="page" th:value="${currentPage}"/>
+                                                <input type="hidden" name="userName" th:value="${user.fullName != null ? user.fullName : user.username}"/>
+                                                <input type="hidden" name="isActive" th:value="${user.active}"/>
                                                 <button type="submit"
-                                                        th:attr="onclick=${user.active ? '\'return confirm(\'Bạn có chắc muốn vô hiệu hóa buyer ' + (user.fullName != null ? user.fullName : user.username) + '?\')\'' : '\'return confirm(\'Bạn có chắc muốn kích hoạt buyer ' + (user.fullName != null ? user.fullName : user.username) + '?\')\''}"
-                                                        class="btn-sm"
+                                                        class="btn-sm toggle-btn"
                                                         th:classappend="${user.active ? 'btn-outline' : 'btn-primary'}">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
                                                         <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
                                                         <line x1="12" y1="2" x2="12" y2="12"/>
                                                     </svg>
@@ -476,13 +592,11 @@ a{text-decoration:none;color:inherit}
                                                 </button>
                                             </form>
 
-                                            <form th:action="@{/admin/users/{userId}/delete(userId=${user.userId})}" method="post" style="display: inline;" th:if="${user.role != null and user.role.name != 'ROLE_ADMIN'}">
+                                            <form th:action="@{/admin/users/{userId}/delete(userId=${user.userId})}" method="post" style="display: inline;" class="delete-form" th:if="${displayRole != 'ROLE_ADMIN'}">
                                                 <input type="hidden" name="currentRole" th:value="${currentRole != null ? currentRole : ''}"/>
-                                                <button type="submit"
-                                                        onclick="return confirm('Bạn có chắc muốn xóa người dùng này? Hành động này không thể hoàn tác!')"
-                                                        class="btn-sm"
-                                                        style="background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger);">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;">
+                                                <input type="hidden" name="page" th:value="${currentPage}"/>
+                                                <button type="submit" class="btn-sm btn-danger">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
                                                         <polyline points="3 6 5 5 18 6 22 6 22 18 19 6 19 6"/>
                                                         <line x1="19" y1="5" x2="9" y2="15"/>
                                                         <line x1="9" y1="5" x2="19" y2="15"/>
@@ -491,7 +605,14 @@ a{text-decoration:none;color:inherit}
                                                 </button>
                                             </form>
 
-                                            <button style="padding: 6px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+                                            <button type="button"
+                                                    th:onclick="'showUserDetail(' + ${user.userId} + ')'"
+                                                    class="btn-sm btn-outline">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                                    <circle cx="12" cy="12" r="10"/>
+                                                    <line x1="12" y1="16" x2="12" y2="12"/>
+                                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                                </svg>
                                                 Chi tiết
                                             </button>
                                         </div>
@@ -509,6 +630,37 @@ a{text-decoration:none;color:inherit}
                             <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Không tìm thấy người dùng</div>
                             <div style="font-size: 14px;">Thử thay đổi bộ lọc hoặc thêm người dùng mới</div>
                         </div>
+
+                        <!-- Pagination -->
+                        <div th:if="${totalPages > 1}" style="padding: 16px 20px; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-size: 13px; color: var(--text-secondary);">
+                                Hiển thị <span style="font-weight: 600; color: var(--text-primary);" th:text="${users != null ? users.size() : 0}">0</span> trên <span style="font-weight: 600; color: var(--text-primary);" th:text="${totalUsers}">0</span> người dùng
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <a th:href="@{/admin/users(role=${currentRole},status=${currentStatus},search=${searchQuery},page=${currentPage - 1})}"
+                                   th:classappend="${hasPrevious ? '' : 'disabled'}"
+                                   class="btn-sm btn-outline"
+                                   th:style="${hasPrevious ? '' : 'opacity: 0.5; pointer-events: none;'}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                        <polyline points="15 18 9 12 15 9 12"/>
+                                    </svg>
+                                    Trước
+                                </a>
+                                <div style="display: flex; gap: 4px;">
+                                    <span style="padding: 6px 12px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; background: var(--bg); color: var(--text-secondary);"
+                                          th:text="${currentPage + 1} + ' / ' + ${totalPages}">1 / 1</span>
+                                </div>
+                                <a th:href="@{/admin/users(role=${currentRole},status=${currentStatus},search=${searchQuery},page=${currentPage + 1})}"
+                                   th:classappend="${hasNext ? '' : 'disabled'}"
+                                   class="btn-sm btn-outline"
+                                   th:style="${hasNext ? '' : 'opacity: 0.5; pointer-events: none;'}">
+                                    Tiếp
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-left: 4px;">
+                                        <polyline points="9 18 15 12 15 15 12"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -516,47 +668,256 @@ a{text-decoration:none;color:inherit}
     </div>
 </div>
 
-<script>
-// Filter button functionality
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        // Navigation is handled by href
+<!-- User Detail Modal -->
+<div id="userDetailModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); padding: 20px; box-sizing: border-box;">
+    <div style="position: relative; max-width: 600px; margin: auto; background: var(--surface); border-radius: var(--radius-lg); box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
+        <!-- Modal Header -->
+        <div style="padding: 24px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Chi tiết người dùng</h2>
+                <p style="font-size: 14px; color: var(--text-secondary);">Thông tin chi tiết về người dùng</p>
+            </div>
+            <button onclick="closeUserDetail()" style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='var(--border-light)'" onmouseout="this.style.background='var(--bg)'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="padding: 24px;">
+            <!-- User Profile -->
+            <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                <div id="modalAvatar" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; background: var(--bg); display: flex; align-items: center; justify-content: center;">
+                    <!-- Avatar will be inserted here -->
+                </div>
+                <div style="flex: 1;">
+                    <h3 id="modalFullName" style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">Full Name</h3>
+                    <p id="modalUsername" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">@username</p>
+                    <div style="display: flex; gap: 8px;">
+                        <span id="modalRole" class="badge badge-info">Role</span>
+                        <span id="modalStatus" class="badge badge-success">Status</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Info -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px; display: block;">Email</label>
+                    <div id="modalEmail" style="font-size: 14px; font-weight: 500;">email@example.com</div>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px; display: block;">Số điện thoại</label>
+                    <div id="modalPhone" style="font-size: 14px; font-weight: 500;">0123456789</div>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px; display: block;">Ngày tham gia</label>
+                    <div id="modalCreatedAt" style="font-size: 14px; font-weight: 500;">01/01/2024</div>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px; display: block;">Cập nhật lần cuối</label>
+                    <div id="modalUpdatedAt" style="font-size: 14px; font-weight: 500;">01/01/2024</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="padding: 16px 24px; background: var(--bg); border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 8px;">
+            <button onclick="closeUserDetail()" class="btn-sm btn-outline">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+// Store user data from server
+const usersData = /*[[${users}]]*/ [];
+
+// Helper function to get display role from user data or DOM
+function getDisplayRole(userId) {
+    // First try to find from DOM data attributes
+    const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+    if (row) {
+        return {
+            displayRole: row.dataset.displayRole || 'ROLE_USER',
+            roleDesc: row.dataset.roleDesc || 'Buyer'
+        };
+    }
+
+    // Fallback to user's database role
+    const user = usersData.find(u => u.userId === userId);
+    if (user && user.role) {
+        const roleName = user.role.name;
+        let roleDesc = 'Buyer';
+        if (roleName === 'ROLE_STORE_OWNER') roleDesc = 'Chủ cửa hàng';
+        else if (roleName === 'ROLE_STORE_STAFF') roleDesc = 'Nhân viên';
+        else if (roleName === 'ROLE_ADMIN') roleDesc = 'Admin';
+        else if (roleName === 'ROLE_MODERATOR') roleDesc = 'Moderator';
+        return { displayRole: roleName, roleDesc: roleDesc };
+    }
+
+    return { displayRole: 'ROLE_USER', roleDesc: 'Buyer' };
+}
+
+// Handle toggle form submit with confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleForms = document.querySelectorAll('.toggle-form');
+    toggleForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const isActive = form.querySelector('input[name="isActive"]').value === 'true';
+            const userName = form.querySelector('input[name="userName"]').value;
+            const action = isActive ? 'vô hiệu hóa' : 'kích hoạt';
+            const confirmed = confirm('Bạn có chắc muốn ' + action + ' người dùng ' + userName + '?');
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Handle delete form submit with confirmation
+    const deleteForms = document.querySelectorAll('.delete-form');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const userName = form.querySelector('input[name="userName"]').value;
+            const confirmed = confirm('Bạn có chắc muốn xóa người dùng ' + userName + '? Hành động này không thể hoàn tác!');
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
     });
 });
+
+function showUserDetail(userId) {
+    const user = usersData.find(u => u.userId === userId);
+    if (!user) {
+        console.error('User not found:', userId);
+        return;
+    }
+
+    // Populate modal
+    const avatarDiv = document.getElementById('modalAvatar');
+    if (user.avatarUrl) {
+        avatarDiv.innerHTML = '<img src="' + user.avatarUrl + '" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;"/>';
+    } else {
+        avatarDiv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 40px; height: 40px; color: var(--text-secondary);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+    }
+
+    document.getElementById('modalFullName').textContent = user.fullName || 'N/A';
+    document.getElementById('modalUsername').textContent = '@' + (user.username || 'N/A');
+
+    const roleBadge = document.getElementById('modalRole');
+    const { displayRole, roleDesc } = getDisplayRole(user.userId);
+
+    roleBadge.textContent = roleDesc;
+    roleBadge.className = 'badge ' + (displayRole === 'ROLE_USER' ? 'badge-info' :
+                                    displayRole === 'ROLE_STORE_OWNER' ? 'badge-success' :
+                                    displayRole === 'ROLE_STORE_STAFF' ? 'badge-warning' : 'badge-danger');
+
+    const statusBadge = document.getElementById('modalStatus');
+    statusBadge.textContent = user.active ? 'Hoạt động' : 'Vô hiệu';
+    statusBadge.className = 'badge ' + (user.active ? 'badge-success' : 'badge-danger');
+
+    document.getElementById('modalEmail').textContent = user.email || 'N/A';
+    document.getElementById('modalPhone').textContent = user.phone || 'N/A';
+
+    // Format dates
+    const formatDate = (dateStr) => {
+        if (!dateStr) return 'N/A';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    document.getElementById('modalCreatedAt').textContent = formatDate(user.createdAt);
+    document.getElementById('modalUpdatedAt').textContent = formatDate(user.updatedAt);
+
+    // Show modal
+    document.getElementById('userDetailModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeUserDetail() {
+    document.getElementById('userDetailModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeUserDetail();
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('userDetailModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeUserDetail();
+    }
+});
+
+// Real-time search with page reload
+let searchTimeout;
+const searchInput = document.getElementById('searchInput');
+
+// Debounce and redirect to search URL
+function debounceSearch(query) {
+    clearTimeout(searchTimeout);
+    const url = new URL(window.location);
+    const currentRole = url.searchParams.get('role') || '';
+    const currentStatus = url.searchParams.get('status') || '';
+
+    searchTimeout = setTimeout(() => {
+        if (query.trim()) {
+            url.searchParams.set('search', query.trim());
+        } else {
+            url.searchParams.delete('search');
+        }
+        if (currentRole) url.searchParams.set('role', currentRole);
+        if (currentStatus) url.searchParams.set('status', currentStatus);
+        url.searchParams.set('page', '0'); // Reset to first page
+        window.location.href = url.toString();
+    }, 500);
+}
+
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value;
+
+        if (query.trim() === '') {
+            // Clear search when input is empty
+            clearTimeout(searchTimeout);
+            const url = new URL(window.location);
+            url.searchParams.delete('search');
+            url.searchParams.set('page', '0');
+            window.location.href = url.toString();
+        } else {
+            debounceSearch(query);
+        }
+    });
+
+    // Handle Enter key
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(searchTimeout);
+            const query = searchInput.value;
+            const url = new URL(window.location);
+            const currentRole = url.searchParams.get('role') || '';
+            const currentStatus = url.searchParams.get('status') || '';
+
+            if (query.trim()) {
+                url.searchParams.set('search', query.trim());
+            } else {
+                url.searchParams.delete('search');
+            }
+            if (currentRole) url.searchParams.set('role', currentRole);
+            if (currentStatus) url.searchParams.set('status', currentStatus);
+            url.searchParams.set('page', '0');
+            window.location.href = url.toString();
+        }
+    });
+}
 </script>
-.filter-btn {
-    padding: 10px 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all 0.2s;
-    display: inline-block;
-}
-
-.filter-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-}
-
-.filter-btn.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-}
-
-/* Input styling */
-input[type="text"] {
-    font-family: var(--font);
-}
-
-input[type="text"]::placeholder {
-    color: var(--text-tertiary);
-}
-</style>
 
 </body>
 </html>

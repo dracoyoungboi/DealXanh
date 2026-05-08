@@ -155,33 +155,59 @@ a{text-decoration:none;color:inherit}
 }
 
 .seller-card{
-    background:var(--surface);border-radius:var(--radius-lg);
+    background:var(--surface);border-radius:12px;
     border:1px solid var(--border-light);
     transition:all var(--tr);overflow:hidden;
 }
-.seller-card:hover{box-shadow:var(--shadow-md);border-color:var(--border)}
+.seller-card:hover{
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+    border-color:rgba(13,92,46,.2);
+    transform:translateY(-1px);
+}
 
 .seller-card__header{
     display:flex;gap:16px;padding:20px;border-bottom:1px solid var(--border-light);
+    align-items:center;
 }
 .seller-logo{
-    width:70px;height:70px;border-radius:var(--radius-md);overflow:hidden;
+    width:60px;height:60px;border-radius:12px;overflow:hidden;
     flex-shrink:0;border:1px solid var(--border-light);background:var(--bg);
 }
 .seller-logo img{width:100%;height:100%;object-fit:cover}
 .seller-info{flex:1;min-width:0}
-.seller-name{font-size:16px;font-weight:700;margin-bottom:4px}
-.seller-type{font-size:13px;color:var(--text-secondary);margin-bottom:8px}
-.seller-meta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--text-tertiary)}
-.seller-meta svg{width:14px;height:14px;margin-right:4px}
+.seller-name{
+    font-size:16px;font-weight:700;margin-bottom:4px;
+    color:var(--text-primary);
+}
+.seller-type{
+    font-size:13px;color:var(--text-secondary);margin-bottom:8px
+}
+.seller-meta{
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px;
+}
+.seller-meta span{
+    display:flex;align-items:center;gap:4px;
+    padding:4px 8px;border-radius:6px;
+    color:var(--text-secondary);font-weight:500;
+    background:var(--bg);
+}
+.seller-meta svg{width:12px;height:12px;flex-shrink:0;opacity:0.6}
 
 .seller-status{
-    padding:6px 14px;border-radius:var(--radius-full);
-    font-size:12px;font-weight:700;flex-shrink:0;
+    width:28px;height:28px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
 }
-.seller-status.pending{background:var(--warning-bg);color:var(--warning)}
-.seller-status.approved{background:var(--success-bg);color:var(--success)}
-.seller-status.rejected{background:var(--danger-bg);color:var(--danger)}
+.seller-status svg{width:16px;height:16px}
+.seller-status.pending{
+    background:var(--warning-bg);color:var(--warning);
+}
+.seller-status.approved{
+    background:var(--success-bg);color:var(--success);
+}
+.seller-status.rejected{
+    background:var(--danger-bg);color:var(--danger);
+}
 
 .seller-card__body{padding:20px}
 .info-row{
@@ -298,11 +324,11 @@ a{text-decoration:none;color:inherit}
         <div class="sidebar-footer">
             <div class="sidebar-user">
                 <div class="sidebar-user__avatar">
-                    <img src="/img/default-avatar.svg" alt="Moderator">
+                    <img th:src="${adminUser != null && adminUser.avatarUrl != null ? adminUser.avatarUrl : '/img/default-avatar.svg'}" alt="Moderator">
                 </div>
                 <div>
-                    <div class="sidebar-user__name" th:text="${#authentication != null ? #authentication.name : 'Moderator'}">Moderator Name</div>
-                    <div class="sidebar-user__role">Moderator</div>
+                    <div class="sidebar-user__name" th:text="${adminUser != null ? (adminUser.fullName != null ? adminUser.fullName : adminUser.username) : 'Moderator'}">Moderator Name</div>
+                    <div class="sidebar-user__role">Kiểm duyệt viên</div>
                 </div>
             </div>
         </div>
@@ -378,8 +404,22 @@ a{text-decoration:none;color:inherit}
                                 </span>
                             </div>
                         </div>
-                        <span class="seller-status" th:class="${store.status}"
-                              th:text="${store.status == 'PENDING' ? 'Chờ duyệt' : (store.status == 'ACTIVE' ? 'Đã duyệt' : (store.status == 'REJECTED' ? 'Từ chối' : store.status))}">Status</span>
+                        <!-- Status icon -->
+                        <div class="seller-status" th:class="${store.status}">
+                            <svg th:if="${store.status == 'PENDING'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            <svg th:if="${store.status == 'ACTIVE'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            <svg th:if="${store.status == 'REJECTED'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="15" y1="9" x2="9" y2="15"/>
+                                <line x1="9" y1="9" x2="15" y2="15"/>
+                            </svg>
+                        </div>
                     </div>
 
                     <div class="seller-card__body">

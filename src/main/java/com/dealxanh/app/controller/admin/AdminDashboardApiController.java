@@ -57,6 +57,11 @@ public class AdminDashboardApiController {
                 result.put("todayOrders", specificDateOrders != null ? specificDateOrders : 0L);
                 result.put("todayCommission", commission);
 
+                // Get deltas compared to previous day
+                LocalDateTime prevDayStart = startDate.minusDays(1);
+                LocalDateTime prevDayEnd = startDate.minusSeconds(1);
+                addDeltasToResult(result, startDate, endDate, prevDayStart, prevDayEnd);
+
                 // Get 7-day GMV data for chart
                 result.put("weeklyGMV", getWeeklyGMV(now));
                 result.put("weeklyOrders", getWeeklyOrders(now));
@@ -103,6 +108,24 @@ public class AdminDashboardApiController {
         result.put("todayOrders", periodOrders != null ? periodOrders : 0L);
         result.put("todayCommission", commission);
 
+        // Always calculate deltas (compare with previous day by default)
+        LocalDateTime yesterdayStart = now.minusDays(1).toLocalDate().atStartOfDay();
+        LocalDateTime yesterdayEnd = yesterdayStart.plusDays(1).minusSeconds(1);
+
+        // For "yesterday" period, compare with day before yesterday
+        if ("yesterday".equals(period)) {
+            LocalDateTime dayBeforeYesterday = yesterdayStart.minusDays(1);
+            addDeltasToResult(result, startDate, endDate, dayBeforeYesterday, yesterdayEnd);
+        } else if ("week".equals(period)) {
+            // For 7-day period, compare with previous 7 days
+            LocalDateTime weekAgoStart = yesterdayStart.minusDays(6);
+            LocalDateTime weekAgoEnd = yesterdayStart.minusSeconds(1);
+            addDeltasToResult(result, startDate, endDate, weekAgoStart, weekAgoEnd);
+        } else {
+            // Default: compare today with yesterday
+            addDeltasToResult(result, startDate, endDate, yesterdayStart, yesterdayEnd);
+        }
+
         // Get 7-day GMV data for chart
         result.put("weeklyGMV", getWeeklyGMV(now));
         result.put("weeklyOrders", getWeeklyOrders(now));
@@ -119,6 +142,81 @@ public class AdminDashboardApiController {
         result.put("totalSellers", totalSellers);
 
         return result;
+    }
+
+    private void addDeltasToResult(Map<String, Object> result, LocalDateTime currentStart, LocalDateTime currentEnd,
+                                       LocalDateTime prevStart, LocalDateTime prevEnd) {
+        // Get current period stats
+        Double currentGMV = orderRepository.sumRevenueByPeriod(currentStart, currentEnd);
+        Long currentOrders = orderRepository.countOrdersByPeriod(currentStart, currentEnd);
+
+        // Get previous period stats
+        Double prevGMV = orderRepository.sumRevenueByPeriod(prevStart, prevEnd);
+        Long prevOrders = orderRepository.countOrdersByPeriod(prevStart, prevEnd);
+
+        System.out.println("=== KPI DELTA DEBUG ===");
+        System.out.println("Current period: " + currentStart + " to " + currentEnd);
+        System.out.println("Previous period: " + prevStart + " to " + prevEnd);
+        System.out.println("Current GMV: " + currentGMV);
+        System.out.println("Previous GMV: " + prevGMV);
+        System.out.println("Current Orders: " + currentOrders);
+        System.out.println("Previous Orders: " + prevOrders);
+
+        // Calculate GMV delta
+        if (prevGMV != null && prevGMV > 0) {
+            double gmvDelta = ((currentGMV != null ? currentGMV : 0.0) - prevGMV) / prevGMV * 100;
+            result.put("gmvDelta", gmvDelta);
+            result.put("gmvDeltaDirection", gmvDelta >= 0 ? "up" : "down");
+            System.out.println("GMV Delta: " + gmvDelta + "% (" + (gmvDelta >= 0 ? "up" : "down") + ")");
+        } else {
+            // If previous period had no GMV, calculate delta based on current value
+            double gmvDelta = (currentGMV != null && currentGMV > 0) ? 100.0 : 0.0;
+            result.put("gmvDelta", gmvDelta);
+            result.put("gmvDeltaDirection", "up");
+            System.out.println("GMV Delta (no previous data): " + gmvDelta + "% (up)");
+        }
+
+        // Calculate Orders delta
+        if (prevOrders != null && prevOrders > 0) {
+            double ordersDelta = ((currentOrders != null ? currentOrders : 0L) - prevOrders) / (double) prevOrders * 100;
+            result.put("ordersDelta", ordersDelta);
+            result.put("ordersDeltaDirection", ordersDelta >= 0 ? "up" : "down");
+            System.out.println("Orders Delta: " + ordersDelta + "% (" + (ordersDelta >= 0 ? "up" : "down") + ")");
+        } else {
+            // If previous period had no orders, calculate delta based on current value
+            double ordersDelta = (currentOrders != null && currentOrders > 0) ? 100.0 : 0.0;
+            result.put("ordersDelta", ordersDelta);
+            result.put("ordersDeltaDirection", "up");
+            System.out.println("Orders Delta (no previous data): " + ordersDelta + "% (up)");
+        }
+
+        // Calculate Stores delta (newly approved stores in period)
+        long currentApprovedStores = storeRepository.countApprovedStoresBetweenDates(currentStart, currentEnd);
+        long prevApprovedStores = storeRepository.countApprovedStoresBetweenDates(prevStart, prevEnd);
+
+        System.out.println("Current Approved Stores: " + currentApprovedStores);
+        System.out.println("Previous Approved Stores: " + prevApprovedStores);
+
+        // Calculate absolute change in number of approved stores
+        long storesDelta = currentApprovedStores - prevApprovedStores;
+        result.put("storesDelta", storesDelta);
+        result.put("storesDeltaDirection", storesDelta >= 0 ? "up" : "down");
+        System.out.println("Stores Delta: " + storesDelta + " stores (" + (storesDelta >= 0 ? "up" : "down") + ")");
+
+        // Calculate Buyers delta (new registrations in period)
+        long currentNewBuyers = userRepository.countBuyersRegisteredBetweenDates(currentStart, currentEnd);
+        long prevNewBuyers = userRepository.countBuyersRegisteredBetweenDates(prevStart, prevEnd);
+
+        System.out.println("Current New Buyers: " + currentNewBuyers);
+        System.out.println("Previous New Buyers: " + prevNewBuyers);
+
+        // Calculate absolute change in number of new buyers
+        long buyersDelta = currentNewBuyers - prevNewBuyers;
+        result.put("buyersDelta", buyersDelta);
+        result.put("buyersDeltaDirection", buyersDelta >= 0 ? "up" : "down");
+        System.out.println("Buyers Delta: " + buyersDelta + " buyers (" + (buyersDelta >= 0 ? "up" : "down") + ")");
+
+        System.out.println("========================");
     }
 
     private Map<String, Double> getWeeklyGMV(LocalDateTime now) {

@@ -71,4 +71,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Count active/inactive buyers
     @Query("SELECT COUNT(u) FROM User u JOIN u.role r WHERE r.name = 'ROLE_USER' AND u.active = :active")
     long countByRoleAndActive(@Param("active") Boolean active);
+
+    // Count new buyer registrations between dates
+    @Query("SELECT COUNT(u) FROM User u JOIN u.role r WHERE r.name = 'ROLE_USER' AND u.createdAt BETWEEN :startDate AND :endDate")
+    long countBuyersRegisteredBetweenDates(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
 }

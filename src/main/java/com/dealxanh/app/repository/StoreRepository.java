@@ -39,4 +39,7 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
 
     // Find top 5 stores by created date
     List<Store> findTop5ByOrderByCreatedAtDesc();
+
+    @Query("SELECT COUNT(s) FROM Store s WHERE s.status = 'ACTIVE' AND s.reviewedAt BETWEEN :startDate AND :endDate")
+    long countApprovedStoresBetweenDates(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
 }

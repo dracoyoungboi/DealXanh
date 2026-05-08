@@ -358,4 +358,45 @@ public class AuthController {
             return "redirect:/login?error=profile_error";
         }
     }
+
+    // Generic logout handler - handles GET /logout requests from admin/seller links
+    @GetMapping("/logout")
+    public String logout(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            System.out.println("=== GENERIC LOGOUT START ===");
+
+            // Invalidate session
+            jakarta.servlet.http.HttpSession session = request.getSession(false);
+            if (session != null) {
+                System.out.println("DEBUG: Invalidating session");
+                session.invalidate();
+            }
+
+            // Clear security context
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+            System.out.println("DEBUG: Security context cleared");
+
+            // Delete cookies
+            jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (jakarta.servlet.http.Cookie cookie : cookies) {
+                    if (cookie.getName().equals("JSESSIONID") || cookie.getName().equals("remember-me")) {
+                        System.out.println("DEBUG: Deleting cookie: " + cookie.getName());
+                        cookie.setMaxAge(0);
+                        cookie.setPath("/");
+                        cookie.setValue("");
+                        response.addCookie(cookie);
+                    }
+                }
+            }
+
+            System.out.println("=== GENERIC LOGOUT END ===");
+        } catch (Exception e) {
+            System.err.println("ERROR during logout: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Redirect to admin login page with logout flag
+        return "redirect:/admin/login?logout=true";
+    }
 }
