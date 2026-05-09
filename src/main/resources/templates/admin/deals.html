@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Deals - Admin DealXanh</title>
+    <!-- CSRF Token for form submissions -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff;--bg:#f0f2f5;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.1);
+    --danger:#ef4444;--danger-bg:rgba(239,68,68,.1);
+    --warning:#f59e0b;--warning-bg:rgba(245,158,11,.1);
+    --success:#10b981;--success-bg:rgba(16,185,129,.1);
+    --info:#3b82f6;--info-bg:rgba(59,130,246,.1);
+    --purple:#8b5cf6;--purple-bg:rgba(139,92,246,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+    --sidebar:240px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary);height:100%}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+img{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+
+/* Layout */
+.layout{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{
+    width:var(--sidebar);flex-shrink:0;
+    background:var(--primary);
+    display:flex;flex-direction:column;
+    position:fixed;top:0;bottom:0;left:0;z-index:30;
+    overflow-y:auto;scrollbar-width:none;
+}
+.sidebar::-webkit-scrollbar{display:none}
+.sidebar-header{
+    padding:20px 16px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;gap:10px;
+    transition:background var(--tr);
+}
+.sidebar-header:hover{background:rgba(255,255,255,.05);}
+.sidebar-header__logo{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:rgba(255,255,255,.15);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sidebar-header__logo svg{width:18px;height:18px;color:#fff}
+.sidebar-header__text{overflow:hidden}
+.sidebar-header__brand{font-size:16px;font-weight:800;color:#fff}
+.sidebar-header__sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px}
+
+.nav-section{padding:16px 10px 0}
+.nav-section__label{
+    font-size:10px;font-weight:700;color:rgba(255,255,255,.4);
+    text-transform:uppercase;letter-spacing:.8px;
+    padding:0 8px;margin-bottom:6px;
+}
+.nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 10px;border-radius:var(--radius-md);
+    color:rgba(255,255,255,.65);font-size:13px;font-weight:500;
+    margin-bottom:2px;cursor:pointer;transition:all var(--tr);
+    position:relative;
+}
+.nav-item:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
+.nav-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
+.nav-item.active::before{
+    content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:3px;height:20px;border-radius:0 2px 2px 0;background:#fff;
+}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.nav-badge{
+    margin-left:auto;min-width:18px;height:18px;border-radius:9px;
+    background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+    padding:0 4px;display:flex;align-items:center;justify-content:center;
+}
+.sidebar-footer{
+    margin-top:auto;padding:14px 10px;
+    border-top:1px solid rgba(255,255,255,.1);
+}
+.sidebar-user{
+    display:flex;align-items:center;gap:10px;padding:8px;
+    border-radius:var(--radius-md);cursor:pointer;
+    transition:background var(--tr);
+}
+.sidebar-user:hover{background:rgba(255,255,255,.1)}
+.sidebar-user__avatar{
+    width:34px;height:34px;border-radius:50%;overflow:hidden;
+    border:2px solid rgba(255,255,255,.2);flex-shrink:0;
+}
+.sidebar-user__avatar img{width:100%;height:100%;object-fit:cover}
+.sidebar-user__name{font-size:13px;font-weight:600;color:#fff}
+.sidebar-user__role{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
+
+/* Main content */
+.main{
+    margin-left:var(--sidebar);flex:1;
+    display:flex;flex-direction:column;min-height:100vh;
+}
+
+/* Top bar */
+.topbar{
+    background:var(--surface);
+    padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--border-light);
+    position:sticky;top:0;z-index:20;
+}
+.topbar__title{font-size:18px;font-weight:800}
+.topbar__right{display:flex;align-items:center;gap:12px}
+.topbar-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    transition:background var(--tr);position:relative;text-decoration:none;
+}
+.topbar-btn:hover{background:var(--border-light)}
+.topbar-btn svg{width:18px;height:18px;color:var(--text-secondary)}
+
+/* Content area */
+.content{padding:24px}
+
+/* Stats cards */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:20px;}
+.stat-card__label{font-size:12px;color:var(--text-secondary);margin-bottom:8px;}
+.stat-card__value{font-size:28px;font-weight:800;color:var(--text-primary);}
+.stat-card__value.success{color:var(--success)}
+.stat-card__value.warning{color:var(--warning)}
+.stat-card__value.info{color:var(--info)}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:10px;margin-bottom:24px;align-items:center;flex-wrap:wrap;}
+.search-wrap{position:relative;flex:1;min-width:250px;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary);pointer-events:none}
+.search-icon svg{width:16px;height:16px}
+.search-input{width:100%;padding:10px 12px 10px 36px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;background:var(--surface);transition:border-color var(--tr);}
+.search-input:focus{outline:none;border-color:var(--primary)}
+.filter-select{padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-weight:600;background:var(--surface);cursor:pointer;}
+.filter-select:focus{outline:none;border-color:var(--primary)}
+.btn-create{padding:10px 20px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;transition:all var(--tr);}
+.btn-create:hover{background:var(--primary-dark)}
+
+/* Deals grid */
+.deals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;}
+
+.deal-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);overflow:hidden;transition:all var(--tr);cursor:pointer;}
+.deal-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--primary);}
+
+/* Deal banner */
+.deal-card__banner{height:140px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);position:relative;overflow:hidden;}
+.deal-card__banner img{width:100%;height:100%;object-fit:cover;position:absolute;}
+.deal-card__banner-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.5) 100%);}
+.deal-card__type{position:absolute;top:12px;left:12px;padding:6px 12px;border-radius:var(--radius-full);font-size:11px;font-weight:700;text-transform:uppercase;background:rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(10px);}
+.deal-card__type.FLASH_SALE{background:var(--danger);}
+.deal-card__type.VOUCHER{background:var(--purple);}
+.deal-card__type.FREESHIP{background:var(--info);}
+.deal-card__type.COMBO{background:var(--warning);}
+.deal-card__type.SEASONAL{background:var(--accent)}
+.deal-card__status{position:absolute;top:12px;right:12px;padding:6px 12px;border-radius:var(--radius-full);font-size:11px;font-weight:700;text-transform:uppercase;color:#fff;}
+.deal-card__status.SCHEDULED{background:var(--info)}
+.deal-card__status.ACTIVE{background:var(--success)}
+.deal-card__status.PAUSED{background:var(--warning)}
+.deal-card__status.ENDED{background:var(--text-secondary)}
+.deal-card__apply-method{position:absolute;bottom:12px;left:12px;padding:4px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);}
+.deal-card__apply-method.CODE_REQUIRED{background:rgba(255,255,255,.15);}
+.deal-card__apply-method.AUTO_APPLY{background:var(--warning);}
+.deal-card__status.CANCELLED{background:var(--danger)}
+
+/* Deal content */
+.deal-card__content{padding:16px;}
+.deal-card__header{margin-bottom:12px;}
+.deal-card__name{font-size:16px;font-weight:700;margin-bottom:4px;line-height:1.4;}
+.deal-card__code{font-size:12px;color:var(--text-secondary);font-family:monospace;background:var(--bg);padding:4px 8px;border-radius:var(--radius-sm);display:inline-block;}
+.deal-card__description{font-size:13px;color:var(--text-secondary);margin-top:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+.deal-card__discount{margin:12px 0;padding:12px;background:var(--bg);border-radius:var(--radius-md);display:flex;align-items:center;gap:12px;}
+.deal-card__discount-value{font-size:24px;font-weight:800;color:var(--danger);flex-shrink:0;}
+.deal-card__discount-label{font-size:13px;color:var(--text-secondary);}
+.deal-card__max-discount{font-size:12px;color:var(--text-tertiary);}
+
+.deal-card__info{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.deal-card__info-item{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;}
+.deal-card__info-item svg{width:14px;height:14px;flex-shrink:0;}
+
+.deal-card__footer{margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;}
+.deal-card__time{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;}
+.deal-card__time svg{width:14px;height:14px;}
+.deal-card__usage{font-size:12px;font-weight:600;}
+.deal-card__usage.progress{color:var(--success);}
+.deal-card__usage.warning{color:var(--warning)}
+.deal-card__usage.full{color:var(--danger)}
+
+.deal-card__store{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);}
+.deal-card__store-logo{width:32px;height:32px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border-light);background:var(--bg);}
+.deal-card__store-logo img{width:100%;height:100%;object-fit:cover}
+.deal-card__store-name{font-size:13px;font-weight:600;}
+
+/* Pagination */
+.pagination{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-top:1px solid var(--border-light);margin-top:16px;}
+.pagination-info{font-size:13px;color:var(--text-secondary)}
+.pagination-controls{display:flex;align-items:center;gap:8px}
+.pagination-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;color:var(--text-primary);cursor:pointer;transition:all var(--tr);}
+.pagination-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.pagination-btn:disabled{opacity:0.5;cursor:not-allowed}
+.pagination-pages{display:flex;gap:4px}
+.pagination-page{min-width:36px;height:36px;padding:0 8px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;color:var(--text-primary);cursor:pointer;transition:all var(--tr);}
+.pagination-page:hover{border-color:var(--primary);color:var(--primary)}
+.pagination-page.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* Empty state */
+.empty-state{text-align:center;padding:80px 20px;color:var(--text-secondary);}
+.empty-state svg{width:80px;height:80px;margin-bottom:16px;opacity:0.3}
+.empty-state h3{font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text-primary)}
+
+/* Modal */
+.modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);padding:20px;box-sizing:border-box;overflow-y:auto;}
+.modal.active{display:flex;align-items:center;justify-content:center;}
+.modal-content{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:800px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-md);}
+.modal-header{padding:20px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;background:var(--bg);}
+.modal-header__title{font-size:18px;font-weight:800;}
+.modal-header__close{width:32px;height:32px;border-radius:var(--radius-md);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background var(--tr);}
+.modal-header__close:hover{background:var(--border-light);}
+.modal-header__close svg{width:18px;height:18px;color:var(--text-secondary)}
+
+.modal-body{padding:20px;overflow-y:auto;flex:1;}
+
+.detail-section{margin-bottom:20px;}
+.detail-section__title{font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;}
+.detail-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;border-bottom:1px solid var(--border-light);}
+.detail-row:last-child{border-bottom:none;}
+.detail-row .label{color:var(--text-secondary)}
+.detail-row .value{font-weight:600;text-align:right;}
+
+.usage-bar{height:8px;border-radius:var(--radius-full);background:var(--border-light);overflow:hidden;margin-top:8px;}
+.usage-bar__fill{height:100%;background:var(--success);transition:width var(--tr);}
+.usage-bar__fill.warning{background:var(--warning)}
+.usage-bar__fill.full{background:var(--danger)}
+
+.products-list{display:flex;flex-direction:column;gap:8px;}
+.product-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:var(--radius-md);}
+.product-item__img{width:48px;height:48px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border-light);background:var(--surface);}
+.product-item__img img{width:100%;height:100%;object-fit:cover}
+.product-item__info{flex:1;}
+.product-item__name{font-size:14px;font-weight:600;margin-bottom:2px;}
+.product-item__price{font-size:12px;color:var(--text-secondary)}
+.product-item__sale-price{font-size:16px;font-weight:700;color:var(--danger)}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <!-- Include sidebar from common fragment -->
+    <div th:replace="~{common/admin/sidebar :: sidebar('deals')}"></div>
+
+    <div class="main">
+        <!-- Include header from common fragment -->
+        <div th:replace="~{common/admin/header :: header('Quản lý Deals', false)}"></div>
+
+        <div class="content">
+            <!-- Stats cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card__label">Tổng Deals</div>
+                    <div class="stat-card__value" th:text="${totalDeals}">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card__label">Đang diễn ra</div>
+                    <div class="stat-card__value success" th:text="${activeDealsCount}">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card__label">Sắp diễn ra</div>
+                    <div class="stat-card__value warning" th:text="${scheduledDealsCount}">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card__label">Loại Deals</div>
+                    <div class="stat-card__value info" th:text="${dealTypes.size()}">0</div>
+                </div>
+            </div>
+
+            <!-- Filter bar -->
+            <form id="filterForm" method="get" action="/admin/deals">
+                <div class="filter-bar">
+                    <div class="search-wrap">
+                        <span class="search-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                        </span>
+                        <input type="text" name="search" class="search-input" placeholder="Tìm theo tên deal, mã deal..." th:value="${searchQuery}">
+                    </div>
+                    <select name="type" class="filter-select" onchange="document.getElementById('filterForm').submit();">
+                        <option value="">Tất cả loại</option>
+                        <option th:each="type : ${dealTypes}" th:value="${type}" th:text="${type == 'FLASH_SALE' ? 'Flash Sale' : type == 'VOUCHER' ? 'Voucher' : type == 'FREESHIP' ? 'Freeship' : type == 'COMBO' ? 'Combo' : 'Seasonal Sale'}" th:selected="${type == selectedType}">Type</option>
+                    </select>
+                    <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit();">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="SCHEDULED" th:selected="${selectedStatus == 'SCHEDULED'}">Sắp diễn ra</option>
+                        <option value="ACTIVE" th:selected="${selectedStatus == 'ACTIVE'}">Đang diễn ra</option>
+                        <option value="PAUSED" th:selected="${selectedStatus == 'PAUSED'}">Tạm dừng</option>
+                        <option value="ENDED" th:selected="${selectedStatus == 'ENDED'}">Đã kết thúc</option>
+                    </select>
+                    <button type="button" class="btn-create" onclick="openCreateDealModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Tạo Deal mới
+                    </button>
+                </div>
+            </form>
+
+            <!-- Deals grid -->
+            <div class="deals-grid" th:if="${deals != null and !deals.isEmpty()}">
+                <div class="deal-card" th:each="deal : ${deals}" th:onclick="'viewDealDetail(' + ${deal.dealId} + ')'">
+                    <!-- Banner -->
+                    <div class="deal-card__banner">
+                        <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/deals/default-banner.jpg'}" alt="">
+                        <div class="deal-card__banner-overlay"></div>
+                        <span class="deal-card__type" th:class="${deal.dealType}" th:text="${deal.dealType == 'FLASH_SALE' ? 'Flash Sale' : deal.dealType == 'VOUCHER' ? 'Voucher' : deal.dealType == 'FREESHIP' ? 'Freeship' : deal.dealType == 'COMBO' ? 'Combo' : 'Seasonal'}">Type</span>
+                        <span class="deal-card__status" th:class="${deal.status}" th:text="${deal.status == 'SCHEDULED' ? 'Sắp diễn ra' : deal.status == 'ACTIVE' ? 'Đang diễn ra' : deal.status == 'PAUSED' ? 'Tạm dừng' : deal.status == 'ENDED' ? 'Đã kết thúc' : 'Đã hủy'}">Status</span>
+                        <span class="deal-card__apply-method" th:class="${deal.applyMethod}" th:text="${deal.applyMethod == 'AUTO_APPLY' ? '⚡ Tự động' : '🔑 Cần mã'}">Apply Method</span>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="deal-card__content">
+                        <div class="deal-card__header">
+                            <div class="deal-card__name" th:text="${deal.dealName}">Deal Name</div>
+                            <span class="deal-card__code" th:text="${deal.dealCode}">CODE</span>
+                        </div>
+
+                        <p class="deal-card__description" th:text="${deal.description}">Description</p>
+
+                        <div class="deal-card__discount">
+                            <div class="deal-card__discount-value" th:text="${deal.discountType == 'PERCENT' ? deal.discountValue + '%' : #numbers.formatDecimal(deal.discountValue, 0, 0) + 'đ'}">50%</div>
+                            <div>
+                                <div class="deal-card__discount-label">Giảm giá</div>
+                                <th:block th:if="${deal.maxDiscountAmount != null}">
+                                    <div class="deal-card__max-discount" th:text="'Tối đa ' + ${#numbers.formatDecimal(deal.maxDiscountAmount, 0, 0)} + 'đ'">Max 50k</div>
+                                </th:block>
+                            </div>
+                        </div>
+
+                        <div class="deal-card__info">
+                            <div class="deal-card__info-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                                <th:block th:if="${deal.startTime != null}" th:text="${#temporals.format(deal.startTime, 'dd/MM HH:mm')}">Start</th:block>
+                            </div>
+                            <div class="deal-card__info-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                                <th:block th:if="${deal.endTime != null}" th:text="${#temporals.format(deal.endTime, 'dd/MM HH:mm')}">End</th:block>
+                            </div>
+                            <div class="deal-card__info-item" th:if="${deal.minOrderAmount != null}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="1" x2="12" y2="23"/>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                                <span th:text="'Tối thiểu ' + ${#numbers.formatDecimal(deal.minOrderAmount, 0, 0)} + 'đ'">Min</span>
+                            </div>
+                        </div>
+
+                        <div class="deal-card__footer">
+                            <div class="deal-card__time">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                                <span th:if="${deal.endTime != null}" th:text="${#temporals.duration(deal.startTime, deal.endTime).toDays() + ' ngày'}">Duration</span>
+                            </div>
+                            <div class="deal-card__usage">
+                                <th:block th:if="${deal.maxUsageCount != null}">
+                                    <span th:class="${deal.usageCount >= deal.maxUsageCount ? 'full' : (deal.usageCount * 100 / deal.maxUsageCount > 80 ? 'warning' : 'progress')}"
+                                          th:text="${deal.usageCount} + '/' + ${deal.maxUsageCount}">Used</span>
+                                </th:block>
+                                <th:block th:if="${deal.maxUsageCount == null}">
+                                    <span class="progress" th:text="${deal.usageCount} + ' đã dùng'">Used</span>
+                                </th:block>
+                            </div>
+                        </div>
+
+                        <div class="deal-card__store" th:if="${deal.store != null}">
+                            <div class="deal-card__store-logo">
+                                <img th:src="${deal.store.logoUrl != null ? deal.store.logoUrl : '/img/default-store.svg'}" alt="">
+                            </div>
+                            <div class="deal-card__store-name" th:text="${deal.store.storeName}">Store Name</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-state" th:if="${deals == null or deals.isEmpty()}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.91 8.84 8.84 20.91a10 10 0 1 1 20.91-8.84Z"/>
+                    <path d="M7.5 12a5.5 5.5 0 0 1 5.5-5.5"/>
+                </svg>
+                <h3>Chưa có deal nào</h3>
+                <p>Tạo deal đầu tiên để bắt đầu khuyến mãi</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" th:if="${totalPages > 1}">
+                <div class="pagination-info">
+                    <span th:text="'Hiển thị ' + (${currentPage} * ${pageSize} + 1) + ' - ' + ${Math.min((currentPage + 1) * pageSize, totalDeals)} + ' / ' + ${totalDeals} + ' deal'">Pagination info</span>
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" th:disabled="${!hasPrevious}" th:onclick="'goToPage(' + (${currentPage} - 1) + ')'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                            <polyline points="15 18 9 12 15 6"/>
+                            <line x1="9" y1="12" x2="21" y2="12"/>
+                        </svg>
+                        Trước
+                    </button>
+
+                    <div class="pagination-pages">
+                        <button th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}" th:if="${pageNum < 5 || pageNum > totalPages - 6 || (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)}" class="pagination-page" th:classappend="${pageNum == currentPage} ? 'active' : ''" th:onclick="'goToPage(' + ${pageNum} + ')'" th:text="${pageNum + 1}">1</button>
+                    </div>
+
+                    <button class="pagination-btn" th:disabled="${!hasNext}" th:onclick="'goToPage(' + (${currentPage} + 1) + ')'">
+                        Tiếp
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                            <polyline points="9 18 15 12 9 6"/>
+                            <line x1="9" y1="12" x2="21" y2="12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Deal Modal -->
+<div class="modal" id="createDealModal">
+    <div class="modal-content" style="max-width:700px;">
+        <div class="modal-header">
+            <div class="modal-header__title">Tạo Deal Mới</div>
+            <div class="modal-header__close" onclick="closeCreateDealModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <form id="createDealForm" method="post" action="/admin/deals/create">
+                <!-- CSRF Token -->
+                <input type="hidden" name="${_csrf.headerName}" value="${_csrf.token}"/>
+
+                <!-- Tên deal -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Tên Deal <span style="color:var(--danger);">*</span></label>
+                    <input type="text" name="dealName" required placeholder="VD: Flash Sale 50% Bánh Mì"
+                           style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                </div>
+
+                <!-- Mã deal -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Mã Deal <span style="color:var(--danger);">*</span></label>
+                    <input type="text" name="dealCode" required placeholder="VD: FLASH50 (không dấu cách)"
+                           style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;text-transform:uppercase;font-family:monospace;">
+                </div>
+
+                <!-- Loại deal -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Loại Deal <span style="color:var(--danger);">*</span></label>
+                    <select name="dealType" required style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                        <option value="">Chọn loại deal...</option>
+                        <option value="FLASH_SALE">⚡ Flash Sale</option>
+                        <option value="VOUCHER">🎫 Voucher</option>
+                        <option value="FREESHIP">🚚 Freeship</option>
+                        <option value="COMBO">📦 Combo</option>
+                        <option value="SEASONAL">🎉 Seasonal Sale</option>
+                    </select>
+                </div>
+
+                <!-- Cách áp dụng -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Cách áp dụng <span style="color:var(--danger);">*</span></label>
+                    <select name="applyMethod" required style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                        <option value="CODE_REQUIRED">🔑 Cần nhập mã (Voucher/Code)</option>
+                        <option value="AUTO_APPLY">⚡ Tự động áp dụng (Giảm giá trực tiếp)</option>
+                    </select>
+                    <small style="display:block;margin-top:4px;color:var(--text-secondary);font-size:12px;">
+                        • Cần nhập mã: User phải nhập mã giảm giá khi checkout<br>
+                        • Tự động áp dụng: Giảm giá tự động áp dụng, sản phẩm hiển thị giá sale ngay
+                    </small>
+                </div>
+
+                <!-- Mô tả -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Mô tả</label>
+                    <textarea name="description" rows="2" placeholder="Mô tả chi tiết về deal..."
+                              style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;resize:vertical;"></textarea>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:16px;">
+                    <!-- Loại giảm giá -->
+                    <div>
+                        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Loại giảm giá <span style="color:var(--danger);">*</span></label>
+                        <select name="discountType" required style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                            <option value="PERCENT">Phần trăm (%)</option>
+                            <option value="FIXED">Số tiền cố định (đ)</option>
+                        </select>
+                    </div>
+
+                    <!-- Giá trị giảm -->
+                    <div>
+                        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Giá trị giảm <span style="color:var(--danger);">*</span></label>
+                        <input type="number" name="discountValue" required min="0" placeholder="50 hoặc 50000"
+                               style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                    </div>
+                </div>
+
+                <!-- Giảm tối đa -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Giảm tối đa (đ) <span style="color:var(--text-secondary);font-size:11px;">- Chỉ áp dụng khi giảm theo %</span></label>
+                    <input type="number" name="maxDiscountAmount" min="0" placeholder="VD: 30000"
+                           style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:16px;">
+                    <!-- Giá trị đơn tối thiểu -->
+                    <div>
+                        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Giá trị đơn tối thiểu <span style="color:var(--danger);">*</span></label>
+                        <input type="number" name="minOrderAmount" required min="0" placeholder="50000"
+                               style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                    </div>
+
+                    <!-- Số lượt sử dụng -->
+                    <div>
+                        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Số lượt tối đa <span style="color:var(--text-secondary);font-size:11px;">- Để trống = vô hạn</span></label>
+                        <input type="number" name="maxUsageCount" min="0" placeholder="Để trống = vô hạn"
+                               style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:16px;">
+                    <!-- Thời gian bắt đầu -->
+                    <div>
+                        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Thời gian bắt đầu <span style="color:var(--danger);">*</span></label>
+                        <input type="datetime-local" name="startTime" required
+                               style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                    </div>
+
+                    <!-- Thời gian kết thúc -->
+                    <div>
+                        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Thời gian kết thúc <span style="color:var(--danger);">*</span></label>
+                        <input type="datetime-local" name="endTime" required
+                               style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                    </div>
+                </div>
+
+                <!-- Phạm vi áp dụng -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Phạm vi áp dụng <span style="color:var(--danger);">*</span></label>
+                    <select name="scope" required style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                        <option value="ALL_STORES">Tất cả cửa hàng</option>
+                        <option value="SPECIFIC_STORES">Cửa hàng cụ thể</option>
+                    </select>
+                </div>
+
+                <!-- Ảnh banner -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">URL Banner Deal</label>
+                    <input type="text" name="bannerUrl" placeholder="/img/deals/flash-sale-banner.jpg"
+                           style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+                </div>
+
+                <!-- Buttons -->
+                <div style="display:flex;gap:12px;justify-content:flex-end;">
+                    <button type="button" onclick="closeCreateDealModal()"
+                            style="padding:10px 20px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);font-size:14px;font-weight:600;cursor:pointer;">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            style="padding:10px 20px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
+                        Tạo Deal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Deal Detail Modal -->
+<div class="modal" id="dealModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-header__title">Chi tiết Deal</div>
+            <div class="modal-header__close" onclick="closeDealModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="modal-body" id="dealModalContent">
+            <!-- Deal detail will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<script>
+function buildUrl(page) {
+    const urlParams = new URLSearchParams(window.location.search);
+    let params = [];
+
+    const search = document.querySelector('.search-input').value;
+    const type = urlParams.get('type') || '';
+    const status = urlParams.get('status') || '';
+
+    if (search) params.push('search=' + encodeURIComponent(search));
+    if (type) params.push('type=' + encodeURIComponent(type));
+    if (status) params.push('status=' + encodeURIComponent(status));
+    params.push('page=' + page);
+
+    return '/admin/deals?' + params.join('&');
+}
+
+function goToPage(page) {
+    window.location.href = buildUrl(page);
+}
+
+function viewDealDetail(dealId) {
+    const modal = document.getElementById('dealModal');
+    const content = document.getElementById('dealModalContent');
+
+    content.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner" style="width:40px;height:40px;border:3px solid var(--border-light);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px;"></div>Đang tải...</div>';
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Find deal data from page
+    const dealCards = document.querySelectorAll('.deal-card');
+    dealCards.forEach(card => {
+        const onclick = card.getAttribute('onclick');
+        if (onclick && onclick.includes('dealId=' + dealId)) {
+            const name = card.querySelector('.deal-card__name').textContent;
+            const code = card.querySelector('.deal-card__code').textContent;
+            const description = card.querySelector('.deal-card__description').textContent;
+            const discount = card.querySelector('.deal-card__discount-value').textContent;
+            const banner = card.querySelector('.deal-card__banner img').src;
+            const store = card.querySelector('.deal-card__store-name');
+
+            content.innerHTML = `
+                <div style="text-align:center;margin-bottom:20px;">
+                    <img src="${banner}" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:16px;">
+                    <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">${name}</h2>
+                    <span style="font-family:monospace;background:var(--bg);padding:4px 8px;border-radius:var(--radius-sm);font-size:12px;">${code}</span>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section__title">Thông tin chung</div>
+                    <div class="detail-row">
+                        <span class="label">Mô tả</span>
+                        <span class="value">${description}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Giảm giá</span>
+                        <span class="value" style="color:var(--danger);">${discount}</span>
+                    </div>
+                </div>
+
+                ${store ? `
+                <div class="detail-section">
+                    <div class="detail-section__title">Cửa hàng áp dụng</div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:48px;height:48px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-light);background:var(--bg);">
+                            <img src="${card.querySelector('.deal-card__store-logo img').src}" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div style="font-weight:600;">${store.textContent}</div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+        }
+    });
+}
+
+function closeDealModal() {
+    document.getElementById('dealModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+function openCreateDealModal() {
+    const modal = document.getElementById('createDealModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Set default start time to now and end time to 7 days later
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const startTime = now.toISOString().slice(0, 16);
+
+    const endTime = new Date(now);
+    endTime.setDate(endTime.getDate() + 7);
+    const endTimeStr = endTime.toISOString().slice(0, 16);
+
+    const startTimeInput = document.querySelector('input[name="startTime"]');
+    const endTimeInput = document.querySelector('input[name="endTime"]');
+
+    if (startTimeInput) startTimeInput.value = startTime;
+    if (endTimeInput) endTimeInput.value = endTimeStr;
+}
+
+function closeCreateDealModal() {
+    document.getElementById('createDealModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+
+    // Reset form
+    const form = document.getElementById('createDealForm');
+    if (form) form.reset();
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDealModal();
+        closeCreateDealModal();
+    }
+});
+
+// Close modal on backdrop click
+document.getElementById('dealModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDealModal();
+    }
+});
+
+document.getElementById('createDealModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCreateDealModal();
+    }
+});
+</script>
+</body>
+</html>

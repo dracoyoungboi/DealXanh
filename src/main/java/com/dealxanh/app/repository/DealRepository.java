@@ -1,0 +1,66 @@
+package com.dealxanh.app.repository;
+
+import com.dealxanh.app.entity.Deal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Repository
+public interface DealRepository extends JpaRepository<Deal, Long> {
+
+    // Find active deals
+    List<Deal> findByStatusAndStartTimeBeforeAndEndTimeAfterOrderByPriorityDesc(
+        String status, LocalDateTime startTime, LocalDateTime endTime
+    );
+
+    // Find by deal type
+    Page<Deal> findByDealType(String dealType, Pageable pageable);
+
+    // Find by status
+    Page<Deal> findByStatus(String status, Pageable pageable);
+
+    // Find by store
+    Page<Deal> findByStoreStoreIdOrderByCreatedAtDesc(Long storeId, Pageable pageable);
+
+    // Find by store and status
+    List<Deal> findByStoreStoreIdAndStatus(Long storeId, String status);
+
+    // Find active deals for a store
+    @Query("SELECT d FROM Deal d WHERE d.status = 'ACTIVE' AND d.startTime <= :now AND d.endTime >= :now AND (d.store.storeId = :storeId OR d.scope = 'ALL_STORES')")
+    List<Deal> findActiveDealsForStore(@Param("storeId") Long storeId, @Param("now") LocalDateTime now);
+
+    // Search deals
+    @Query("SELECT d FROM Deal d WHERE d.dealName LIKE %:keyword% OR d.dealCode LIKE %:keyword%")
+    Page<Deal> searchDeals(@Param("keyword") String keyword, Pageable pageable);
+
+    // Count by status
+    long countByStatus(String status);
+
+    // Count by deal type
+    long countByDealType(String dealType);
+
+    // Find deals starting soon (within 24 hours)
+    @Query("SELECT d FROM Deal d WHERE d.status = 'SCHEDULED' AND d.startTime BETWEEN :now AND :end")
+    List<Deal> findStartingSoon(@Param("now") LocalDateTime now, @Param("end") LocalDateTime end);
+
+    // Find expiring soon (within 24 hours)
+    @Query("SELECT d FROM Deal d WHERE d.status = 'ACTIVE' AND d.endTime BETWEEN :now AND :end")
+    List<Deal> findExpiringSoon(@Param("now") LocalDateTime now, @Param("end") LocalDateTime end);
+
+    // Find all deals with stores info
+    @Query("SELECT DISTINCT d FROM Deal d LEFT JOIN FETCH d.store LEFT JOIN FETCH d.createdBy ORDER BY d.createdAt DESC")
+    List<Deal> findAllWithDetails();
+
+    // Get deal statistics
+    @Query("SELECT COUNT(d) FROM Deal d WHERE d.status = 'ACTIVE'")
+    Long countActiveDeals();
+
+    @Query("SELECT COUNT(d) FROM Deal d WHERE d.status = 'SCHEDULED'")
+    Long countScheduledDeals();
+}

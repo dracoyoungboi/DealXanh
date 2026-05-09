@@ -13,7 +13,8 @@
 -->
 <body th:fragment="sidebar(activeSidebar)">
 <aside class="sidebar">
-    <div class="sidebar-header">
+    <a th:href="${adminUser != null and adminUser.role != null and adminUser.role.name == 'ROLE_MODERATOR' ? '/admin/seller-verify' : '/admin/dashboard'}"
+       class="sidebar-header" style="text-decoration:none;cursor:pointer;">
         <div class="sidebar-header__logo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -21,9 +22,9 @@
         </div>
         <div class="sidebar-header__text">
             <div class="sidebar-header__brand">DealXanh</div>
-            <div class="sidebar-header__sub">Admin Portal</div>
+            <div class="sidebar-header__sub" th:text="${adminUser != null and adminUser.role != null and adminUser.role.name == 'ROLE_MODERATOR' ? 'Moderator Portal' : 'Admin Portal'}">Admin Portal</div>
         </div>
-    </div>
+    </a>
 
     <div class="nav-section">
         <div class="nav-section__label">Tổng quan</div>

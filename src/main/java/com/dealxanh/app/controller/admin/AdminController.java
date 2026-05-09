@@ -4,10 +4,13 @@ import com.dealxanh.app.entity.Role;
 import com.dealxanh.app.entity.Store;
 import com.dealxanh.app.entity.User;
 import com.dealxanh.app.entity.Order;
+import com.dealxanh.app.entity.Deal;
 import com.dealxanh.app.repository.OrderRepository;
 import com.dealxanh.app.repository.RoleRepository;
 import com.dealxanh.app.repository.StoreRepository;
 import com.dealxanh.app.repository.UserRepository;
+import com.dealxanh.app.repository.DealRepository;
+import com.dealxanh.app.repository.DealProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -38,6 +41,12 @@ public class AdminController {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private DealRepository dealRepository;
+
+    @Autowired
+    private DealProductRepository dealProductRepository;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -814,6 +823,168 @@ public class AdminController {
         model.addAttribute("currentStatus", status != null ? status : "");
 
         return "admin/order-detail :: orders-table";
+    }
+
+    // ============== DEALS MANAGEMENT ==============
+
+    @GetMapping("/deals")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String deals(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            Model model, Authentication authentication) {
+
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsernameWithRole(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
+
+        // Set active sidebar
+        model.addAttribute("activeSidebar", "deals");
+
+        // Get all deals with details
+        List<Deal> allDeals = dealRepository.findAllWithDetails();
+
+        // Apply filters
+        List<Deal> filteredDeals = allDeals.stream()
+                .filter(deal -> {
+                    // Filter by type
+                    if (type != null && !type.trim().isEmpty() && !type.equals("ALL")) {
+                        if (!type.equals(deal.getDealType())) {
+                            return false;
+                        }
+                    }
+                    // Filter by status
+                    if (status != null && !status.trim().isEmpty() && !status.equals("ALL")) {
+                        if (!status.equals(deal.getStatus())) {
+                            return false;
+                        }
+                    }
+                    // Filter by search
+                    if (search != null && !search.trim().isEmpty()) {
+                        String searchLower = search.toLowerCase().trim();
+                        if (deal.getDealName() == null || !deal.getDealName().toLowerCase().contains(searchLower)) {
+                            if (deal.getDealCode() == null || !deal.getDealCode().toLowerCase().contains(searchLower)) {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        // Pagination
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, filteredDeals.size());
+        List<Deal> paginatedDeals =
+            (startIndex < filteredDeals.size())
+                ? filteredDeals.subList(startIndex, endIndex)
+                : new java.util.ArrayList<>();
+
+        int totalPages = (int) Math.ceil((double) filteredDeals.size() / size);
+
+        model.addAttribute("deals", paginatedDeals);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalDeals", filteredDeals.size());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("hasPrevious", page > 0);
+        model.addAttribute("hasNext", page < totalPages - 1);
+
+        // Filter attributes
+        model.addAttribute("searchQuery", search != null ? search : "");
+        model.addAttribute("selectedType", type != null ? type : "");
+        model.addAttribute("selectedStatus", status != null ? status : "");
+
+        // Get deal types for filter
+        List<String> dealTypes = allDeals.stream()
+                .map(Deal::getDealType)
+                .filter(t -> t != null)
+                .distinct()
+                .sorted()
+                .collect(java.util.stream.Collectors.toList());
+        model.addAttribute("dealTypes", dealTypes);
+
+        // Get pending sellers count for sidebar badge
+        long pendingSellers = storeRepository.countByStatus("PENDING");
+        model.addAttribute("pendingSellerCount", pendingSellers);
+
+        // Create stats object for sidebar
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("pendingStores", pendingSellers);
+        model.addAttribute("stats", stats);
+
+        // Statistics
+        long activeDeals = dealRepository.countByStatus("ACTIVE");
+        long scheduledDeals = dealRepository.countByStatus("SCHEDULED");
+        model.addAttribute("activeDealsCount", activeDeals);
+        model.addAttribute("scheduledDealsCount", scheduledDeals);
+
+        return "admin/deals";
+    }
+
+    @PostMapping("/deals/create")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String createDeal(
+            @RequestParam String dealName,
+            @RequestParam String dealCode,
+            @RequestParam String dealType,
+            @RequestParam(required = false) String description,
+            @RequestParam String discountType,
+            @RequestParam Double discountValue,
+            @RequestParam(required = false) Double maxDiscountAmount,
+            @RequestParam Double minOrderAmount,
+            @RequestParam(required = false) Long maxUsageCount,
+            @RequestParam LocalDateTime startTime,
+            @RequestParam LocalDateTime endTime,
+            @RequestParam String scope,
+            @RequestParam(required = false) String bannerUrl,
+            @RequestParam(defaultValue = "CODE_REQUIRED") String applyMethod,
+            Model model,
+            Authentication authentication) {
+
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsernameWithRole(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        // Create new deal
+        Deal deal = new Deal();
+        deal.setDealName(dealName);
+        deal.setDealCode(dealCode);
+        deal.setDealType(dealType);
+        deal.setDescription(description);
+        deal.setDiscountType(discountType);
+        deal.setDiscountValue(discountValue);
+        deal.setMaxDiscountAmount(maxDiscountAmount);
+        deal.setMinOrderAmount(minOrderAmount);
+        deal.setMaxUsageCount(maxUsageCount);
+        deal.setUsageCount(0L);
+        deal.setStartTime(startTime);
+        deal.setEndTime(endTime);
+        deal.setStatus("SCHEDULED");
+        deal.setScope(scope);
+        deal.setBannerUrl(bannerUrl);
+        deal.setApplyMethod(applyMethod);
+        deal.setPriority(50);
+        deal.setCreatedBy(adminUser);
+        deal.setCreatedAt(LocalDateTime.now());
+        deal.setUpdatedAt(LocalDateTime.now());
+
+        // Save deal
+        dealRepository.save(deal);
+
+        // Add success message
+        model.addAttribute("success", "Tạo deal thành công!");
+
+        return "redirect:/admin/deals";
     }
 
     @PostMapping("/seller-verify/{storeId}/approve")
