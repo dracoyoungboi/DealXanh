@@ -3,6 +3,7 @@ package com.dealxanh.app.controller.admin;
 import com.dealxanh.app.entity.Role;
 import com.dealxanh.app.entity.Store;
 import com.dealxanh.app.entity.User;
+import com.dealxanh.app.entity.Order;
 import com.dealxanh.app.repository.OrderRepository;
 import com.dealxanh.app.repository.RoleRepository;
 import com.dealxanh.app.repository.StoreRepository;
@@ -246,6 +247,11 @@ public class AdminController {
         model.addAttribute("currentStatus", status);
         model.addAttribute("activeSidebar", "seller-verify");
 
+        // Create stats object for sidebar badge
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("pendingStores", pendingCount);
+        model.addAttribute("stats", stats);
+
         // Pagination attributes
         model.addAttribute("currentPage", currentPage);
         model.addAttribute("totalPages", totalPages);
@@ -283,8 +289,16 @@ public class AdminController {
             model.addAttribute("adminUser", adminUser);
         }
 
+        // Set active sidebar
+        model.addAttribute("activeSidebar", "users");
+
         // Get pending sellers count for sidebar badge
         long pendingSellers = storeRepository.countByStatus("PENDING");
+
+        // Create stats object for sidebar
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("pendingStores", pendingSellers);
+        model.addAttribute("stats", stats);
 
         // DEBUG: List all available roles
         System.out.println("=== AVAILABLE ROLES IN DATABASE ===");
@@ -636,6 +650,172 @@ public class AdminController {
         return "admin/finance";
     }
 
+    @GetMapping("/orders")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String orders(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            Model model, Authentication authentication) {
+
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsernameWithRole(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
+
+        // Set active sidebar
+        model.addAttribute("activeSidebar", "orders");
+
+        // Get all stores that have orders
+        java.util.List<Store> allStores = orderRepository.findAllStoresWithOrders();
+
+        // Apply filters
+        java.util.List<Store> filteredStores = allStores.stream()
+                .filter(store -> {
+                    // Filter by city
+                    if (city != null && !city.trim().isEmpty() && !city.equals("Tất cả thành phố")) {
+                        if (store.getCity() == null || !store.getCity().equals(city)) {
+                            return false;
+                        }
+                    }
+                    // Filter by search
+                    if (search != null && !search.trim().isEmpty()) {
+                        String searchLower = search.toLowerCase().trim();
+                        if (store.getStoreName() == null || !store.getStoreName().toLowerCase().contains(searchLower)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        // Calculate stats for each store
+        java.util.List<java.util.Map<String, Object>> storeStats = filteredStores.stream()
+                .map(store -> {
+                    java.util.Map<String, Object> stats = new java.util.HashMap<>();
+                    stats.put("storeId", store.getStoreId());
+                    stats.put("storeName", store.getStoreName());
+                    stats.put("logoUrl", store.getLogoUrl());
+                    stats.put("city", store.getCity());
+                    stats.put("district", store.getDistrict());
+
+                    // Order statistics
+                    long totalOrders = orderRepository.countByStoreStoreId(store.getStoreId());
+                    Double revenue = orderRepository.sumCompletedRevenueByStore(store.getStoreId());
+                    long pendingOrders = orderRepository.countPendingOrdersByStore(store.getStoreId());
+
+                    stats.put("totalOrders", totalOrders);
+                    stats.put("revenue", revenue != null ? revenue : 0.0);
+                    stats.put("pendingOrders", pendingOrders);
+
+                    return stats;
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        // Sort by revenue descending
+        storeStats.sort((a, b) -> {
+            Double revenueA = (Double) a.get("revenue");
+            Double revenueB = (Double) b.get("revenue");
+            return revenueB.compareTo(revenueA);
+        });
+
+        // Pagination
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, storeStats.size());
+        java.util.List<java.util.Map<String, Object>> paginatedStats =
+            (startIndex < storeStats.size())
+                ? storeStats.subList(startIndex, endIndex)
+                : new java.util.ArrayList<>();
+
+        int totalPages = (int) Math.ceil((double) storeStats.size() / size);
+
+        model.addAttribute("stores", paginatedStats);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalStores", storeStats.size());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("hasPrevious", page > 0);
+        model.addAttribute("hasNext", page < totalPages - 1);
+
+        // Filter attributes
+        model.addAttribute("searchQuery", search != null ? search : "");
+        model.addAttribute("selectedCity", city != null ? city : "");
+
+        // Get all cities for filter
+        java.util.List<String> cities = allStores.stream()
+                .map(Store::getCity)
+                .filter(c -> c != null && !c.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(java.util.stream.Collectors.toList());
+        model.addAttribute("cities", cities);
+
+        // Get pending sellers count for sidebar badge
+        long pendingSellers = storeRepository.countByStatus("PENDING");
+        model.addAttribute("pendingSellerCount", pendingSellers);
+
+        // Create stats object for sidebar
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("pendingStores", pendingSellers);
+        model.addAttribute("stats", stats);
+
+        return "admin/orders";
+    }
+
+    @GetMapping("/orders/shop/{storeId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String getShopOrders(
+            @PathVariable Long storeId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model, Authentication authentication) {
+
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsernameWithRole(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
+
+        // Get store
+        Store store = storeRepository.findById(storeId).orElse(null);
+        if (store == null) {
+            return "redirect:/admin/orders";
+        }
+
+        // Get orders with pagination
+        org.springframework.data.domain.Pageable pageable =
+            org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
+
+        org.springframework.data.domain.Page<Order> ordersPage;
+        if (status != null && !status.isEmpty()) {
+            ordersPage = orderRepository.findByStoreStoreIdAndStatusOrderByCreatedAtDesc(storeId, status, pageable);
+        } else {
+            ordersPage = orderRepository.findByStoreStoreIdOrderByCreatedAtDesc(storeId, pageable);
+        }
+
+        model.addAttribute("store", store);
+        model.addAttribute("orders", ordersPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", ordersPage.getTotalPages());
+        model.addAttribute("totalOrders", ordersPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("hasPrevious", ordersPage.hasPrevious());
+        model.addAttribute("hasNext", ordersPage.hasNext());
+        model.addAttribute("currentStatus", status != null ? status : "");
+
+        return "admin/order-detail :: orders-table";
+    }
+
     @PostMapping("/seller-verify/{storeId}/approve")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public String approveStore(
@@ -821,6 +1001,17 @@ public class AdminController {
         if (adminUser != null) {
             model.addAttribute("adminUser", adminUser);
         }
+
+        // Set active sidebar
+        model.addAttribute("activeSidebar", "profile");
+
+        // Get pending sellers count for sidebar badge
+        long pendingSellers = storeRepository.countByStatus("PENDING");
+
+        // Create stats object for sidebar
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("pendingStores", pendingSellers);
+        model.addAttribute("stats", stats);
 
         return "admin/profile";
     }

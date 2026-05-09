@@ -1,6 +1,7 @@
 package com.dealxanh.app.repository;
 
 import com.dealxanh.app.entity.Order;
+import com.dealxanh.app.entity.Store;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -47,4 +48,27 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Find by QR code (for store scan pickup)
     Optional<Order> findByPickupQrCode(String qrCode);
+
+    // ============== ADMIN ORDERS PAGE STATISTICS ==============
+
+    // Count orders by store
+    long countByStoreStoreId(Long storeId);
+
+    // Sum revenue by store (completed orders)
+    @Query("SELECT COALESCE(SUM(o.finalAmount), 0.0) FROM Order o WHERE o.store.storeId = :storeId AND o.status = 'COMPLETED'")
+    Double sumCompletedRevenueByStore(@Param("storeId") Long storeId);
+
+    // Count pending orders by store
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.store.storeId = :storeId AND o.status IN ('PENDING', 'CONFIRMED', 'READY_FOR_PICKUP')")
+    long countPendingOrdersByStore(@Param("storeId") Long storeId);
+
+    // Get all orders by store with pagination
+    Page<Order> findByStoreStoreIdOrderByCreatedAtDesc(Long storeId, Pageable pageable);
+
+    // Get orders by store with status filter
+    Page<Order> findByStoreStoreIdAndStatusOrderByCreatedAtDesc(Long storeId, String status, Pageable pageable);
+
+    // Get all distinct stores that have orders
+    @Query("SELECT DISTINCT o.store FROM Order o WHERE o.store IS NOT NULL ORDER BY o.store.storeName")
+    java.util.List<Store> findAllStoresWithOrders();
 }
