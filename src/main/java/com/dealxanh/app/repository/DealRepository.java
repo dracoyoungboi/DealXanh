@@ -31,6 +31,9 @@ public interface DealRepository extends JpaRepository<Deal, Long> {
     // Find by store and status
     List<Deal> findByStoreStoreIdAndStatus(Long storeId, String status);
 
+    // Find all deals by store
+    List<Deal> findByStoreStoreId(Long storeId);
+
     // Find active deals for a store
     @Query("SELECT d FROM Deal d WHERE d.status = 'ACTIVE' AND d.startTime <= :now AND d.endTime >= :now AND (d.store.storeId = :storeId OR d.scope = 'ALL_STORES')")
     List<Deal> findActiveDealsForStore(@Param("storeId") Long storeId, @Param("now") LocalDateTime now);
@@ -63,4 +66,23 @@ public interface DealRepository extends JpaRepository<Deal, Long> {
 
     @Query("SELECT COUNT(d) FROM Deal d WHERE d.status = 'SCHEDULED'")
     Long countScheduledDeals();
+
+    // Check if deal code exists (excluding current deal)
+    @Query("SELECT COUNT(d) FROM Deal d WHERE d.dealCode = :code AND d.status <> 'CANCELLED' AND (:dealId IS NULL OR d.dealId <> :dealId)")
+    Long countByDealCodeAndStatusNotCancelled(@Param("code") String code, @Param("dealId") Long dealId);
+
+    // Find overlapping deals for same store
+    @Query("SELECT d FROM Deal d WHERE d.store.storeId = :storeId AND d.status IN ('SCHEDULED', 'ACTIVE') " +
+           "AND d.startTime < :endTime AND d.endTime > :startTime " +
+           "AND (:dealId IS NULL OR d.dealId <> :dealId)")
+    List<Deal> findOverlappingDealsForStore(@Param("storeId") Long storeId, @Param("startTime") LocalDateTime startTime,
+                                            @Param("endTime") LocalDateTime endTime, @Param("dealId") Long dealId);
+
+    // Get average product price for store
+    @Query("SELECT AVG(p.originalPrice) FROM Product p WHERE p.store.storeId = :storeId AND p.active = true AND p.deleted = false")
+    Double getAverageProductPriceByStore(@Param("storeId") Long storeId);
+
+    // Count approved products for store
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.store.storeId = :storeId AND p.approvalStatus = 'APPROVED' AND p.deleted = false")
+    Long countApprovedProductsByStore(@Param("storeId") Long storeId);
 }

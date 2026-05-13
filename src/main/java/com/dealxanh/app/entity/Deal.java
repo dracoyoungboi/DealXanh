@@ -81,6 +81,13 @@ public class Deal {
     @JoinColumn(name = "store_id")
     private Store store;
 
+    // Relationships
+    @OneToMany(mappedBy = "deal", cascade = CascadeType.ALL)
+    private java.util.List<DealProduct> dealProducts;
+
+    @OneToMany(mappedBy = "deal", cascade = CascadeType.ALL)
+    private java.util.List<DealCategory> dealCategories;
+
     // Constructor
     public Deal() {
         this.status = "SCHEDULED";
@@ -164,6 +171,12 @@ public class Deal {
 
     public Store getStore() { return store; }
     public void setStore(Store store) { this.store = store; }
+
+    public java.util.List<DealProduct> getDealProducts() { return dealProducts; }
+    public void setDealProducts(java.util.List<DealProduct> dealProducts) { this.dealProducts = dealProducts; }
+
+    public java.util.List<DealCategory> getDealCategories() { return dealCategories; }
+    public void setDealCategories(java.util.List<DealCategory> dealCategories) { this.dealCategories = dealCategories; }
 
     // Helper methods
     public boolean isActive() {

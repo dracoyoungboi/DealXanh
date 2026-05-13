@@ -47,6 +47,13 @@ public class Product {
     // Soft delete
     private Boolean deleted = false;
 
+    // Trạng thái duyệt: PENDING, APPROVED, REJECTED
+    private String approvalStatus = "PENDING";
+
+    // Lý do từ chối (nếu rejected)
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -142,4 +149,22 @@ public class Product {
 
     public List<Review> getReviews() { return reviews; }
     public void setReviews(List<Review> reviews) { this.reviews = reviews; }
+
+    public String getApprovalStatus() { return approvalStatus; }
+    public void setApprovalStatus(String approvalStatus) { this.approvalStatus = approvalStatus; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (approvalStatus == null) approvalStatus = "PENDING";
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

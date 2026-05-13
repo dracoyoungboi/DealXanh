@@ -5,12 +5,17 @@ import com.dealxanh.app.entity.Store;
 import com.dealxanh.app.entity.User;
 import com.dealxanh.app.entity.Order;
 import com.dealxanh.app.entity.Deal;
+import com.dealxanh.app.entity.DealProduct;
+import com.dealxanh.app.entity.Product;
 import com.dealxanh.app.repository.OrderRepository;
 import com.dealxanh.app.repository.RoleRepository;
 import com.dealxanh.app.repository.StoreRepository;
 import com.dealxanh.app.repository.UserRepository;
 import com.dealxanh.app.repository.DealRepository;
 import com.dealxanh.app.repository.DealProductRepository;
+import com.dealxanh.app.repository.ProductRepository;
+import com.dealxanh.app.service.DealService;
+import com.dealxanh.app.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -18,9 +23,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
@@ -47,6 +54,15 @@ public class AdminController {
 
     @Autowired
     private DealProductRepository dealProductRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private ProductService productService;
+
+    @Autowired
+    private DealService dealService;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -642,6 +658,117 @@ public class AdminController {
         return "admin/dispute";
     }
 
+    @GetMapping("/products")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String products(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String approval,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model,
+            Authentication authentication) {
+
+        // Get current admin user
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (adminUser != null) {
+            model.addAttribute("adminUser", adminUser);
+        }
+
+        // Set active sidebar
+        model.addAttribute("activeSidebar", "products");
+
+        // Get products with pagination
+        org.springframework.data.domain.Pageable pageable =
+            org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<Product> products;
+
+        // Filter by approval status if specified
+        if (approval != null && !approval.isEmpty()) {
+            products = productService.getProductsByApprovalStatus(approval, pageable);
+        } else {
+            products = productService.getAllProducts(pageable);
+        }
+
+        // Get statistics
+        model.addAttribute("products", products);
+        model.addAttribute("totalProducts", productService.getTotalProducts());
+        model.addAttribute("activeProducts", productService.getActiveProducts());
+        model.addAttribute("outOfStockProducts", productService.getOutOfStockProducts());
+        model.addAttribute("pendingApproval", productService.getPendingApprovalProducts());
+        model.addAttribute("approvedProducts", productService.getApprovedProducts());
+        model.addAttribute("rejectedProducts", productService.getRejectedProducts());
+
+        // Filter parameters
+        model.addAttribute("selectedCategory", category);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedApproval", approval);
+        model.addAttribute("searchQuery", search);
+        model.addAttribute("currentPage", page);
+
+        return "admin/products";
+    }
+
+    @PostMapping("/products/{id}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String approveProduct(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        Product product = productService.approveProduct(id);
+        if (product == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy sản phẩm");
+            return "redirect:/admin/products";
+        }
+
+        redirectAttributes.addFlashAttribute("success", "Đã duyệt sản phẩm: " + product.getName());
+        return "redirect:/admin/products?approval=PENDING";
+    }
+
+    @PostMapping("/products/{id}/reject")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String rejectProduct(
+            @PathVariable Long id,
+            @RequestParam String reason,
+            RedirectAttributes redirectAttributes) {
+        Product product = productService.rejectProduct(id, reason);
+        if (product == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy sản phẩm");
+            return "redirect:/admin/products";
+        }
+
+        redirectAttributes.addFlashAttribute("success", "Đã từ chối sản phẩm: " + product.getName());
+        return "redirect:/admin/products?approval=PENDING";
+    }
+
+    @PostMapping("/products/{id}/toggle")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String toggleProduct(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        Product product = productService.toggleActive(id);
+        if (product == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy sản phẩm");
+            return "redirect:/admin/products";
+        }
+
+        String status = product.getActive() ? "kích hoạt" : "ngừng kích hoạt";
+        redirectAttributes.addFlashAttribute("success", "Đã " + status + " sản phẩm: " + product.getName());
+        return "redirect:/admin/products";
+    }
+
+    @PostMapping("/products/{id}/delete")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public String deleteProduct(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        boolean deleted = productService.deleteProduct(id);
+        if (!deleted) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy sản phẩm");
+            return "redirect:/admin/products";
+        }
+
+        redirectAttributes.addFlashAttribute("success", "Đã xóa sản phẩm thành công");
+        return "redirect:/admin/products";
+    }
+
     @GetMapping("/finance")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public String finance(Model model, Authentication authentication) {
@@ -947,44 +1074,214 @@ public class AdminController {
             @RequestParam String scope,
             @RequestParam(required = false) String bannerUrl,
             @RequestParam(defaultValue = "CODE_REQUIRED") String applyMethod,
-            Model model,
+            RedirectAttributes redirectAttributes,
             Authentication authentication) {
 
-        // Get current admin user
-        String username = authentication.getName();
-        User adminUser = userRepository.findByUsernameWithRole(username)
-                .orElse(userRepository.findByEmail(username).orElse(null));
+        try {
+            // Get current admin user
+            String username = authentication.getName();
+            User adminUser = userRepository.findByUsernameWithRole(username)
+                    .orElse(userRepository.findByEmail(username).orElse(null));
 
-        // Create new deal
-        Deal deal = new Deal();
-        deal.setDealName(dealName);
-        deal.setDealCode(dealCode);
-        deal.setDealType(dealType);
-        deal.setDescription(description);
-        deal.setDiscountType(discountType);
-        deal.setDiscountValue(discountValue);
-        deal.setMaxDiscountAmount(maxDiscountAmount);
-        deal.setMinOrderAmount(minOrderAmount);
-        deal.setMaxUsageCount(maxUsageCount);
-        deal.setUsageCount(0L);
-        deal.setStartTime(startTime);
-        deal.setEndTime(endTime);
-        deal.setStatus("SCHEDULED");
-        deal.setScope(scope);
-        deal.setBannerUrl(bannerUrl);
-        deal.setApplyMethod(applyMethod);
-        deal.setPriority(50);
-        deal.setCreatedBy(adminUser);
-        deal.setCreatedAt(LocalDateTime.now());
-        deal.setUpdatedAt(LocalDateTime.now());
+            // Create new deal
+            Deal deal = new Deal();
+            deal.setDealName(dealName);
+            deal.setDealCode(dealCode);
+            deal.setDealType(dealType);
+            deal.setDescription(description);
+            deal.setDiscountType(discountType);
+            deal.setDiscountValue(discountValue);
+            deal.setMaxDiscountAmount(maxDiscountAmount);
+            deal.setMinOrderAmount(minOrderAmount);
+            deal.setMaxUsageCount(maxUsageCount);
+            deal.setUsageCount(0L);
+            deal.setStartTime(startTime);
+            deal.setEndTime(endTime);
+            deal.setScope(scope);
+            deal.setBannerUrl(bannerUrl);
+            deal.setApplyMethod(applyMethod);
+            deal.setPriority(50);
+            deal.setCreatedBy(adminUser);
 
-        // Save deal
-        dealRepository.save(deal);
+            // Save deal with validation
+            dealService.createDeal(deal);
 
-        // Add success message
-        model.addAttribute("success", "Tạo deal thành công!");
+            redirectAttributes.addFlashAttribute("success", "Tạo deal thành công!");
+            return "redirect:/admin/deals";
 
-        return "redirect:/admin/deals";
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/admin/deals";
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi hệ thống: " + ex.getMessage());
+            return "redirect:/admin/deals";
+        }
+    }
+
+    // ============ DEAL CATEGORIES (Admin gán categories vào platform deals) ============
+
+    @GetMapping("/deals/{dealId}/available-categories")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @ResponseBody
+    public java.util.List<com.dealxanh.app.entity.Category> getAvailableCategoriesForDeal(
+            @PathVariable Long dealId) {
+        return dealService.getAvailableCategoriesForDeal(dealId);
+    }
+
+    @PostMapping("/deals/{dealId}/assign-categories")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @ResponseBody
+    public java.util.Map<String, Object> assignCategoriesToDeal(
+            @PathVariable Long dealId,
+            @RequestParam(required = false) java.util.List<Long> categoryIds,
+            @RequestParam(required = false) Integer priority) {
+
+        try {
+            int assignedCount = 0;
+            if (categoryIds != null && !categoryIds.isEmpty()) {
+                for (Long categoryId : categoryIds) {
+                    com.dealxanh.app.entity.DealCategory dealCategory =
+                        dealService.addCategoryToDeal(dealId, categoryId, priority);
+                    if (dealCategory != null) {
+                        assignedCount++;
+                    }
+                }
+            }
+
+            return java.util.Map.of(
+                "success", true,
+                "message", "Đã gán " + assignedCount + " danh mục vào deal"
+            );
+        } catch (Exception e) {
+            return java.util.Map.of(
+                "success", false,
+                "message", "Lỗi: " + e.getMessage()
+            );
+        }
+    }
+
+    @GetMapping("/deals/{dealId}/categories")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getDealCategories(@PathVariable Long dealId) {
+        java.util.List<com.dealxanh.app.entity.DealCategory> categories =
+            dealService.getDealCategories(dealId);
+
+        return java.util.Map.of("categories", categories);
+    }
+
+    @PostMapping("/deals/{dealId}/remove-category/{categoryId}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @ResponseBody
+    public java.util.Map<String, Object> removeCategoryFromDeal(
+            @PathVariable Long dealId,
+            @PathVariable Long categoryId) {
+
+        boolean removed = dealService.removeCategoryFromDeal(dealId, categoryId);
+
+        return java.util.Map.of(
+            "success", removed,
+            "message", removed ? "Đã xóa danh mục khỏi deal" : "Không thể xóa danh mục"
+        );
+    }
+
+    // ============ DEAL PRODUCTS (Seller gán products vào store deals) ============
+
+    @GetMapping("/deals/{dealId}/available-products")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STORE_OWNER')")
+    @ResponseBody
+    public java.util.List<Product> getAvailableProductsForDeal(
+            @PathVariable Long dealId) {
+
+        Deal deal = dealService.getDealById(dealId);
+        if (deal == null || deal.getStore() == null) {
+            return java.util.List.of();
+        }
+
+        // Get products from this store that are not already in the deal
+        java.util.List<Product> allStoreProducts = productRepository.findByStore_StoreId(deal.getStore().getStoreId());
+
+        java.util.List<Long> existingProductIds = dealProductRepository
+                .findByDeal(deal)
+                .stream()
+                .map(dp -> dp.getProduct().getProductId())
+                .toList();
+
+        if (existingProductIds.isEmpty()) {
+            return allStoreProducts;
+        }
+
+        return allStoreProducts.stream()
+                .filter(p -> !existingProductIds.contains(p.getProductId()))
+                .toList();
+    }
+
+    @PostMapping("/deals/{dealId}/assign-products")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STORE_OWNER')")
+    @ResponseBody
+    public java.util.Map<String, Object> assignProductsToDeal(
+            @PathVariable Long dealId,
+            @RequestBody java.util.List<java.util.Map<String, Object>> productsData) {
+
+        try {
+            int assignedCount = 0;
+            for (java.util.Map<String, Object> data : productsData) {
+                Long productId = ((Number) data.get("productId")).longValue();
+                Double originalPrice = ((Number) data.get("originalPrice")).doubleValue();
+                Double salePrice = ((Number) data.get("salePrice")).doubleValue();
+                Integer maxQuantity = data.get("maxQuantity") != null ?
+                    ((Number) data.get("maxQuantity")).intValue() : null;
+                Integer priority = data.get("priority") != null ?
+                    ((Number) data.get("priority")).intValue() : 0;
+
+                DealProduct dealProduct = dealService.addProductToDeal(
+                    dealId, productId, originalPrice, salePrice, maxQuantity, priority
+                );
+
+                if (dealProduct != null) {
+                    assignedCount++;
+                }
+            }
+
+            return java.util.Map.of(
+                "success", true,
+                "message", "Đã thêm " + assignedCount + " sản phẩm vào deal"
+            );
+        } catch (IllegalArgumentException e) {
+            return java.util.Map.of(
+                "success", false,
+                "message", e.getMessage()
+            );
+        } catch (Exception e) {
+            return java.util.Map.of(
+                "success", false,
+                "message", "Lỗi: " + e.getMessage()
+            );
+        }
+    }
+
+    @GetMapping("/deals/{dealId}/products")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STORE_OWNER')")
+    @ResponseBody
+    public java.util.Map<String, Object> getDealProducts(@PathVariable Long dealId) {
+        java.util.List<DealProduct> products = dealService.getDealProducts(dealId);
+
+        return java.util.Map.of("products", products);
+    }
+
+    @PostMapping("/deals/{dealId}/remove-product/{productId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STORE_OWNER')")
+    @ResponseBody
+    public java.util.Map<String, Object> removeProductFromDeal(
+            @PathVariable Long dealId,
+            @PathVariable Long productId) {
+
+        boolean removed = dealService.removeProductFromDeal(dealId, productId);
+
+        return java.util.Map.of(
+            "success", removed,
+            "message", removed ? "Đã xóa sản phẩm khỏi deal" : "Không thể xóa sản phẩm"
+        );
     }
 
     @PostMapping("/seller-verify/{storeId}/approve")

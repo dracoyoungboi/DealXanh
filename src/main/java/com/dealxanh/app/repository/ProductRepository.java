@@ -43,6 +43,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // For store owner management
     Page<Product> findByStoreStoreIdAndDeletedFalse(Long storeId, Pageable pageable);
 
+    // Find by store and deleted false (returns List)
+    List<Product> findByStoreStoreIdAndDeletedFalse(Long storeId);
+
+    List<Product> findByStore_StoreId(Long storeId);
+
     // Blind Box filter
     @Query("SELECT p FROM Product p WHERE p.active = true AND p.deleted = false AND p.stockQuantity > 0 " +
            "AND p.productType = 'BLIND_BOX'" +
@@ -52,7 +57,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // For admin
     Page<Product> findByDeletedFalse(Pageable pageable);
 
+    // Approval workflow
+    @Query("SELECT p FROM Product p WHERE p.deleted = false AND p.approvalStatus = :status")
+    Page<Product> findByApprovalStatus(@Param("status") String status, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.deleted = false AND p.approvalStatus = 'PENDING'")
+    List<Product> findPendingApproval();
+
     long countByDeletedFalseAndActive(Boolean active);
+
+    long countByDeletedFalseAndApprovalStatus(String status);
 
     long countByStoreStoreIdAndDeletedFalse(Long storeId);
 }
