@@ -445,6 +445,10 @@ public class AdminController {
         // Add displayRole to each user based on their actual role AND store relationships
         Map<Long, String> displayRoles = new HashMap<>();
         Map<Long, String> roleDescriptions = new HashMap<>();
+        Map<Long, String> qualityLabels = new HashMap<>();
+        Map<Long, Double> storeRatings = new HashMap<>();
+        Map<Long, Integer> storeTotalReviews = new HashMap<>();
+        int autoDisabledCount = 0;
 
         for (User user : users) {
             String displayRole = determineDisplayRole(user, allStores);
@@ -452,10 +456,38 @@ public class AdminController {
             displayRoles.put(user.getUserId(), displayRole);
             roleDescriptions.put(user.getUserId(), roleDescription);
 
+            // Build store quality info for sellers
+            if ("ROLE_STORE_OWNER".equals(displayRole) || "ROLE_STORE_STAFF".equals(displayRole)) {
+                Store userStore = findStoreForUser(user, displayRole, allStores);
+                if (userStore != null) {
+                    double rating = userStore.getAverageRating() != null ? userStore.getAverageRating() : 0;
+                    int reviewCount = userStore.getTotalReviews() != null ? userStore.getTotalReviews() : 0;
+                    storeRatings.put(user.getUserId(), rating);
+                    storeTotalReviews.put(user.getUserId(), reviewCount);
+                    qualityLabels.put(user.getUserId(), getQualityLabel(rating, reviewCount));
+
+                    // Auto-disable seller if: total reviews >= 40 AND average rating <= 2.5
+                    if (reviewCount >= 40 && rating <= 2.5 && user.getActive()) {
+                        user.setActive(false);
+                        user.setUpdatedAt(LocalDateTime.now());
+                        userRepository.save(user);
+                        autoDisabledCount++;
+                        System.out.println("AUTO-DISABLED: User " + user.getUsername() +
+                                         " | Store: " + userStore.getStoreName() +
+                                         " | Rating: " + rating +
+                                         " | Reviews: " + reviewCount);
+                    }
+                }
+            }
+
             // Debug log
             System.out.println("User: " + user.getUsername() +
                              " | DB Role: " + (user.getRole() != null ? user.getRole().getName() : "null") +
                              " | Display Role: " + displayRole);
+        }
+
+        if (autoDisabledCount > 0) {
+            model.addAttribute("warning", "Đã tự động vô hiệu " + autoDisabledCount + " người dùng do chất lượng thực phẩm và dịch vụ không đảm bảo (đánh giá >= 40, rating <= 2.5 sao)");
         }
 
         // Pagination logic
@@ -480,6 +512,9 @@ public class AdminController {
         model.addAttribute("users", paginatedUsers);
         model.addAttribute("displayRoles", displayRoles);
         model.addAttribute("roleDescriptions", roleDescriptions);
+        model.addAttribute("qualityLabels", qualityLabels);
+        model.addAttribute("storeRatings", storeRatings);
+        model.addAttribute("storeTotalReviews", storeTotalReviews);
         model.addAttribute("currentRole", role != null ? role : "");
         model.addAttribute("currentStatus", status != null ? status : "");
         model.addAttribute("searchQuery", search != null ? search : "");
@@ -540,43 +575,112 @@ public class AdminController {
         return buildUsersRedirectUrl(currentRole, currentStatus, null, page);
     }
 
-    @PostMapping("/users/{userId}/delete")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String deleteUser(
+    @PostMapping("/users/{userId}/edit")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String editUser(
             @PathVariable Long userId,
+            @RequestParam String fullName,
+            @RequestParam String email,
+            @RequestParam String phone,
+            @RequestParam(required = false) String address,
             @RequestParam String currentRole,
+            @RequestParam String currentStatus,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false, defaultValue = "0") int page,
             RedirectAttributes redirectAttributes) {
 
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             redirectAttributes.addFlashAttribute("error", "Người dùng không tồn tại");
-            return buildUsersRedirectUrl(currentRole, null, null, page);
+            return buildUsersRedirectUrl(currentRole, currentStatus, search, page);
         }
 
-        // Prevent admin from deleting themselves
-        Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = auth.getName();
-        if (currentUsername.equals(user.getUsername()) || currentUsername.equals(user.getEmail())) {
-            redirectAttributes.addFlashAttribute("error", "Bạn không thể xóa tài khoản của chính mình");
-            return buildUsersRedirectUrl(currentRole, null, null, page);
+        user.setFullName(fullName);
+        user.setEmail(email);
+        user.setPhone(phone);
+        user.setAddress(address);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        redirectAttributes.addFlashAttribute("success", "Đã cập nhật thông tin người dùng " + user.getUsername() + " thành công");
+        return buildUsersRedirectUrl(currentRole, currentStatus, search, page);
+    }
+
+    @GetMapping("/api/users/{userId}/edit-data")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public Map<String, Object> getUserEditData(@PathVariable Long userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return Map.of("success", false, "message", "Người dùng không tồn tại");
         }
 
-        String username = user.getUsername() != null ? user.getUsername() : user.getEmail();
+        Map<String, Object> data = new HashMap<>();
+        data.put("success", true);
+        data.put("userId", user.getUserId());
+        data.put("username", user.getUsername());
+        data.put("fullName", user.getFullName());
+        data.put("email", user.getEmail());
+        data.put("phone", user.getPhone());
+        data.put("address", user.getAddress());
+        data.put("avatarUrl", user.getAvatarUrl());
+        data.put("active", user.getActive());
+        data.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
+        data.put("updatedAt", user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : null);
 
-        // Check if user has orders
-        if (user.getOrders() != null && !user.getOrders().isEmpty()) {
-            // Instead of deleting, just deactivate
-            user.setActive(false);
-            user.setUpdatedAt(LocalDateTime.now());
-            userRepository.save(user);
-            redirectAttributes.addFlashAttribute("success", "Đã vô hiệu hóa người dùng " + username + " (có đơn hàng, không thể xóa hoàn toàn)");
-        } else {
-            userRepository.delete(user);
-            redirectAttributes.addFlashAttribute("success", "Đã xóa người dùng " + username + " thành công");
+        // Database role
+        if (user.getRole() != null) {
+            data.put("roleName", user.getRole().getName());
         }
 
-        return buildUsersRedirectUrl(currentRole, null, null, page);
+        // Get store info if user is a seller (owner or staff)
+        List<Store> allStores = storeRepository.findAll();
+        String displayRole = determineDisplayRole(user, allStores);
+        data.put("displayRole", displayRole);
+        data.put("roleDescription", getRoleDescription(displayRole));
+
+        // Find store for this seller
+        Store userStore = null;
+        if ("ROLE_STORE_OWNER".equals(displayRole)) {
+            for (Store store : allStores) {
+                if (store.getOwner() != null && store.getOwner().getUserId().equals(user.getUserId())) {
+                    userStore = store;
+                    break;
+                }
+            }
+        } else if ("ROLE_STORE_STAFF".equals(displayRole)) {
+            userStore = user.getWorkStore();
+        }
+
+        if (userStore != null) {
+            Map<String, Object> storeData = new HashMap<>();
+            storeData.put("storeId", userStore.getStoreId());
+            storeData.put("storeName", userStore.getStoreName());
+            storeData.put("description", userStore.getDescription());
+            storeData.put("address", userStore.getAddress());
+            storeData.put("phone", userStore.getPhone());
+            storeData.put("status", userStore.getStatus());
+            storeData.put("businessType", userStore.getBusinessType());
+            storeData.put("categories", userStore.getCategories());
+            storeData.put("city", userStore.getCity());
+            storeData.put("district", userStore.getDistrict());
+            double rating = userStore.getAverageRating() != null ? userStore.getAverageRating() : 0;
+            int reviewCount = userStore.getTotalReviews() != null ? userStore.getTotalReviews() : 0;
+            storeData.put("averageRating", rating);
+            storeData.put("totalReviews", reviewCount);
+            storeData.put("logoUrl", userStore.getLogoUrl());
+            storeData.put("createdAt", userStore.getCreatedAt() != null ? userStore.getCreatedAt().toString() : null);
+
+            // Quality label
+            String qualityLabel = getQualityLabel(rating, reviewCount);
+            if (qualityLabel != null) {
+                storeData.put("qualityLabel", qualityLabel);
+                storeData.put("qualityText", getQualityDisplayText(qualityLabel));
+            }
+            data.put("store", storeData);
+        }
+
+        return data;
     }
 
     /**
@@ -1453,6 +1557,49 @@ public class AdminController {
             case "ROLE_USER":
             default:
                 return "Buyer";
+        }
+    }
+
+    /**
+     * Finds the store associated with a user based on their display role.
+     */
+    private Store findStoreForUser(User user, String displayRole, List<Store> allStores) {
+        if ("ROLE_STORE_OWNER".equals(displayRole)) {
+            for (Store store : allStores) {
+                if (store.getOwner() != null && store.getOwner().getUserId().equals(user.getUserId())) {
+                    return store;
+                }
+            }
+        } else if ("ROLE_STORE_STAFF".equals(displayRole)) {
+            return user.getWorkStore();
+        }
+        return null;
+    }
+
+    /**
+     * Determines quality label based on store rating and review count.
+     * - >= 40 reviews & rating <= 2.5: Kém chất lượng (auto-disable)
+     * - rating 3.0 - 4.0: Chất lượng ổn
+     * - rating >= 4.5: Chất lượng tốt
+     */
+    private String getQualityLabel(double rating, int totalReviews) {
+        if (totalReviews == 0) return null; // No reviews yet
+        if (totalReviews >= 40 && rating <= 2.5) return "POOR";
+        if (rating >= 4.5) return "GOOD";
+        if (rating >= 3.0) return "OK";
+        return "POOR"; // below 3.0 with any review count
+    }
+
+    /**
+     * Gets the Vietnamese display text for a quality label.
+     */
+    private String getQualityDisplayText(String label) {
+        if (label == null) return null;
+        switch (label) {
+            case "POOR": return "Chất lượng thực phẩm và dịch vụ không đảm bảo";
+            case "OK": return "Chất lượng ổn";
+            case "GOOD": return "Chất lượng tốt";
+            default: return null;
         }
     }
 

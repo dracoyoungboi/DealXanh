@@ -210,7 +210,206 @@ input[type="text"]::placeholder {
     color: var(--text-tertiary);
 }
 
-/* Loading spinner animation */
+/* Action Buttons */
+.action-btn{
+    width: 34px; height: 34px;
+    border-radius: var(--radius-md);
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    flex-shrink: 0;
+}
+.action-btn:hover{transform: translateY(-2px);}
+.action-btn:active{transform: translateY(0);}
+
+/* Toggle buttons */
+.toggle-deactivate{
+    background: #fee2e2; color: var(--danger);
+    border: 1px solid #fecaca;
+}
+.toggle-deactivate:hover{
+    background: var(--danger); color: #fff;
+    box-shadow: 0 4px 12px rgba(239,68,68,.35);
+}
+.toggle-activate{
+    background: #d1fae5; color: var(--success);
+    border: 1px solid #a7f3d0;
+}
+.toggle-activate:hover{
+    background: var(--success); color: #fff;
+    box-shadow: 0 4px 12px rgba(16,185,129,.35);
+}
+
+/* Edit button */
+.edit-action-btn{
+    background: #e0e7ff; color: #4f46e5;
+    border: 1px solid #c7d2fe;
+}
+.edit-action-btn:hover{
+    background: #4f46e5; color: #fff;
+    box-shadow: 0 4px 12px rgba(79,70,229,.35);
+}
+
+/* Detail button */
+.detail-action-btn{
+    background: #f0f2f5; color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+.detail-action-btn:hover{
+    background: var(--primary); color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(13,92,46,.3);
+}
+
+/* Edit Modal */
+.edit-modal-overlay{
+    display: none; position: fixed; z-index: 1001;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.55);
+    padding: 20px; box-sizing: border-box;
+    overflow-y: auto;
+    animation: fadeIn 0.2s ease;
+}
+.edit-modal-overlay.show{
+    display: flex; align-items: flex-start; justify-content: center;
+}
+.edit-modal{
+    position: relative; width: 100%; max-width: 680px;
+    margin: 40px auto;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 25px 80px rgba(0,0,0,0.25);
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.edit-modal__header{
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(135deg, #fafbfc 0%, #fff 100%);
+}
+.edit-modal__title{font-size: 20px; font-weight: 800;}
+.edit-modal__subtitle{font-size: 13px; color: var(--text-secondary); margin-top: 2px;}
+.edit-modal__close{
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--bg); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.edit-modal__close:hover{background: var(--danger); color: #fff;}
+
+.edit-modal__body{padding: 24px 28px;}
+.edit-modal__body--loading{
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px 20px; color: var(--text-secondary);
+}
+.edit-modal__body--loading .spinner{
+    width: 32px; height: 32px; border: 3px solid var(--border);
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 12px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.edit-form-group{margin-bottom: 20px;}
+
+.edit-form-group label{
+    display: block; font-size: 12px; font-weight: 700;
+    color: var(--text-secondary); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 6px;
+}
+.edit-form-group input,
+.edit-form-group textarea,
+.edit-form-group select{
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font); font-size: 14px;
+    color: var(--text-primary);
+    background: var(--surface);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+.edit-form-group input:focus,
+.edit-form-group textarea:focus,
+.edit-form-group select:focus{
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(13,92,46,.1);
+}
+.edit-form-group input:disabled,
+.edit-form-group textarea:disabled{
+    background: var(--bg); color: var(--text-secondary);
+    cursor: not-allowed;
+}
+.edit-form-row{
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.edit-form-row-3{
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+}
+
+.edit-section-title{
+    font-size: 14px; font-weight: 700; color: var(--primary);
+    padding: 12px 0 8px; margin-bottom: 12px;
+    border-bottom: 2px solid var(--primary);
+    display: flex; align-items: center; gap: 8px;
+}
+.edit-section-title svg{width: 18px; height: 18px; flex-shrink: 0;}
+
+.store-info-card{
+    background: linear-gradient(135deg, #f0fdf4 0%, #fafbfc 100%);
+    border: 1px solid #bbf7d0; border-radius: var(--radius-lg);
+    padding: 20px; margin-bottom: 20px;
+}
+.store-info-card__header{
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+}
+.store-info-card__name{font-size: 16px; font-weight: 700; color: var(--primary);}
+.store-info-card__badge{
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: var(--radius-full);
+}
+.store-info-grid{
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.store-info-item{}
+.store-info-item__label{
+    font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    text-transform: uppercase; margin-bottom: 2px;
+}
+.store-info-item__value{font-size: 14px; font-weight: 500; color: var(--text-primary);}
+
+.edit-modal__footer{
+    padding: 16px 28px; background: var(--bg);
+    border-top: 1px solid var(--border-light);
+    display: flex; justify-content: flex-end; gap: 10px;
+}
+
+.btn-save{
+    padding: 10px 24px; border-radius: var(--radius-md);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    background: var(--primary); color: #fff; border: none;
+}
+.btn-save:hover{
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13,92,46,.3);
+}
+.btn-cancel{
+    padding: 10px 24px; border-radius: var(--radius-md);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface); color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+.btn-cancel:hover{
+    border-color: var(--text-secondary);
+    background: var(--bg);
+}
     </style>
 </head>
 <body>
@@ -367,6 +566,17 @@ input[type="text"]::placeholder {
                 </div>
             </div>
 
+            <div th:if="${warning}" style="margin-bottom: 20px; padding: 14px 18px; border-radius: var(--radius-md); background: var(--warning-bg); color: #92400e; border: 1px solid var(--warning);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; flex-shrink: 0;">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span th:text="${warning}">Warning message</span>
+                </div>
+            </div>
+
             <!-- Users Table -->
             <div class="card" style="border: none; box-shadow: var(--shadow-sm);">
                 <div class="card__body" style="padding: 0;">
@@ -374,12 +584,13 @@ input[type="text"]::placeholder {
                         <table class="table" th:if="${users != null and !users.isEmpty()}" style="border-radius: var(--radius-lg); overflow: hidden;">
                             <thead>
                                 <tr style="background: var(--bg);">
-                                    <th style="width: 280px;">Người dùng</th>
-                                    <th style="width: 220px;">Email</th>
+                                    <th style="width: 240px;">Người dùng</th>
+                                    <th style="width: 200px;">Email</th>
                                     <th>Vai trò</th>
                                     <th>Trạng thái</th>
-                                    <th style="width: 140px;">SĐT</th>
-                                    <th style="text-align: right; width: 220px;">Thao tác</th>
+                                    <th>Chất lượng</th>
+                                    <th style="width: 120px;">SĐT</th>
+                                    <th style="text-align: right; width: 170px;">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -443,10 +654,62 @@ input[type="text"]::placeholder {
                                         </span>
                                     </td>
                                     <td>
+                                        <div th:if="${qualityLabels != null && qualityLabels.containsKey(user.userId)}">
+                                            <div th:switch="${qualityLabels[user.userId]}">
+                                                <!-- POOR: Chất lượng thực phẩm và dịch vụ không đảm bảo -->
+                                                <div th:case="'POOR'" style="display: flex; align-items: center; gap: 4px;">
+                                                    <span class="badge badge-danger" style="font-size: 10px; padding: 3px 8px;">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px">
+                                                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                                            <line x1="12" y1="9" x2="12" y2="13"/>
+                                                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                                        </svg>
+                                                        Kém
+                                                    </span>
+                                                    <div style="font-size: 10px; color: var(--danger);">
+                                                        <span th:text="${#numbers.formatDecimal(storeRatings[user.userId], 1, 1)}">0.0</span>
+                                                        ⭐
+                                                    </div>
+                                                </div>
+                                                <!-- OK: Chất lượng ổn -->
+                                                <div th:case="'OK'" style="display: flex; align-items: center; gap: 4px;">
+                                                    <span class="badge badge-warning" style="font-size: 10px; padding: 3px 8px;">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px">
+                                                            <circle cx="12" cy="12" r="10"/>
+                                                            <line x1="12" y1="8" x2="12" y2="12"/>
+                                                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                                        </svg>
+                                                        Ổn
+                                                    </span>
+                                                    <div style="font-size: 10px; color: var(--warning);">
+                                                        <span th:text="${#numbers.formatDecimal(storeRatings[user.userId], 1, 1)}">0.0</span>
+                                                        ⭐
+                                                    </div>
+                                                </div>
+                                                <!-- GOOD: Chất lượng tốt -->
+                                                <div th:case="'GOOD'" style="display: flex; align-items: center; gap: 4px;">
+                                                    <span class="badge badge-success" style="font-size: 10px; padding: 3px 8px;">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px">
+                                                            <polyline points="20 6 9 17 4 12"/>
+                                                        </svg>
+                                                        Tốt
+                                                    </span>
+                                                    <div style="font-size: 10px; color: var(--success);">
+                                                        <span th:text="${#numbers.formatDecimal(storeRatings[user.userId], 1, 1)}">0.0</span>
+                                                        ⭐
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" th:text="'(' + ${storeTotalReviews[user.userId]} + ' đánh giá)'">(0 đánh giá)</div>
+                                        </div>
+                                        <span th:unless="${qualityLabels != null && qualityLabels.containsKey(user.userId)}" style="font-size: 12px; color: var(--text-tertiary);">--</span>
+                                    </td>
+                                    <td>
                                         <div style="font-size: 13px; color: var(--text-secondary);" th:text="${user.phone != null ? user.phone : 'N/A'}">0123456789</div>
                                     </td>
                                     <td style="text-align: right;">
-                                        <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                                        <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                                            <!-- Toggle Active/Inactive Button -->
                                             <form th:action="@{/admin/users/{userId}/toggle-active(userId=${user.userId})}" method="post" style="display: inline;" class="toggle-form">
                                                 <input type="hidden" name="currentRole" th:value="${currentRole != null ? currentRole : ''}"/>
                                                 <input type="hidden" name="currentStatus" th:value="${currentStatus != null ? currentStatus : ''}"/>
@@ -454,38 +717,39 @@ input[type="text"]::placeholder {
                                                 <input type="hidden" name="userName" th:value="${user.fullName != null ? user.fullName : user.username}"/>
                                                 <input type="hidden" name="isActive" th:value="${user.active}"/>
                                                 <button type="submit"
-                                                        class="btn-sm toggle-btn"
-                                                        th:classappend="${user.active ? 'btn-outline' : 'btn-primary'}">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
-                                                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
-                                                        <line x1="12" y1="2" x2="12" y2="12"/>
+                                                        class="action-btn toggle-action-btn"
+                                                        th:classappend="${user.active ? 'toggle-deactivate' : 'toggle-activate'}"
+                                                        th:title="${user.active ? 'Vô hiệu hóa người dùng' : 'Kích hoạt người dùng'}">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px;">
+                                                        <path th:if="${user.active}" d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+                                                        <line th:if="${user.active}" x1="12" y1="2" x2="12" y2="12"/>
+                                                        <path th:if="${not user.active}" d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                                        <polyline th:if="${not user.active}" points="22 4 12 14.01 9 11.01"/>
                                                     </svg>
-                                                    <span th:text="${user.active ? 'Vô hiệu' : 'Kích hoạt'}"></span>
                                                 </button>
                                             </form>
 
-                                            <form th:action="@{/admin/users/{userId}/delete(userId=${user.userId})}" method="post" style="display: inline;" class="delete-form" th:if="${displayRole != 'ROLE_ADMIN'}">
-                                                <input type="hidden" name="currentRole" th:value="${currentRole != null ? currentRole : ''}"/>
-                                                <input type="hidden" name="page" th:value="${currentPage}"/>
-                                                <button type="submit" class="btn-sm btn-danger">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
-                                                        <polyline points="3 6 5 5 18 6 22 6 22 18 19 6 19 6"/>
-                                                        <line x1="19" y1="5" x2="9" y2="15"/>
-                                                        <line x1="9" y1="5" x2="19" y2="15"/>
-                                                    </svg>
-                                                    Xóa
-                                                </button>
-                                            </form>
-
+                                            <!-- Edit Button -->
                                             <button type="button"
+                                                    class="action-btn edit-action-btn"
+                                                    th:onclick="'openEditModal(' + ${user.userId} + ')'"
+                                                    title="Chỉnh sửa người dùng">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px;">
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                                </svg>
+                                            </button>
+
+                                            <!-- Detail Button -->
+                                            <button type="button"
+                                                    class="action-btn detail-action-btn"
                                                     th:onclick="'showUserDetail(' + ${user.userId} + ')'"
-                                                    class="btn-sm btn-outline">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                                    title="Xem chi tiết người dùng">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px;">
                                                     <circle cx="12" cy="12" r="10"/>
                                                     <line x1="12" y1="16" x2="12" y2="12"/>
                                                     <line x1="12" y1="8" x2="12.01" y2="8"/>
                                                 </svg>
-                                                Chi tiết
                                             </button>
                                         </div>
                                     </td>
@@ -602,6 +866,52 @@ input[type="text"]::placeholder {
     </div>
 </div>
 
+<!-- Edit User Modal -->
+<div id="editUserModal" class="edit-modal-overlay">
+    <div class="edit-modal">
+        <!-- Modal Header -->
+        <div class="edit-modal__header">
+            <div>
+                <div class="edit-modal__title">Chỉnh sửa người dùng</div>
+                <div class="edit-modal__subtitle">Cập nhật thông tin cá nhân và xem thông tin cửa hàng</div>
+            </div>
+            <button class="edit-modal__close" onclick="closeEditModal()" title="Đóng">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="edit-modal__body" id="editModalBody">
+            <div class="edit-modal__body--loading">
+                <div class="spinner"></div>
+                <span style="font-size: 14px;">Đang tải dữ liệu...</span>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="edit-modal__footer" id="editModalFooter" style="display: none;">
+            <button class="btn-cancel" onclick="closeEditModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Hủy
+            </button>
+            <button class="btn-save" onclick="submitEditForm()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Lưu thay đổi
+            </button>
+        </div>
+    </div>
+</div>
+
 <script th:inline="javascript">
 // Store user data from server
 const usersData = /*[[${users}]]*/ [];
@@ -646,19 +956,283 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
-    // Handle delete form submit with confirmation
-    const deleteForms = document.querySelectorAll('.delete-form');
-    deleteForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const userName = form.querySelector('input[name="userName"]').value;
-            const confirmed = confirm('Bạn có chắc muốn xóa người dùng ' + userName + '? Hành động này không thể hoàn tác!');
-            if (!confirmed) {
-                e.preventDefault();
-            }
-        });
-    });
 });
+
+let currentEditUserId = null;
+
+// Open edit modal and load user data via API
+function openEditModal(userId) {
+    currentEditUserId = userId;
+
+    const modal = document.getElementById('editUserModal');
+    const body = document.getElementById('editModalBody');
+    const footer = document.getElementById('editModalFooter');
+
+    // Show loading
+    body.innerHTML = `<div class="edit-modal__body--loading"><div class="spinner"></div><span style="font-size: 14px; margin-left: 12px;">Đang tải dữ liệu...</span></div>`;
+    footer.style.display = 'none';
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    // Fetch user data from API
+    fetch('/admin/api/users/' + userId + '/edit-data')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                body.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--danger);">
+                    <p style="font-size: 16px; font-weight: 600;">Lỗi tải dữ liệu</p>
+                    <p style="font-size: 14px; margin-top: 4px;">${data.message || 'Không thể tải thông tin người dùng'}</p>
+                </div>`;
+                return;
+            }
+            renderEditForm(data);
+            footer.style.display = 'flex';
+        })
+        .catch(err => {
+            console.error('Error loading user data:', err);
+            body.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--danger);">
+                <p style="font-size: 16px; font-weight: 600;">Lỗi kết nối</p>
+                <p style="font-size: 14px; margin-top: 4px;">Không thể kết nối đến máy chủ</p>
+            </div>`;
+        });
+}
+
+function renderEditForm(data) {
+    const body = document.getElementById('editModalBody');
+
+    const isSeller = data.displayRole === 'ROLE_STORE_OWNER' || data.displayRole === 'ROLE_STORE_STAFF';
+    const roleDesc = data.roleDescription || 'Buyer';
+    const store = data.store;
+
+    let html = '';
+
+    // Avatar + Role header
+    html += `<div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+        <div style="width: 72px; height: 72px; border-radius: 50%; overflow: hidden; background: var(--bg); display: flex; align-items: center; justify-content: center; border: 3px solid var(--border-light); flex-shrink: 0;">`;
+    if (data.avatarUrl) {
+        html += `<img src="${data.avatarUrl}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">`;
+    } else {
+        html += `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 36px; height: 36px; color: var(--text-secondary);">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+        </svg>`;
+    }
+    html += `</div>
+        <div>
+            <div style="font-size: 18px; font-weight: 700;">${escapeHtml(data.fullName || data.username)}</div>
+            <div style="font-size: 13px; color: var(--text-secondary);">@${escapeHtml(data.username)}</div>
+            <div style="margin-top: 4px;">
+                <span class="badge ${data.displayRole === 'ROLE_USER' ? 'badge-info' : (data.displayRole === 'ROLE_STORE_OWNER' ? 'badge-success' : (data.displayRole === 'ROLE_STORE_STAFF' ? 'badge-warning' : 'badge-danger'))}">
+                    ${roleDesc}
+                </span>
+                <span class="badge ${data.active ? 'badge-success' : 'badge-danger'}" style="margin-left: 6px;">
+                    ${data.active ? 'Hoạt động' : 'Vô hiệu'}
+                </span>
+            </div>
+        </div>
+    </div>`;
+
+    // Store info card (for sellers)
+    if (isSeller && store) {
+        html += `<div class="edit-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+                <path d="M5 21V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v12"/>
+                <path d="M12 3v18"/>
+            </svg>
+            Thông tin cửa hàng
+        </div>`;
+
+        html += `<div class="store-info-card">
+            <div class="store-info-card__header">
+                <div style="width: 48px; height: 48px; border-radius: var(--radius-md); overflow: hidden; background: var(--bg); display: flex; align-items: center; justify-content: center; border: 2px solid #bbf7d0; flex-shrink: 0;">`;
+        if (store.logoUrl) {
+            html += `<img src="${store.logoUrl}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">`;
+        } else {
+            html += `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px; color: var(--primary);">
+                <path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/>
+                <path d="M5 21V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v12"/>
+            </svg>`;
+        }
+        html += `</div>
+                <div>
+                    <div class="store-info-card__name">${escapeHtml(store.storeName || 'Chưa có tên')}</div>
+                    <span class="store-info-card__badge badge ${store.status === 'ACTIVE' ? 'badge-success' : (store.status === 'PENDING' ? 'badge-warning' : 'badge-danger')}">
+                        ${store.status === 'ACTIVE' ? 'Đang hoạt động' : (store.status === 'PENDING' ? 'Chờ duyệt' : store.status)}
+                    </span>
+                </div>
+            </div>
+            <div class="store-info-grid">`;
+        if (store.description) {
+            html += `<div class="store-info-item"><div class="store-info-item__label">Mô tả</div><div class="store-info-item__value">${escapeHtml(store.description)}</div></div>`;
+        }
+        if (store.phone) {
+            html += `<div class="store-info-item"><div class="store-info-item__label">SĐT cửa hàng</div><div class="store-info-item__value">${escapeHtml(store.phone)}</div></div>`;
+        }
+        if (store.address) {
+            html += `<div class="store-info-item"><div class="store-info-item__label">Địa chỉ</div><div class="store-info-item__value">${escapeHtml(store.address)}</div></div>`;
+        }
+        if (store.city || store.district) {
+            html += `<div class="store-info-item"><div class="store-info-item__label">Khu vực</div><div class="store-info-item__value">${escapeHtml(store.city || '')}${store.city && store.district ? ', ' : ''}${escapeHtml(store.district || '')}</div></div>`;
+        }
+        if (store.businessType) {
+            html += `<div class="store-info-item"><div class="store-info-item__label">Loại hình</div><div class="store-info-item__value">${escapeHtml(store.businessType)}</div></div>`;
+        }
+        if (store.categories) {
+            html += `<div class="store-info-item"><div class="store-info-item__label">Danh mục</div><div class="store-info-item__value">${escapeHtml(store.categories)}</div></div>`;
+        }
+        if (store.averageRating != null) {
+            let qualityHtml = '';
+            if (store.qualityLabel && store.qualityText) {
+                const qColor = store.qualityLabel === 'POOR' ? 'var(--danger)' : (store.qualityLabel === 'GOOD' ? 'var(--success)' : 'var(--warning)');
+                const qBg = store.qualityLabel === 'POOR' ? 'var(--danger-bg)' : (store.qualityLabel === 'GOOD' ? 'var(--success-bg)' : 'var(--warning-bg)');
+                qualityHtml = `<div style="margin-top: 4px;">
+                    <span style="display: inline-block; padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; background: ${qBg}; color: ${qColor}; border: 1px solid ${qColor};">
+                        ${store.qualityText}
+                    </span>
+                </div>`;
+            }
+            html += `<div class="store-info-item"><div class="store-info-item__label">Đánh giá</div><div class="store-info-item__value">${store.averageRating} ⭐ (${store.totalReviews || 0} đánh giá)${qualityHtml}</div></div>`;
+        }
+        if (store.createdAt) {
+            html += `<div class="store-info-item"><div class="store-info-item__label">Ngày tạo cửa hàng</div><div class="store-info-item__value">${formatDateStr(store.createdAt)}</div></div>`;
+        }
+        html += `</div></div>`;
+    }
+
+    // Edit form
+    html += `<div class="edit-section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+        </svg>
+        Thông tin cá nhân
+    </div>`;
+
+    html += `<form id="editUserForm" onsubmit="return false;">
+        <div class="edit-form-row">
+            <div class="edit-form-group">
+                <label for="editFullName">Họ và tên</label>
+                <input type="text" id="editFullName" value="${escapeAttr(data.fullName || '')}" placeholder="Nhập họ và tên">
+            </div>
+            <div class="edit-form-group">
+                <label for="editEmail">Email</label>
+                <input type="email" id="editEmail" value="${escapeAttr(data.email || '')}" placeholder="Nhập email">
+            </div>
+        </div>
+        <div class="edit-form-row">
+            <div class="edit-form-group">
+                <label for="editPhone">Số điện thoại</label>
+                <input type="text" id="editPhone" value="${escapeAttr(data.phone || '')}" placeholder="Nhập số điện thoại">
+            </div>
+            <div class="edit-form-group">
+                <label for="editUsername">Tên đăng nhập</label>
+                <input type="text" id="editUsername" value="${escapeAttr(data.username || '')}" disabled>
+                <span style="font-size: 11px; color: var(--text-tertiary); margin-top: 3px; display: block;">Không thể thay đổi tên đăng nhập</span>
+            </div>
+        </div>
+        <div class="edit-form-group">
+            <label for="editAddress">Địa chỉ</label>
+            <textarea id="editAddress" rows="2" placeholder="Nhập địa chỉ" style="resize: vertical;">${escapeHtml(data.address || '')}</textarea>
+        </div>
+        <div class="edit-form-row">
+            <div class="edit-form-group">
+                <label for="editRole">Vai trò</label>
+                <input type="text" id="editRole" value="${roleDesc}" disabled>
+                <span style="font-size: 11px; color: var(--text-tertiary); margin-top: 3px; display: block;">Liên hệ Admin để thay đổi vai trò</span>
+            </div>
+            <div class="edit-form-group">
+                <label for="editCreatedAt">Ngày tham gia</label>
+                <input type="text" id="editCreatedAt" value="${formatDateStr(data.createdAt)}" disabled>
+            </div>
+        </div>
+    </form>`;
+
+    body.innerHTML = html;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function escapeAttr(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function formatDateStr(dateStr) {
+    if (!dateStr) return 'N/A';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    } catch(e) { return 'N/A'; }
+}
+
+function submitEditForm() {
+    if (!currentEditUserId) return;
+
+    const fullName = document.getElementById('editFullName').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+    const phone = document.getElementById('editPhone').value.trim();
+    const address = document.getElementById('editAddress').value.trim();
+
+    if (!fullName || !email || !phone) {
+        alert('Vui lòng điền đầy đủ Họ tên, Email và Số điện thoại');
+        return;
+    }
+
+    // Build form data
+    const formData = new FormData();
+    formData.append('fullName', fullName);
+    formData.append('email', email);
+    formData.append('phone', phone);
+    formData.append('address', address);
+
+    // Get current URL params for redirect
+    const url = new URL(window.location);
+    formData.append('currentRole', url.searchParams.get('role') || '');
+    formData.append('currentStatus', url.searchParams.get('status') || '');
+    formData.append('search', url.searchParams.get('search') || '');
+    formData.append('page', url.searchParams.get('page') || '0');
+
+    // Build URL-encoded form body
+    const params = new URLSearchParams();
+    for (const [key, value] of formData.entries()) {
+        params.append(key, value);
+    }
+
+    fetch('/admin/users/' + currentEditUserId + '/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+        } else {
+            return response.text();
+        }
+    })
+    .then(html => {
+        if (html) {
+            // If we got HTML back (non-redirect), reload the page
+            document.open();
+            document.write(html);
+            document.close();
+        }
+    })
+    .catch(err => {
+        console.error('Error saving user:', err);
+        alert('Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.');
+    });
+}
+
+function closeEditModal() {
+    document.getElementById('editUserModal').classList.remove('show');
+    document.body.style.overflow = 'auto';
+    currentEditUserId = null;
+}
 
 function showUserDetail(userId) {
     const user = usersData.find(u => u.userId === userId);
@@ -713,17 +1287,24 @@ function closeUserDetail() {
     document.body.style.overflow = 'auto';
 }
 
-// Close modal on escape key
+// Close modals on escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+        closeUserDetail();
+        closeEditModal();
+    }
+});
+
+// Close modals when clicking outside
+document.getElementById('userDetailModal').addEventListener('click', function(e) {
+    if (e.target === this) {
         closeUserDetail();
     }
 });
 
-// Close modal when clicking outside
-document.getElementById('userDetailModal').addEventListener('click', function(e) {
+document.getElementById('editUserModal').addEventListener('click', function(e) {
     if (e.target === this) {
-        closeUserDetail();
+        closeEditModal();
     }
 });
 
