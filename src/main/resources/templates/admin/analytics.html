@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo & Phân tích — Admin DealXanh</title>
+    <div th:replace="~{common/admin/css :: css}"></div>
+    <style>
+.content{padding:24px;display:flex;flex-direction:column;gap:20px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);padding:18px;
+    transition:all var(--tr);
+}
+.kpi-card:hover{box-shadow:var(--shadow-md)}
+.kpi-card__top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.kpi-card__label{font-size:12px;color:var(--text-secondary);font-weight:500}
+.kpi-card__icon{width:36px;height:36px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center}
+.kpi-card__icon svg{width:18px;height:18px}
+.kpi-card__value{font-size:26px;font-weight:800;margin-bottom:4px;line-height:1}
+.kpi-card__change{font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.kpi-card__change.up{color:var(--success)}
+.kpi-card__change.down{color:var(--danger)}
+.kpi-card__sub{font-size:11px;color:var(--text-tertiary);margin-top:4px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+.col-2-1{display:grid;grid-template-columns:2fr 1fr;gap:20px}
+
+.panel{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light)}
+.panel__header{padding:16px 20px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
+.panel__title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.panel__title svg{width:16px;height:16px;color:var(--primary)}
+.panel__body{padding:20px}
+
+.table{width:100%;border-collapse:collapse}
+.table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-light)}
+.table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border-light)}
+.table tr:last-child td{border-bottom:none}
+.table tr:hover td{background:var(--bg)}
+
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:var(--radius-full)}
+.badge--success{background:var(--success-bg);color:var(--success)}
+.badge--warning{background:var(--warning-bg);color:var(--warning)}
+.badge--danger{background:var(--danger-bg);color:var(--danger)}
+.badge--info{background:var(--info-bg);color:var(--info)}
+
+.chart-area{height:280px;position:relative;display:flex;align-items:flex-end;gap:2px;padding:0 4px}
+.chart-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;cursor:pointer;min-width:6px}
+.chart-bar__fill{border-radius:3px 3px 0 0;width:100%;max-width:36px;transition:all .3s;position:relative}
+.chart-bar__fill:hover{opacity:.75}
+.chart-bar__fill.revenue{background:linear-gradient(to top,var(--primary),rgba(13,92,46,.3))}
+.chart-bar__fill.orders{background:linear-gradient(to top,var(--accent),rgba(212,175,55,.3))}
+.chart-bar__tooltip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--text-primary);color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;white-space:nowrap;display:none;z-index:5;margin-bottom:4px}
+.chart-bar:hover .chart-bar__tooltip{display:block}
+.chart-label-x{font-size:10px;color:var(--text-tertiary);margin-top:6px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+.chart-legend{display:flex;gap:16px;margin-bottom:12px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-secondary)}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+
+.progress-bar{height:8px;border-radius:4px;background:var(--bg);overflow:hidden;margin-top:6px}
+.progress-bar__fill{height:100%;border-radius:4px;transition:width .5s}
+.progress-bar__fill.green{background:var(--success)}
+.progress-bar__fill.yellow{background:var(--warning)}
+.progress-bar__fill.red{background:var(--danger)}
+.progress-bar__fill.blue{background:var(--info)}
+
+.recommendation-item{
+    padding:14px 16px;border-radius:var(--radius-md);
+    border-left:3px solid var(--border);margin-bottom:10px;
+    transition:all .2s;background:var(--bg);
+}
+.recommendation-item:hover{box-shadow:var(--shadow-sm)}
+.recommendation-item.high{border-left-color:var(--danger)}
+.recommendation-item.medium{border-left-color:var(--warning)}
+.recommendation-item.info{border-left-color:var(--info)}
+.recommendation-item__header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.recommendation-item__icon{font-size:18px}
+.recommendation-item__title{font-size:13px;font-weight:700}
+.recommendation-item__detail{font-size:12px;color:var(--text-secondary);margin-bottom:8px;line-height:1.5}
+.recommendation-item__action{display:inline-block;padding:5px 12px;border-radius:var(--radius-md);font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;background:var(--primary);color:#fff}
+.recommendation-item__action:hover{background:var(--primary-dark)}
+
+.donut-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.metric-circle{
+    width:100px;height:100px;border-radius:50%;margin:0 auto 12px;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+}
+.metric-circle__value{font-size:22px;font-weight:800;z-index:1}
+.metric-circle__bg{position:absolute;inset:0;border-radius:50%}
+.metric-center{text-align:center;margin-bottom:20px}
+.metric-label{font-size:13px;font-weight:600;margin-bottom:4px}
+.metric-sub{font-size:11px;color:var(--text-secondary)}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div th:replace="~{common/admin/sidebar :: sidebar('analytics')}"></div>
+    <div class="main">
+        <div th:replace="~{common/admin/header :: header('Báo cáo & Phân tích', false)}"></div>
+        <div class="content">
+
+            <!-- KPI Overview Row -->
+            <div class="kpi-grid" id="kpiGrid">
+                <div class="kpi-card"><div class="kpi-card__top"><div class="kpi-card__label">Tổng GMV (30 ngày)</div><div class="kpi-card__icon" style="background:rgba(13,92,46,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div><div class="kpi-card__value">--</div><div class="kpi-card__sub">Đang tải...</div></div>
+                <div class="kpi-card"><div class="kpi-card__top"><div class="kpi-card__label">Tổng đơn hàng</div><div class="kpi-card__icon" style="background:var(--info-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/></svg></div></div><div class="kpi-card__value">--</div><div class="kpi-card__sub">Đang tải...</div></div>
+                <div class="kpi-card"><div class="kpi-card__top"><div class="kpi-card__label">Giá trị TB đơn</div><div class="kpi-card__icon" style="background:rgba(212,175,55,.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div><div class="kpi-card__value">--</div><div class="kpi-card__sub">Đang tải...</div></div>
+                <div class="kpi-card"><div class="kpi-card__top"><div class="kpi-card__label">Deal đang chạy</div><div class="kpi-card__icon" style="background:var(--success-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div></div><div class="kpi-card__value">--</div><div class="kpi-card__sub">Đang tải...</div></div>
+            </div>
+
+            <!-- Chart + Recommendations -->
+            <div class="col-2-1">
+                <!-- Revenue Trend Chart -->
+                <div class="panel">
+                    <div class="panel__header">
+                        <div class="panel__title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            Xu hướng Doanh thu & Đơn hàng (30 ngày)
+                        </div>
+                    </div>
+                    <div class="panel__body">
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="legend-dot" style="background:var(--primary)"></div>Doanh thu</div>
+                            <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Đơn hàng</div>
+                        </div>
+                        <div class="chart-area" id="revenueChart">
+                            <div style="text-align:center;width:100%;padding:80px 0;color:var(--text-secondary);">Đang tải dữ liệu...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="panel">
+                    <div class="panel__header">
+                        <div class="panel__title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                            Đề xuất & Cảnh báo
+                        </div>
+                    </div>
+                    <div class="panel__body" id="recommendationsList" style="max-height:360px;overflow-y:auto;">
+                        <div style="text-align:center;padding:40px;color:var(--text-secondary);">Đang phân tích...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics row -->
+            <div class="three-col">
+                <!-- Pickup Rate -->
+                <div class="panel">
+                    <div class="panel__header"><div class="panel__title">Tỷ lệ nhận hàng</div></div>
+                    <div class="panel__body" style="text-align:center;">
+                        <div class="metric-circle" id="pickupCircle" style="border:8px solid var(--border-light);">
+                            <span class="metric-circle__value" id="pickupRateVal">--%</span>
+                        </div>
+                        <div class="metric-label">Hoàn thành pickup</div>
+                        <div class="metric-sub" id="pickupDetail">Đang tải...</div>
+                    </div>
+                </div>
+                <!-- Cancel Rate -->
+                <div class="panel">
+                    <div class="panel__header"><div class="panel__title">Tỷ lệ huỷ đơn</div></div>
+                    <div class="panel__body" style="text-align:center;">
+                        <div class="metric-circle" id="cancelCircle" style="border:8px solid var(--border-light);">
+                            <span class="metric-circle__value" id="cancelRateVal">--%</span>
+                        </div>
+                        <div class="metric-label">Đơn bị huỷ</div>
+                        <div class="metric-sub" id="cancelDetail">Đang tải...</div>
+                    </div>
+                </div>
+                <!-- Platform Health -->
+                <div class="panel">
+                    <div class="panel__header"><div class="panel__title">Sức khoẻ nền tảng</div></div>
+                    <div class="panel__body" id="platformHealth">
+                        <div style="text-align:center;padding:20px;color:var(--text-secondary);">Đang tải...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Stores Table -->
+            <div class="panel">
+                <div class="panel__header">
+                    <div class="panel__title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                        Top 10 cửa hàng theo doanh thu (30 ngày)
+                    </div>
+                </div>
+                <div class="panel__body" style="padding:0">
+                    <table class="table">
+                        <thead><tr><th>#</th><th>Cửa hàng</th><th>Doanh thu</th><th>Đánh giá</th><th>Trạng thái</th></tr></thead>
+                        <tbody id="topStoresTable"><tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-secondary);">Đang tải...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{common/admin/js :: js}"></div>
+
+<script>
+function fmtMoney(v) {
+    if (v == null || v === 0) return '0đ';
+    if (v >= 1e9) return (v/1e9).toFixed(1) + 'tỷ';
+    if (v >= 1e6) return (v/1e6).toFixed(1) + 'tr';
+    return Math.round(v).toLocaleString() + 'đ';
+}
+function fmtPct(v) { return Math.round(v * 10) / 10 + '%'; }
+
+// Load all data
+Promise.all([
+    fetch('/admin/api/analytics/overview?days=30').then(r => r.json()),
+    fetch('/admin/api/analytics/chart?days=30').then(r => r.json()),
+    fetch('/admin/api/analytics/top-stores?days=30').then(r => r.json()),
+    fetch('/admin/api/analytics/recommendations').then(r => r.json())
+]).then(([overview, chart, topStores, recs]) => {
+    renderKPIs(overview);
+    renderChart(chart);
+    renderTopStores(topStores);
+    renderRecommendations(recs);
+    renderMetrics(overview);
+    renderHealth(overview);
+}).catch(err => console.error('Analytics load error:', err));
+
+function renderKPIs(d) {
+    const grid = document.getElementById('kpiGrid');
+    grid.innerHTML = `
+        <div class="kpi-card">
+            <div class="kpi-card__top"><div class="kpi-card__label">Tổng GMV (30 ngày)</div><div class="kpi-card__icon" style="background:rgba(13,92,46,.1)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div>
+            <div class="kpi-card__value">${fmtMoney(d.revenue)}</div>
+            <div class="kpi-card__change ${d.revenueChange >= 0 ? 'up' : 'down'}">${d.revenueChange >= 0 ? '↑' : '↓'} ${Math.abs(d.revenueChange).toFixed(1)}%</div>
+            <div class="kpi-card__sub">So với kỳ trước</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-card__top"><div class="kpi-card__label">Tổng đơn hàng</div><div class="kpi-card__icon" style="background:var(--info-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/></svg></div></div>
+            <div class="kpi-card__value">${(d.orders || 0).toLocaleString()}</div>
+            <div class="kpi-card__change ${d.orderChange >= 0 ? 'up' : 'down'}">${d.orderChange >= 0 ? '↑' : '↓'} ${Math.abs(d.orderChange).toFixed(1)}%</div>
+            <div class="kpi-card__sub">So với kỳ trước</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-card__top"><div class="kpi-card__label">Giá trị TB đơn</div><div class="kpi-card__icon" style="background:rgba(212,175,55,.12)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
+            <div class="kpi-card__value">${fmtMoney(d.avgOrder)}</div>
+            <div class="kpi-card__sub">Trung bình mỗi đơn</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-card__top"><div class="kpi-card__label">Deal đang chạy</div><div class="kpi-card__icon" style="background:var(--success-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+            <div class="kpi-card__value">${d.activeDeals || 0}</div>
+            <div class="kpi-card__sub">${d.scheduledDeals || 0} sắp diễn ra · ${d.totalStores || 0} cửa hàng · ${(d.totalBuyers || 0).toLocaleString()} buyers</div>
+        </div>`;
+}
+
+function renderChart(d) {
+    const container = document.getElementById('revenueChart');
+    if (!d.data || d.data.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:80px 0;color:var(--text-secondary);">Chưa có dữ liệu</div>';
+        return;
+    }
+    const maxRev = d.maxRevenue || 1;
+    const maxOrd = Math.max(...d.data.map(p => p.orders || 0), 1);
+
+    container.innerHTML = d.data.map((p, i) => {
+        const showLabel = i % Math.ceil(d.data.length / 15) === 0;
+        return `<div class="chart-bar" title="${p.date}: ${fmtMoney(p.revenue)} / ${p.orders} đơn">
+            <div class="chart-bar__tooltip">${fmtMoney(p.revenue)}<br>${p.orders} đơn</div>
+            <div class="chart-bar__fill revenue" style="height:${p.revenue / maxRev * 90}%"></div>
+            <div class="chart-bar__fill orders" style="height:${(p.orders||0) / maxOrd * 60}%;margin-top:2px"></div>
+            <div class="chart-label-x">${showLabel ? p.label : ''}</div>
+        </div>`;
+    }).join('');
+}
+
+function renderTopStores(d) {
+    const tbody = document.getElementById('topStoresTable');
+    if (!d.data || d.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-secondary);">Chưa có dữ liệu</td></tr>';
+        return;
+    }
+    tbody.innerHTML = d.data.map(s => `
+        <tr>
+            <td><span style="font-weight:800;${s.rank <= 3 ? 'color:var(--accent);' : ''}">#${s.rank}</span></td>
+            <td><div style="font-weight:600">${s.storeName}</div><div style="font-size:11px;color:var(--text-tertiary)">#${s.storeId}</div></td>
+            <td><span style="font-weight:700">${fmtMoney(s.revenue)}</span></td>
+            <td>${s.rating != null ? s.rating.toFixed(1) + ' ⭐' : 'N/A'}</td>
+            <td><span class="badge ${s.status === 'ACTIVE' ? 'badge--success' : 'badge--warning'}">${s.status === 'ACTIVE' ? 'Hoạt động' : s.status}</span></td>
+        </tr>`).join('');
+}
+
+function renderRecommendations(d) {
+    const container = document.getElementById('recommendationsList');
+    if (!d.data || d.data.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--success);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:40px;height:40px;margin-bottom:8px;opacity:0.5"><polyline points="20 6 9 17 4 12"/></svg><div style="font-weight:600;">Mọi thứ đều ổn!</div><div style="font-size:12px;color:var(--text-secondary);">Không có cảnh báo nào</div></div>';
+        return;
+    }
+    container.innerHTML = d.data.map(r => `
+        <div class="recommendation-item ${r.priority}">
+            <div class="recommendation-item__header">
+                <span class="recommendation-item__icon">${r.icon}</span>
+                <span class="recommendation-item__title">${r.title}</span>
+            </div>
+            <div class="recommendation-item__detail">${r.detail}</div>
+            <a href="${r.link}" class="recommendation-item__action">${r.action} →</a>
+        </div>`).join('');
+}
+
+function renderMetrics(d) {
+    const pickupRate = d.pickupRate || 0;
+    const cancelRate = d.cancelRate || 0;
+
+    document.getElementById('pickupRateVal').textContent = pickupRate.toFixed(1) + '%';
+    document.getElementById('pickupDetail').textContent = 'Trên tổng ' + (d.orders || 0).toLocaleString() + ' đơn';
+    const pickupCircle = document.getElementById('pickupCircle');
+    pickupCircle.style.borderColor = pickupRate >= 80 ? 'var(--success)' : (pickupRate >= 60 ? 'var(--warning)' : 'var(--danger)');
+
+    document.getElementById('cancelRateVal').textContent = cancelRate.toFixed(1) + '%';
+    document.getElementById('cancelDetail').textContent = 'Trên tổng ' + (d.orders || 0).toLocaleString() + ' đơn';
+    const cancelCircle = document.getElementById('cancelCircle');
+    cancelCircle.style.borderColor = cancelRate <= 10 ? 'var(--success)' : (cancelRate <= 25 ? 'var(--warning)' : 'var(--danger)');
+}
+
+function renderHealth(d) {
+    const container = document.getElementById('platformHealth');
+    const stores = d.totalStores || 0;
+    const activeStores = d.activeStores || 0;
+    const activeDeals = d.activeDeals || 0;
+    const commission = d.commission || 0;
+    const storeRate = stores > 0 ? (activeStores / stores * 100) : 0;
+
+    container.innerHTML = `
+        <div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Cửa hàng active</span><span style="font-weight:600">${activeStores}/${stores}</span></div>
+            <div class="progress-bar"><div class="progress-bar__fill green" style="width:${storeRate}%"></div></div>
+        </div>
+        <div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Deal đang chạy</span><span style="font-weight:600">${activeDeals}</span></div>
+            <div class="progress-bar"><div class="progress-bar__fill blue" style="width:${Math.min(activeDeals / 50 * 100, 100)}%"></div></div>
+        </div>
+        <div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Hoa hồng thu về</span><span style="font-weight:600">${fmtMoney(commission)}</span></div>
+            <div class="progress-bar"><div class="progress-bar__fill yellow" style="width:${Math.min((commission || 0) / (d.revenue || 1) * 500, 100)}%"></div></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);text-align:center;padding:8px;">
+            ${activeDeals >= 20 ? '✅ Hệ thống hoạt động tốt' : activeDeals >= 5 ? '⚠️ Cần thêm deal để tăng trưởng' : '🔴 Cần tạo deal ngay'}
+        </div>`;
+}
+</script>
+</body>
+</html>

@@ -71,4 +71,42 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // Get all distinct stores that have orders
     @Query("SELECT DISTINCT o.store FROM Order o WHERE o.store IS NOT NULL ORDER BY o.store.storeName")
     java.util.List<Store> findAllStoresWithOrders();
+
+    // === Analytics Queries ===
+
+    // Daily order count for chart (last N days)
+    @Query("SELECT COUNT(o) FROM Order o WHERE DATE(o.createdAt) = DATE(:date)")
+    Long countOrdersByDate(@Param("date") java.time.LocalDate date);
+
+    // Daily completed revenue for chart
+    @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o WHERE o.status = 'COMPLETED' AND DATE(o.createdAt) = DATE(:date)")
+    Double sumRevenueByDate(@Param("date") java.time.LocalDate date);
+
+    // Average order value
+    @Query("SELECT COALESCE(AVG(o.finalAmount), 0) FROM Order o WHERE o.status = 'COMPLETED'")
+    Double averageOrderValue();
+
+    // Average order value for period
+    @Query("SELECT COALESCE(AVG(o.finalAmount), 0) FROM Order o WHERE o.status = 'COMPLETED' AND o.createdAt BETWEEN :from AND :to")
+    Double averageOrderValueByPeriod(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    // Top stores by revenue
+    @Query("SELECT o.store, COALESCE(SUM(o.finalAmount), 0) as revenue FROM Order o WHERE o.status = 'COMPLETED' AND o.createdAt BETWEEN :from AND :to GROUP BY o.store ORDER BY revenue DESC")
+    java.util.List<Object[]> topStoresByRevenue(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    // Order status distribution
+    @Query("SELECT o.status, COUNT(o) FROM Order o WHERE o.createdAt BETWEEN :from AND :to GROUP BY o.status")
+    java.util.List<Object[]> orderStatusDistribution(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    // Pickup completion rate
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = 'COMPLETED' AND o.createdAt BETWEEN :from AND :to")
+    Long countCompletedPickups(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    // Cancellation rate
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = 'CANCELLED' AND o.createdAt BETWEEN :from AND :to")
+    Long countCancelledOrders(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    // Total orders between dates
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.createdAt BETWEEN :from AND :to")
+    Long totalOrdersBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

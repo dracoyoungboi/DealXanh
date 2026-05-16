@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Khiếu nại — Admin DealXanh</title>
+    <title>Khiếu nại & Tranh chấp — Admin DealXanh</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <div th:replace="~{common/admin/css :: css}"></div>
     <style>
-/* Dispute page specific styles */
 .content{padding:24px;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
-
-/* KPI cards */
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .kpi-card{
     background:var(--surface);border-radius:var(--radius-lg);
-    border:1.5px solid var(--border-light);padding:14px;cursor:pointer;
-    transition:all var(--tr);
+    border:1.5px solid var(--border-light);padding:14px;cursor:pointer;transition:all var(--tr);
 }
 .kpi-card:hover{border-color:var(--border)}
 .kpi-card.active{border-color:var(--primary);background:rgba(13,92,46,.02)}
@@ -22,225 +20,96 @@
 .kpi-card__label svg{width:14px;height:14px}
 .kpi-card__value{font-size:22px;font-weight:800;margin:6px 0 2px}
 .kpi-card__sub{font-size:11px;color:var(--text-tertiary)}
-
-/* Filter bar */
-.filter-row{
-    display:flex;gap:8px;margin-bottom:16px;align-items:center;
-}
-.search-wrap{
-    position:relative;flex:1;
-}
-.search-wrap svg{
-    position:absolute;left:10px;top:50%;transform:translateY(-50%);
-    width:14px;height:14px;color:var(--text-tertiary);pointer-events:none;
-}
-.search-input{
-    width:100%;padding:8px 10px 8px 32px;
-    border:1px solid var(--border);border-radius:var(--radius-md);
-    font-size:13px;background:var(--surface);transition:border-color var(--tr);
-}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;align-items:center}
+.search-wrap{position:relative;flex:1}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-tertiary);pointer-events:none}
+.search-input{width:100%;padding:8px 10px 8px 32px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;background:var(--surface);transition:border-color var(--tr)}
 .search-input:focus{outline:none;border-color:var(--primary)}
-.filter-select{
-    padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-md);
-    font-size:12px;font-weight:600;background:var(--surface);cursor:pointer;
-}
+.filter-select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:12px;font-weight:600;background:var(--surface);cursor:pointer}
 .filter-select:focus{outline:none;border-color:var(--primary)}
-
-/* Panel */
 .panel{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light)}
-.panel__header{
-    padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
-    border-bottom:1px solid var(--border-light);
-}
+.panel__header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-light)}
 .panel__title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
 .panel__title svg{width:15px;height:15px;color:var(--primary)}
-.panel__actions{display:flex;align-items:center;gap:8px}
 .panel__body{padding:18px}
-
-/* Dispute list */
 .dispute-list{display:flex;flex-direction:column;gap:0}
-.dispute-item{
-    display:flex;gap:12px;padding:14px;cursor:pointer;
-    border-bottom:1px solid var(--border-light);transition:background var(--tr);
-}
+.dispute-item{display:flex;gap:12px;padding:14px;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background var(--tr)}
 .dispute-item:last-child{border-bottom:none}
 .dispute-item:hover{background:rgba(13,92,46,.02)}
 .dispute-item.selected{background:rgba(13,92,46,.06);border-left:3px solid var(--primary)}
-.dispute-item__row{display:flex;gap:12px;flex:1}
-.dispute-avatar{width:42px;height:42px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0;background:var(--bg)}
-.dispute-avatar img{width:100%;height:100%;object-fit:cover}
+.dispute-avatar{width:42px;height:42px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.dispute-avatar svg{width:22px;height:22px;color:var(--text-secondary)}
 .dispute-info{flex:1;min-width:0}
-.dispute-top{
-    display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;
-}
+.dispute-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
 .dispute-user{font-size:13px;font-weight:700}
-.priority-badge{
-    font-size:10px;font-weight:600;padding:2px 8px;border-radius:var(--radius-full);
-}
-.priority-badge--high{background:var(--danger-bg);color:var(--danger)}
-.priority-badge--medium{background:var(--warning-bg);color:var(--warning)}
-.priority-badge--low{background:var(--info-bg);color:var(--info)}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:var(--radius-full)}
+.status-badge--danger{background:var(--danger-bg);color:var(--danger)}
+.status-badge--warning{background:var(--warning-bg);color:var(--warning)}
+.status-badge--info{background:var(--info-bg);color:var(--info)}
+.status-badge--success{background:var(--success-bg);color:var(--success)}
 .dispute-time{font-size:11px;color:var(--text-tertiary);margin-left:auto}
-.dispute-subject{font-size:13px;font-weight:600;margin-bottom:3px;line-height:1.4}
-.dispute-preview{font-size:12px;color:var(--text-secondary);line-height:1.4;margin-bottom:6px}
-.dispute-tags{display:flex;gap:6px;flex-wrap:wrap}
-.badge{
-    display:inline-flex;align-items:center;gap:4px;
-    font-size:10px;font-weight:600;padding:3px 8px;border-radius:var(--radius-full);
-}
-.badge__dot{width:4px;height:4px;border-radius:50%;background:currentColor}
-.badge--danger{background:var(--danger-bg);color:var(--danger)}
-.badge--warning{background:var(--warning-bg);color:var(--warning)}
-.badge--info{background:var(--info-bg);color:var(--info)}
-
-/* Detail panel */
-.detail-card{
-    background:var(--surface);border-radius:var(--radius-lg);
-    border:1px solid var(--border-light);
-    position:sticky;top:80px;
-}
-.detail-card__header{
-    padding:16px 18px;border-bottom:1px solid var(--border-light);
-    display:flex;align-items:center;gap:12px;
-}
-.detail-card__id{font-size:11px;color:var(--text-tertiary);font-weight:600}
-.detail-card__subject{font-size:14px;font-weight:700}
-.detail-card__actions{margin-left:auto;display:flex;gap:8px}
-.detail-card__body{padding:16px 18px;display:flex;flex-direction:column;gap:16px}
-
-/* Message thread */
-.message-thread{display:flex;flex-direction:column;gap:12px}
-.message{
-    display:flex;gap:10px;max-width:85%;
-}
-.message.user{margin-left:auto;flex-direction:row-reverse}
-.message__avatar{width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--bg)}
-.message__avatar img{width:100%;height:100%;object-fit:cover}
-.message__bubble{
-    padding:10px 14px;border-radius:var(--radius-md);
-    font-size:12px;line-height:1.5;
-}
-.message.admin .message__bubble{background:var(--bg);border:1px solid var(--border-light)}
-.message.user .message__bubble{background:var(--primary);color:#fff}
-.message__meta{font-size:10px;color:var(--text-tertiary);margin-top:4px}
-
-/* Action buttons */
-.btn{
-    display:flex;align-items:center;justify-content:center;gap:6px;
-    padding:10px 16px;border-radius:var(--radius-md);
-    font-size:13px;font-weight:600;cursor:pointer;transition:all var(--tr);
-}
-.btn--primary{background:var(--primary);color:#fff}
-.btn--primary:hover{background:var(--primary-dark)}
-.btn--success{background:var(--success);color:#fff}
-.btn--success:hover{background:#059669}
-.btn--danger{background:var(--danger);color:#fff}
-.btn--danger:hover{background:#dc2626}
-.btn--outline{background:var(--surface);color:var(--text-primary);border:1px solid var(--border)}
-.btn--outline:hover{border-color:var(--primary);color:var(--primary)}
-.btn svg{width:14px;height:14px}
-
-/* Tabs */
-.tabs{display:flex;gap:6px;margin-bottom:12px}
-.tab{
-    padding:6px 12px;border-radius:var(--radius-full);
-    font-size:12px;font-weight:600;cursor:pointer;
-    border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);
-    transition:all var(--tr);
-}
-.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-
-/* Info rows */
-.info-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border-light)}
-.info-row:last-child{border-bottom:none}
-.info-row__label{color:var(--text-secondary)}
-.info-row__value{font-weight:600;max-width:60%;text-align:right}
-
-/* Modal */
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center}
-.modal.show{display:flex}
-.modal__content{background:var(--surface);border-radius:var(--radius-lg);max-width:480px;width:90%;max-height:80vh;overflow-y:auto}
-.modal__header{padding:16px 20px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
-.modal__title{font-size:15px;font-weight:700}
-.modal__close{width:28px;height:28px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background var(--tr)}
-.modal__close:hover{background:var(--bg)}
-.modal__body{padding:20px}
-.modal__footer{padding:16px 20px;border-top:1px solid var(--border-light);display:flex;gap:10px;justify-content:end}
+.dispute-reason{font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.4}
+.dispute-preview{font-size:12px;color:var(--text-secondary);line-height:1.4}
+.btn-sm{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-md);font-size:13px;font-weight:600;transition:all var(--tr);cursor:pointer;border:none}
+.btn-sm--primary{background:var(--primary);color:#fff}
+.btn-sm--primary:hover{background:var(--primary-dark)}
+.btn-sm--outline{background:var(--surface);color:var(--text-primary);border:1px solid var(--border)}
+.btn-sm--outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-sm--danger{background:var(--danger);color:#fff}
+.btn-sm--danger:hover{background:#dc2626}
+.detail-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);position:sticky;top:80px}
+.detail-empty{text-align:center;padding:60px 20px;color:var(--text-secondary)}
+.detail-empty svg{width:48px;height:48px;opacity:0.3;margin-bottom:12px}
+.detail-row{margin-bottom:12px}
+.detail-row label{display:block;font-size:11px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;margin-bottom:4px}
+.detail-row .value{font-size:14px;font-weight:500;color:var(--text-primary)}
     </style>
 </head>
 <body>
 <div class="layout">
-    <!-- Sidebar Fragment -->
     <div th:replace="~{common/admin/sidebar :: sidebar('dispute')}"></div>
-
     <div class="main">
-        <!-- Header Fragment -->
         <div th:replace="~{common/admin/header :: header('Khiếu nại & Tranh chấp', false)}"></div>
 
         <div class="content">
-            <!-- Left: List -->
-            <div class="list-col">
-
+            <!-- Left column -->
+            <div>
                 <!-- KPI cards -->
-                <div class="kpi-row">
-                    <div class="kpi-card active" onclick="filterDisputes('open')">
-                        <div class="kpi-card__label">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            Đang mở
-                        </div>
-                        <div class="kpi-card__value" style="color:var(--danger)">3</div>
+                <div class="kpi-row" style="margin-bottom:16px;">
+                    <a th:href="@{/admin/dispute}" class="kpi-card" th:classappend="${currentStatus == '' ? 'active' : ''}" style="text-decoration:none;color:inherit;">
+                        <div class="kpi-card__label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> Tất cả</div>
+                        <div class="kpi-card__value" th:text="${totalDisputes}">0</div>
+                        <div class="kpi-card__sub">Tổng khiếu nại</div>
+                    </a>
+                    <a th:href="@{/admin/dispute(status='PENDING')}" class="kpi-card" th:classappend="${currentStatus == 'PENDING' ? 'active' : ''}" style="text-decoration:none;color:inherit;">
+                        <div class="kpi-card__label"><svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Chờ xử lý</div>
+                        <div class="kpi-card__value" style="color:var(--danger);" th:text="${totalPending}">0</div>
                         <div class="kpi-card__sub">Cần xử lý ngay</div>
-                    </div>
-                    <div class="kpi-card" onclick="filterDisputes('processing')">
-                        <div class="kpi-card__label">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            Đang xử lý
-                        </div>
-                        <div class="kpi-card__value" style="color:var(--warning)">8</div>
-                        <div class="kpi-card__sub">Chờ phản hồi</div>
-                    </div>
-                    <div class="kpi-card" onclick="filterDisputes('resolved')">
-                        <div class="kpi-card__label">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                            Đã giải quyết
-                        </div>
-                        <div class="kpi-card__value" style="color:var(--success)">147</div>
-                        <div class="kpi-card__sub">Tháng này</div>
-                    </div>
-                    <div class="kpi-card" onclick="filterDisputes('refunded')">
-                        <div class="kpi-card__label">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            Hoàn tiền
-                        </div>
-                        <div class="kpi-card__value" style="color:var(--info)">12</div>
-                        <div class="kpi-card__sub">4.2tr đồng</div>
-                    </div>
+                    </a>
+                    <a th:href="@{/admin/dispute(status='REVIEWING')}" class="kpi-card" th:classappend="${currentStatus == 'REVIEWING' ? 'active' : ''}" style="text-decoration:none;color:inherit;">
+                        <div class="kpi-card__label"><svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Đang xem xét</div>
+                        <div class="kpi-card__value" style="color:var(--warning);" th:text="${totalReviewing}">0</div>
+                        <div class="kpi-card__sub">Đang điều tra</div>
+                    </a>
+                    <a th:href="@{/admin/dispute(status='RESOLVED_REFUND')}" class="kpi-card" th:classappend="${currentStatus == 'RESOLVED_REFUND' ? 'active' : ''}" style="text-decoration:none;color:inherit;">
+                        <div class="kpi-card__label"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Đã hoàn tiền</div>
+                        <div class="kpi-card__value" style="color:var(--success);" th:text="${totalResolvedRefund}">0</div>
+                        <div class="kpi-card__sub">Đã giải quyết</div>
+                    </a>
                 </div>
 
                 <!-- Filter bar -->
                 <div class="filter-row">
                     <div class="search-wrap">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input type="text" class="search-input" placeholder="Tìm theo user, mã đơn, cửa hàng...">
+                        <input type="text" class="search-input" id="searchInput" th:value="${searchQuery}" placeholder="Tìm kiếm theo tên, lý do...">
                     </div>
-                    <select class="filter-select">
-                        <option>Tất cả loại</option>
-                        <option>Không nhận được hàng</option>
-                        <option>Chất lượng kém</option>
-                        <option>QR lỗi</option>
-                        <option>Sai đơn hàng</option>
-                        <option>Hoàn tiền</option>
-                    </select>
-                    <select class="filter-select">
-                        <option>Tất cả mức độ</option>
-                        <option>🔴 Cao</option>
-                        <option>🟡 Trung bình</option>
-                        <option>⚪ Thấp</option>
-                    </select>
-                    <select class="filter-select">
-                        <option>Mới nhất</option>
-                        <option>Chưa trả lời</option>
-                        <option>Chờ lâu nhất</option>
+                    <select class="filter-select" onchange="window.location.href='/admin/dispute?status=' + this.value">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="PENDING" th:selected="${currentStatus == 'PENDING'}">Chờ xử lý</option>
+                        <option value="REVIEWING" th:selected="${currentStatus == 'REVIEWING'}">Đang xem xét</option>
+                        <option value="RESOLVED_REFUND" th:selected="${currentStatus == 'RESOLVED_REFUND'}">Đã hoàn tiền</option>
+                        <option value="RESOLVED_REJECTED" th:selected="${currentStatus == 'RESOLVED_REJECTED'}">Đã từ chối</option>
                     </select>
                 </div>
 
@@ -248,170 +117,70 @@
                 <div class="panel">
                     <div class="panel__header">
                         <div class="panel__title">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                             Danh sách khiếu nại
                         </div>
-                        <span style="font-size:12px;color:var(--text-secondary)">11 tổng · 3 chưa xử lý</span>
+                        <span style="font-size:12px;color:var(--text-secondary);" th:text="${disputes != null ? disputes.size() : 0} + ' khiếu nại'">0</span>
                     </div>
-                    <div class="dispute-list">
-
-                        <!-- Dispute 1 - High priority, selected -->
-                        <div class="dispute-item selected" onclick="selectDispute(1)">
-                            <div class="dispute-item__row">
-                                <div class="dispute-avatar"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=76&q=70" alt=""></div>
+                    <div class="panel__body" style="padding:0;">
+                        <div class="dispute-list" th:if="${disputes != null and !disputes.isEmpty()}">
+                            <div th:each="d, iterStat : ${disputes}" class="dispute-item" th:data-dispute-id="${d.disputeId}"
+                                 th:classappend="${iterStat.index == 0} ? 'selected' : ''"
+                                 th:onclick="'selectDispute(' + ${d.disputeId} + ', this)'">
+                                <div class="dispute-avatar">
+                                    <img th:if="${d.complainant != null && d.complainant.avatarUrl != null}" th:src="${d.complainant.avatarUrl}" alt="">
+                                    <svg th:unless="${d.complainant != null && d.complainant.avatarUrl != null}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </div>
                                 <div class="dispute-info">
                                     <div class="dispute-top">
-                                        <span class="dispute-user">Nguyễn Thị Mai</span>
-                                        <span class="priority-badge priority-badge--high">🔴 Cao</span>
-                                        <span class="dispute-time">15 phút trước</span>
+                                        <span class="dispute-user" th:text="${d.complainant != null ? (d.complainant.fullName != null ? d.complainant.fullName : d.complainant.username) : 'N/A'}">User</span>
+                                        <span class="status-badge"
+                                              th:class="${d.status == 'PENDING' ? 'status-badge--danger' : (d.status == 'REVIEWING' ? 'status-badge--warning' : (d.status == 'RESOLVED_REFUND' ? 'status-badge--success' : 'status-badge--info'))}"
+                                              th:text="${d.status == 'PENDING' ? 'Chờ XL' : (d.status == 'REVIEWING' ? 'Đang xem xét' : (d.status == 'RESOLVED_REFUND' ? 'Đã hoàn tiền' : 'Đã từ chối'))}">Status</span>
+                                        <span class="dispute-time" th:text="${d.createdAt != null ? #temporals.format(d.createdAt, 'dd/MM HH:mm') : ''}">Time</span>
                                     </div>
-                                    <div class="dispute-subject">Chất lượng bánh không như mô tả — mốc, không ăn được</div>
-                                    <div class="dispute-preview">Tôi đặt combo bánh ngọt mix nhưng nhận được hộp bánh bị mốc 2/6 cái...</div>
-                                    <div class="dispute-tags">
-                                        <span class="badge badge--danger"><span class="badge__dot"></span>Mở mới</span>
-                                        <span class="badge badge--warning">Chất lượng kém</span>
-                                        <span class="badge">Tiệm Bánh Mì Hoa Hồng</span>
-                                    </div>
+                                    <div class="dispute-reason" th:text="${d.reason}">Reason</div>
+                                    <div class="dispute-preview" th:text="${d.description != null ? (#strings.length(d.description) > 100 ? #strings.substring(d.description, 0, 100) + '...' : d.description) : ''}">Preview</div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Dispute 2 - Medium priority -->
-                        <div class="dispute-item" onclick="selectDispute(2)">
-                            <div class="dispute-item__row">
-                                <div class="dispute-avatar"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=76&q=70" alt=""></div>
-                                <div class="dispute-info">
-                                    <div class="dispute-top">
-                                        <span class="dispute-user">Trần Văn Nam</span>
-                                        <span class="priority-badge priority-badge--medium">🟡 Trung bình</span>
-                                        <span class="dispute-time">2 giờ trước</span>
-                                    </div>
-                                    <div class="dispute-subject">QR code không quét được khi đến lấy hàng</div>
-                                    <div class="dispute-preview">Đến cửa hàng lấy combo nhưng nhân viên bảo QR code bị lỗi, không nhận được hàng...</div>
-                                    <div class="dispute-tags">
-                                        <span class="badge badge--warning">Đang xử lý</span>
-                                        <span class="badge">QR lỗi</span>
-                                        <span class="badge">Cafe Góc Phố</span>
-                                    </div>
-                                </div>
-                            </div>
+                        <div th:unless="${disputes != null and !disputes.isEmpty()}" style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin-bottom:12px;opacity:0.3;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+                            <div style="font-size:14px;font-weight:600;">Không có khiếu nại nào</div>
                         </div>
-
-                        <!-- Dispute 3 - High priority -->
-                        <div class="dispute-item" onclick="selectDispute(3)">
-                            <div class="dispute-item__row">
-                                <div class="dispute-avatar"><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=76&q=70" alt=""></div>
-                                <div class="dispute-info">
-                                    <div class="dispute-top">
-                                        <span class="dispute-user">Lê Thị Hương</span>
-                                        <span class="priority-badge priority-badge--high">🔴 Cao</span>
-                                        <span class="dispute-time">3 giờ trước</span>
-                                    </div>
-                                    <div class="dispute-subject">Yêu cầu hoàn tiền — hàng không nhận được</div>
-                                    <div class="dispute-preview">Tôi đã đặt deal nhưng đến hẹn không thấy ai đâu, chờ 30p vẫn không...</div>
-                                    <div class="dispute-tags">
-                                        <span class="badge badge--danger"><span class="badge__dot"></span>Mở mới</span>
-                                        <span class="badge badge--info">Hoàn tiền</span>
-                                        <span class="badge">Nhà Hàng Phở Ngon</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </div>
 
             <!-- Right: Detail panel -->
-            <div>
-                <div class="detail-card">
-                    <div class="detail-card__header">
-                        <div>
-                            <div class="detail-card__id">#DISP-2024-001</div>
-                            <div class="detail-card__subject">Chất lượng bánh không như mô tả — mốc, không ăn được</div>
-                        </div>
-                        <div class="detail-card__actions">
-                            <button class="btn btn--outline" style="padding:6px 10px;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            </button>
-                            <button class="btn btn--outline" style="padding:6px 10px;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                            </button>
-                        </div>
+            <div class="detail-card" id="detailPanel">
+                <div id="detailEmpty" class="detail-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <div style="font-weight:600;margin-bottom:4px;">Chọn một khiếu nại</div>
+                    <div style="font-size:13px;">Chọn từ danh sách để xem chi tiết</div>
+                </div>
+                <div id="detailContent" style="display:none;">
+                    <div class="panel__header">
+                        <div class="panel__title">Chi tiết khiếu nại</div>
+                        <span id="detailBadge" class="status-badge">Status</span>
                     </div>
-                    <div class="detail-card__body">
-
-                        <!-- User info -->
-                        <div style="padding-bottom:14px;border-bottom:1px solid var(--border-light)">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-                                <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--bg)">
-                                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=76&q=70" style="width:100%;height:100%;object-fit:cover" alt="">
-                                </div>
-                                <div>
-                                    <div style="font-size:13px;font-weight:700">Nguyễn Thị Mai</div>
-                                    <div style="font-size:11px;color:var(--text-secondary)">nguyenthimai@email.com · 090 123 4567</div>
-                                </div>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-row__label">Đơn hàng</span>
-                                <span class="info-row__value">#ORD-2024-0892</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-row__label">Cửa hàng</span>
-                                <span class="info-row__value">Tiệm Bánh Mì Hoa Hồng</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-row__label">Ngày tạo</span>
-                                <span class="info-row__value">18/01/2025 14:32</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-row__label">Loại khiếu nại</span>
-                                <span class="info-row__value" style="color:var(--warning)">Chất lượng kém</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-row__label">Mức độ</span>
-                                <span class="info-row__value" style="color:var(--danger)">🔴 Cao</span>
-                            </div>
+                    <div class="panel__body">
+                        <div class="detail-row"><label>Người khiếu nại</label><div class="value" id="detailUser">-</div></div>
+                        <div class="detail-row"><label>Email</label><div class="value" id="detailEmail">-</div></div>
+                        <div class="detail-row"><label>SĐT</label><div class="value" id="detailPhone">-</div></div>
+                        <div class="detail-row"><label>Lý do</label><div class="value" id="detailReason">-</div></div>
+                        <div class="detail-row"><label>Mô tả chi tiết</label><div class="value" id="detailDesc" style="line-height:1.6;">-</div></div>
+                        <div class="detail-row"><label>Đơn hàng #</label><div class="value" id="detailOrder">-</div></div>
+                        <div class="detail-row"><label>Ngày tạo</label><div class="value" id="detailDate">-</div></div>
+                        <div class="detail-row" id="adminNoteRow" style="display:none;"><label>Ghi chú Admin</label><div class="value" id="detailNote" style="color:var(--primary);">-</div></div>
+                        <div style="display:flex;gap:8px;margin-top:16px;" id="detailActions">
+                            <button class="btn-sm btn-sm--primary" id="btnApprove" onclick="resolveDispute('approve')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg> Phê duyệt hoàn tiền
+                            </button>
+                            <button class="btn-sm btn-sm--danger" id="btnReject" onclick="resolveDispute('reject')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Từ chối
+                            </button>
                         </div>
-
-                        <!-- Message thread -->
-                        <div>
-                            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;letter-spacing:.5px;text-transform:uppercase">Hội thoại</div>
-                            <div class="message-thread">
-                                <div class="message user">
-                                    <div class="message__avatar"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=76&q=70" alt=""></div>
-                                    <div>
-                                        <div class="message__bubble">Tôi đặt combo bánh ngọt mix nhưng nhận được hộp bánh bị mốc 2/6 cái. Tôi không thể ăn được. Yêu cầu hoàn tiền hoặc gửi lại.</div>
-                                        <div class="message__meta">14:32 · Buyer</div>
-                                    </div>
-                                </div>
-                                <div class="message admin">
-                                    <div class="message__avatar"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=76&q=70" alt=""></div>
-                                    <div>
-                                        <div class="message__bubble">Chào Mai, DealXanh đã nhận được khiếu nại của bạn. Chúng tôi đang liên hệ với cửa hàng để xác minh tình hình.</div>
-                                        <div class="message__meta">14:45 · Admin</div>
-                                    </div>
-                                </div>
-                                <div class="message user">
-                                    <div class="message__avatar"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=76&q=70" alt=""></div>
-                                    <div>
-                                        <div class="message__bubble">Vâng, tôi có chụp ảnh bánh bị mốc rồi. Tôi gửi luôn đây.</div>
-                                        <div class="message__meta">14:50 · Buyer</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                    <div style="padding:16px 18px;border-top:1px solid var(--border-light);display:flex;flex-direction:column;gap:10px">
-                        <button class="btn btn--success">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                            Đồng ý hoàn tiền
-                        </button>
-                        <button class="btn btn--outline">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            Trả lời khách hàng
-                        </button>
                     </div>
                 </div>
             </div>
@@ -422,15 +191,127 @@
 <div th:replace="~{common/admin/js :: js}"></div>
 
 <script>
-function filterDisputes(status) {
-    document.querySelectorAll('.kpi-card').forEach(card => card.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+let currentDisputeId = null;
+
+// Real-time search
+document.getElementById('searchInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const status = new URLSearchParams(window.location.search).get('status') || '';
+        window.location.href = '/admin/dispute?search=' + encodeURIComponent(this.value) + (status ? '&status=' + status : '');
+    }
+});
+
+function selectDispute(disputeId, el) {
+    currentDisputeId = disputeId;
+    document.querySelectorAll('.dispute-item').forEach(i => i.classList.remove('selected'));
+    if (el) el.classList.add('selected');
+
+    document.getElementById('detailEmpty').style.display = 'none';
+    document.getElementById('detailContent').style.display = 'block';
+    document.getElementById('detailContent').innerHTML = '<div style="text-align:center;padding:40px;">Đang tải...</div>';
+
+    fetch('/admin/api/dispute/' + disputeId)
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) { alert(d.message); return; }
+            const data = d.data;
+
+            document.getElementById('detailUser').textContent = data.userName || 'N/A';
+            document.getElementById('detailEmail').textContent = data.userEmail || 'N/A';
+            document.getElementById('detailPhone').textContent = data.userPhone || 'N/A';
+            document.getElementById('detailReason').textContent = data.reason || 'N/A';
+            document.getElementById('detailDesc').textContent = data.description || 'N/A';
+            document.getElementById('detailOrder').textContent = data.orderId ? '#' + data.orderId + ' (' + (data.orderAmount || 0).toLocaleString() + 'đ)' : 'N/A';
+            document.getElementById('detailDate').textContent = data.createdAt ? new Date(data.createdAt).toLocaleString('vi-VN') : 'N/A';
+
+            const statusLabels = {'PENDING':'Chờ xử lý','REVIEWING':'Đang xem xét','RESOLVED_REFUND':'Đã hoàn tiền','RESOLVED_REJECTED':'Đã từ chối'};
+            const badge = document.getElementById('detailBadge');
+            badge.textContent = statusLabels[data.status] || data.status;
+            badge.className = 'status-badge ' + (data.status === 'PENDING' ? 'status-badge--danger' : data.status === 'REVIEWING' ? 'status-badge--warning' : data.status === 'RESOLVED_REFUND' ? 'status-badge--success' : 'status-badge--info');
+
+            // Admin note
+            if (data.adminNote) {
+                document.getElementById('adminNoteRow').style.display = 'block';
+                document.getElementById('detailNote').textContent = data.adminNote;
+            } else {
+                document.getElementById('adminNoteRow').style.display = 'none';
+            }
+
+            // Action buttons
+            const actions = document.getElementById('detailActions');
+            if (data.status === 'PENDING' || data.status === 'REVIEWING') {
+                actions.style.display = 'flex';
+                if (data.status === 'PENDING') {
+                    // Add review button
+                    actions.innerHTML = `
+                        <button class="btn-sm btn-sm--outline" onclick="startReview()" style="color:var(--warning);border-color:var(--warning);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Bắt đầu xem xét
+                        </button>
+                        <button class="btn-sm btn-sm--primary" onclick="resolveDispute('approve')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg> Phê duyệt hoàn tiền
+                        </button>
+                        <button class="btn-sm btn-sm--danger" onclick="resolveDispute('reject')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Từ chối
+                        </button>`;
+                } else {
+                    actions.innerHTML = `
+                        <button class="btn-sm btn-sm--primary" onclick="resolveDispute('approve')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg> Phê duyệt hoàn tiền
+                        </button>
+                        <button class="btn-sm btn-sm--danger" onclick="resolveDispute('reject')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Từ chối
+                        </button>`;
+                }
+            } else {
+                actions.style.display = 'none';
+            }
+        })
+        .catch(err => { console.error(err); });
 }
 
-function selectDispute(id) {
-    document.querySelectorAll('.dispute-item').forEach(item => item.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
+function startReview() {
+    if (!currentDisputeId) return;
+    const csrfToken = document.querySelector('meta[name="_csrf"]');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+    const formData = new URLSearchParams();
+    if (csrfToken && csrfHeader) formData.append(csrfHeader.getAttribute('content'), csrfToken.getAttribute('content'));
+
+    fetch('/admin/api/dispute/' + currentDisputeId + '/review', {
+        method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: formData.toString()
+    })
+    .then(r => r.json())
+    .then(d => { alert(d.message); if (d.success) location.reload(); })
+    .catch(err => alert('Lỗi: ' + err.message));
 }
+
+function resolveDispute(action) {
+    if (!currentDisputeId) return;
+    const note = prompt(action === 'approve' ? 'Ghi chú phê duyệt (tuỳ chọn):' : 'Lý do từ chối:', '');
+    if (note === null) return; // cancelled
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+    const formData = new URLSearchParams();
+    formData.append('action', action);
+    if (note) formData.append('adminNote', note);
+    if (csrfToken && csrfHeader) formData.append(csrfHeader.getAttribute('content'), csrfToken.getAttribute('content'));
+
+    fetch('/admin/api/dispute/' + currentDisputeId + '/resolve', {
+        method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: formData.toString()
+    })
+    .then(r => r.json())
+    .then(d => { alert(d.message); if (d.success) location.reload(); })
+    .catch(err => alert('Lỗi: ' + err.message));
+}
+
+// Auto-select first dispute
+document.addEventListener('DOMContentLoaded', function() {
+    const firstItem = document.querySelector('.dispute-item');
+    if (firstItem) {
+        const id = firstItem.getAttribute('data-dispute-id');
+        if (id) selectDispute(parseInt(id), firstItem);
+    }
+});
 </script>
 </body>
 </html>

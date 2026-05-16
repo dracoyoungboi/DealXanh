@@ -115,6 +115,7 @@ public class SecurityConfig {
                     "/api/**", "/perform_login",
                     "/admin/seller-verify/*/approve", "/admin/seller-verify/*/reject",
                     "/admin/seller-verify/*/reset-to-pending",
+                    "/admin/api/finance/**", "/admin/api/dispute/**",
                     "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )
             )

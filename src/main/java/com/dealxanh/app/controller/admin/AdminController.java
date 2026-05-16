@@ -16,6 +16,7 @@ import com.dealxanh.app.repository.DealRepository;
 import com.dealxanh.app.repository.DealCategoryRepository;
 import com.dealxanh.app.repository.DealProductRepository;
 import com.dealxanh.app.repository.ProductRepository;
+import com.dealxanh.app.repository.DisputeRepository;
 import com.dealxanh.app.repository.TransactionRepository;
 import com.dealxanh.app.service.DealService;
 import com.dealxanh.app.service.ProductService;
@@ -63,6 +64,9 @@ public class AdminController {
 
     @Autowired
     private TransactionRepository transactionRepository;
+
+    @Autowired
+    private DisputeRepository disputeRepository;
 
     @Autowired
     private ProductRepository productRepository;
@@ -759,19 +763,380 @@ public class AdminController {
 
     @GetMapping("/dispute")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public String disputes(Model model, Authentication authentication) {
-        // Get current admin user
+    public String disputes(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            Model model, Authentication authentication) {
+
         String username = authentication.getName();
         User adminUser = userRepository.findByUsername(username)
                 .orElse(userRepository.findByEmail(username).orElse(null));
-
         if (adminUser != null) {
             model.addAttribute("adminUser", adminUser);
         }
 
-        // Placeholder for disputes page
+        // Dispute stats
+        model.addAttribute("totalPending", disputeRepository.countPendingDisputes());
+        model.addAttribute("totalReviewing", disputeRepository.countReviewingDisputes());
+        model.addAttribute("totalResolvedRefund", disputeRepository.countResolvedRefundDisputes());
+        model.addAttribute("totalResolvedRejected", disputeRepository.countResolvedRejectedDisputes());
+        model.addAttribute("totalDisputes", disputeRepository.count());
+
+        // Fetch disputes
+        java.util.List<com.dealxanh.app.entity.Dispute> disputes;
+        if (status != null && !status.isEmpty()) {
+            disputes = disputeRepository.findByStatusWithComplainant(status);
+        } else {
+            disputes = disputeRepository.findAllWithComplainant();
+        }
+
+        // Search filter
+        if (search != null && !search.trim().isEmpty()) {
+            String s = search.toLowerCase().trim();
+            disputes = disputes.stream()
+                .filter(d -> (d.getComplainant() != null && d.getComplainant().getFullName() != null
+                        && d.getComplainant().getFullName().toLowerCase().contains(s))
+                    || (d.getReason() != null && d.getReason().toLowerCase().contains(s))
+                    || (d.getDescription() != null && d.getDescription().toLowerCase().contains(s)))
+                .collect(java.util.stream.Collectors.toList());
+        }
+
+        model.addAttribute("disputes", disputes);
+        model.addAttribute("currentStatus", status != null ? status : "");
+        model.addAttribute("searchQuery", search != null ? search : "");
         model.addAttribute("activeSidebar", "dispute");
+
+        long pendingSellers = storeRepository.countByStatus("PENDING");
+        model.addAttribute("pendingSellerCount", pendingSellers);
+
         return "admin/dispute";
+    }
+
+    @GetMapping("/api/dispute/{disputeId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getDisputeDetail(@PathVariable Long disputeId) {
+        com.dealxanh.app.entity.Dispute dispute = disputeRepository.findByIdWithDetails(disputeId);
+        if (dispute == null) {
+            return java.util.Map.of("success", false, "message", "Không tìm thấy khiếu nại");
+        }
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("disputeId", dispute.getDisputeId());
+        data.put("reason", dispute.getReason());
+        data.put("description", dispute.getDescription());
+        data.put("status", dispute.getStatus());
+        data.put("adminNote", dispute.getAdminNote());
+        data.put("evidenceUrl", dispute.getEvidenceUrl());
+        data.put("createdAt", dispute.getCreatedAt() != null ? dispute.getCreatedAt().toString() : null);
+        data.put("updatedAt", dispute.getUpdatedAt() != null ? dispute.getUpdatedAt().toString() : null);
+
+        if (dispute.getComplainant() != null) {
+            data.put("userName", dispute.getComplainant().getFullName() != null
+                    ? dispute.getComplainant().getFullName() : dispute.getComplainant().getUsername());
+            data.put("userEmail", dispute.getComplainant().getEmail());
+            data.put("userPhone", dispute.getComplainant().getPhone());
+        }
+
+        if (dispute.getOrder() != null) {
+            data.put("orderId", dispute.getOrder().getOrderId());
+            data.put("orderAmount", dispute.getOrder().getFinalAmount());
+            data.put("orderStatus", dispute.getOrder().getStatus());
+        }
+
+        return java.util.Map.of("success", true, "data", data);
+    }
+
+    @PostMapping("/api/dispute/{disputeId}/resolve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> resolveDispute(
+            @PathVariable Long disputeId,
+            @RequestParam String action, // "approve" or "reject"
+            @RequestParam(required = false) String adminNote) {
+
+        try {
+            com.dealxanh.app.entity.Dispute dispute = disputeRepository.findById(disputeId).orElse(null);
+            if (dispute == null) {
+                return java.util.Map.of("success", false, "message", "Không tìm thấy khiếu nại");
+            }
+
+            if (!"PENDING".equals(dispute.getStatus()) && !"REVIEWING".equals(dispute.getStatus())) {
+                return java.util.Map.of("success", false, "message", "Khiếu nại này đã được xử lý");
+            }
+
+            if ("approve".equals(action)) {
+                dispute.setStatus("RESOLVED_REFUND");
+                dispute.setAdminNote(adminNote);
+            } else if ("reject".equals(action)) {
+                dispute.setStatus("RESOLVED_REJECTED");
+                dispute.setAdminNote(adminNote);
+            } else {
+                return java.util.Map.of("success", false, "message", "Hành động không hợp lệ");
+            }
+
+            dispute.setUpdatedAt(LocalDateTime.now());
+            disputeRepository.save(dispute);
+
+            return java.util.Map.of("success", true,
+                    "message", "approve".equals(action) ? "Đã phê duyệt hoàn tiền" : "Đã từ chối khiếu nại");
+        } catch (Exception e) {
+            return java.util.Map.of("success", false, "message", "Lỗi: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/api/dispute/{disputeId}/review")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> startReviewDispute(@PathVariable Long disputeId) {
+        try {
+            com.dealxanh.app.entity.Dispute dispute = disputeRepository.findById(disputeId).orElse(null);
+            if (dispute == null) {
+                return java.util.Map.of("success", false, "message", "Không tìm thấy khiếu nại");
+            }
+            dispute.setStatus("REVIEWING");
+            dispute.setUpdatedAt(LocalDateTime.now());
+            disputeRepository.save(dispute);
+            return java.util.Map.of("success", true, "message", "Đã chuyển sang trạng thái đang xem xét");
+        } catch (Exception e) {
+            return java.util.Map.of("success", false, "message", "Lỗi: " + e.getMessage());
+        }
+    }
+
+    // ========== ANALYTICS (Báo cáo & Phân tích) ==========
+
+    @GetMapping("/analytics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String analytics(Model model, Authentication authentication) {
+        String username = authentication.getName();
+        User adminUser = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+        if (adminUser != null) model.addAttribute("adminUser", adminUser);
+
+        model.addAttribute("activeSidebar", "analytics");
+        long pendingSellers = storeRepository.countByStatus("PENDING");
+        model.addAttribute("pendingSellerCount", pendingSellers);
+        return "admin/analytics";
+    }
+
+    @GetMapping("/api/analytics/overview")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getAnalyticsOverview(
+            @RequestParam(defaultValue = "30") int days) {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime from = now.minusDays(days);
+        LocalDateTime prevFrom = from.minusDays(days);
+
+        // Current period
+        Double revenue = orderRepository.sumRevenueByPeriod(from, now);
+        Long orders = orderRepository.totalOrdersBetween(from, now);
+        Double avgOrder = orderRepository.averageOrderValueByPeriod(from, now);
+        Long completedPickups = orderRepository.countCompletedPickups(from, now);
+        Long cancelled = orderRepository.countCancelledOrders(from, now);
+        Double commission = transactionRepository.sumCommission(from, now);
+
+        // Previous period (for comparison)
+        Double prevRevenue = orderRepository.sumRevenueByPeriod(prevFrom, from);
+        Long prevOrders = orderRepository.totalOrdersBetween(prevFrom, from);
+
+        // Deal stats
+        Long activeDeals = dealRepository.countByStatus("ACTIVE");
+        Long scheduledDeals = dealRepository.countByStatus("SCHEDULED");
+
+        // Store & User stats
+        long totalStores = storeRepository.count();
+        long activeStores = storeRepository.countByStatus("ACTIVE");
+        long totalBuyers = userRepository.countByRoleName("ROLE_USER");
+
+        // Calculate rates
+        double pickupRate = (orders != null && orders > 0) ? ((double) (completedPickups != null ? completedPickups : 0) / orders * 100) : 0;
+        double cancelRate = (orders != null && orders > 0) ? ((double) (cancelled != null ? cancelled : 0) / orders * 100) : 0;
+
+        // Revenue change
+        double revenueChange = (prevRevenue != null && prevRevenue > 0 && revenue != null)
+                ? ((revenue - prevRevenue) / prevRevenue * 100) : 0;
+        double orderChange = (prevOrders != null && prevOrders > 0 && orders != null)
+                ? ((double)(orders - prevOrders) / prevOrders * 100) : 0;
+
+        return java.util.Map.of(
+            "success", true,
+            "revenue", revenue != null ? revenue : 0,
+            "orders", orders != null ? orders : 0,
+            "avgOrder", avgOrder != null ? avgOrder : 0,
+            "commission", commission != null ? commission : 0,
+            "activeDeals", activeDeals,
+            "scheduledDeals", scheduledDeals,
+            "totalStores", totalStores,
+            "activeStores", activeStores,
+            "totalBuyers", totalBuyers,
+            "pickupRate", Math.round(pickupRate * 10) / 10.0,
+            "cancelRate", Math.round(cancelRate * 10) / 10.0,
+            "revenueChange", Math.round(revenueChange * 10) / 10.0,
+            "orderChange", Math.round(orderChange * 10) / 10.0
+        );
+    }
+
+    @GetMapping("/api/analytics/chart")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getAnalyticsChart(
+            @RequestParam(defaultValue = "30") int days) {
+
+        LocalDateTime now = LocalDateTime.now();
+        java.util.List<java.util.Map<String, Object>> chartData = new java.util.ArrayList<>();
+        double maxRevenue = 1;
+
+        for (int i = days - 1; i >= 0; i--) {
+            java.time.LocalDate date = now.toLocalDate().minusDays(i);
+            Double dayRevenue = orderRepository.sumRevenueByDate(date);
+            Long dayOrders = orderRepository.countOrdersByDate(date);
+            java.util.Map<String, Object> point = new java.util.HashMap<>();
+            point.put("date", date.toString());
+            point.put("label", date.getDayOfMonth() + "/" + date.getMonthValue());
+            point.put("revenue", dayRevenue != null ? dayRevenue : 0);
+            point.put("orders", dayOrders != null ? dayOrders : 0);
+            chartData.add(point);
+            if (dayRevenue != null && dayRevenue > maxRevenue) maxRevenue = dayRevenue;
+        }
+
+        return java.util.Map.of("success", true, "data", chartData, "maxRevenue", maxRevenue);
+    }
+
+    @GetMapping("/api/analytics/top-stores")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getTopStores(
+            @RequestParam(defaultValue = "30") int days) {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime from = now.minusDays(days);
+        java.util.List<Object[]> topStores = orderRepository.topStoresByRevenue(from, now);
+        java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+
+        int rank = 1;
+        for (Object[] row : topStores) {
+            com.dealxanh.app.entity.Store store = (com.dealxanh.app.entity.Store) row[0];
+            Double revenue = (Double) row[1];
+            java.util.Map<String, Object> item = new java.util.HashMap<>();
+            item.put("rank", rank++);
+            item.put("storeName", store.getStoreName());
+            item.put("storeId", store.getStoreId());
+            item.put("revenue", revenue);
+            item.put("status", store.getStatus());
+            item.put("rating", store.getAverageRating());
+            result.add(item);
+            if (result.size() >= 10) break; // Top 10
+        }
+
+        return java.util.Map.of("success", true, "data", result);
+    }
+
+    @GetMapping("/api/analytics/recommendations")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getRecommendations() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime monthStart = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+
+        java.util.List<java.util.Map<String, Object>> recommendations = new java.util.ArrayList<>();
+
+        // 1. Check pending disputes
+        Long pendingDisputes = disputeRepository.countPendingDisputes();
+        if (pendingDisputes > 0) {
+            recommendations.add(java.util.Map.of(
+                "priority", "high", "icon", "⚠️", "title", "Khiếu nại chưa xử lý",
+                "detail", "Có " + pendingDisputes + " khiếu nại đang chờ. Xử lý sớm để giữ uy tín.",
+                "action", "Xem ngay", "link", "/admin/dispute?status=PENDING"
+            ));
+        }
+
+        // 2. Check cancellation rate
+        Long cancelled = orderRepository.countCancelledOrders(monthStart, now);
+        Long totalOrders = orderRepository.totalOrdersBetween(monthStart, now);
+        if (totalOrders != null && totalOrders > 0) {
+            double cRate = (double) cancelled / totalOrders * 100;
+            if (cRate > 15) {
+                recommendations.add(java.util.Map.of(
+                    "priority", "high", "icon", "📉", "title", "Tỷ lệ huỷ đơn cao: " + Math.round(cRate) + "%",
+                    "detail", "Tỷ lệ huỷ đơn tháng này cao bất thường. Kiểm tra chất lượng SP & dịch vụ.",
+                    "action", "Xem orders", "link", "/admin/orders"
+                ));
+            }
+        }
+
+        // 3. Check stores needing approval
+        long pendingStores = storeRepository.countByStatus("PENDING");
+        if (pendingStores > 0) {
+            recommendations.add(java.util.Map.of(
+                "priority", "high", "icon", "🏪", "title", pendingStores + " cửa hàng chờ duyệt",
+                "detail", "Duyệt cửa hàng mới để mở rộng hệ thống.",
+                "action", "Duyệt ngay", "link", "/admin/seller-verify?status=pending"
+            ));
+        }
+
+        // 4. Check deals expiring soon
+        LocalDateTime soon = now.plusDays(3);
+        java.util.List<com.dealxanh.app.entity.Deal> expiringDeals = dealRepository.findExpiringSoon(now, soon);
+        if (expiringDeals != null && !expiringDeals.isEmpty()) {
+            recommendations.add(java.util.Map.of(
+                "priority", "medium", "icon", "⏰", "title", expiringDeals.size() + " deal sắp hết hạn trong 3 ngày",
+                "detail", "Tạo deal mới để duy trì lượng khách hàng. Gia hạn deal nếu cần.",
+                "action", "Xem deals", "link", "/admin/deals"
+            ));
+        }
+
+        // 5. Check products pending approval
+        long pendingProducts = productRepository.countByDeletedFalseAndApprovalStatus("PENDING");
+        if (pendingProducts > 0) {
+            recommendations.add(java.util.Map.of(
+                "priority", "medium", "icon", "📦", "title", pendingProducts + " sản phẩm chờ duyệt",
+                "detail", "Duyệt sản phẩm để seller có thể tạo deal.",
+                "action", "Xem SP", "link", "/admin/products?approval=PENDING"
+            ));
+        }
+
+        // 6. GMV performance insight
+        Double thisMonth = orderRepository.sumRevenueByPeriod(monthStart, now);
+        LocalDateTime lastMonthStart = monthStart.minusMonths(1);
+        LocalDateTime lastMonthEnd = monthStart.minusSeconds(1);
+        Double lastMonth = orderRepository.sumRevenueByPeriod(lastMonthStart, lastMonthEnd);
+        if (thisMonth != null && lastMonth != null && lastMonth > 0) {
+            double gmvGrowth = (thisMonth - lastMonth) / lastMonth * 100;
+            if (gmvGrowth < 0) {
+                recommendations.add(java.util.Map.of(
+                    "priority", "high", "icon", "📊", "title", "GMV giảm " + Math.round(Math.abs(gmvGrowth)) + "% so với tháng trước",
+                    "detail", "Xem xét tạo thêm deal Flash Sale, tăng marketing. Phân tích nguyên nhân từ báo cáo bên dưới.",
+                    "action", "Xem báo cáo", "link", "/admin/analytics"
+                ));
+            } else if (gmvGrowth > 20) {
+                recommendations.add(java.util.Map.of(
+                    "priority", "info", "icon", "🚀", "title", "GMV tăng trưởng " + Math.round(gmvGrowth) + "%!",
+                    "detail", "Đà tăng trưởng tốt. Cân nhắc mở rộng thêm deal và cửa hàng.",
+                    "action", "Xem chi tiết", "link", "/admin/analytics"
+                ));
+            }
+        }
+
+        // 7. Low-rated stores warning
+        java.util.List<com.dealxanh.app.entity.Store> allStores = storeRepository.findAll();
+        int lowRatedCount = 0;
+        for (com.dealxanh.app.entity.Store s : allStores) {
+            if (s.getTotalReviews() != null && s.getTotalReviews() >= 10
+                && s.getAverageRating() != null && s.getAverageRating() <= 3.0) {
+                lowRatedCount++;
+            }
+        }
+        if (lowRatedCount > 0) {
+            recommendations.add(java.util.Map.of(
+                "priority", "medium", "icon", "⭐", "title", lowRatedCount + " cửa hàng có rating thấp (<= 3.0 sao)",
+                "detail", "Liên hệ cửa hàng để cải thiện chất lượng. Cân nhắc tạm dừng nếu không cải thiện.",
+                "action", "Xem users", "link", "/admin/users?role=seller"
+            ));
+        }
+
+        return java.util.Map.of("success", true, "data", recommendations);
     }
 
     @GetMapping("/products")
@@ -999,28 +1364,32 @@ public class AdminController {
 
     @GetMapping("/finance/export-csv")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public String exportFinanceCsv(
+    public void exportFinanceCsv(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate + "T00:00:00") : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
-        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate + "T23:59:59") : now;
+        LocalDateTime start = (startDate != null && !startDate.isEmpty())
+                ? LocalDateTime.parse(startDate + "T00:00:00")
+                : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = (endDate != null && !endDate.isEmpty())
+                ? LocalDateTime.parse(endDate + "T23:59:59")
+                : now;
 
         java.util.List<com.dealxanh.app.entity.Transaction> transactions = transactionRepository.findByDateRange(start, end);
 
         response.setContentType("text/csv;charset=UTF-8");
-        response.setHeader("Content-Disposition", "attachment; filename=finance_" + start.toLocalDate() + "_" + end.toLocalDate() + ".csv");
-        // Add BOM for Excel UTF-8 compatibility
-        response.getOutputStream().write(0xEF);
-        response.getOutputStream().write(0xBB);
-        response.getOutputStream().write(0xBF);
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=\"finance_"
+                + start.toLocalDate() + "_" + end.toLocalDate() + ".csv\"");
 
-        java.io.PrintWriter writer = response.getWriter();
-        writer.println("ID,Cửa hàng,Loại,Số tiền,Phí nền tảng,Số tiền thực,Trạng thái,Mô tả,Ngày tạo");
+        java.io.Writer writer = response.getWriter();
+        // BOM for Excel UTF-8
+        writer.write('﻿');
+        writer.write("ID,Cửa hàng,Loại,Số tiền,Phí nền tảng,Số tiền thực,Trạng thái,Mô tả,Ngày tạo\n");
         for (com.dealxanh.app.entity.Transaction t : transactions) {
-            writer.printf("%d,\"%s\",%s,%.0f,%.0f,%.0f,%s,\"%s\",%s\n",
+            writer.write(String.format("%d,\"%s\",%s,%.0f,%.0f,%.0f,%s,\"%s\",%s\n",
                     t.getTransactionId(),
                     t.getStore() != null ? t.getStore().getStoreName().replace("\"", "\"\"") : "N/A",
                     t.getType(),
@@ -1030,10 +1399,9 @@ public class AdminController {
                     t.getStatus(),
                     t.getDescription() != null ? t.getDescription().replace("\"", "\"\"") : "",
                     t.getCreatedAt() != null ? t.getCreatedAt().toString() : ""
-            );
+            ));
         }
         writer.flush();
-        return null; // Response already committed
     }
 
     @PostMapping("/api/finance/payout")

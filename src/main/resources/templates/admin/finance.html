@@ -529,10 +529,13 @@ function closeWalletModal() {
 // ===== Reconciliation Functions =====
 
 let reconciliationData = [];
+let confirmedStoreIds = new Set(); // Track which stores have been confirmed
 
 function openReconcileModal() {
     document.getElementById('reconcile-modal').classList.add('show');
     document.getElementById('reconcileModalBody').innerHTML = '<div style="text-align:center;padding:30px;">Đang tải dữ liệu đối soát...</div>';
+    confirmedStoreIds = new Set();
+    updateConfirmBtn();
 
     const urlParams = new URLSearchParams(window.location.search);
     const startDate = urlParams.get('startDate') || '';
@@ -575,24 +578,44 @@ function renderReconciliationTable() {
     let totalStores = reconciliationData.length;
     let totalTransactions = 0;
 
-    let html = `<div style="max-height:400px;overflow-y:auto;"><table class="table">
-        <thead><tr><th>Cửa hàng</th><th style="text-align:right;">Số đơn</th><th style="text-align:right;">Doanh thu</th><th style="text-align:right;">Hoa hồng</th><th style="text-align:right;">Cần trả</th><th>Trạng thái</th></tr></thead>
+    let html = `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;text-align:center;">
+        Nhấn <b>"Xác nhận"</b> từng dòng để kiểm tra — nhấn <b>"Xác nhận đã đối soát"</b> bên dưới để hoàn tất
+    </div>
+    <div style="max-height:380px;overflow-y:auto;"><table class="table">
+        <thead><tr><th>Cửa hàng</th><th style="text-align:right;">Số đơn</th><th style="text-align:right;">Doanh thu</th><th style="text-align:right;">Hoa hồng</th><th style="text-align:right;">Cần trả</th><th style="width:140px;">Trạng thái</th></tr></thead>
         <tbody>`;
 
-    reconciliationData.forEach(store => {
+    reconciliationData.forEach((store, idx) => {
         totalTransactions += store.orderCount || 0;
         totalAmount += store.revenue || 0;
+        const storeKey = String(store.storeId);
+        const isConfirmed = confirmedStoreIds.has(storeKey);
+
         html += `
-            <tr>
+            <tr id="reconcile-row-${idx}" style="transition:background .3s;${isConfirmed ? 'background:rgba(16,185,129,.04);' : ''}">
                 <td>
                     <div style="font-weight:600">${escapeHtml(store.storeName)}</div>
-                    <div style="font-size:11px;color:var(--text-tertiary);">${escapeHtml(store.storeId)}</div>
+                    <div style="font-size:11px;color:var(--text-tertiary);">#${escapeHtml(store.storeId)}</div>
                 </td>
                 <td style="text-align:right;font-weight:600;">${store.orderCount || 0} đơn</td>
                 <td style="text-align:right;">${(store.revenue || 0).toLocaleString()}đ</td>
                 <td style="text-align:right;color:var(--text-secondary);">${(store.commission || 0).toLocaleString()}đ</td>
                 <td style="text-align:right;font-weight:600;color:var(--primary);">${(store.netAmount || 0).toLocaleString()}đ</td>
-                <td><span class="status-badge status-badge--warning">⏳ Chờ đối soát</span></td>
+                <td id="reconcile-status-${idx}">
+                    ${isConfirmed ? `
+                        <span class="status-badge status-badge--success">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+                            Đã đối soát
+                        </span>` : `
+                        <button onclick="confirmStoreReconciliation(${idx}, '${storeKey}')"
+                                style="padding:5px 12px;border-radius:var(--radius-md);background:var(--warning);color:#fff;font-size:11px;font-weight:600;cursor:pointer;border:none;white-space:nowrap;transition:all .2s;"
+                                onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='var(--warning)'">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;"><polyline points="20 6 9 17 4 12"/></svg>
+                            Xác nhận
+                        </button>
+                        <span class="status-badge status-badge--warning" style="margin-left:4px;">⏳ Chờ</span>`
+                    }
+                </td>
             </tr>`;
     });
 
@@ -600,9 +623,69 @@ function renderReconciliationTable() {
     body.innerHTML = html;
     stats.textContent = `${totalStores} cửa hàng · ${totalTransactions} đơn · Tổng ${totalAmount.toLocaleString()}đ`;
     document.getElementById('confirmReconcileBtn').style.display = 'flex';
+    updateConfirmBtn();
 }
 
+// Per-store confirmation (visual only - no DB write yet)
+function confirmStoreReconciliation(idx, storeKey) {
+    confirmedStoreIds.add(storeKey);
+    // Re-render just the status cell
+    const statusCell = document.getElementById('reconcile-status-' + idx);
+    const row = document.getElementById('reconcile-row-' + idx);
+    if (row) row.style.background = 'rgba(16,185,129,.04)';
+    if (statusCell) {
+        statusCell.innerHTML = `
+            <span class="status-badge status-badge--success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Đã đối soát
+            </span>
+            <button onclick="undoStoreReconciliation(${idx}, '${storeKey}')"
+                    style="padding:3px 8px;border-radius:var(--radius-md);background:transparent;color:var(--text-tertiary);font-size:10px;cursor:pointer;border:1px solid var(--border);margin-left:4px;"
+                    title="Hoàn tác">↩</button>`;
+    }
+    updateConfirmBtn();
+}
+
+// Undo per-store confirmation
+function undoStoreReconciliation(idx, storeKey) {
+    confirmedStoreIds.delete(storeKey);
+    const statusCell = document.getElementById('reconcile-status-' + idx);
+    const row = document.getElementById('reconcile-row-' + idx);
+    if (row) row.style.background = '';
+    if (statusCell) {
+        statusCell.innerHTML = `
+            <button onclick="confirmStoreReconciliation(${idx}, '${storeKey}')"
+                    style="padding:5px 12px;border-radius:var(--radius-md);background:var(--warning);color:#fff;font-size:11px;font-weight:600;cursor:pointer;border:none;white-space:nowrap;transition:all .2s;"
+                    onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='var(--warning)'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Xác nhận
+            </button>
+            <span class="status-badge status-badge--warning" style="margin-left:4px;">⏳ Chờ</span>`;
+    }
+    updateConfirmBtn();
+}
+
+function updateConfirmBtn() {
+    const btn = document.getElementById('confirmReconcileBtn');
+    const total = reconciliationData.length;
+    const confirmed = confirmedStoreIds.size;
+    if (total === 0 || confirmed === 0) {
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+    } else {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    }
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Xác nhận đã đối soát (${confirmed}/${total})`;
+}
+
+// Final reconciliation - only processes confirmed stores
 function processReconciliation() {
+    if (confirmedStoreIds.size === 0) {
+        alert('Vui lòng xác nhận ít nhất một cửa hàng trước khi đối soát.');
+        return;
+    }
+
     const btn = document.getElementById('confirmReconcileBtn');
     btn.disabled = true;
     btn.textContent = 'Đang xử lý...';
@@ -614,7 +697,7 @@ function processReconciliation() {
         formData.append(csrfHeader.getAttribute('content'), csrfToken.getAttribute('content'));
     }
 
-    const storeIds = reconciliationData.map(s => s.storeId).join(',');
+    const storeIds = Array.from(confirmedStoreIds).join(',');
 
     fetch(`/admin/api/finance/reconcile?storeIds=${storeIds}`, {
         method: 'POST',
@@ -630,19 +713,20 @@ function processReconciliation() {
         } else {
             alert('Lỗi: ' + data.message);
             btn.disabled = false;
-            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Xác nhận đã đối soát';
+            updateConfirmBtn();
         }
     })
     .catch(err => {
         alert('Lỗi kết nối: ' + err.message);
         btn.disabled = false;
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Xác nhận đã đối soát';
+        updateConfirmBtn();
     });
 }
 
 function closeReconcileModal() {
     document.getElementById('reconcile-modal').classList.remove('show');
     reconciliationData = [];
+    confirmedStoreIds = new Set();
 }
 </script>
 </body>
