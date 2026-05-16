@@ -1,8 +1,8 @@
 # DealXanh - O2O Deal Marketplace Platform
 
-## 📊 Project Status: **~75% Complete**
+## 📊 Project Status: **~82% Complete**
 
-**Last Updated:** 2026-05-16
+**Last Updated:** 2026-05-16 (end of day)
 **Version:** 1.0.0-alpha
 
 ---
@@ -447,6 +447,43 @@ src/main/resources/templates/
    - ✅ `MIN_SALE_PRICE_PERCENT` = 0.35 (giá sale >= 35% giá gốc, tương đương giảm tối đa 65%)
    - ✅ `validateCumulativeDiscount()`: Kiểm tra nếu sản phẩm thuộc danh mục có platform deal → cộng dồn discount, nếu vượt 65% → báo lỗi "Sản phẩm đã giảm giá kịch sàn, không thể giảm hơn"
 
+8. **Admin Deal Cards - Categories & Products Panel**
+   - ✅ Card 2 cột: trái (main info) + phải 140px (danh mục dọc + sản phẩm ngang max 2 + ", +N SP")
+   - ✅ AdminController build `dealCategoriesMap` + `dealProductsMap` từ DB
+   - ✅ Fix grid min-width 320px → 370px để vừa panel phải
+   - ✅ Fix modal Xem DM/SP: empty state thay vì auto-redirect
+   - ✅ Fix modal Thêm DM/SP: empty state thay vì spinner vô hạn
+
+9. **Finance & Reconciliation (Tài chính & Đối soát) — Xây dựng hoàn chỉnh**
+   - ✅ `TransactionRepository` với 14 query methods (sumGMV, sumCommission, sumPaidPayouts, sumGMVByDate, findPendingPayoutsWithStore...)
+   - ✅ Trang `/admin/finance`: KPI cards động, chart 7 ngày, bảng chờ payout, bảng giao dịch gần đây
+   - ✅ Date range filter (2 ô input[date]), Xuất CSV (BOM UTF-8), Chạy Payout (modal confirm → API POST)
+   - ✅ **Ví nền tảng**: popup số dư = Commission - PaidOut - Pending
+   - ✅ **Đối soát**: modal từng dòng store, xác nhận riêng + nút undo ↩, counter (3/5), commit tổng
+   - ✅ Dùng chung header fragment như các trang khác
+
+10. **Dispute Management (Khiếu nại & Tranh chấp) — Xây dựng hoàn chỉnh**
+    - ✅ `DisputeRepository` với queries JOIN FETCH complainant + order
+    - ✅ Trang `/admin/dispute`: KPI cards lọc theo status, danh sách disputes, panel chi tiết bên phải
+    - ✅ Flow: PENDING → "Bắt đầu xem xét" → REVIEWING → "Phê duyệt hoàn tiền" / "Từ chối" (có prompt nhập ghi chú)
+    - ✅ Đã xử lý → ẩn action buttons, hiển thị admin note
+
+11. **Analytics & Reports (Báo cáo & Phân tích) — Enterprise Dashboard**
+    - ✅ `OrderRepository` thêm 8 analytics queries (sumRevenueByDate, topStoresByRevenue, orderStatusDistribution...)
+    - ✅ Trang `/admin/analytics`: 4 KPI cards (% change vs kỳ trước), revenue trend chart 30 ngày (bar), top 10 stores
+    - ✅ **Hệ thống Đề xuất thông minh**: 8 loại cảnh báo (dispute pending, huỷ đơn cao, store chờ duyệt, deal hết hạn, GMV giảm, rating thấp...) → mỗi đề xuất có nút hành động
+    - ✅ Metrics: tỷ lệ pickup (vòng tròn), tỷ lệ huỷ, sức khoẻ nền tảng (progress bars)
+
+12. **Profile Security - Password Validation**
+    - ✅ **Backend fix**: BCrypt `matches()` để validate mật khẩu hiện tại + `encode()` để lưu mật khẩu mới (trước đó so sánh plain text → luôn fail!)
+    - ✅ **Frontend**: strength meter 4 thanh (đỏ→vàng→cam→xanh), real-time, check confirm match, chặn submit nếu không khớp/trùng
+
+13. **Session Expiration — Role-based Redirect**
+    - ✅ `CustomInvalidSessionStrategy`: `/admin/**` → `/admin/login?expired=true`, `/seller/**` → `/seller/login?expired=true`, còn lại → `/login?expired=true`
+    - ✅ AJAX request → 401 JSON
+    - ✅ Cả 3 trang login hiển thị message "Phiên đăng nhập đã hết hạn"
+    - ✅ Session timeout: 30 phút
+
 ### **Recent Fixes (2026-05-13):**
 
 1. **Thymeleaf Template Error**
@@ -477,10 +514,11 @@ src/main/resources/templates/
    - ⚠️ Payment integration missing
    - ⚠️ Shipping/tracking incomplete
 
-2. **Finance & Dispute Management** (~20%)
-   - ⚠️ UI exists but backend incomplete
-   - ❌ Commission calculation incomplete
-   - ❌ Dispute resolution workflow missing
+2. **Finance, Dispute & Analytics** (~90%)
+   - ✅ Finance: KPI, chart, transactions, CSV export, payout, wallet, reconciliation
+   - ✅ Dispute: list, detail panel, review flow, approve/reject
+   - ✅ Analytics: enterprise dashboard, recommendations engine, top stores
+   - ⚠️ Payout chưa tích hợp cổng thanh toán thật
 
 3. **Seller Order Fulfillment** (~30%)
    - ⚠️ UI exists
@@ -506,10 +544,11 @@ src/main/resources/templates/
 
 ### **Low Priority:**
 
-7. **Analytics Dashboard** (~20%)
-   - ⚠️ Basic stats exist
-   - ❌ Advanced charts missing
-   - ❌ Export functionality missing
+7. **Analytics Dashboard** (~90%)
+   - ✅ Enterprise dashboard: KPIs, revenue chart, top stores, metrics
+   - ✅ AI Recommendations engine: 8 loại cảnh báo thông minh
+   - ✅ Export CSV cho finance
+   - ⚠️ Chưa có export PDF/Excel report
 
 8. **Mobile App** (Not started)
 
