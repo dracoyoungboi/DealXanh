@@ -127,19 +127,46 @@
                 </div>
             </div>
             
-            <!-- Thêm dữ liệu động mồi sẵn (sẽ hiển thị khi Server trả deal thực tế) -->
+            <!-- Deal động từ Server -->
             <div class="deal-card" th:each="deal : ${featuredDeals}" style="background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); transition: all 0.3s; cursor: pointer;">
-                <a th:href="@{/deals/{id}(id=${deal.productId})}" style="text-decoration:none; color:inherit;">
+                <a th:href="@{/deals/{id}(id=${deal.dealId})}" style="text-decoration:none; color:inherit;">
                     <div style="position: relative; padding-top: 75%;">
-                        <img th:src="${deal.imageUrl}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" th:alt="${deal.name}">
-                        <span style="position: absolute; top: 8px; left: 8px; background: var(--status-danger); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;" th:text="${'-' + deal.discountPercent.intValue() + '%'}">-50%</span>
+                        <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/deals/default-banner.jpg'}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" th:alt="${deal.dealName}">
+                        <span th:if="${deal.discountPercent > 0}" style="position: absolute; top: 8px; left: 8px; background: var(--status-danger); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;" th:text="${'-' + #numbers.formatDecimal(deal.discountPercent, 0, 'COMMA', 0, 'POINT') + '%'}">-50%</span>
+                        <span th:if="${deal.dealType != null}" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #fff;"
+                              th:style="${deal.dealType == 'FLASH_SALE' ? 'background:var(--status-danger);' : (deal.dealType == 'VOUCHER' ? 'background:#7c3aed;' : (deal.dealType == 'COMBO' ? 'background:var(--status-warning);' : 'background:var(--accent);'))}"
+                              th:text="${deal.dealType == 'FLASH_SALE' ? 'Flash Sale' : (deal.dealType == 'VOUCHER' ? 'Voucher' : (deal.dealType == 'COMBO' ? 'Combo' : 'Seasonal'))}">Type</span>
                     </div>
                     <div style="padding: 12px;">
-                        <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);" th:text="${deal.name}">Tên sản phẩm</h3>
-                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;" th:text="${deal.store.storeName}">Tên cửa hàng</p>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 16px; font-weight: 800; color: var(--primary);" th:text="${#numbers.formatDecimal(deal.discountedPrice, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</span>
-                            <span style="font-size: 13px; color: var(--text-tertiary); text-decoration: line-through;" th:text="${#numbers.formatDecimal(deal.originalPrice, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</span>
+                        <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);" th:text="${deal.dealName}">Tên Deal</h3>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;" th:text="${deal.storeName != null ? deal.storeName : 'Toàn hệ thống'}">Tên cửa hàng</p>
+
+                        <!-- Danh mục áp dụng (cột dọc) -->
+                        <div th:if="${deal.categories != null and !deal.categories.isEmpty()}" style="margin-bottom: 6px;">
+                            <div style="font-size: 10px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 3px; text-transform: uppercase;">Danh mục áp dụng:</div>
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <div th:each="cat : ${deal.categories}" style="font-size: 11px; color: var(--primary); display: flex; align-items: center; gap: 4px;">
+                                    <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0;"></span>
+                                    <span th:text="${cat}">Danh mục</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sản phẩm áp dụng (hàng ngang, max 2 + ,...) -->
+                        <div th:if="${deal.products != null and !deal.products.isEmpty()}" style="margin-bottom: 6px;">
+                            <div style="font-size: 10px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 3px; text-transform: uppercase;">Sản phẩm áp dụng:</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                                <span th:each="prod, iterStat : ${deal.products}" th:if="${iterStat.index < 2}"
+                                      style="font-size: 11px; background: var(--bg); color: var(--text-primary); padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); white-space: nowrap;"
+                                      th:text="${prod}">Sản phẩm</span>
+                                <span th:if="${deal.products.size() > 2}" style="font-size: 11px; color: var(--text-tertiary); font-style: italic;">, +${deal.products.size() - 2} sản phẩm khác...</span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                            <span th:if="${deal.discountType == 'PERCENT'}" style="font-size: 16px; font-weight: 800; color: var(--primary);" th:text="'Giảm ' + #numbers.formatDecimal(deal.discountValue, 0, 'COMMA', 0, 'POINT') + '%'">Giảm 50%</span>
+                            <span th:if="${deal.discountType == 'FIXED'}" style="font-size: 16px; font-weight: 800; color: var(--primary);" th:text="'Giảm ' + #numbers.formatDecimal(deal.discountValue, 0, 'COMMA', 0, 'POINT') + 'đ'">Giảm 20k</span>
+                            <span th:if="${deal.minOrderAmount > 0}" style="font-size: 12px; color: var(--text-tertiary);" th:text="'Cho đơn từ ' + #numbers.formatDecimal(deal.minOrderAmount, 0, 'COMMA', 0, 'POINT') + 'đ'">Cho đơn từ 50k</span>
                         </div>
                     </div>
                 </a>

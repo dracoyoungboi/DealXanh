@@ -47,4 +47,31 @@ public class EmailService {
             throw new RuntimeException("Không thể gửi email: " + e.getMessage());
         }
     }
+
+    public void sendSellerReReviewEmail(String toEmail, String sellerName, String storeName, String reason) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(toEmail);
+            message.setSubject("DealXanh - Hồ sơ của bạn đang được xét duyệt lại");
+
+            StringBuilder text = new StringBuilder();
+            text.append("Xin chào ").append(sellerName != null ? sellerName : "bạn").append(",\n\n");
+            text.append("Cửa hàng \"").append(storeName != null ? storeName : "của bạn").append("\" của bạn trên DealXanh đã được chuyển về trạng thái chờ xét duyệt để được xem xét lại.\n\n");
+
+            if (reason != null && !reason.trim().isEmpty()) {
+                text.append("Lý do từ chối trước đó: ").append(reason).append("\n\n");
+            }
+
+            text.append("Đội ngũ DealXanh sẽ xem xét lại hồ sơ của bạn trong thời gian sớm nhất.\n");
+            text.append("Vui lòng kiểm tra và cập nhật thông tin cửa hàng nếu cần thiết.\n\n");
+            text.append("Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email này.\n\n");
+            text.append("Trân trọng,\nĐội ngũ DealXanh.");
+
+            message.setText(text.toString());
+            mailSender.send(message);
+            System.out.println("Seller re-review email sent to: " + toEmail + " for store: " + storeName);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi gửi email xét duyệt lại: " + e.getMessage());
+        }
+    }
 }

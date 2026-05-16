@@ -114,6 +114,7 @@ public class SecurityConfig {
                     "/cart/clear", "/cart/apply-coupon", "/cart/remove-coupon",
                     "/api/**", "/perform_login",
                     "/admin/seller-verify/*/approve", "/admin/seller-verify/*/reject",
+                    "/admin/seller-verify/*/reset-to-pending",
                     "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )
             )

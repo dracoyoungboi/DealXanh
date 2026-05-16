@@ -146,6 +146,7 @@ public class SellerController {
             @RequestParam LocalDateTime startTime,
             @RequestParam LocalDateTime endTime,
             @RequestParam(required = false) String bannerUrl,
+            @RequestParam(required = false) org.springframework.web.multipart.MultipartFile bannerFile,
             @RequestParam(defaultValue = "CODE_REQUIRED") String applyMethod,
             Principal principal,
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
@@ -155,6 +156,20 @@ public class SellerController {
             if (user == null || user.getWorkStore() == null) {
                 redirectAttributes.addFlashAttribute("error", "Không tìm thấy cửa hàng");
                 return "redirect:/seller/deals";
+            }
+
+            // Handle banner file upload
+            String bannerPath = bannerUrl;
+            if (bannerFile != null && !bannerFile.isEmpty()) {
+                if (!isImageFile(bannerFile)) {
+                    redirectAttributes.addFlashAttribute("error", "File banner phải là ảnh (JPG, PNG, WEBP)");
+                    return "redirect:/seller/deals/create";
+                }
+                if (!isValidFileSize(bannerFile, 5 * 1024 * 1024)) {
+                    redirectAttributes.addFlashAttribute("error", "File banner không được vượt quá 5MB");
+                    return "redirect:/seller/deals/create";
+                }
+                bannerPath = saveUploadedFile(bannerFile);
             }
 
             Deal deal = new Deal();
@@ -171,7 +186,7 @@ public class SellerController {
             deal.setEndTime(endTime);
             deal.setStore(user.getWorkStore());
             deal.setScope("SPECIFIC_STORES");
-            deal.setBannerUrl(bannerUrl);
+            deal.setBannerUrl(bannerPath);
             deal.setApplyMethod(applyMethod);
             deal.setPriority(50);
             deal.setCreatedBy(user);
@@ -188,6 +203,30 @@ public class SellerController {
             redirectAttributes.addFlashAttribute("error", "Lỗi hệ thống: " + ex.getMessage());
             return "redirect:/seller/deals/create";
         }
+    }
+
+    // ========== File upload helpers ==========
+
+    private String saveUploadedFile(org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        if (file == null || file.isEmpty()) return null;
+        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads");
+        if (!java.nio.file.Files.exists(uploadPath)) {
+            java.nio.file.Files.createDirectories(uploadPath);
+        }
+        java.nio.file.Files.copy(file.getInputStream(), uploadPath.resolve(fileName),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        return "/uploads/" + fileName;
+    }
+
+    private boolean isImageFile(org.springframework.web.multipart.MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && (contentType.equals("image/jpeg")
+                || contentType.equals("image/png") || contentType.equals("image/webp"));
+    }
+
+    private boolean isValidFileSize(org.springframework.web.multipart.MultipartFile file, long maxSizeInBytes) {
+        return file.getSize() <= maxSizeInBytes;
     }
 
     // ============ DEAL PRODUCTS API ============

@@ -18,7 +18,7 @@ public class DealService {
     // Validation Constants
     private static final double MAX_DISCOUNT_PERCENT = 85.0;
     private static final double MIN_DISCOUNT_PERCENT = 1.0;
-    private static final double MIN_SALE_PRICE_PERCENT = 0.15;
+    private static final double MIN_SALE_PRICE_PERCENT = 0.35; // Max 65% discount
     private static final int MAX_DEAL_DURATION_DAYS = 30;
     private static final double MIN_FIXED_DISCOUNT = 1000.0;
     private static final double MAX_FIXED_DISCOUNT = 500000.0;
@@ -26,7 +26,6 @@ public class DealService {
     // Deal type specific duration limits (in hours)
     private static final int FLASH_SALE_MAX_HOURS = 6;
     private static final int VOUCHER_MAX_DAYS = 30;
-    private static final int FREESHIP_MAX_DAYS = 30;
     private static final int COMBO_MAX_DAYS = 15;
     private static final int SEASONAL_MAX_DAYS = 30;
 
@@ -210,6 +209,12 @@ public class DealService {
             throw new IllegalArgumentException("Số lượng tối đa phải lớn hơn 0");
         }
 
+        // Validate product is not in another overlapping active deal
+        validateProductNotInOverlappingDeal(product, deal);
+
+        // Validate cumulative discount from platform deals (category-based) doesn't exceed 65%
+        validateCumulativeDiscount(product, deal, salePrice, originalPrice);
+
         DealProduct existingDealProduct = dealProductRepository
                 .findByDealAndProduct(deal, product);
         if (existingDealProduct != null) {
@@ -296,6 +301,11 @@ public class DealService {
     // ============ VALIDATION METHODS ============
 
     private void validateDeal(Deal deal, Long existingDealId) {
+        // 0. Reject deprecated FREESHIP type
+        if ("FREESHIP".equals(deal.getDealType())) {
+            throw new IllegalArgumentException("Freeship không còn được hỗ trợ. Vui lòng chọn loại deal khác.");
+        }
+
         // 1. Validate deal code uniqueness
         validateDealCodeUniqueness(deal.getDealCode(), existingDealId);
 
@@ -415,16 +425,6 @@ public class DealService {
                 if (days > maxDays) {
                     throw new IllegalArgumentException(String.format(
                         "Voucher chỉ được chạy tối đa %d ngày. Bạn đang chọn %d ngày.",
-                        maxDays, days
-                    ));
-                }
-                break;
-
-            case "FREESHIP":
-                maxDays = FREESHIP_MAX_DAYS;
-                if (days > maxDays) {
-                    throw new IllegalArgumentException(String.format(
-                        "Freeship chỉ được chạy tối đa %d ngày. Bạn đang chọn %d ngày.",
                         maxDays, days
                     ));
                 }
@@ -556,6 +556,100 @@ public class DealService {
         }
     }
 
+    private void validateProductNotInOverlappingDeal(Product product, Deal currentDeal) {
+        // Find all deal products for this product
+        List<DealProduct> existingDealProducts = dealProductRepository.findByProduct(product);
+
+        if (existingDealProducts == null || existingDealProducts.isEmpty()) {
+            return; // Product not in any deal
+        }
+
+        LocalDateTime currentStart = currentDeal.getStartTime();
+        LocalDateTime currentEnd = currentDeal.getEndTime();
+
+        for (DealProduct dp : existingDealProducts) {
+            Deal otherDeal = dp.getDeal();
+            // Skip if same deal or deal is cancelled/ended
+            if (otherDeal.getDealId().equals(currentDeal.getDealId())) continue;
+            if ("CANCELLED".equals(otherDeal.getStatus()) || "ENDED".equals(otherDeal.getStatus())) continue;
+
+            // Check time overlap
+            LocalDateTime otherStart = otherDeal.getStartTime();
+            LocalDateTime otherEnd = otherDeal.getEndTime();
+
+            if (currentStart != null && currentEnd != null && otherStart != null && otherEnd != null) {
+                boolean overlaps = currentStart.isBefore(otherEnd) && currentEnd.isAfter(otherStart);
+                if (overlaps) {
+                    throw new IllegalArgumentException(String.format(
+                        "Sản phẩm '%s' đã có trong deal '%s' (thời gian: %s - %s). Không thể thêm vào deal này.",
+                        product.getName(),
+                        otherDeal.getDealName(),
+                        otherStart.toLocalDate().toString(),
+                        otherEnd.toLocalDate().toString()
+                    ));
+                }
+            }
+        }
+    }
+
+    private void validateCumulativeDiscount(Product product, Deal currentDeal,
+                                              Double salePrice, Double originalPrice) {
+        // Check if product's category has any active platform deal
+        if (product.getCategory() == null) return;
+
+        List<DealCategory> activeDealCategories = dealCategoryRepository
+                .findActiveByCategory(product.getCategory());
+
+        if (activeDealCategories == null || activeDealCategories.isEmpty()) return;
+
+        for (DealCategory dc : activeDealCategories) {
+            Deal platformDeal = dc.getDeal();
+            if (platformDeal == null) continue;
+            if (platformDeal.getDealId().equals(currentDeal.getDealId())) continue;
+            if (!"ACTIVE".equals(platformDeal.getStatus()) && !"SCHEDULED".equals(platformDeal.getStatus())) continue;
+
+            // Check time overlap
+            if (currentDeal.getStartTime() != null && currentDeal.getEndTime() != null
+                && platformDeal.getStartTime() != null && platformDeal.getEndTime() != null) {
+                boolean overlaps = currentDeal.getStartTime().isBefore(platformDeal.getEndTime())
+                        && currentDeal.getEndTime().isAfter(platformDeal.getStartTime());
+                if (!overlaps) continue;
+            }
+
+            // Calculate platform deal's discount on this product
+            double platformDiscount = 0;
+            if ("PERCENT".equals(platformDeal.getDiscountType())) {
+                platformDiscount = originalPrice * platformDeal.getDiscountValue() / 100.0;
+                if (platformDeal.getMaxDiscountAmount() != null) {
+                    platformDiscount = Math.min(platformDiscount, platformDeal.getMaxDiscountAmount());
+                }
+            } else {
+                platformDiscount = platformDeal.getDiscountValue();
+            }
+
+            // Calculate current deal's discount
+            double currentDiscount = originalPrice - salePrice;
+
+            // Calculate total discount percentage
+            double totalDiscount = platformDiscount + currentDiscount;
+            double totalDiscountPercent = (totalDiscount / originalPrice) * 100.0;
+
+            if (totalDiscountPercent > 65.0) {
+                throw new IllegalArgumentException(String.format(
+                    "Sản phẩm '%s' đã giảm giá kịch sàn, không thể giảm hơn. " +
+                    "Danh mục đã có deal nền tảng '%s' giảm %s%%. " +
+                    "Tổng giảm giá sẽ là %,.0f%% (vượt quá 65%%).",
+                    product.getName(),
+                    platformDeal.getDealName(),
+                    "PERCENT".equals(platformDeal.getDiscountType())
+                        ? String.format("%.0f%%", platformDeal.getDiscountValue())
+                        : String.format("%,.0fđ", platformDeal.getDiscountValue()),
+                    totalDiscountPercent
+                ));
+            }
+        }
+    }
+
     private void validateProductPrices(Double originalPrice, Double salePrice) {
         if (originalPrice == null || salePrice == null) {
             throw new IllegalArgumentException("Giá gốc và giá sale không được để trống");
@@ -566,7 +660,7 @@ public class DealService {
         double minPrice = originalPrice * MIN_SALE_PRICE_PERCENT;
         if (salePrice < minPrice) {
             throw new IllegalArgumentException(
-                String.format("Giá sale tối thiểu %,.0fđ (15%% giá gốc)", minPrice)
+                String.format("Sản phẩm đã giảm giá kịch sàn, không thể giảm hơn. Giá sale tối thiểu %,.0fđ (tối đa giảm 65%% giá gốc %,.0fđ)", minPrice, originalPrice)
             );
         }
         if (salePrice >= originalPrice) {

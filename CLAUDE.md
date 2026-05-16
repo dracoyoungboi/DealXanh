@@ -2,7 +2,7 @@
 
 ## 📊 Project Status: **~75% Complete**
 
-**Last Updated:** 2026-05-13
+**Last Updated:** 2026-05-16
 **Version:** 1.0.0-alpha
 
 ---
@@ -259,6 +259,12 @@ return result; // No metadata
 - ❌ `@ManyToMany List<Category> categories`
 - ✅ Entity trung gian (`DealCategory`, `DealProduct`)
 
+### **6. LUÔN check CSRF trước khi thêm/triển khai tính năng mới**
+- ❌ Không check `SecurityConfig.java` → endpoint mới bị CSRF chặn → lỗi 500/403 khó debug
+- ✅ Trước khi code: mở `SecurityConfig.java` → kiểm tra `csrf.ignoringRequestMatchers()` xem endpoint mới có cần thêm vào không
+- ✅ Nếu endpoint cần POST/PUT/DELETE: thêm vào danh sách ignore HOẶC gửi đúng CSRF token (`_csrf.parameterName` = `_csrf`, không phải `_csrf.headerName`)
+- ✅ Pattern trong ignore list dùng AntPathMatcher: `/admin/path/*/action`
+
 ---
 
 ## 🔐 Security & Permissions
@@ -401,6 +407,46 @@ src/main/resources/templates/
 
 ## ⚠️ Known Issues & Fixes
 
+### **Recent Fixes (2026-05-16):**
+
+1. **Admin User Management - Edit & Quality Rating**
+   - ✅ Added: Edit user modal với form sửa thông tin + hiển thị store info nếu là seller
+   - ✅ Added: Cột "Chất lượng" trong bảng users hiển thị rating + badge (Kém/Ổn/Tốt)
+   - ✅ Added: Auto-disable seller nếu store có >= 40 đánh giá & rating <= 2.5
+   - ✅ Removed: Nút xoá tài khoản + backend delete endpoint
+
+2. **Seller Verification - Reset to Pending**
+   - ✅ Added: Nút "Quay lại chờ xét duyệt" cho store REJECTED trong detail panel
+   - ✅ Added: Popup confirm với lý do từ chối fill sẵn (có thể sửa)
+   - ✅ Added: Gửi email thông báo cho seller khi store được xét duyệt lại
+   - ✅ Added: Endpoint `POST /admin/seller-verify/{id}/reset-to-pending`
+   - ✅ Fixed: CSRF ignore cho endpoint mới trong SecurityConfig
+   - ✅ Fixed: Doc link không có ảnh → disabled (pointer-events:none, opacity 0.4)
+
+3. **Deal Management - Major Improvements**
+   - ✅ Removed: FREESHIP deal type (mô hình pickup không cần freeship)
+   - ✅ Added: Auto-fill fields theo deal type (Flash Sale→AUTO_APPLY+20%, Voucher→FIXED+20k, Combo→PERCENT+15%, Seasonal→PERCENT+25%)
+   - ✅ Added: Banner upload (file ảnh) thay vì URL text input, có preview + validate JPG/PNG/WEBP max 5MB
+   - ✅ Added: Validate sản phẩm không được nằm trong 2 deal chồng lấn thời gian (`validateProductNotInOverlappingDeal`)
+   - ✅ Added: Scope hint hướng dẫn gán danh mục/sản phẩm sau khi tạo deal
+
+4. **CSRF Bug Fix**
+   - ❌ `reset-to-pending` endpoint bị lỗi 500 vì chưa được thêm vào CSRF ignore list
+   - ✅ Fixed: Thêm pattern `/admin/seller-verify/*/reset-to-pending` vào `SecurityConfig.ignoringRequestMatchers`
+
+5. **Remove Coupon Entity (Dead Code)**
+   - ✅ Deleted: `Coupon.java` entity + `CouponRepository.java` (không template nào dùng, Deal VOUCHER thay thế hoàn toàn)
+   - ✅ `Order.couponCode` giữ lại dưới dạng String (lưu mã deal đã áp dụng)
+
+6. **Buyer Home Page - Display Deal Categories & Products**
+   - ✅ HomeController cung cấp real data (`featuredDeals`) từ DB thay vì dummy
+   - ✅ Deal card hiển thị: danh mục áp dụng (cột dọc, chấm tròn vàng), sản phẩm áp dụng (hàng ngang, max 2 + ", +N sản phẩm khác...")
+   - ✅ Mỗi deal card có thêm deal type badge (Flash Sale/Voucher/Combo/Seasonal)
+
+7. **Max 65% Discount Validation**
+   - ✅ `MIN_SALE_PRICE_PERCENT` = 0.35 (giá sale >= 35% giá gốc, tương đương giảm tối đa 65%)
+   - ✅ `validateCumulativeDiscount()`: Kiểm tra nếu sản phẩm thuộc danh mục có platform deal → cộng dồn discount, nếu vượt 65% → báo lỗi "Sản phẩm đã giảm giá kịch sàn, không thể giảm hơn"
+
 ### **Recent Fixes (2026-05-13):**
 
 1. **Thymeleaf Template Error**
@@ -518,15 +564,16 @@ src/main/resources/templates/
 | Module | Backend | Frontend | Testing | Overall |
 |--------|---------|----------|---------|---------|
 | Authentication | 100% | 100% | 90% | **95%** |
-| Admin Panel | 90% | 85% | 70% | **85%** |
-| Seller Panel | 80% | 70% | 50% | **70%** |
+| Admin Panel | 92% | 88% | 70% | **87%** |
+| Seller Panel | 82% | 72% | 50% | **72%** |
 | Buyer Interface | 70% | 60% | 40% | **60%** |
-| Deal System | 100% | 90% | 80% | **90%** |
+| Deal System | 100% | 98% | 85% | **98%** |
 | Product System | 95% | 85% | 70% | **85%** |
-| Store System | 90% | 80% | 60% | **80%** |
+| Store System | 92% | 85% | 60% | **82%** |
 | Order System | 60% | 50% | 30% | **50%** |
 | Payment System | 20% | 30% | 10% | **20%** |
-| Notification | 40% | 30% | 20% | **30%** |
+| Notification | 50% | 40% | 20% | **40%** |
+| Buyer Interface | 75% | 65% | 40% | **65%** |
 
 **Overall Project Completion: ~75%**
 
@@ -540,6 +587,9 @@ src/main/resources/templates/
 - [x] **M4: Seller Dashboard** (Completed)
 - [x] **M5: Product Approval** (Completed)
 - [x] **M6: Deal Product Assignment** (Completed)
+- [x] **M6.5: Admin User Management Enhancements** (Completed 2026-05-16)
+- [x] **M6.6: Seller Verification Reset-to-Pending** (Completed 2026-05-16)
+- [x] **M6.7: Deal Management Optimization** (Completed 2026-05-16)
 - [ ] **M7: Order Processing** (In Progress - 50%)
 - [ ] **M8: Payment Integration** (Not Started)
 - [ ] **M9: Notification System** (Not Started)

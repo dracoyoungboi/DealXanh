@@ -5,6 +5,7 @@ import com.dealxanh.app.entity.Store;
 import com.dealxanh.app.entity.User;
 import com.dealxanh.app.entity.Order;
 import com.dealxanh.app.entity.Deal;
+import com.dealxanh.app.entity.DealCategory;
 import com.dealxanh.app.entity.DealProduct;
 import com.dealxanh.app.entity.Product;
 import com.dealxanh.app.repository.OrderRepository;
@@ -12,8 +13,10 @@ import com.dealxanh.app.repository.RoleRepository;
 import com.dealxanh.app.repository.StoreRepository;
 import com.dealxanh.app.repository.UserRepository;
 import com.dealxanh.app.repository.DealRepository;
+import com.dealxanh.app.repository.DealCategoryRepository;
 import com.dealxanh.app.repository.DealProductRepository;
 import com.dealxanh.app.repository.ProductRepository;
+import com.dealxanh.app.repository.TransactionRepository;
 import com.dealxanh.app.service.DealService;
 import com.dealxanh.app.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +59,12 @@ public class AdminController {
     private DealProductRepository dealProductRepository;
 
     @Autowired
+    private DealCategoryRepository dealCategoryRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
     private ProductRepository productRepository;
 
     @Autowired
@@ -66,6 +75,9 @@ public class AdminController {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private com.dealxanh.app.service.EmailService emailService;
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
@@ -875,19 +887,310 @@ public class AdminController {
 
     @GetMapping("/finance")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public String finance(Model model, Authentication authentication) {
-        // Get current admin user
+    public String finance(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            Model model, Authentication authentication) {
+
         String username = authentication.getName();
         User adminUser = userRepository.findByUsername(username)
                 .orElse(userRepository.findByEmail(username).orElse(null));
-
         if (adminUser != null) {
             model.addAttribute("adminUser", adminUser);
         }
 
-        // Placeholder for finance page
+        // Default date range: current month
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime defaultStart = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime defaultEnd = now;
+        if (startDate != null && !startDate.isEmpty()) {
+            defaultStart = LocalDateTime.parse(startDate + "T00:00:00");
+        }
+        if (endDate != null && !endDate.isEmpty()) {
+            defaultEnd = LocalDateTime.parse(endDate + "T23:59:59");
+        }
+
+        // Finance stats
+        Double gmv = transactionRepository.sumGMV(defaultStart, defaultEnd);
+        Double commission = transactionRepository.sumCommission(defaultStart, defaultEnd);
+        Double paidPayouts = transactionRepository.sumPaidPayouts(defaultStart, defaultEnd);
+        Long pendingCount = transactionRepository.countPendingReconciliation();
+        Long pendingPayoutCount = transactionRepository.countPendingPayouts();
+        Double pendingPayoutAmount = transactionRepository.sumPendingPayouts();
+
         model.addAttribute("activeSidebar", "finance");
+        model.addAttribute("startDate", startDate != null ? startDate : now.toLocalDate().withDayOfMonth(1).toString());
+        model.addAttribute("endDate", endDate != null ? endDate : now.toLocalDate().toString());
+        model.addAttribute("gmv", gmv != null ? gmv : 0);
+        model.addAttribute("commission", commission != null ? commission : 0);
+        model.addAttribute("paidPayouts", paidPayouts != null ? paidPayouts : 0);
+        model.addAttribute("pendingCount", pendingCount != null ? pendingCount : 0);
+        model.addAttribute("pendingPayoutCount", pendingPayoutCount != null ? pendingPayoutCount : 0);
+        model.addAttribute("pendingPayoutAmount", pendingPayoutAmount != null ? pendingPayoutAmount : 0);
+
+        // Commission rate
+        if (gmv != null && gmv > 0 && commission != null) {
+            model.addAttribute("commissionRate", Math.round(commission / gmv * 1000) / 10.0);
+        } else {
+            model.addAttribute("commissionRate", 0.0);
+        }
+
+        // Pending payouts list
+        java.util.List<com.dealxanh.app.entity.Transaction> pendingPayouts =
+                transactionRepository.findPendingPayoutsWithStore();
+        model.addAttribute("pendingPayouts", pendingPayouts);
+
+        // Daily chart data (last 7 days)
+        java.util.List<java.util.Map<String, Object>> chartData = new java.util.ArrayList<>();
+        String[] dayLabels = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
+        for (int i = 6; i >= 0; i--) {
+            java.time.LocalDate date = now.toLocalDate().minusDays(i);
+            Double dayGmv = transactionRepository.sumGMVByDate(date);
+            Double dayCommission = transactionRepository.sumCommissionByDate(date);
+            java.util.Map<String, Object> dayData = new java.util.HashMap<>();
+            dayData.put("label", dayLabels[date.getDayOfWeek().getValue() - 1]);
+            dayData.put("date", date.toString());
+            dayData.put("gmv", dayGmv != null ? dayGmv : 0);
+            dayData.put("commission", dayCommission != null ? dayCommission : 0);
+            chartData.add(dayData);
+        }
+        model.addAttribute("chartData", chartData);
+
+        // Max GMV for chart scaling
+        double maxGmv = chartData.stream().mapToDouble(d -> (double) d.get("gmv")).max().orElse(1);
+        model.addAttribute("maxGmv", maxGmv > 0 ? maxGmv : 1);
+
+        // Pending sellers count for sidebar
+        long pendingSellers = storeRepository.countByStatus("PENDING");
+        model.addAttribute("pendingSellerCount", pendingSellers);
+
         return "admin/finance";
+    }
+
+    @GetMapping("/api/finance/transactions")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getTransactions(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate + "T00:00:00") : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate + "T23:59:59") : now;
+
+        java.util.List<com.dealxanh.app.entity.Transaction> transactions = transactionRepository.findByDateRange(start, end);
+        java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+        for (com.dealxanh.app.entity.Transaction t : transactions) {
+            java.util.Map<String, Object> item = new java.util.HashMap<>();
+            item.put("transactionId", t.getTransactionId());
+            item.put("storeName", t.getStore() != null ? t.getStore().getStoreName() : "N/A");
+            item.put("type", t.getType());
+            item.put("amount", t.getAmount());
+            item.put("platformFee", t.getPlatformFee());
+            item.put("netAmount", t.getNetAmount());
+            item.put("status", t.getStatus());
+            item.put("description", t.getDescription());
+            item.put("createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : null);
+            result.add(item);
+        }
+
+        return java.util.Map.of("success", true, "data", result);
+    }
+
+    @GetMapping("/finance/export-csv")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String exportFinanceCsv(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate + "T00:00:00") : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate + "T23:59:59") : now;
+
+        java.util.List<com.dealxanh.app.entity.Transaction> transactions = transactionRepository.findByDateRange(start, end);
+
+        response.setContentType("text/csv;charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=finance_" + start.toLocalDate() + "_" + end.toLocalDate() + ".csv");
+        // Add BOM for Excel UTF-8 compatibility
+        response.getOutputStream().write(0xEF);
+        response.getOutputStream().write(0xBB);
+        response.getOutputStream().write(0xBF);
+
+        java.io.PrintWriter writer = response.getWriter();
+        writer.println("ID,Cửa hàng,Loại,Số tiền,Phí nền tảng,Số tiền thực,Trạng thái,Mô tả,Ngày tạo");
+        for (com.dealxanh.app.entity.Transaction t : transactions) {
+            writer.printf("%d,\"%s\",%s,%.0f,%.0f,%.0f,%s,\"%s\",%s\n",
+                    t.getTransactionId(),
+                    t.getStore() != null ? t.getStore().getStoreName().replace("\"", "\"\"") : "N/A",
+                    t.getType(),
+                    t.getAmount() != null ? t.getAmount() : 0,
+                    t.getPlatformFee() != null ? t.getPlatformFee() : 0,
+                    t.getNetAmount() != null ? t.getNetAmount() : 0,
+                    t.getStatus(),
+                    t.getDescription() != null ? t.getDescription().replace("\"", "\"\"") : "",
+                    t.getCreatedAt() != null ? t.getCreatedAt().toString() : ""
+            );
+        }
+        writer.flush();
+        return null; // Response already committed
+    }
+
+    @PostMapping("/api/finance/payout")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseBody
+    public java.util.Map<String, Object> processPayout() {
+        try {
+            // Get all pending payout transactions
+            java.util.List<com.dealxanh.app.entity.Transaction> pendingPayouts =
+                    transactionRepository.findPendingPayoutsWithStore();
+
+            int processed = 0;
+            double totalAmount = 0;
+
+            for (com.dealxanh.app.entity.Transaction t : pendingPayouts) {
+                t.setStatus("COMPLETED");
+                t.setUpdatedAt(LocalDateTime.now());
+                t.setDescription(t.getDescription() + " | Đã thanh toán " + LocalDateTime.now().toLocalDate());
+                transactionRepository.save(t);
+                processed++;
+                totalAmount += t.getAmount() != null ? t.getAmount() : 0;
+            }
+
+            return java.util.Map.of(
+                    "success", true,
+                    "message", "Đã xử lý " + processed + " khoản payout, tổng " + String.format("%,.0fđ", totalAmount),
+                    "processed", processed,
+                    "totalAmount", totalAmount
+            );
+        } catch (Exception e) {
+            return java.util.Map.of("success", false, "message", "Lỗi: " + e.getMessage());
+        }
+    }
+
+    // ========== WALLET (Ví nền tảng) ==========
+
+    @GetMapping("/api/finance/wallet")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getWallet() {
+        LocalDateTime allTime = LocalDateTime.now().minusYears(10); // All time
+        LocalDateTime now = LocalDateTime.now();
+
+        Double totalGmv = transactionRepository.sumGMV(allTime, now);
+        Double totalCommission = transactionRepository.sumCommission(allTime, now);
+        Double totalPaidOut = transactionRepository.sumPaidPayouts(allTime, now);
+        Double pendingPayout = transactionRepository.sumPendingPayouts();
+
+        // Balance = commission earned - already paid out - pending payouts
+        double balance = (totalCommission != null ? totalCommission : 0)
+                       - (totalPaidOut != null ? totalPaidOut : 0)
+                       - (pendingPayout != null ? pendingPayout : 0);
+
+        return java.util.Map.of(
+                "success", true,
+                "balance", Math.max(0, balance),
+                "totalGmv", totalGmv != null ? totalGmv : 0,
+                "totalCommission", totalCommission != null ? totalCommission : 0,
+                "totalPaidOut", totalPaidOut != null ? totalPaidOut : 0,
+                "pendingPayout", pendingPayout != null ? pendingPayout : 0
+        );
+    }
+
+    // ========== RECONCILIATION (Đối soát) ==========
+
+    @GetMapping("/api/finance/reconciliation")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getReconciliation(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate + "T00:00:00") : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate + "T23:59:59") : now;
+
+        // Get all COMPLETED SALE transactions by store for reconciliation
+        java.util.List<com.dealxanh.app.entity.Transaction> transactions =
+                transactionRepository.findByTypeAndDateRange("SALE", start, end);
+
+        // Group by store and calculate reconciliation data
+        java.util.Map<Long, java.util.Map<String, Object>> storeMap = new java.util.LinkedHashMap<>();
+        for (com.dealxanh.app.entity.Transaction t : transactions) {
+            if (!"COMPLETED".equals(t.getStatus())) continue;
+            Long storeId = t.getStore() != null ? t.getStore().getStoreId() : null;
+            if (storeId == null) continue;
+
+            storeMap.computeIfAbsent(storeId, k -> {
+                java.util.Map<String, Object> m = new java.util.HashMap<>();
+                m.put("storeId", storeId);
+                m.put("storeName", t.getStore().getStoreName());
+                m.put("revenue", 0.0);
+                m.put("commission", 0.0);
+                m.put("netAmount", 0.0);
+                m.put("orderCount", 0);
+                return m;
+            });
+
+            java.util.Map<String, Object> storeData = storeMap.get(storeId);
+            storeData.put("revenue", (double) storeData.get("revenue") + (t.getAmount() != null ? t.getAmount() : 0));
+            storeData.put("commission", (double) storeData.get("commission") + (t.getPlatformFee() != null ? t.getPlatformFee() : 0));
+            storeData.put("netAmount", (double) storeData.get("netAmount") + (t.getNetAmount() != null ? t.getNetAmount() : 0));
+            storeData.put("orderCount", (int) storeData.get("orderCount") + 1);
+        }
+
+        return java.util.Map.of(
+                "success", true,
+                "stores", new java.util.ArrayList<>(storeMap.values()),
+                "total", storeMap.size()
+        );
+    }
+
+    @PostMapping("/api/finance/reconcile")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> processReconciliation(
+            @RequestParam(required = false) String storeIds,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate + "T00:00:00") : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+            LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate + "T23:59:59") : now;
+
+            java.util.List<com.dealxanh.app.entity.Transaction> transactions;
+            if (storeIds != null && !storeIds.isEmpty()) {
+                String[] ids = storeIds.split(",");
+                transactions = new java.util.ArrayList<>();
+                for (String idStr : ids) {
+                    Long storeId = Long.parseLong(idStr.trim());
+                    transactions.addAll(transactionRepository.findByStoreAndDateRange(storeId, start, end));
+                }
+            } else {
+                transactions = transactionRepository.findByDateRange(start, end);
+            }
+
+            int reconciled = 0;
+            for (com.dealxanh.app.entity.Transaction t : transactions) {
+                if ("PENDING".equals(t.getStatus()) && !"PAYOUT".equals(t.getType())) {
+                    // Create a confirmation transaction as reconciliation proof
+                    t.setStatus("COMPLETED");
+                    t.setUpdatedAt(LocalDateTime.now());
+                    t.setDescription((t.getDescription() != null ? t.getDescription() : "") + " | Đã đối soát " + now.toLocalDate());
+                    transactionRepository.save(t);
+                    reconciled++;
+                }
+            }
+
+            return java.util.Map.of(
+                    "success", true,
+                    "message", "Đã đối soát " + reconciled + " giao dịch thành công",
+                    "reconciled", reconciled
+            );
+        } catch (Exception e) {
+            return java.util.Map.of("success", false, "message", "Lỗi: " + e.getMessage());
+        }
     }
 
     @GetMapping("/orders")
@@ -1122,6 +1425,40 @@ public class AdminController {
         int totalPages = (int) Math.ceil((double) filteredDeals.size() / size);
 
         model.addAttribute("deals", paginatedDeals);
+
+        // Build deal categories & products maps for card display
+        java.util.Map<Long, java.util.List<String>> dealCategoriesMap = new java.util.HashMap<>();
+        java.util.Map<Long, java.util.List<String>> dealProductsMap = new java.util.HashMap<>();
+
+        for (Deal deal : paginatedDeals) {
+            // Categories
+            java.util.List<DealCategory> dealCategories = dealCategoryRepository.findByDealAndActiveTrue(deal);
+            if (dealCategories != null && !dealCategories.isEmpty()) {
+                java.util.List<String> catNames = dealCategories.stream()
+                        .filter(dc -> dc.getCategory() != null)
+                        .map(dc -> dc.getCategory().getName())
+                        .collect(java.util.stream.Collectors.toList());
+                if (!catNames.isEmpty()) {
+                    dealCategoriesMap.put(deal.getDealId(), catNames);
+                }
+            }
+
+            // Products
+            java.util.List<DealProduct> dealProducts = dealProductRepository.findByDeal(deal);
+            if (dealProducts != null && !dealProducts.isEmpty()) {
+                java.util.List<String> prodNames = dealProducts.stream()
+                        .filter(dp -> dp.getProduct() != null)
+                        .map(dp -> dp.getProduct().getName())
+                        .collect(java.util.stream.Collectors.toList());
+                if (!prodNames.isEmpty()) {
+                    dealProductsMap.put(deal.getDealId(), prodNames);
+                }
+            }
+        }
+
+        model.addAttribute("dealCategoriesMap", dealCategoriesMap);
+        model.addAttribute("dealProductsMap", dealProductsMap);
+
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalDeals", filteredDeals.size());
@@ -1177,6 +1514,7 @@ public class AdminController {
             @RequestParam LocalDateTime endTime,
             @RequestParam String scope,
             @RequestParam(required = false) String bannerUrl,
+            @RequestParam(required = false) org.springframework.web.multipart.MultipartFile bannerFile,
             @RequestParam(defaultValue = "CODE_REQUIRED") String applyMethod,
             RedirectAttributes redirectAttributes,
             Authentication authentication) {
@@ -1186,6 +1524,20 @@ public class AdminController {
             String username = authentication.getName();
             User adminUser = userRepository.findByUsernameWithRole(username)
                     .orElse(userRepository.findByEmail(username).orElse(null));
+
+            // Handle banner file upload
+            String bannerPath = bannerUrl;
+            if (bannerFile != null && !bannerFile.isEmpty()) {
+                if (!isImageFile(bannerFile)) {
+                    redirectAttributes.addFlashAttribute("error", "File banner phải là ảnh (JPG, PNG, WEBP)");
+                    return "redirect:/admin/deals";
+                }
+                if (!isValidFileSize(bannerFile, 5 * 1024 * 1024)) { // max 5MB
+                    redirectAttributes.addFlashAttribute("error", "File banner không được vượt quá 5MB");
+                    return "redirect:/admin/deals";
+                }
+                bannerPath = saveUploadedFile(bannerFile);
+            }
 
             // Create new deal
             Deal deal = new Deal();
@@ -1202,7 +1554,7 @@ public class AdminController {
             deal.setStartTime(startTime);
             deal.setEndTime(endTime);
             deal.setScope(scope);
-            deal.setBannerUrl(bannerUrl);
+            deal.setBannerUrl(bannerPath);
             deal.setApplyMethod(applyMethod);
             deal.setPriority(50);
             deal.setCreatedBy(adminUser);
@@ -1220,6 +1572,30 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("error", "Lỗi hệ thống: " + ex.getMessage());
             return "redirect:/admin/deals";
         }
+    }
+
+    // ========== File upload helpers for deal banner ==========
+
+    private String saveUploadedFile(org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        if (file == null || file.isEmpty()) return null;
+        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads");
+        if (!java.nio.file.Files.exists(uploadPath)) {
+            java.nio.file.Files.createDirectories(uploadPath);
+        }
+        java.nio.file.Files.copy(file.getInputStream(), uploadPath.resolve(fileName),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        return "/uploads/" + fileName;
+    }
+
+    private boolean isImageFile(org.springframework.web.multipart.MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && (contentType.equals("image/jpeg")
+                || contentType.equals("image/png") || contentType.equals("image/webp"));
+    }
+
+    private boolean isValidFileSize(org.springframework.web.multipart.MultipartFile file, long maxSizeInBytes) {
+        return file.getSize() <= maxSizeInBytes;
     }
 
     // ============ DEAL CATEGORIES (Admin gán categories vào platform deals) ============
@@ -1502,6 +1878,59 @@ public class AdminController {
 
         redirectAttributes.addFlashAttribute("success", "Đã từ chối cửa hàng " + store.getStoreName() + " thành công");
         return buildRedirectUrl(currentStatus, search, city, sort, page);
+    }
+
+    @PostMapping("/seller-verify/{storeId}/reset-to-pending")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String resetStoreToPending(
+            @PathVariable Long storeId,
+            @RequestParam(required = false) String reason,
+            @RequestParam(required = false) String currentStatus,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            RedirectAttributes redirectAttributes) {
+
+        Store store = storeRepository.findById(storeId).orElse(null);
+        if (store == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy cửa hàng");
+            return buildRedirectUrl(currentStatus != null ? currentStatus : "", search, city, sort, page);
+        }
+
+        if (!"REJECTED".equals(store.getStatus())) {
+            redirectAttributes.addFlashAttribute("error", "Chỉ có thể đưa cửa hàng bị từ chối về trạng thái chờ duyệt");
+            return buildRedirectUrl(currentStatus != null ? currentStatus : "", search, city, sort, page);
+        }
+
+        // Save the original rejection reason for email
+        String originalReason = store.getRejectionReason();
+
+        // Update rejection reason if admin provided a new one
+        if (reason != null && !reason.trim().isEmpty()) {
+            store.setRejectionReason(reason.trim());
+        }
+
+        // Reset store to PENDING status and clear rejection tracking
+        store.setStatus("PENDING");
+        store.setRejectedBy(null);
+        store.setReviewedAt(null);
+        store.setUpdatedAt(LocalDateTime.now());
+        storeRepository.save(store);
+
+        // Send email notification to seller
+        if (store.getOwner() != null && store.getOwner().getEmail() != null && !store.getOwner().getEmail().isEmpty()) {
+            try {
+                String sellerName = store.getOwner().getFullName() != null ? store.getOwner().getFullName() : store.getOwner().getUsername();
+                String emailReason = (reason != null && !reason.trim().isEmpty()) ? reason.trim() : originalReason;
+                emailService.sendSellerReReviewEmail(store.getOwner().getEmail(), sellerName, store.getStoreName(), emailReason);
+            } catch (Exception e) {
+                System.err.println("Không thể gửi email xét duyệt lại: " + e.getMessage());
+            }
+        }
+
+        redirectAttributes.addFlashAttribute("success", "Đã chuyển cửa hàng \"" + store.getStoreName() + "\" về trạng thái chờ xét duyệt và gửi email thông báo cho seller");
+        return buildRedirectUrl(currentStatus != null ? currentStatus : "", search, city, sort, page);
     }
 
     /**
