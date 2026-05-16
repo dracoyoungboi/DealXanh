@@ -194,6 +194,14 @@
                 }
             }
 
+            // Check for session expired
+            if (urlParams.get('expired') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = '⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#f59e0b';
+            }
+
             // Check for error parameter on page load
             if (urlParams.get('error') === 'true') {
                 const errorDiv = document.getElementById('password-error');

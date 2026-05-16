@@ -2474,25 +2474,33 @@ public class AdminController {
             return "redirect:/admin/profile";
         }
 
-        // Validate current password
-        if (!adminUser.getPassword().equals(currentPassword)) {
+        // Validate current password using BCrypt
+        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder =
+                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+        if (!encoder.matches(currentPassword, adminUser.getPassword())) {
             redirectAttributes.addFlashAttribute("error", "Mật khẩu hiện tại không đúng!");
             return "redirect:/admin/profile";
         }
 
-        // Validate new password
+        // Validate new password strength
         if (newPassword.length() < 6) {
             redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 6 ký tự!");
             return "redirect:/admin/profile";
         }
-
-        if (!newPassword.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp!");
+        if (newPassword.length() > 50) {
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu mới không được vượt quá 50 ký tự!");
             return "redirect:/admin/profile";
         }
 
-        // Update password
-        adminUser.setPassword(newPassword);
+        // Validate confirm password matches
+        if (!newPassword.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp với mật khẩu mới!");
+            return "redirect:/admin/profile";
+        }
+
+        // Update password with BCrypt encoding
+        adminUser.setPassword(encoder.encode(newPassword));
+        adminUser.setUpdatedAt(LocalDateTime.now());
         userRepository.save(adminUser);
 
         redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công!");

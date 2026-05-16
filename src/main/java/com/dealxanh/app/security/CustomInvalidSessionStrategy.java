@@ -1,0 +1,38 @@
+package com.dealxanh.app.security;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.web.session.InvalidSessionStrategy;
+
+import java.io.IOException;
+
+public class CustomInvalidSessionStrategy implements InvalidSessionStrategy {
+
+    @Override
+    public void onInvalidSessionDetected(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+
+        String requestUrl = request.getRequestURI();
+
+        String loginUrl;
+        if (requestUrl.startsWith("/admin")) {
+            loginUrl = "/admin/login?expired=true";
+        } else if (requestUrl.startsWith("/seller") || requestUrl.startsWith("/store")) {
+            loginUrl = "/seller/login?expired=true";
+        } else {
+            loginUrl = "/login?expired=true";
+        }
+
+        // For AJAX requests, return 401
+        String requestedWith = request.getHeader("X-Requested-With");
+        if ("XMLHttpRequest".equals(requestedWith) || requestUrl.startsWith("/admin/api") || requestUrl.startsWith("/api")) {
+            response.setStatus(401);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\":\"session_expired\",\"redirect\":\"" + loginUrl + "\"}");
+            return;
+        }
+
+        response.sendRedirect(loginUrl);
+    }
+}

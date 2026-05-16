@@ -88,6 +88,7 @@ public class SecurityConfig {
             )
             .sessionManagement(session -> session
                 .sessionFixation().migrateSession()
+                .invalidSessionStrategy(new com.dealxanh.app.security.CustomInvalidSessionStrategy())
                 .maximumSessions(1)
                 .maxSessionsPreventsLogin(false)
             )
