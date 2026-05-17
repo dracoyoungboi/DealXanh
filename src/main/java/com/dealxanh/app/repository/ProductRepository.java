@@ -46,7 +46,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Find by store and deleted false (returns List)
     List<Product> findByStoreStoreIdAndDeletedFalse(Long storeId);
 
-    List<Product> findByStore_StoreId(Long storeId);
+    // Find by category and deleted false
+    List<Product> findByCategoryAndDeletedFalse(com.dealxanh.app.entity.Category category);
 
     // Blind Box filter
     @Query("SELECT p FROM Product p WHERE p.active = true AND p.deleted = false AND p.stockQuantity > 0 " +
@@ -69,4 +70,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     long countByDeletedFalseAndApprovalStatus(String status);
 
     long countByStoreStoreIdAndDeletedFalse(Long storeId);
+
+    // Count expired or out of stock products
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.deleted = false AND (p.expiryDate < CURRENT_TIMESTAMP OR p.stockQuantity <= 0)")
+    long countExpiredOrOutOfStock();
+
+    // Count all non-deleted products
+    long countByDeletedFalse();
 }

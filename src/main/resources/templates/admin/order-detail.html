@@ -14,7 +14,7 @@
                 <div class="order-item__id">
                     Đơn hàng #<span th:text="${order.orderId}">ID</span>
                 </div>
-                <div class="order-item__status" th:class="${order.status}" th:text="${order.status == 'PENDING' ? 'Chờ xác nhận' : order.status == 'CONFIRMED' ? 'Đã xác nhận' : order.status == 'READY_FOR_PICKUP' ? 'Sẵn sàng' : order.status == 'COMPLETED' ? 'Hoàn thành' : 'Đã hủy'}">Status</div>
+                <div class="order-item__status" th:classappend="${order.status}" th:text="${order.status == 'PENDING' ? 'Chờ xác nhận' : order.status == 'CONFIRMED' ? 'Đã xác nhận' : order.status == 'READY_FOR_PICKUP' ? 'Sẵn sàng' : order.status == 'COMPLETED' ? 'Hoàn thành' : 'Đã hủy'}">Status</div>
             </div>
 
             <div class="order-item__customer">
@@ -41,7 +41,7 @@
                 </div>
                 <div class="order-item__detail">
                     <div class="order-item__detail-label">Thanh toán</div>
-                    <div class="order-item__detail-value" th:class="${order.paymentStatus == 'PAID' ? 'success' : 'warning'}" th:text="${order.paymentStatus == 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}">Status</div>
+                    <div class="order-item__detail-value" th:classappend="${order.paymentStatus == 'PAID' ? 'success' : 'warning'}" th:text="${order.paymentStatus == 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}">Status</div>
                 </div>
             </div>
 
@@ -56,7 +56,7 @@
                     <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text-secondary);">Danh sách sản phẩm:</div>
                     <div class="product-item" th:each="item : ${order.orderItems}">
                         <div class="product-item__info">
-                            <div class="product-item__name" th:text="${item.product != null ? item.product.productName : 'Sản phẩm'}">Product Name</div>
+                            <div class="product-item__name" th:text="${item.product != null ? item.product.name : 'Sản phẩm'}">Product Name</div>
                             <div class="product-item__qty" th:text="'Số lượng: ' + ${item.quantity}">Quantity</div>
                         </div>
                         <div class="product-item__price" th:text="${#numbers.formatDecimal(item.unitPrice * item.quantity, 0, 0)} + 'đ'">Price</div>

@@ -18,10 +18,22 @@ public class DealService {
     // Validation Constants
     private static final double MAX_DISCOUNT_PERCENT = 85.0;
     private static final double MIN_DISCOUNT_PERCENT = 1.0;
-    private static final double MIN_SALE_PRICE_PERCENT = 0.35; // Max 65% discount
+    private static final double MIN_SALE_PRICE_PERCENT = 0.20; // Absolute floor: min 20% of original
     private static final int MAX_DEAL_DURATION_DAYS = 30;
     private static final double MIN_FIXED_DISCOUNT = 1000.0;
     private static final double MAX_FIXED_DISCOUNT = 500000.0;
+
+    // Tiered discount caps (platform + store combined)
+    private static final double MAX_COMBINED_DISCOUNT_NORMAL = 65.0;   // Hàng thường
+    private static final double MAX_COMBINED_DISCOUNT_FLASH_SALE = 70.0; // Flash Sale
+    private static final double MAX_COMBINED_DISCOUNT_NEAR_EXPIRY = 80.0; // Hàng cận date
+
+    // Platform-only caps (admin gán danh mục)
+    private static final double MAX_PLATFORM_DISCOUNT = 30.0;    // Chặn cứng
+    private static final double PLATFORM_DISCOUNT_WARNING = 28.0; // Cảnh báo
+
+    // Near expiry threshold (days)
+    private static final int NEAR_EXPIRY_DAYS = 3;
 
     // Deal type specific duration limits (in hours)
     private static final int FLASH_SALE_MAX_HOURS = 6;
@@ -125,6 +137,11 @@ public class DealService {
             return null;
         }
 
+        // Platform deal validation: check products in category don't exceed 30% platform discount
+        if ("ALL_STORES".equals(deal.getScope()) && deal.getStore() == null) {
+            validatePlatformCategoryDiscount(deal, category);
+        }
+
         // Check if deal category already exists
         DealCategory existingDealCategory = dealCategoryRepository
                 .findByDealAndCategory(deal, category);
@@ -141,6 +158,74 @@ public class DealService {
         dealCategory.setActive(true);
 
         return dealCategoryRepository.save(dealCategory);
+    }
+
+    /**
+     * Validate that adding this platform deal to a category won't push any product
+     * over the 30% cumulative platform discount cap.
+     */
+    private void validatePlatformCategoryDiscount(Deal newDeal, Category category) {
+        List<Product> productsInCategory = productRepository.findByCategoryAndDeletedFalse(category);
+        if (productsInCategory == null || productsInCategory.isEmpty()) return;
+
+        double newDealDiscount = newDeal.getDiscountValue() != null ? newDeal.getDiscountValue() : 0;
+        boolean isPercent = "PERCENT".equals(newDeal.getDiscountType());
+
+        java.util.List<String> blockedProducts = new java.util.ArrayList<>();
+
+        for (Product product : productsInCategory) {
+            if (product.getOriginalPrice() == null || product.getOriginalPrice() <= 0) continue;
+
+            // Sum all existing platform deal discounts on this product
+            double existingPlatformDiscountPercent = getExistingPlatformDiscountPercent(product, newDeal);
+
+            double newDiscountPercent = isPercent ? newDealDiscount : (newDealDiscount / product.getOriginalPrice() * 100);
+            double totalPlatformPercent = existingPlatformDiscountPercent + newDiscountPercent;
+
+            if (totalPlatformPercent > MAX_PLATFORM_DISCOUNT) {
+                blockedProducts.add(String.format("%s (đã giảm %.0f%% + thêm %.0f%% = %.0f%%)",
+                    product.getName(), existingPlatformDiscountPercent, newDiscountPercent, totalPlatformPercent));
+            }
+        }
+
+        if (!blockedProducts.isEmpty()) {
+            String productList = String.join(", ", blockedProducts.stream().limit(5).toList());
+            if (blockedProducts.size() > 5) {
+                productList += " và " + (blockedProducts.size() - 5) + " sản phẩm khác";
+            }
+            throw new IllegalArgumentException(String.format(
+                "Không thể gán danh mục '%s': %d sản phẩm đã vượt giới hạn giảm giá nền tảng (%.0f%%). %s",
+                category.getName(), blockedProducts.size(), MAX_PLATFORM_DISCOUNT, productList));
+        }
+    }
+
+    /**
+     * Calculate total existing platform discount percentage on a product (excluding the given deal).
+     */
+    private double getExistingPlatformDiscountPercent(Product product, Deal excludeDeal) {
+        if (product.getCategory() == null) return 0;
+
+        List<DealCategory> platformDealCategories = dealCategoryRepository
+                .findActiveByCategory(product.getCategory());
+
+        if (platformDealCategories == null || platformDealCategories.isEmpty()) return 0;
+
+        double totalPercent = 0;
+        for (DealCategory dc : platformDealCategories) {
+            Deal platformDeal = dc.getDeal();
+            if (platformDeal == null) continue;
+            if (platformDeal.getDealId().equals(excludeDeal.getDealId())) continue;
+            if (!"ACTIVE".equals(platformDeal.getStatus()) && !"SCHEDULED".equals(platformDeal.getStatus())) continue;
+
+            if ("PERCENT".equals(platformDeal.getDiscountType())) {
+                totalPercent += platformDeal.getDiscountValue() != null ? platformDeal.getDiscountValue() : 0;
+            } else {
+                if (product.getOriginalPrice() != null && product.getOriginalPrice() > 0) {
+                    totalPercent += (platformDeal.getDiscountValue() / product.getOriginalPrice()) * 100;
+                }
+            }
+        }
+        return totalPercent;
     }
 
     @Transactional
@@ -169,6 +254,49 @@ public class DealService {
         if (deal == null) return List.of();
 
         return dealCategoryRepository.findByDealAndActiveTrue(deal);
+    }
+
+    /**
+     * Returns deal categories with platform discount warnings.
+     * [{dealCategory, warning: "Sản phẩm X đã đạt 28% giảm giá nền tảng"}, ...]
+     */
+    public java.util.List<java.util.Map<String, Object>> getDealCategoriesWithWarnings(Long dealId) {
+        Deal deal = getDealById(dealId);
+        if (deal == null) return List.of();
+
+        List<DealCategory> categories = dealCategoryRepository.findByDealAndActiveTrue(deal);
+        java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+
+        for (DealCategory dc : categories) {
+            java.util.Map<String, Object> item = new java.util.HashMap<>();
+            item.put("dealCategory", dc);
+
+            // Check products in this category for platform discount warnings
+            if (dc.getCategory() != null) {
+                java.util.List<String> warnings = buildPlatformDiscountWarnings(dc.getCategory(), deal);
+                if (!warnings.isEmpty()) {
+                    item.put("warnings", warnings);
+                }
+            }
+            result.add(item);
+        }
+        return result;
+    }
+
+    private java.util.List<String> buildPlatformDiscountWarnings(Category category, Deal excludeDeal) {
+        java.util.List<String> warnings = new java.util.ArrayList<>();
+        List<Product> products = productRepository.findByCategoryAndDeletedFalse(category);
+        if (products == null) return warnings;
+
+        for (Product product : products) {
+            if (product.getOriginalPrice() == null || product.getOriginalPrice() <= 0) continue;
+            double existingPercent = getExistingPlatformDiscountPercent(product, excludeDeal);
+            if (existingPercent >= PLATFORM_DISCOUNT_WARNING) {
+                warnings.add(String.format("%s (đã giảm %.0f%% từ deal nền tảng khác)",
+                    product.getName(), existingPercent));
+            }
+        }
+        return warnings;
     }
 
     public List<Category> getAvailableCategoriesForDeal(Long dealId) {
@@ -594,7 +722,6 @@ public class DealService {
 
     private void validateCumulativeDiscount(Product product, Deal currentDeal,
                                               Double salePrice, Double originalPrice) {
-        // Check if product's category has any active platform deal
         if (product.getCategory() == null) return;
 
         List<DealCategory> activeDealCategories = dealCategoryRepository
@@ -602,13 +729,14 @@ public class DealService {
 
         if (activeDealCategories == null || activeDealCategories.isEmpty()) return;
 
+        double maxCap = getMaxDiscountCap(product, currentDeal);
+
         for (DealCategory dc : activeDealCategories) {
             Deal platformDeal = dc.getDeal();
             if (platformDeal == null) continue;
             if (platformDeal.getDealId().equals(currentDeal.getDealId())) continue;
             if (!"ACTIVE".equals(platformDeal.getStatus()) && !"SCHEDULED".equals(platformDeal.getStatus())) continue;
 
-            // Check time overlap
             if (currentDeal.getStartTime() != null && currentDeal.getEndTime() != null
                 && platformDeal.getStartTime() != null && platformDeal.getEndTime() != null) {
                 boolean overlaps = currentDeal.getStartTime().isBefore(platformDeal.getEndTime())
@@ -616,38 +744,67 @@ public class DealService {
                 if (!overlaps) continue;
             }
 
-            // Calculate platform deal's discount on this product
-            double platformDiscount = 0;
-            if ("PERCENT".equals(platformDeal.getDiscountType())) {
-                platformDiscount = originalPrice * platformDeal.getDiscountValue() / 100.0;
-                if (platformDeal.getMaxDiscountAmount() != null) {
-                    platformDiscount = Math.min(platformDiscount, platformDeal.getMaxDiscountAmount());
-                }
-            } else {
-                platformDiscount = platformDeal.getDiscountValue();
-            }
-
-            // Calculate current deal's discount
+            double platformDiscount = calculateDealDiscount(platformDeal, originalPrice);
             double currentDiscount = originalPrice - salePrice;
+            double totalDiscountPercent = ((platformDiscount + currentDiscount) / originalPrice) * 100.0;
 
-            // Calculate total discount percentage
-            double totalDiscount = platformDiscount + currentDiscount;
-            double totalDiscountPercent = (totalDiscount / originalPrice) * 100.0;
-
-            if (totalDiscountPercent > 65.0) {
+            if (totalDiscountPercent > maxCap) {
                 throw new IllegalArgumentException(String.format(
-                    "Sản phẩm '%s' đã giảm giá kịch sàn, không thể giảm hơn. " +
-                    "Danh mục đã có deal nền tảng '%s' giảm %s%%. " +
-                    "Tổng giảm giá sẽ là %,.0f%% (vượt quá 65%%).",
+                    "Sản phẩm '%s' không thể giảm thêm. " +
+                    "Danh mục đã có deal nền tảng '%s' giảm %s. " +
+                    "Tổng giảm sẽ là %,.0f%% (vượt quá giới hạn %,.0f%% cho %s).",
                     product.getName(),
                     platformDeal.getDealName(),
-                    "PERCENT".equals(platformDeal.getDiscountType())
-                        ? String.format("%.0f%%", platformDeal.getDiscountValue())
-                        : String.format("%,.0fđ", platformDeal.getDiscountValue()),
-                    totalDiscountPercent
+                    formatDiscountDisplay(platformDeal),
+                    totalDiscountPercent,
+                    maxCap,
+                    getCapLabel(product, currentDeal)
                 ));
             }
         }
+    }
+
+    /**
+     * Returns the maximum allowed combined discount percentage for a product+deal.
+     */
+    private double getMaxDiscountCap(Product product, Deal deal) {
+        if (product.getExpiryDate() != null
+                && product.getExpiryDate().isBefore(java.time.LocalDateTime.now().plusDays(NEAR_EXPIRY_DAYS))) {
+            return MAX_COMBINED_DISCOUNT_NEAR_EXPIRY;
+        }
+        if ("FLASH_SALE".equals(deal.getDealType())) {
+            return MAX_COMBINED_DISCOUNT_FLASH_SALE;
+        }
+        return MAX_COMBINED_DISCOUNT_NORMAL;
+    }
+
+    private String getCapLabel(Product product, Deal deal) {
+        if (product.getExpiryDate() != null
+                && product.getExpiryDate().isBefore(java.time.LocalDateTime.now().plusDays(NEAR_EXPIRY_DAYS))) {
+            return "hàng cận date";
+        }
+        if ("FLASH_SALE".equals(deal.getDealType())) {
+            return "Flash Sale";
+        }
+        return "hàng thường";
+    }
+
+    private double calculateDealDiscount(Deal deal, double originalPrice) {
+        if ("PERCENT".equals(deal.getDiscountType())) {
+            double discount = originalPrice * deal.getDiscountValue() / 100.0;
+            if (deal.getMaxDiscountAmount() != null) {
+                discount = Math.min(discount, deal.getMaxDiscountAmount());
+            }
+            return discount;
+        }
+        return deal.getDiscountValue() != null ? deal.getDiscountValue() : 0;
+    }
+
+    private String formatDiscountDisplay(Deal deal) {
+        if ("PERCENT".equals(deal.getDiscountType())) {
+            return String.format("%.0f%%", deal.getDiscountValue());
+        }
+        return String.format("%,.0fđ", deal.getDiscountValue());
     }
 
     private void validateProductPrices(Double originalPrice, Double salePrice) {

@@ -1,5 +1,6 @@
 package com.dealxanh.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
@@ -76,6 +77,9 @@ public class Store {
     private Integer maxSlotsPerTime;
     private Integer pickupDurationMinutes;
     private String approvalMode; // "manual" or "auto"
+
+    // Partner tier: BRONZE, SILVER, GOLD, DIAMOND
+    private String partnerTier = "BRONZE";
     // ----------------------------------------
 
     private LocalDateTime createdAt;
@@ -85,12 +89,15 @@ public class Store {
     @JoinColumn(name = "owner_id")
     private User owner;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL)
     private List<Product> products;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "store")
     private List<Order> orders;
 
+    @JsonIgnore
     // Danh sách nhân viên trực thuộc cửa hàng
     @OneToMany(mappedBy = "workStore")
     private List<User> staffList;
@@ -203,6 +210,30 @@ public class Store {
 
     public String getApprovalMode() { return approvalMode; }
     public void setApprovalMode(String approvalMode) { this.approvalMode = approvalMode; }
+
+    public String getPartnerTier() { return partnerTier != null ? partnerTier : "BRONZE"; }
+    public void setPartnerTier(String partnerTier) { this.partnerTier = partnerTier; }
+
+    /** Commission rate based on partner tier */
+    public double getCommissionRate() {
+        if (partnerTier == null) return 0.10;
+        return switch (partnerTier) {
+            case "DIAMOND" -> 0.04;
+            case "GOLD" -> 0.06;
+            case "SILVER" -> 0.08;
+            default -> 0.10; // BRONZE
+        };
+    }
+
+    public String getPartnerTierLabel() {
+        if (partnerTier == null) return "Đồng";
+        return switch (partnerTier) {
+            case "DIAMOND" -> "Kim Cương";
+            case "GOLD" -> "Bạch Kim";
+            case "SILVER" -> "Vàng";
+            default -> "Đồng";
+        };
+    }
 
     // Approval tracking getters and setters
     public User getApprovedBy() { return approvedBy; }

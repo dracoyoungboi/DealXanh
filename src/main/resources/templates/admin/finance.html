@@ -170,7 +170,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                         </div>
                     </div>
-                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(gmv, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(gmv, 0, 0) + 'đ'}">0đ</div>
                     <div class="kpi-card__sub">Tổng giá trị giao dịch trong kỳ</div>
                 </div>
                 <div class="kpi-card">
@@ -180,7 +180,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                         </div>
                     </div>
-                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(commission, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(commission, 0, 0) + 'đ'}">0đ</div>
                     <div class="kpi-card__sub" th:text="'Tỷ lệ ~' + ${commissionRate} + '%'">Tỷ lệ ~13%</div>
                 </div>
                 <div class="kpi-card">
@@ -190,7 +190,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                         </div>
                     </div>
-                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(paidPayouts, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(paidPayouts, 0, 0) + 'đ'}">0đ</div>
                     <div class="kpi-card__sub">Đã thanh toán cho cửa hàng</div>
                 </div>
                 <div class="kpi-card">
@@ -200,7 +200,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         </div>
                     </div>
-                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(pendingPayoutAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(pendingPayoutAmount, 0, 0) + 'đ'}">0đ</div>
                     <div class="kpi-card__sub" th:text="${pendingPayoutCount} + ' cửa hàng chờ payout'">0 cửa hàng</div>
                 </div>
             </div>
@@ -223,7 +223,7 @@
                         <div class="chart-area">
                             <th:block th:each="day : ${chartData}">
                                 <div class="chart-col">
-                                    <div class="chart-tooltip" th:text="${#numbers.formatDecimal(day.gmv / 1000000, 0, 'COMMA', 1, 'POINT') + 'tr'}">0tr</div>
+                                    <div class="chart-tooltip" th:text="${#numbers.formatDecimal(day.gmv / 1000000, 0, 1) + 'tr'}">0tr</div>
                                     <div class="chart-bar-wrap">
                                         <div class="chart-bar gmv" th:style="'height:' + ${day.gmv / maxGmv * 100} + '%'"></div>
                                         <div class="chart-bar commission" th:style="'height:' + ${day.commission / maxGmv * 100} + '%'"></div>
@@ -258,7 +258,7 @@
                                         <div style="font-size:11px;color:var(--text-tertiary)" th:text="${pt.description}">Desc</div>
                                     </td>
                                     <td>
-                                        <div style="font-weight:600" th:text="${#numbers.formatDecimal(pt.amount, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</div>
+                                        <div style="font-weight:600" th:text="${#numbers.formatDecimal(pt.amount, 0, 0) + 'đ'}">0đ</div>
                                     </td>
                                     <td><span class="status-badge status-badge--warning">Chờ thanh toán</span></td>
                                 </tr>
@@ -311,7 +311,7 @@
             <div class="payout-summary">
                 <div style="margin-bottom:12px;"><strong>Kỳ:</strong> <span th:text="${startDate} + ' – ' + ${endDate}">date</span></div>
                 <div style="margin-bottom:12px;"><strong>Số cửa hàng chờ payout:</strong> <span th:text="${pendingPayoutCount}">0</span></div>
-                <div style="margin-bottom:12px;"><strong>Tổng số tiền:</strong> <span th:text="${#numbers.formatDecimal(pendingPayoutAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</span></div>
+                <div style="margin-bottom:12px;"><strong>Tổng số tiền:</strong> <span th:text="${#numbers.formatDecimal(pendingPayoutAmount, 0, 0) + 'đ'}">0đ</span></div>
             </div>
             <div th:if="${pendingPayoutCount > 0}" style="padding:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-md);font-size:12px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -363,6 +363,10 @@
         </div>
         <div class="modal__footer">
             <span id="reconcileStats" style="font-size:12px;color:var(--text-secondary);flex:1;"></span>
+            <button class="btn-sm btn-sm--outline" onclick="printReconciliation()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                In biên bản
+            </button>
             <button class="btn-sm btn-sm--outline" onclick="closeReconcileModal()">Đóng</button>
             <button class="btn-sm btn-sm--primary" id="confirmReconcileBtn" onclick="processReconciliation()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
@@ -585,16 +589,18 @@ function renderReconciliationTable() {
         <thead><tr><th>Cửa hàng</th><th style="text-align:right;">Số đơn</th><th style="text-align:right;">Doanh thu</th><th style="text-align:right;">Hoa hồng</th><th style="text-align:right;">Cần trả</th><th style="width:140px;">Trạng thái</th></tr></thead>
         <tbody>`;
 
+    const tierColors = {'Kim Cương':'#667eea','Bạch Kim':'#d4af37','Vàng':'#7a8a9a','Đồng':'#cd7f32'};
     reconciliationData.forEach((store, idx) => {
         totalTransactions += store.orderCount || 0;
         totalAmount += store.revenue || 0;
         const storeKey = String(store.storeId);
         const isConfirmed = confirmedStoreIds.has(storeKey);
+        const tierBadge = store.tier ? `<span style="font-size:10px;font-weight:700;color:${tierColors[store.tier]||'#cd7f32'};margin-left:6px;">${store.tier} · ${store.commissionRate || '10%'}</span>` : '';
 
         html += `
             <tr id="reconcile-row-${idx}" style="transition:background .3s;${isConfirmed ? 'background:rgba(16,185,129,.04);' : ''}">
                 <td>
-                    <div style="font-weight:600">${escapeHtml(store.storeName)}</div>
+                    <div style="font-weight:600">${escapeHtml(store.storeName)}${tierBadge}</div>
                     <div style="font-size:11px;color:var(--text-tertiary);">#${escapeHtml(store.storeId)}</div>
                 </td>
                 <td style="text-align:right;font-weight:600;">${store.orderCount || 0} đơn</td>
@@ -677,6 +683,95 @@ function updateConfirmBtn() {
         btn.style.pointerEvents = 'auto';
     }
     btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Xác nhận đã đối soát (${confirmed}/${total})`;
+}
+
+// Print reconciliation report
+function printReconciliation() {
+    if (reconciliationData.length === 0) {
+        alert('Không có dữ liệu đối soát để in.');
+        return;
+    }
+    const startDate = document.getElementById('startDate')?.value || '';
+    const endDate = document.getElementById('endDate')?.value || '';
+    const now = new Date().toLocaleDateString('vi-VN');
+
+    let totalRevenue = 0, totalCommission = 0, totalNet = 0, totalOrders = 0;
+    let rows = '';
+    reconciliationData.forEach((store, idx) => {
+        totalRevenue += store.revenue || 0;
+        totalCommission += store.commission || 0;
+        totalNet += store.netAmount || 0;
+        totalOrders += store.orderCount || 0;
+        rows += `
+            <tr>
+                <td>${idx + 1}</td>
+                <td>${escapeHtml(store.storeName)}</td>
+                <td style="text-align:right;">${(store.orderCount || 0)}</td>
+                <td style="text-align:right;">${(store.revenue || 0).toLocaleString()}đ</td>
+                <td style="text-align:right;">${(store.commission || 0).toLocaleString()}đ</td>
+                <td style="text-align:right;font-weight:600;">${(store.netAmount || 0).toLocaleString()}đ</td>
+            </tr>`;
+    });
+
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    printWindow.document.write(`
+        <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>Biên bản đối soát</title>
+        <style>
+            body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:30px;color:#1a1a1a;line-height:1.5;}
+            .header{text-align:center;margin-bottom:24px;border-bottom:2px solid #0d5c2e;padding-bottom:16px;}
+            .header h2{color:#0d5c2e;margin:0 0 4px 0;font-size:20px;}
+            .header .sub{color:#666;font-size:13px;}
+            .meta{display:flex;justify-content:space-between;margin-bottom:20px;font-size:13px;color:#666;}
+            .meta strong{color:#1a1a1a;}
+            table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}
+            th{background:#0d5c2e;color:#fff;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
+            th.right{text-align:right;}
+            td{padding:8px 12px;border-bottom:1px solid #e0e0e0;}
+            .summary{background:#f0f2f5;padding:16px;border-radius:8px;margin-top:20px;}
+            .summary h3{margin:0 0 12px 0;font-size:15px;color:#0d5c2e;}
+            .summary-row{display:flex;justify-content:space-between;padding:4px 0;font-size:14px;}
+            .summary-row.total{border-top:2px solid #0d5c2e;padding-top:8px;margin-top:4px;font-weight:700;font-size:15px;}
+            .footer{text-align:center;margin-top:40px;font-size:12px;color:#999;border-top:1px solid #e0e0e0;padding-top:12px;}
+            .signatures{display:flex;justify-content:space-between;margin-top:60px;font-size:13px;}
+            .sig-block{text-align:center;width:200px;}
+            .sig-line{border-bottom:1px solid #1a1a1a;margin-bottom:6px;}
+            @media print{
+                body{margin:15px;}
+                .no-print{display:none;}
+            }
+        </style></head><body>
+            <div class="header">
+                <h2>BIÊN BẢN ĐỐI SOÁT GIAO DỊCH</h2>
+                <div class="sub">DealXanh O2O Deal Marketplace</div>
+            </div>
+            <div class="meta">
+                <div><strong>Kỳ đối soát:</strong> ${startDate || '...'} — ${endDate || '...'}</div>
+                <div><strong>Ngày in:</strong> ${now}</div>
+            </div>
+            <table>
+                <thead><tr><th>#</th><th>Cửa hàng</th><th class="right">Số đơn</th><th class="right">Doanh thu</th><th class="right">Hoa hồng (10%)</th><th class="right">Cần trả shop</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="summary">
+                <h3>Tổng kết</h3>
+                <div class="summary-row"><span>Tổng cửa hàng</span><span>${reconciliationData.length}</span></div>
+                <div class="summary-row"><span>Tổng số đơn</span><span>${totalOrders}</span></div>
+                <div class="summary-row"><span>Tổng doanh thu (GMV)</span><span>${totalRevenue.toLocaleString()}đ</span></div>
+                <div class="summary-row"><span>Tổng hoa hồng nền tảng</span><span>${totalCommission.toLocaleString()}đ</span></div>
+                <div class="summary-row total"><span>Tổng cần trả cho cửa hàng</span><span>${totalNet.toLocaleString()}đ</span></div>
+            </div>
+            <div class="signatures">
+                <div class="sig-block"><div class="sig-line"></div>Người lập biên bản</div>
+                <div class="sig-block"><div class="sig-line"></div>Kế toán xác nhận</div>
+                <div class="sig-block"><div class="sig-line"></div>Người duyệt</div>
+            </div>
+            <div class="footer">Biên bản được tạo tự động từ hệ thống DealXanh — ${now}</div>
+            <div class="no-print" style="text-align:center;margin-top:20px;">
+                <button onclick="window.print()" style="padding:10px 30px;background:#0d5c2e;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">🖨 In biên bản</button>
+            </div>
+        </body></html>
+    `);
+    printWindow.document.close();
 }
 
 // Final reconciliation - only processes confirmed stores

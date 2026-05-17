@@ -7,6 +7,7 @@
     <!-- CSRF Token -->
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <div th:replace="~{common/admin/css :: css}"></div>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -410,20 +411,7 @@ img{display:block;max-width:100%}
 </a>
 
 <!-- Bottom nav -->
-<nav class="bottom-nav">
-    <a class="nav-item" href="/seller/dashboard">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/></svg>
-        <span>Dashboard</span>
-    </a>
-    <div class="nav-item active">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>Deals</span>
-    </div>
-    <a class="nav-item" href="/seller/deals/create">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        <span>Tạo deal</span>
-    </a>
-</nav>
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('deals')}"></div>
 
 <!-- Deal Products Modal -->
 <div class="modal" id="dealProductsModal">

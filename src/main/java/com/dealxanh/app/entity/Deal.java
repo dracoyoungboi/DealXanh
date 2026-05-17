@@ -1,5 +1,6 @@
 package com.dealxanh.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -82,9 +83,11 @@ public class Deal {
     private Store store;
 
     // Relationships
+    @JsonIgnore
     @OneToMany(mappedBy = "deal", cascade = CascadeType.ALL)
     private java.util.List<DealProduct> dealProducts;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "deal", cascade = CascadeType.ALL)
     private java.util.List<DealCategory> dealCategories;
 

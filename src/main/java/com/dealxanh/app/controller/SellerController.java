@@ -41,6 +41,9 @@ public class SellerController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private OrderRepository orderRepository;
+
     // ============ DASHBOARD ============
 
     @GetMapping({"", "/dashboard"})
@@ -51,18 +54,33 @@ public class SellerController {
         }
 
         Store store = user.getWorkStore();
+        Long storeId = store.getStoreId();
 
-        // Get deal statistics for this store
-        long totalDeals = dealRepository.findByStoreStoreIdAndStatus(store.getStoreId(), "ACTIVE").size() +
-                         dealRepository.findByStoreStoreIdAndStatus(store.getStoreId(), "SCHEDULED").size();
+        // KPIs
+        long totalDeals = dealRepository.findByStoreStoreId(storeId).size();
+        long activeDeals = dealRepository.findByStoreStoreIdAndStatus(storeId, "ACTIVE").size();
+        long scheduledDeals = dealRepository.findByStoreStoreIdAndStatus(storeId, "SCHEDULED").size();
+        long totalProducts = productRepository.countByStoreStoreIdAndDeletedFalse(storeId);
+        long pendingOrders = orderRepository.countPendingOrdersByStore(storeId);
+        long totalOrders = orderRepository.countByStoreStoreId(storeId);
 
-        long activeDeals = dealRepository.findByStoreStoreIdAndStatus(store.getStoreId(), "ACTIVE").size();
-        long scheduledDeals = dealRepository.findByStoreStoreIdAndStatus(store.getStoreId(), "SCHEDULED").size();
+        // Recent orders (last 5)
+        org.springframework.data.domain.Pageable top5 =
+            org.springframework.data.domain.PageRequest.of(0, 5, org.springframework.data.domain.Sort.by("createdAt").descending());
+        var recentOrdersPage = orderRepository.findByStoreStoreIdOrderByCreatedAtDesc(storeId, top5);
+        java.util.List<com.dealxanh.app.entity.Order> recentOrders = recentOrdersPage.getContent();
+
+        // Common model attrs for sidebar
+        model.addAttribute("user", user);
+        model.addAttribute("store", store);
+        model.addAttribute("pendingOrders", pendingOrders);
+        model.addAttribute("activeDeals", activeDeals);
 
         model.addAttribute("totalDeals", totalDeals);
-        model.addAttribute("activeDeals", activeDeals);
         model.addAttribute("scheduledDeals", scheduledDeals);
-        model.addAttribute("store", store);
+        model.addAttribute("totalProducts", totalProducts);
+        model.addAttribute("totalOrders", totalOrders);
+        model.addAttribute("recentOrders", recentOrders);
 
         return "seller/dashboard";
     }
@@ -110,13 +128,17 @@ public class SellerController {
         long scheduledCount = allDeals.stream().filter(d -> "SCHEDULED".equals(d.getStatus())).count();
         long endedCount = allDeals.stream().filter(d -> "ENDED".equals(d.getStatus())).count();
 
+        model.addAttribute("user", user);
+        model.addAttribute("store", store);
+        model.addAttribute("activeDeals", activeCount);
+        model.addAttribute("pendingOrders", orderRepository.countPendingOrdersByStore(store.getStoreId()));
+
         model.addAttribute("deals", filteredDeals);
         model.addAttribute("activeCount", activeCount);
         model.addAttribute("scheduledCount", scheduledCount);
         model.addAttribute("endedCount", endedCount);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("searchQuery", search);
-        model.addAttribute("store", store);
 
         return "seller/deals";
     }
@@ -128,7 +150,10 @@ public class SellerController {
             return "redirect:/login";
         }
 
+        model.addAttribute("user", user);
         model.addAttribute("store", user.getWorkStore());
+        model.addAttribute("activeDeals", dealRepository.findByStoreStoreIdAndStatus(user.getWorkStore().getStoreId(), "ACTIVE").size());
+        model.addAttribute("pendingOrders", orderRepository.countPendingOrdersByStore(user.getWorkStore().getStoreId()));
         return "seller/create-deal";
     }
 
@@ -214,8 +239,11 @@ public class SellerController {
         if (!java.nio.file.Files.exists(uploadPath)) {
             java.nio.file.Files.createDirectories(uploadPath);
         }
-        java.nio.file.Files.copy(file.getInputStream(), uploadPath.resolve(fileName),
-                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        java.nio.file.Path targetPath = uploadPath.resolve(fileName);
+        // Nếu file đã tồn tại, dùng lại link cũ
+        if (!java.nio.file.Files.exists(targetPath)) {
+            java.nio.file.Files.copy(file.getInputStream(), targetPath);
+        }
         return "/uploads/" + fileName;
     }
 
@@ -412,7 +440,15 @@ public class SellerController {
     private User getCurrentUser(Principal principal) {
         if (principal == null) return null;
         String username = principal.getName();
-        return userRepository.findByUsernameWithRole(username)
+        User user = userRepository.findByUsernameWithRole(username)
                 .orElse(userRepository.findByEmail(username).orElse(null));
+        // If user is a store owner but workStore is null, look up store by owner
+        if (user != null && user.getWorkStore() == null) {
+            Store ownedStore = storeRepository.findByOwner(user).orElse(null);
+            if (ownedStore != null && "ACTIVE".equals(ownedStore.getStatus())) {
+                user.setWorkStore(ownedStore);
+            }
+        }
+        return user;
     }
 }

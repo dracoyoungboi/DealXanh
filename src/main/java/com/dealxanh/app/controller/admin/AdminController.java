@@ -15,6 +15,7 @@ import com.dealxanh.app.repository.UserRepository;
 import com.dealxanh.app.repository.DealRepository;
 import com.dealxanh.app.repository.DealCategoryRepository;
 import com.dealxanh.app.repository.DealProductRepository;
+import com.dealxanh.app.repository.CategoryRepository;
 import com.dealxanh.app.repository.ProductRepository;
 import com.dealxanh.app.repository.DisputeRepository;
 import com.dealxanh.app.repository.TransactionRepository;
@@ -67,6 +68,9 @@ public class AdminController {
 
     @Autowired
     private DisputeRepository disputeRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Autowired
     private ProductRepository productRepository;
@@ -355,7 +359,8 @@ public class AdminController {
         // First filter by role
         if (role != null && !role.isEmpty()) {
             if ("buyer".equals(role)) {
-                Role userRole = roleRepository.findByName("ROLE_USER").orElse(null);
+                // DB có thể lưu "USER" hoặc "ROLE_USER"
+                Role userRole = findRoleByName("ROLE_USER", "USER");
                 users = userRole != null ? userRepository.findByRole(userRole) : new java.util.ArrayList<>();
             } else if ("seller".equals(role)) {
                 // Find users who own stores or work at stores
@@ -960,22 +965,22 @@ public class AdminController {
         double orderChange = (prevOrders != null && prevOrders > 0 && orders != null)
                 ? ((double)(orders - prevOrders) / prevOrders * 100) : 0;
 
-        return java.util.Map.of(
-            "success", true,
-            "revenue", revenue != null ? revenue : 0,
-            "orders", orders != null ? orders : 0,
-            "avgOrder", avgOrder != null ? avgOrder : 0,
-            "commission", commission != null ? commission : 0,
-            "activeDeals", activeDeals,
-            "scheduledDeals", scheduledDeals,
-            "totalStores", totalStores,
-            "activeStores", activeStores,
-            "totalBuyers", totalBuyers,
-            "pickupRate", Math.round(pickupRate * 10) / 10.0,
-            "cancelRate", Math.round(cancelRate * 10) / 10.0,
-            "revenueChange", Math.round(revenueChange * 10) / 10.0,
-            "orderChange", Math.round(orderChange * 10) / 10.0
-        );
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("success", true);
+        result.put("revenue", revenue != null ? revenue : 0);
+        result.put("orders", orders != null ? orders : 0);
+        result.put("avgOrder", avgOrder != null ? avgOrder : 0);
+        result.put("commission", commission != null ? commission : 0);
+        result.put("activeDeals", activeDeals);
+        result.put("scheduledDeals", scheduledDeals);
+        result.put("totalStores", totalStores);
+        result.put("activeStores", activeStores);
+        result.put("totalBuyers", totalBuyers);
+        result.put("pickupRate", Math.round(pickupRate * 10) / 10.0);
+        result.put("cancelRate", Math.round(cancelRate * 10) / 10.0);
+        result.put("revenueChange", Math.round(revenueChange * 10) / 10.0);
+        result.put("orderChange", Math.round(orderChange * 10) / 10.0);
+        return result;
     }
 
     @GetMapping("/api/analytics/chart")
@@ -1151,40 +1156,41 @@ public class AdminController {
             Model model,
             Authentication authentication) {
 
-        // Get current admin user
         String username = authentication.getName();
         User adminUser = userRepository.findByUsername(username)
                 .orElse(userRepository.findByEmail(username).orElse(null));
+        if (adminUser != null) model.addAttribute("adminUser", adminUser);
 
-        if (adminUser != null) {
-            model.addAttribute("adminUser", adminUser);
-        }
-
-        // Set active sidebar
         model.addAttribute("activeSidebar", "products");
 
-        // Get products with pagination
+        // Get filter URL from request to determine active tab/filters
         org.springframework.data.domain.Pageable pageable =
             org.springframework.data.domain.PageRequest.of(page, size);
         org.springframework.data.domain.Page<Product> products;
 
-        // Filter by approval status if specified
+        // Filter by approval status
         if (approval != null && !approval.isEmpty()) {
             products = productService.getProductsByApprovalStatus(approval, pageable);
         } else {
             products = productService.getAllProducts(pageable);
         }
 
-        // Get statistics
+        // Stats (with correct semantics)
+        long totalProducts = productRepository.countByDeletedFalse();
+        long activeProducts = productService.getActiveProducts();
+        long expiredProducts = productRepository.countExpiredOrOutOfStock();
         model.addAttribute("products", products);
-        model.addAttribute("totalProducts", productService.getTotalProducts());
-        model.addAttribute("activeProducts", productService.getActiveProducts());
-        model.addAttribute("outOfStockProducts", productService.getOutOfStockProducts());
+        model.addAttribute("totalProducts", totalProducts);
+        model.addAttribute("activeProducts", activeProducts);
+        model.addAttribute("expiredProducts", expiredProducts);
         model.addAttribute("pendingApproval", productService.getPendingApprovalProducts());
         model.addAttribute("approvedProducts", productService.getApprovedProducts());
         model.addAttribute("rejectedProducts", productService.getRejectedProducts());
 
-        // Filter parameters
+        // Categories for filter dropdown
+        model.addAttribute("categories", categoryRepository.findAll());
+
+        // Filter params
         model.addAttribute("selectedCategory", category);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedApproval", approval);
@@ -1226,14 +1232,17 @@ public class AdminController {
     @PostMapping("/products/{id}/toggle")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public String toggleProduct(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        Product product = productService.toggleActive(id);
-        if (product == null) {
-            redirectAttributes.addFlashAttribute("error", "Không tìm thấy sản phẩm");
-            return "redirect:/admin/products";
+        try {
+            Product product = productService.toggleActive(id);
+            if (product == null) {
+                redirectAttributes.addFlashAttribute("error", "Không tìm thấy sản phẩm");
+                return "redirect:/admin/products";
+            }
+            String status = product.getActive() ? "kích hoạt" : "ngừng bán";
+            redirectAttributes.addFlashAttribute("success", "Đã " + status + " sản phẩm: " + product.getName());
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-
-        String status = product.getActive() ? "kích hoạt" : "ngừng kích hoạt";
-        redirectAttributes.addFlashAttribute("success", "Đã " + status + " sản phẩm: " + product.getName());
         return "redirect:/admin/products";
     }
 
@@ -1248,6 +1257,46 @@ public class AdminController {
 
         redirectAttributes.addFlashAttribute("success", "Đã xóa sản phẩm thành công");
         return "redirect:/admin/products";
+    }
+
+    @GetMapping("/api/products/{id}/detail")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getProductDetail(@PathVariable Long id) {
+        Product product = productService.getProductById(id);
+        if (product == null) {
+            return java.util.Map.of("success", false, "message", "Không tìm thấy sản phẩm");
+        }
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("productId", product.getProductId());
+        data.put("name", product.getName());
+        data.put("description", product.getDescription());
+        data.put("imageUrl", product.getImageUrl());
+        data.put("originalPrice", product.getOriginalPrice());
+        data.put("dealPrice", product.getDealPrice());
+        data.put("stockQuantity", product.getStockQuantity());
+        data.put("productType", product.getProductType());
+        data.put("active", product.getActive());
+        data.put("deleted", product.getDeleted());
+        data.put("approvalStatus", product.getApprovalStatus());
+        data.put("rejectionReason", product.getRejectionReason());
+        data.put("createdAt", product.getCreatedAt() != null ? product.getCreatedAt().toString() : null);
+        data.put("updatedAt", product.getUpdatedAt() != null ? product.getUpdatedAt().toString() : null);
+        data.put("expiryDate", product.getExpiryDate() != null ? product.getExpiryDate().toString() : null);
+        data.put("dealStartTime", product.getDealStartTime() != null ? product.getDealStartTime().toString() : null);
+        data.put("dealEndTime", product.getDealEndTime() != null ? product.getDealEndTime().toString() : null);
+        data.put("pickupDeadline", product.getPickupDeadline() != null ? product.getPickupDeadline().toString() : null);
+
+        if (product.getStore() != null) {
+            data.put("storeName", product.getStore().getStoreName());
+            data.put("storeId", product.getStore().getStoreId());
+        }
+        if (product.getCategory() != null) {
+            data.put("categoryName", product.getCategory().getName());
+        }
+
+        return java.util.Map.of("success", true, "data", data);
     }
 
     @GetMapping("/finance")
@@ -1340,8 +1389,8 @@ public class AdminController {
             @RequestParam(required = false) String endDate) {
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate + "T00:00:00") : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
-        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate + "T23:59:59") : now;
+        LocalDateTime start = (startDate != null && !startDate.isEmpty()) ? LocalDateTime.parse(startDate + "T00:00:00") : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = (endDate != null && !endDate.isEmpty()) ? LocalDateTime.parse(endDate + "T23:59:59") : now;
 
         java.util.List<com.dealxanh.app.entity.Transaction> transactions = transactionRepository.findByDateRange(start, end);
         java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
@@ -1409,6 +1458,29 @@ public class AdminController {
     @ResponseBody
     public java.util.Map<String, Object> processPayout() {
         try {
+            // Calculate current wallet balance
+            LocalDateTime allTime = LocalDateTime.now().minusYears(10);
+            LocalDateTime now = LocalDateTime.now();
+            Double totalCommission = transactionRepository.sumCommission(allTime, now);
+            Double totalPaidOut = transactionRepository.sumPaidPayouts(allTime, now);
+            Double pendingAmount = transactionRepository.sumPendingPayouts();
+
+            double balance = (totalCommission != null ? totalCommission : 0)
+                           - (totalPaidOut != null ? totalPaidOut : 0);
+
+            double pending = pendingAmount != null ? pendingAmount : 0;
+
+            if (pending <= 0) {
+                return java.util.Map.of("success", false, "message", "Không có khoản payout nào đang chờ xử lý.");
+            }
+
+            if (pending > balance) {
+                return java.util.Map.of("success", false,
+                    "message", String.format(
+                        "Số dư ví không đủ. Cần %,.0fđ nhưng chỉ có %,.0fđ. Cần thêm %,.0fđ.",
+                        pending, Math.max(0, balance), pending - Math.max(0, balance)));
+            }
+
             // Get all pending payout transactions
             java.util.List<com.dealxanh.app.entity.Transaction> pendingPayouts =
                     transactionRepository.findPendingPayoutsWithStore();
@@ -1419,7 +1491,7 @@ public class AdminController {
             for (com.dealxanh.app.entity.Transaction t : pendingPayouts) {
                 t.setStatus("COMPLETED");
                 t.setUpdatedAt(LocalDateTime.now());
-                t.setDescription(t.getDescription() + " | Đã thanh toán " + LocalDateTime.now().toLocalDate());
+                t.setDescription(t.getDescription() + " | Đã thanh toán " + now.toLocalDate());
                 transactionRepository.save(t);
                 processed++;
                 totalAmount += t.getAmount() != null ? t.getAmount() : 0;
@@ -1475,8 +1547,8 @@ public class AdminController {
             @RequestParam(required = false) String endDate) {
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate + "T00:00:00") : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
-        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate + "T23:59:59") : now;
+        LocalDateTime start = (startDate != null && !startDate.isEmpty()) ? LocalDateTime.parse(startDate + "T00:00:00") : now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime end = (endDate != null && !endDate.isEmpty()) ? LocalDateTime.parse(endDate + "T23:59:59") : now;
 
         // Get all COMPLETED SALE transactions by store for reconciliation
         java.util.List<com.dealxanh.app.entity.Transaction> transactions =
@@ -1493,6 +1565,8 @@ public class AdminController {
                 java.util.Map<String, Object> m = new java.util.HashMap<>();
                 m.put("storeId", storeId);
                 m.put("storeName", t.getStore().getStoreName());
+                m.put("tier", t.getStore().getPartnerTierLabel());
+                m.put("commissionRate", Math.round(t.getStore().getCommissionRate() * 100) + "%");
                 m.put("revenue", 0.0);
                 m.put("commission", 0.0);
                 m.put("netAmount", 0.0);
@@ -1734,6 +1808,7 @@ public class AdminController {
     public String deals(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String scope,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
@@ -1769,13 +1844,24 @@ public class AdminController {
                             return false;
                         }
                     }
-                    // Filter by search
+                    // Filter by scope (platform vs store)
+                    if (scope != null && !scope.trim().isEmpty() && !scope.equals("ALL")) {
+                        if ("PLATFORM".equals(scope) && deal.getStore() != null) {
+                            return false;
+                        }
+                        if ("STORE".equals(scope) && deal.getStore() == null) {
+                            return false;
+                        }
+                    }
+                    // Filter by search (name, code, store name)
                     if (search != null && !search.trim().isEmpty()) {
                         String searchLower = search.toLowerCase().trim();
-                        if (deal.getDealName() == null || !deal.getDealName().toLowerCase().contains(searchLower)) {
-                            if (deal.getDealCode() == null || !deal.getDealCode().toLowerCase().contains(searchLower)) {
-                                return false;
-                            }
+                        boolean nameMatch = deal.getDealName() != null && deal.getDealName().toLowerCase().contains(searchLower);
+                        boolean codeMatch = deal.getDealCode() != null && deal.getDealCode().toLowerCase().contains(searchLower);
+                        boolean storeMatch = deal.getStore() != null && deal.getStore().getStoreName() != null
+                                && deal.getStore().getStoreName().toLowerCase().contains(searchLower);
+                        if (!nameMatch && !codeMatch && !storeMatch) {
+                            return false;
                         }
                     }
                     return true;
@@ -1838,6 +1924,7 @@ public class AdminController {
         model.addAttribute("searchQuery", search != null ? search : "");
         model.addAttribute("selectedType", type != null ? type : "");
         model.addAttribute("selectedStatus", status != null ? status : "");
+        model.addAttribute("selectedScope", scope != null ? scope : "");
 
         // Get deal types for filter
         List<String> dealTypes = allDeals.stream()
@@ -1951,8 +2038,11 @@ public class AdminController {
         if (!java.nio.file.Files.exists(uploadPath)) {
             java.nio.file.Files.createDirectories(uploadPath);
         }
-        java.nio.file.Files.copy(file.getInputStream(), uploadPath.resolve(fileName),
-                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        java.nio.file.Path targetPath = uploadPath.resolve(fileName);
+        // Nếu file đã tồn tại (cùng tên), dùng lại link cũ, không ghi đè
+        if (!java.nio.file.Files.exists(targetPath)) {
+            java.nio.file.Files.copy(file.getInputStream(), targetPath);
+        }
         return "/uploads/" + fileName;
     }
 
@@ -1969,7 +2059,7 @@ public class AdminController {
     // ============ DEAL CATEGORIES (Admin gán categories vào platform deals) ============
 
     @GetMapping("/deals/{dealId}/available-categories")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     @ResponseBody
     public java.util.List<com.dealxanh.app.entity.Category> getAvailableCategoriesForDeal(
             @PathVariable Long dealId) {
@@ -2012,9 +2102,17 @@ public class AdminController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     @ResponseBody
     public java.util.Map<String, Object> getDealCategories(@PathVariable Long dealId) {
+        Deal deal = dealService.getDealById(dealId);
+
+        // For platform deals, return warnings about products nearing 30% cap
+        if (deal != null && "ALL_STORES".equals(deal.getScope()) && deal.getStore() == null) {
+            java.util.List<java.util.Map<String, Object>> categoriesWithWarnings =
+                dealService.getDealCategoriesWithWarnings(dealId);
+            return java.util.Map.of("categories", categoriesWithWarnings);
+        }
+
         java.util.List<com.dealxanh.app.entity.DealCategory> categories =
             dealService.getDealCategories(dealId);
-
         return java.util.Map.of("categories", categories);
     }
 
@@ -2047,7 +2145,7 @@ public class AdminController {
         }
 
         // Get products from this store that are not already in the deal
-        java.util.List<Product> allStoreProducts = productRepository.findByStore_StoreId(deal.getStore().getStoreId());
+        java.util.List<Product> allStoreProducts = productRepository.findByStoreStoreIdAndDeletedFalse(deal.getStore().getStoreId());
 
         java.util.List<Long> existingProductIds = dealProductRepository
                 .findByDeal(deal)
@@ -2299,6 +2397,17 @@ public class AdminController {
 
         redirectAttributes.addFlashAttribute("success", "Đã chuyển cửa hàng \"" + store.getStoreName() + "\" về trạng thái chờ xét duyệt và gửi email thông báo cho seller");
         return buildRedirectUrl(currentStatus != null ? currentStatus : "", search, city, sort, page);
+    }
+
+    /**
+     * Finds a role by trying both "ROLE_XXX" and "XXX" formats (DB inconsistency).
+     */
+    private Role findRoleByName(String withPrefix, String withoutPrefix) {
+        Role role = roleRepository.findByName(withPrefix).orElse(null);
+        if (role == null) {
+            role = roleRepository.findByName(withoutPrefix).orElse(null);
+        }
+        return role;
     }
 
     /**

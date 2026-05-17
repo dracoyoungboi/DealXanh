@@ -117,10 +117,13 @@ public class SecurityConfig {
                     "/admin/seller-verify/*/approve", "/admin/seller-verify/*/reject",
                     "/admin/seller-verify/*/reset-to-pending",
                     "/admin/api/finance/**", "/admin/api/dispute/**",
+                    "/admin/deals/*/assign-categories", "/admin/deals/*/remove-category/*",
+                    "/admin/deals/*/assign-products", "/admin/deals/*/remove-product/*",
                     "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )
             )
                 .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(new com.dealxanh.app.security.CustomAuthenticationEntryPoint())
                 .accessDeniedPage("/login?error=access_denied")
             )
             .oauth2Login(oauth2 -> oauth2

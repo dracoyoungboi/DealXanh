@@ -286,13 +286,13 @@
 
                 <div class="kpi-card">
                     <div class="kpi-card__top">
-                        <div class="kpi-card__label">Hết hàng</div>
+                        <div class="kpi-card__label">Hết hạn / Hết hàng</div>
                         <div class="kpi-icon" style="background:var(--danger);color:#fff">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         </div>
                     </div>
-                    <div class="kpi-card__value" style="color:var(--danger)" th:text="${outOfStockProducts}">0</div>
-                    <div class="kpi-card__sub">Cần nhập hàng</div>
+                    <div class="kpi-card__value" style="color:var(--danger)" th:text="${expiredProducts}">0</div>
+                    <div class="kpi-card__sub">Quá date hoặc hết stock</div>
                 </div>
             </div>
 
@@ -312,20 +312,27 @@
                 </div>
 
                 <!-- Filter Bar -->
-                <div style="padding:16px 20px;border-bottom:1px solid var(--border-light)">
+                <form method="get" th:action="@{/admin/products}" style="padding:16px 20px;border-bottom:1px solid var(--border-light)">
+                    <!-- Preserve approval tab -->
+                    <input type="hidden" name="approval" th:value="${selectedApproval}">
                     <div class="filter-bar">
                         <div class="search-wrap">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            <input type="text" class="search-input" placeholder="Tìm theo tên sản phẩm, mã SKU...">
+                            <input type="text" name="search" class="search-input" placeholder="Tìm theo tên sản phẩm..." th:value="${searchQuery}">
                         </div>
-                        <select class="filter-select">
-                            <option>Tất cả danh mục</option>
-                            <option>Ẩm thực</option>
-                            <option>Đồ uống</option>
-                            <option>Thời trang</option>
+                        <select name="category" class="filter-select" onchange="this.form.submit()">
+                            <option value="">Tất cả danh mục</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.categoryId}" th:text="${cat.name}" th:selected="${selectedCategory != null && selectedCategory.toString() == cat.categoryId.toString()}">Category</option>
                         </select>
+                        <select name="status" class="filter-select" onchange="this.form.submit()">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="active" th:selected="${selectedStatus == 'active'}">Đang hoạt động</option>
+                            <option value="inactive" th:selected="${selectedStatus == 'inactive'}">Ngừng hoạt động</option>
+                            <option value="outofstock" th:selected="${selectedStatus == 'outofstock'}">Hết hạn</option>
+                        </select>
+                        <button type="submit" class="btn btn--outline" style="font-size:12px;">🔍 Tìm</button>
                     </div>
-                </div>
+                </form>
 
                 <!-- Products Table -->
                 <div class="panel__body">
@@ -361,8 +368,8 @@
                                 </td>
                                 <td>
                                     <div class="price">
-                                        <span th:if="${product.dealPrice != null}" th:text="${#numbers.formatInteger(product.dealPrice, 0)} + '₫'">0₫</span>
-                                        <span class="price__original" th:if="${product.originalPrice != null && product.dealPrice != null && product.originalPrice > product.dealPrice}" th:text="${#numbers.formatInteger(product.originalPrice, 0)} + '₫'">0₫</span>
+                                        <span th:if="${product.dealPrice != null}" th:text="${#numbers.formatDecimal(product.dealPrice, 0, 0)} + '₫'">0₫</span>
+                                        <span class="price__original" th:if="${product.originalPrice != null && product.dealPrice != null && product.originalPrice > product.dealPrice}" th:text="${#numbers.formatDecimal(product.originalPrice, 0, 0)} + '₫'">0₫</span>
                                     </div>
                                 </td>
                                 <td>
@@ -402,12 +409,10 @@
                                             </button>
                                         </form>
 
-                                        <!-- Delete button -->
-                                        <form th:action="@{/admin/products/{id}/delete(id=${product.productId})}" method="post" style="display:inline;">
-                                            <button type="submit" class="action-btn action-btn--delete" title="Xóa sản phẩm" onclick="return confirm('Xóa sản phẩm này?')">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                            </button>
-                                        </form>
+                                        <!-- Detail button -->
+                                        <button type="button" class="action-btn action-btn--edit" title="Chi tiết sản phẩm" th:onclick="|viewProductDetail(${product.productId})|">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -467,5 +472,114 @@ document.querySelector('.search-input')?.addEventListener('input', function() {
     }, 500);
 });
 </script>
+<!-- Product Detail Modal -->
+<div class="modal" id="productDetailModal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.5);overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
+        <div style="background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:650px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-md);">
+            <div style="padding:20px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;background:var(--bg);">
+                <h3 style="font-size:18px;font-weight:800;">Chi tiết sản phẩm</h3>
+                <button onclick="closeProductDetailModal()" style="width:32px;height:32px;border-radius:var(--radius-md);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;">✕</button>
+            </div>
+            <div id="productDetailContent" style="padding:20px;overflow-y:auto;flex:1;">
+                <div style="text-align:center;padding:40px;">Đang tải...</div>
+            </div>
+            <div style="padding:16px 20px;border-top:1px solid var(--border-light);display:flex;justify-content:flex-end;">
+                <button onclick="closeProductDetailModal()" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--surface);border:1px solid var(--border);font-size:14px;font-weight:600;cursor:pointer;">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function viewProductDetail(productId) {
+    const modal = document.getElementById('productDetailModal');
+    const content = document.getElementById('productDetailContent');
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    content.innerHTML = '<div style="text-align:center;padding:40px;">Đang tải...</div>';
+
+    try {
+        const res = await fetch(`/admin/api/products/${productId}/detail`);
+        const json = await res.json();
+        if (!json.success) {
+            content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);">${json.message}</div>`;
+            return;
+        }
+        const p = json.data;
+        const isExpired = p.expiryDate && new Date(p.expiryDate) < new Date();
+        const isOutOfStock = (p.stockQuantity || 0) <= 0;
+        const statusColor = p.active ? 'var(--success)' : 'var(--danger)';
+        const stockColor = isOutOfStock ? 'var(--danger)' : 'var(--success)';
+        const approvalBadge = p.approvalStatus === 'APPROVED'
+            ? '<span style="background:var(--success-bg);color:var(--success);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;">Đã duyệt</span>'
+            : p.approvalStatus === 'PENDING'
+            ? '<span style="background:var(--warning-bg);color:var(--warning);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;">Chờ duyệt</span>'
+            : '<span style="background:var(--danger-bg);color:var(--danger);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;">Từ chối</span>';
+
+        content.innerHTML = `
+            <div style="display:flex;gap:24px;margin-bottom:20px;align-items:flex-start;">
+                <div style="position:relative;flex-shrink:0;">
+                    <img src="${p.imageUrl || '/img/default-product.svg'}" style="width:200px;height:200px;border-radius:var(--radius-lg);object-fit:cover;border:2px solid var(--border-light);" onerror="this.src='/img/default-product.svg'">
+                    <span style="position:absolute;top:10px;left:10px;background:${p.active ? 'var(--success)' : 'var(--danger)'};color:#fff;padding:4px 12px;border-radius:var(--radius-full);font-size:11px;font-weight:700;">${p.active ? 'Đang bán' : 'Ngừng bán'}</span>
+                    ${isOutOfStock ? '<span style="position:absolute;top:10px;right:10px;background:var(--danger);color:#fff;padding:4px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:700;">Hết hàng</span>' : ''}
+                    ${isExpired ? '<span style="position:absolute;bottom:10px;left:10px;background:var(--warning);color:#fff;padding:4px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:700;">Hết hạn</span>' : ''}
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                        <span style="font-size:11px;color:var(--text-tertiary);font-family:monospace;">#${p.productId}</span>
+                        ${approvalBadge}
+                    </div>
+                    <h3 style="font-size:22px;font-weight:800;margin:0 0 6px 0;line-height:1.3;">${p.name || 'N/A'}</h3>
+                    ${p.description ? `<p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px 0;line-height:1.5;">${p.description}</p>` : ''}
+                    <div style="display:flex;align-items:baseline;gap:12px;padding:12px 16px;background:var(--bg);border-radius:var(--radius-md);margin-top:8px;">
+                        <span style="font-size:24px;font-weight:800;color:var(--primary);">${(p.originalPrice || 0).toLocaleString()}đ</span>
+                        ${p.dealPrice ? `<span style="font-size:16px;color:var(--text-tertiary);text-decoration:line-through;">→ ${p.dealPrice.toLocaleString()}đ</span>` : ''}
+                        ${p.dealPrice ? `<span style="font-size:14px;font-weight:700;color:var(--danger);">(-${Math.round((1 - p.dealPrice / p.originalPrice) * 100)}%)</span>` : ''}
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border-light);border-radius:var(--radius-lg);overflow:hidden;">
+                ${[
+                    ['📦 Tồn kho', `<span style="font-weight:600;color:${stockColor}">${p.stockQuantity || 0}</span>`],
+                    ['🏷 Loại SP', p.productType || 'N/A'],
+                    ['📂 Danh mục', p.categoryName || '<span style="color:var(--text-tertiary);">Chưa có</span>'],
+                    ['🏪 Cửa hàng', p.storeName || 'N/A'],
+                    ['📅 Ngày tạo', p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : 'N/A'],
+                    ['🔄 Cập nhật', p.updatedAt ? new Date(p.updatedAt).toLocaleDateString('vi-VN') : 'N/A'],
+                    ['⏰ Hạn dùng', isExpired
+                        ? `<span style="color:var(--danger);font-weight:600;">${new Date(p.expiryDate).toLocaleDateString('vi-VN')} (Đã hết hạn)</span>`
+                        : (p.expiryDate ? new Date(p.expiryDate).toLocaleDateString('vi-VN') : '<span style="color:var(--text-tertiary);">Không có</span>')],
+                    ['🎯 Deal từ', p.dealStartTime ? new Date(p.dealStartTime).toLocaleDateString('vi-VN') : 'N/A'],
+                    ['🏁 Deal đến', p.dealEndTime ? new Date(p.dealEndTime).toLocaleDateString('vi-VN') : 'N/A'],
+                ].map(([label, value]) => `
+                    <div style="padding:12px 16px;border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);">
+                        <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:3px;">${label}</div>
+                        <div style="font-size:14px;">${value}</div>
+                    </div>
+                `).join('')}
+            </div>
+
+            ${p.rejectionReason ? `
+            <div style="margin-top:12px;padding:12px 16px;background:var(--danger-bg);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-md);">
+                <div style="font-size:11px;font-weight:700;color:var(--danger);margin-bottom:4px;">Lý do từ chối</div>
+                <div style="font-size:13px;color:var(--danger);">${p.rejectionReason}</div>
+            </div>` : ''}
+        `;
+    } catch (e) {
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);">Không thể tải chi tiết sản phẩm</div>';
+    }
+}
+
+function closeProductDetailModal() {
+    document.getElementById('productDetailModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+document.getElementById('productDetailModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeProductDetailModal();
+});
+</script>
+
 </body>
 </html>

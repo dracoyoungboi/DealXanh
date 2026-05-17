@@ -181,7 +181,7 @@ a{text-decoration:none;color:inherit}
 .deal-card__status.CANCELLED{background:var(--danger)}
 
 /* Deal content */
-.deal-card__content{padding:16px;}
+.deal-card__content{padding:20px 20px 16px 20px;}
 .deal-card__header{margin-bottom:12px;}
 .deal-card__name{font-size:16px;font-weight:700;margin-bottom:4px;line-height:1.4;}
 .deal-card__code{font-size:12px;color:var(--text-secondary);font-family:monospace;background:var(--bg);padding:4px 8px;border-radius:var(--radius-sm);display:inline-block;}
@@ -208,6 +208,11 @@ a{text-decoration:none;color:inherit}
 .deal-card__store-logo{width:32px;height:32px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border-light);background:var(--bg);}
 .deal-card__store-logo img{width:100%;height:100%;object-fit:cover}
 .deal-card__store-name{font-size:13px;font-weight:600;}
+.store-tier-badge{padding:3px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.store-tier-badge.DIAMOND{background:linear-gradient(135deg,#667eea,#764ba2)}
+.store-tier-badge.GOLD{background:linear-gradient(135deg,#d4af37,#b8932a)}
+.store-tier-badge.SILVER{background:linear-gradient(135deg,#a8b8c8,#7a8a9a)}
+.store-tier-badge.BRONZE{background:linear-gradient(135deg,#cd7f32,#a0522d)}
 
 /* Pagination */
 .pagination{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-top:1px solid var(--border-light);margin-top:16px;}
@@ -300,7 +305,7 @@ a{text-decoration:none;color:inherit}
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                             </svg>
                         </span>
-                        <input type="text" name="search" class="search-input" placeholder="Tìm theo tên deal, mã deal..." th:value="${searchQuery}">
+                        <input type="text" name="search" class="search-input" placeholder="Tìm tên deal, mã, tên shop..." th:value="${searchQuery}">
                     </div>
                     <select name="type" class="filter-select" onchange="document.getElementById('filterForm').submit();">
                         <option value="">Tất cả loại</option>
@@ -312,6 +317,11 @@ a{text-decoration:none;color:inherit}
                         <option value="ACTIVE" th:selected="${selectedStatus == 'ACTIVE'}">Đang diễn ra</option>
                         <option value="PAUSED" th:selected="${selectedStatus == 'PAUSED'}">Tạm dừng</option>
                         <option value="ENDED" th:selected="${selectedStatus == 'ENDED'}">Đã kết thúc</option>
+                    </select>
+                    <select name="scope" class="filter-select" onchange="document.getElementById('filterForm').submit();">
+                        <option value="">Tất cả phạm vi</option>
+                        <option value="PLATFORM" th:selected="${selectedScope == 'PLATFORM'}">🌐 Toàn sàn</option>
+                        <option value="STORE" th:selected="${selectedScope == 'STORE'}">🏪 Cửa hàng</option>
                     </select>
                     <button type="button" class="btn-create" onclick="openCreateDealModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -325,7 +335,7 @@ a{text-decoration:none;color:inherit}
 
             <!-- Deals grid -->
             <div class="deals-grid" th:if="${deals != null and !deals.isEmpty()}">
-                <div class="deal-card" th:each="deal : ${deals}" th:onclick="'viewDealDetail(' + ${deal.dealId} + ')'">
+                <div class="deal-card" th:each="deal : ${deals}" th:onclick="|viewDealDetail(${deal.dealId})|">
                     <!-- Banner -->
                     <div class="deal-card__banner">
                         <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/deals/default-banner.jpg'}" alt="">
@@ -333,6 +343,7 @@ a{text-decoration:none;color:inherit}
                         <span class="deal-card__type" th:class="${deal.dealType}" th:text="${deal.dealType == 'FLASH_SALE' ? 'Flash Sale' : deal.dealType == 'VOUCHER' ? 'Voucher' : deal.dealType == 'COMBO' ? 'Combo' : 'Seasonal'}">Type</span>
                         <span class="deal-card__status" th:class="${deal.status}" th:text="${deal.status == 'SCHEDULED' ? 'Sắp diễn ra' : deal.status == 'ACTIVE' ? 'Đang diễn ra' : deal.status == 'PAUSED' ? 'Tạm dừng' : deal.status == 'ENDED' ? 'Đã kết thúc' : 'Đã hủy'}">Status</span>
                         <span class="deal-card__apply-method" th:class="${deal.applyMethod}" th:text="${deal.applyMethod == 'AUTO_APPLY' ? '⚡ Tự động' : '🔑 Cần mã'}">Apply Method</span>
+                        <span class="deal-card__scope-badge" th:classappend="${deal.store == null ? 'platform' : 'store'}" th:text="${deal.store == null ? '🌐 Toàn sàn' : '🏪 ' + deal.store.storeName}" style="position:absolute;bottom:12px;right:12px;padding:4px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:600;color:#fff;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);"></span>
                     </div>
 
                     <!-- Content -->
@@ -370,7 +381,7 @@ a{text-decoration:none;color:inherit}
                                         <circle cx="12" cy="12" r="10"/>
                                         <polyline points="12 6 12 12 16 14"/>
                                     </svg>
-                                    <th:block th:if="${deal.endTime != null}" th:text="${#temporals.format(deal.endTime, 'dd/MM HH:mm')}">End</th:block>
+                                    <th:block th:if="${deal.endTime != null}" th:text="${'→ ' + #temporals.format(deal.endTime, 'dd/MM HH:mm')}">End</th:block>
                                 </div>
                                 <div class="deal-card__info-item" th:if="${deal.minOrderAmount != null}">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -389,8 +400,9 @@ a{text-decoration:none;color:inherit}
                                         <line x1="8" y1="2" x2="8" y2="6"/>
                                         <line x1="3" y1="10" x2="21" y2="10"/>
                                     </svg>
-                                    <span th:if="${deal.endTime != null}" th:text="${#temporals.day(deal.startTime) + ' - ' + #temporals.day(deal.endTime)}">Duration</span>
+                                    <span th:if="${deal.endTime != null}" th:text="${#temporals.day(deal.startTime) + '/' + #temporals.month(deal.startTime) + ' - ' + #temporals.day(deal.endTime) + '/' + #temporals.month(deal.endTime)}">Duration</span>
                                 </div>
+                                <div style="font-size:11px;color:var(--text-tertiary);" th:if="${deal.createdAt != null}" th:text="${'Tạo: ' + #temporals.day(deal.createdAt) + '/' + #temporals.month(deal.createdAt)}">Created</div>
                                 <div class="deal-card__usage">
                                     <th:block th:if="${deal.maxUsageCount != null}">
                                         <span th:class="${deal.usageCount >= deal.maxUsageCount ? 'full' : (deal.usageCount * 100 / deal.maxUsageCount > 80 ? 'warning' : 'progress')}"
@@ -401,38 +413,12 @@ a{text-decoration:none;color:inherit}
                                     </th:block>
                                 </div>
                             </div>
-
-                            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);display:flex;gap:8px;">
-                                <button th:if="${deal.store != null}"
-                                        th:onclick="'openViewDealProductsModal(' + ${deal.dealId} + ')'"
-                                        style="flex:1;padding:8px;border-radius:var(--radius-md);background:var(--info-bg);color:var(--info);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                                    Xem SP
-                                </button>
-                                <button th:if="${deal.store != null}"
-                                    th:onclick="'openDealProductsModal(' + ${deal.dealId} + ')'"
-                                    style="flex:1;padding:8px;border-radius:var(--radius-md);background:var(--success-bg);color:var(--success);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                Thêm SP
-                            </button>
-                            <button th:onclick="'openDealCategoriesModal(' + ${deal.dealId} + ')'"
-                                    th:style="'flex:1;padding:8px;border-radius:var(--radius-md);background:var(--warning-bg);color:var(--warning);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;' + ${deal.store != null ? '' : 'width:calc(50% - 4px);'}">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M3 21h18M5 21V7l8-4 8-4"/></svg>
-                                Xem DM
-                            </button>
-                            <button th:onclick="'openAssignCategoriesModal(' + ${deal.dealId} + ', \\'' + ${deal.dealName} + '\\')'"
-                                    style="flex:1;padding:8px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                Thêm DM
-                            </button>
-                        </div>
-
                         </div><!-- end left column -->
 
                         <!-- Right: Categories & Products -->
                         <div style="width:140px;flex-shrink:0;padding-left:10px;border-left:1px solid var(--border-light);font-size:11px;display:flex;flex-direction:column;gap:8px;">
 
-                            <!-- Categories (vertical column, show all) -->
+                            <!-- Categories (vertical column) -->
                             <div th:if="${dealCategoriesMap != null && dealCategoriesMap.containsKey(deal.dealId)}">
                                 <div style="font-weight:700;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:4px;">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M3 21h18M5 21V7l8-4 8-4"/></svg>
@@ -447,7 +433,7 @@ a{text-decoration:none;color:inherit}
                                 </div>
                             </div>
 
-                            <!-- Products (horizontal chips, max 2 + ,...) -->
+                            <!-- Products (horizontal chips, max 2) -->
                             <div th:if="${dealProductsMap != null && dealProductsMap.containsKey(deal.dealId)}">
                                 <div style="font-weight:700;color:var(--info);margin-bottom:4px;display:flex;align-items:center;gap:4px;">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
@@ -472,12 +458,44 @@ a{text-decoration:none;color:inherit}
                         </div><!-- end right column -->
                     </div><!-- end flex row -->
 
+                    <!-- Action buttons (outside flex, full width) -->
+                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
+                        <button th:if="${deal.store != null}"
+                                th:onclick="|event.stopPropagation();openViewDealProductsModal(${deal.dealId})|"
+                                style="padding:7px 10px;border-radius:var(--radius-sm);background:var(--info-bg);color:var(--info);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                            Xem SP
+                        </button>
+                        <button th:if="${deal.store != null}"
+                                th:onclick="|event.stopPropagation();openDealProductsModal(${deal.dealId})|"
+                                style="padding:7px 10px;border-radius:var(--radius-sm);background:var(--success-bg);color:var(--success);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Thêm SP
+                        </button>
+                        <button th:onclick="|event.stopPropagation();openDealCategoriesModal(${deal.dealId})|"
+                                style="padding:7px 10px;border-radius:var(--radius-sm);background:var(--warning-bg);color:var(--warning);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M3 21h18M5 21V7l8-4 8-4"/></svg>
+                            Danh mục
+                        </button>
+                        <button th:onclick="|event.stopPropagation();openAssignCategoriesModal(${deal.dealId})|"
+                                style="padding:7px 10px;border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Gán DM
+                        </button>
+                    </div>
+
                     <!-- Store info (below flex) -->
-                    <div class="deal-card__store" th:if="${deal.store != null}" style="padding:0 16px 12px;">
+                    <div class="deal-card__store" th:if="${deal.store != null}" style="margin-top:4px;padding:0 0 8px 0;display:flex;align-items:center;gap:10px;">
                         <div class="deal-card__store-logo">
                             <img th:src="${deal.store.logoUrl != null ? deal.store.logoUrl : '/img/default-store.svg'}" alt="">
                         </div>
-                        <div class="deal-card__store-name" th:text="${deal.store.storeName}">Store Name</div>
+                        <div style="flex:1;min-width:0;">
+                            <div class="deal-card__store-name" th:text="${deal.store.storeName}">Store Name</div>
+                        </div>
+                        <span th:if="${deal.store.partnerTier != null}"
+                              th:text="${deal.store.partnerTierLabel}"
+                              class="store-tier-badge"
+                              th:classappend="${deal.store.partnerTier}"></span>
                     </div>
                     </div><!-- end deal-card__content -->
                 </div>
@@ -656,20 +674,10 @@ a{text-decoration:none;color:inherit}
                     </div>
                 </div>
 
-                <!-- Phạm vi áp dụng -->
-                <div style="margin-bottom:16px;">
-                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">Phạm vi áp dụng <span style="color:var(--danger);">*</span></label>
-                    <select name="scope" id="scopeSelect" required style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;" onchange="handleScopeChange()">
-                        <option value="ALL_STORES">🌐 Tất cả cửa hàng (theo danh mục)</option>
-                        <option value="SPECIFIC_STORES">🏪 Cửa hàng cụ thể (theo sản phẩm)</option>
-                    </select>
-                    <small id="scopeHint" style="display:block;margin-top:4px;color:var(--text-secondary);font-size:11px;">
-                        ALL_STORES: Áp dụng cho tất cả sản phẩm trong danh mục được chọn. SPECIFIC_STORES: Chọn sản phẩm cụ thể từ cửa hàng.
-                    </small>
-                    <!-- Quick category preview (shown when ALL_STORES is selected - populated after deal creation) -->
-                    <div id="scopeCategoryPreview" style="display:none;margin-top:8px;padding:10px;background:var(--bg);border-radius:var(--radius-md);font-size:12px;color:var(--text-secondary);">
-                        <span style="font-weight:600;color:var(--primary);">💡 Mẹo:</span> Sau khi tạo deal, vào "Thêm DM" để gán danh mục. Tất cả sản phẩm thuộc danh mục đó sẽ tự động được áp dụng deal.
-                    </div>
+                <!-- Phạm vi áp dụng (admin chỉ tạo Platform Deal) -->
+                <input type="hidden" name="scope" value="ALL_STORES">
+                <div style="margin-bottom:16px;padding:10px 14px;background:var(--bg);border-radius:var(--radius-md);font-size:12px;color:var(--text-secondary);">
+                    <span style="font-weight:600;color:var(--primary);">🌐 Deal toàn sàn:</span> Áp dụng cho tất cả sản phẩm trong danh mục được chọn. Sau khi tạo deal, vào <strong>"Gán DM"</strong> để chọn danh mục.
                 </div>
 
                 <!-- Ảnh banner (upload) -->
@@ -742,9 +750,12 @@ a{text-decoration:none;color:inherit}
             <form id="assignCategoryForm" method="post">
                 <input type="hidden" name="dealId" id="assignDealId">
 
+                <!-- Error message -->
+                <div id="assignCategoryError" style="display:none;padding:10px 14px;margin-bottom:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-md);font-size:13px;color:var(--danger);"></div>
+
                 <div style="margin-bottom:16px;">
                     <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;">
-                        Chọn danh mục để áp dụng deal
+                        Chọn danh mục để áp dụng deal (tối đa 30% giảm giá nền tảng cộng dồn)
                     </label>
                     <div id="categoriesList" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-height:400px;overflow-y:auto;padding:12px;background:var(--bg);border-radius:var(--radius-md);">
                         <!-- Categories will be loaded here dynamically -->
@@ -1025,36 +1036,18 @@ function clearBannerFile() {
     document.getElementById('bannerPreviewImg').src = '';
 }
 
-// Scope change handler
-function handleScopeChange() {
-    const scope = document.getElementById('scopeSelect').value;
-    const preview = document.getElementById('scopeCategoryPreview');
-    if (scope === 'ALL_STORES') {
-        preview.style.display = 'block';
-    } else {
-        preview.style.display = 'none';
-    }
-}
-
-// Update openCreateDealModal to also initialize scope
+// Update openCreateDealModal to reset form state
 const originalOpenCreateDealModal = openCreateDealModal;
 openCreateDealModal = function() {
     originalOpenCreateDealModal();
-    // Reset banner preview
     clearBannerFile();
-    // Reset deal type hint
     document.getElementById('dealTypeHint').innerHTML = 'Chọn loại deal để tự động điền các giá trị đề xuất';
-    // Hide scope preview
-    document.getElementById('scopeCategoryPreview').style.display = 'none';
-    // Initialize scope handling
-    handleScopeChange();
 };
 
 // Update closeCreateDealModal to also clear banner
 const originalCloseCreateDealModal = closeCreateDealModal;
 closeCreateDealModal = function() {
     clearBannerFile();
-    document.getElementById('scopeCategoryPreview').style.display = 'none';
     originalCloseCreateDealModal();
 };
 
@@ -1070,10 +1063,12 @@ function buildUrl(page) {
     const search = document.querySelector('.search-input').value;
     const type = urlParams.get('type') || '';
     const status = urlParams.get('status') || '';
+    const scope = urlParams.get('scope') || '';
 
     if (search) params.push('search=' + encodeURIComponent(search));
     if (type) params.push('type=' + encodeURIComponent(type));
     if (status) params.push('status=' + encodeURIComponent(status));
+    if (scope) params.push('scope=' + encodeURIComponent(scope));
     params.push('page=' + page);
 
     return '/admin/deals?' + params.join('&');
@@ -1091,21 +1086,26 @@ function viewDealDetail(dealId) {
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    // Find deal data from page
+    // Find deal data from page by matching onclick="viewDealDetail(ID)"
     const dealCards = document.querySelectorAll('.deal-card');
+    let found = false;
     dealCards.forEach(card => {
+        if (found) return;
         const onclick = card.getAttribute('onclick');
-        if (onclick && onclick.includes('dealId=' + dealId)) {
+        const match = onclick && onclick.match(/viewDealDetail\((\d+)\)/);
+        if (match && parseInt(match[1]) === dealId) {
+            found = true;
             const name = card.querySelector('.deal-card__name').textContent;
             const code = card.querySelector('.deal-card__code').textContent;
-            const description = card.querySelector('.deal-card__description').textContent;
+            const descEl = card.querySelector('.deal-card__description');
+            const description = descEl ? descEl.textContent : '';
             const discount = card.querySelector('.deal-card__discount-value').textContent;
             const banner = card.querySelector('.deal-card__banner img').src;
             const store = card.querySelector('.deal-card__store-name');
 
             content.innerHTML = `
                 <div style="text-align:center;margin-bottom:20px;">
-                    <img src="${banner}" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:16px;">
+                    <img src="${banner}" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:16px;" onerror="this.src='/img/default-product.svg'">
                     <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">${name}</h2>
                     <span style="font-family:monospace;background:var(--bg);padding:4px 8px;border-radius:var(--radius-sm);font-size:12px;">${code}</span>
                 </div>
@@ -1114,7 +1114,7 @@ function viewDealDetail(dealId) {
                     <div class="detail-section__title">Thông tin chung</div>
                     <div class="detail-row">
                         <span class="label">Mô tả</span>
-                        <span class="value">${description}</span>
+                        <span class="value">${description || 'Không có mô tả'}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">Giảm giá</span>
@@ -1127,7 +1127,7 @@ function viewDealDetail(dealId) {
                     <div class="detail-section__title">Cửa hàng áp dụng</div>
                     <div style="display:flex;align-items:center;gap:12px;">
                         <div style="width:48px;height:48px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-light);background:var(--bg);">
-                            <img src="${card.querySelector('.deal-card__store-logo img').src}" style="width:100%;height:100%;object-fit:cover;">
+                            <img src="${card.querySelector('.deal-card__store-logo img') ? card.querySelector('.deal-card__store-logo img').src : '/img/default-store.svg'}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='/img/default-store.svg'">
                         </div>
                         <div style="font-weight:600;">${store.textContent}</div>
                     </div>
@@ -1136,6 +1136,9 @@ function viewDealDetail(dealId) {
             `;
         }
     });
+    if (!found) {
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">Không tìm thấy thông tin deal</div>';
+    }
 }
 
 function closeDealModal() {
@@ -1226,12 +1229,14 @@ document.getElementById('viewDealProductsModal').addEventListener('click', funct
 });
 
 // Assign Categories Modal functions
-function openAssignCategoriesModal(dealId, dealName) {
+function openAssignCategoriesModal(dealId) {
     const modal = document.getElementById('assignCategoriesModal');
     const dealIdInput = document.getElementById('assignDealId');
     const categoriesList = document.getElementById('categoriesList');
+    const errorDiv = document.getElementById('assignCategoryError');
 
     dealIdInput.value = dealId;
+    if (errorDiv) { errorDiv.style.display = 'none'; errorDiv.textContent = ''; }
 
     // Show loading
     categoriesList.innerHTML = '<div style="text-align:center;padding:20px;">Đang tải danh mục...</div>';
@@ -1287,11 +1292,17 @@ document.getElementById('assignCategoryForm').addEventListener('submit', functio
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Đã gán danh mục vào deal thành công!');
             closeAssignCategoriesModal();
             location.reload();
         } else {
-            alert('Có lỗi xảy ra: ' + (data.message || 'Unknown error'));
+            const errorMsg = data.message || 'Unknown error';
+            const errorDiv = document.getElementById('assignCategoryError');
+            if (errorDiv) {
+                errorDiv.textContent = errorMsg;
+                errorDiv.style.display = 'block';
+            } else {
+                alert('Lỗi: ' + errorMsg);
+            }
         }
     })
     .catch(error => {
@@ -1308,25 +1319,38 @@ function openDealCategoriesModal(dealId) {
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    // Fetch deal categories
     fetch(`/admin/deals/${dealId}/categories`)
         .then(response => response.json())
         .then(data => {
             if (data.categories && data.categories.length > 0) {
+                const items = data.categories.map(item => {
+                    // Normalize: new format has {dealCategory, warnings}, old format is flat DealCategory
+                    const dc = item.dealCategory || item;
+                    const warnings = item.warnings || [];
+                    return { dc, warnings };
+                });
+
+                const warningHtml = items.filter(i => i.warnings.length > 0).map(i =>
+                    `<div style="padding:8px 12px;margin-bottom:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-md);font-size:11px;color:var(--warning);">
+                        <strong>⚠️ ${i.dc.category.name}:</strong> ${i.warnings.join('; ')}
+                    </div>`
+                ).join('');
+
                 content.innerHTML = `
+                    ${warningHtml ? `<div style="margin-bottom:12px;">${warningHtml}</div>` : ''}
                     <div style="margin-bottom:16px;">
-                        <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Danh mục áp dụng</h3>
+                        <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Danh mục áp dụng (${items.length})</h3>
                         <div class="products-list">
-                            ${data.categories.map(dc => `
+                            ${items.map(({dc}) => `
                                 <div class="product-item" style="display:flex;align-items:center;justify-content:space-between;">
                                     <div style="display:flex;align-items:center;gap:12px;">
-                                        <img src="${dc.category.iconUrl || '/img/default-category.svg'}" style="width:32px;height:32px;border-radius:var(--radius-sm);object-fit:cover;">
+                                        <img src="${dc.category && dc.category.iconUrl ? dc.category.iconUrl : '/img/default-category.svg'}" style="width:32px;height:32px;border-radius:var(--radius-sm);object-fit:cover;">
                                         <div>
-                                            <div class="product-item__name">${dc.category.name}</div>
-                                            <div class="product-item__price">Priority: ${dc.priority}</div>
+                                            <div class="product-item__name">${dc.category ? dc.category.name : 'N/A'}</div>
+                                            <div class="product-item__price">Priority: ${dc.priority || 0}</div>
                                         </div>
                                     </div>
-                                    <button onclick="removeCategoryFromDeal(${dealId}, ${dc.category.categoryId})"
+                                    <button onclick="removeCategoryFromDeal(${dealId}, ${dc.category ? dc.category.categoryId : 0})"
                                             style="padding:6px 12px;border-radius:var(--radius-md);background:var(--danger-bg);color:var(--danger);font-size:12px;font-weight:600;cursor:pointer;">
                                         Xóa
                                     </button>

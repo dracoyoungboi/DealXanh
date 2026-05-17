@@ -15,6 +15,11 @@ public class CustomInvalidSessionStrategy implements InvalidSessionStrategy {
 
         String requestUrl = request.getRequestURI();
 
+        // Don't redirect if already on a login page (prevents redirect loop)
+        if (requestUrl.contains("/login")) {
+            return;
+        }
+
         String loginUrl;
         if (requestUrl.startsWith("/admin")) {
             loginUrl = "/admin/login?expired=true";
@@ -32,6 +37,13 @@ public class CustomInvalidSessionStrategy implements InvalidSessionStrategy {
             response.getWriter().write("{\"error\":\"session_expired\",\"redirect\":\"" + loginUrl + "\"}");
             return;
         }
+
+        // Xóa session cookie cũ để tránh redirect loop
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JSESSIONID", null);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        response.addCookie(cookie);
 
         response.sendRedirect(loginUrl);
     }

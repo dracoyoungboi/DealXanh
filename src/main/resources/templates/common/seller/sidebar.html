@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:fragment="sidebar(activePage)">
+<aside class="sidebar" style="background:linear-gradient(180deg,#0d5c2e 0%,#08421f 100%);">
+    <!-- Store branding -->
+    <a th:href="@{/seller/dashboard}" class="sidebar-header" style="text-decoration:none;cursor:pointer;">
+        <div class="sidebar-header__logo">
+            <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt="" style="width:36px;height:36px;border-radius:var(--radius-md);object-fit:cover;">
+        </div>
+        <div class="sidebar-header__text">
+            <div class="sidebar-header__brand" th:text="${store.storeName}">Store Name</div>
+            <div class="sidebar-header__sub" style="display:flex;align-items:center;gap:6px;">
+                <span th:text="${store.partnerTierLabel}">Đồng</span>
+                <span style="opacity:0.5;">·</span>
+                <span th:text="${store.status == 'ACTIVE' ? 'Đã duyệt' : store.status}">ACTIVE</span>
+            </div>
+        </div>
+    </a>
+
+    <div class="nav-section">
+        <div class="nav-section__label">Cửa hàng</div>
+        <a class="nav-item" th:href="@{/seller/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active' : ''">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/>
+            </svg>
+            Dashboard
+            <span class="nav-badge" th:if="${pendingOrders != null and pendingOrders > 0}" th:text="${pendingOrders}">0</span>
+        </a>
+        <a class="nav-item" th:href="@{/seller/deals}" th:classappend="${activePage == 'deals'} ? 'active' : ''">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+            Quản lý Deals
+            <span class="nav-badge" th:if="${activeDeals != null and activeDeals > 0}" th:text="${activeDeals}" style="background:var(--success);">0</span>
+        </a>
+        <a class="nav-item" th:href="@{/seller/deals/create}" th:classappend="${activePage == 'create-deal'} ? 'active' : ''">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Tạo Deal mới
+        </a>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section__label">Đơn hàng</div>
+        <a class="nav-item" th:href="@{/seller/Fulfillment}" th:classappend="${activePage == 'fulfillment'} ? 'active' : ''">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/>
+            </svg>
+            Xử lý đơn (Pickup)
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <a th:href="@{/seller/dashboard}" class="sidebar-user" style="text-decoration:none;">
+            <div class="sidebar-user__avatar">
+                <img th:src="${user != null && user.avatarUrl != null ? user.avatarUrl : '/img/default-avatar.svg'}" alt="">
+            </div>
+            <div>
+                <div class="sidebar-user__name" th:text="${user != null ? (user.fullName != null ? user.fullName : user.username) : 'Seller'}">Seller Name</div>
+                <div class="sidebar-user__role" th:text="${store.partnerTierLabel + ' · ' + (store.getCommissionRate() * 100 + '% hoa hồng')}">Đồng · 10% hoa hồng</div>
+            </div>
+        </a>
+    </div>
+</aside>
+</body>
+</html>

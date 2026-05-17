@@ -7,6 +7,7 @@
     <!-- CSRF Token -->
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <div th:replace="~{common/admin/css :: css}"></div>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -78,6 +79,11 @@ a{text-decoration:none;color:inherit}
 
 /* Discount type specific hints */
 .validation-hint{font-size:11px;color:var(--info);margin-top:4px;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--border-light);padding:8px 0;z-index:20}
+.bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;text-decoration:none}
+.bottom-nav .nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
+.bottom-nav .nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
+.bottom-nav .nav-item.active svg,.bottom-nav .nav-item.active span{color:var(--primary)}
     </style>
 </head>
 <body>
@@ -364,5 +370,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('create-deal')}"></div>
 </body>
 </html>

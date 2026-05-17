@@ -1,5 +1,6 @@
 package com.dealxanh.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -65,9 +66,11 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<Review> reviews;
 
@@ -84,8 +87,9 @@ public class Product {
     }
 
     // Phần trăm giảm giá
+    @JsonIgnore
     public double getDiscountPercent() {
-        if (originalPrice == null || originalPrice == 0) return 0;
+        if (originalPrice == null || originalPrice == 0 || dealPrice == null) return 0;
         return Math.round(((originalPrice - dealPrice) / originalPrice) * 100);
     }
 

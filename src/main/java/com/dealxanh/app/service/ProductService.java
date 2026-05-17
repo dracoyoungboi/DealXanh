@@ -118,17 +118,30 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    // Toggle active status
+    // Toggle active status (Ngừng bán / Kích hoạt)
     @Transactional
     public Product toggleActive(Long id) {
         Product product = getProductById(id);
-        if (product == null) {
-            return null;
+        if (product == null) return null;
+
+        // Nếu đang kích hoạt → ngừng bán (luôn được phép)
+        if (product.getActive()) {
+            product.setActive(false);
+            product.setUpdatedAt(LocalDateTime.now());
+            return productRepository.save(product);
         }
 
-        product.setActive(!product.getActive());
-        product.setUpdatedAt(LocalDateTime.now());
+        // Nếu đang ngừng → chỉ kích hoạt lại khi còn hàng và chưa hết hạn
+        if (product.getStockQuantity() != null && product.getStockQuantity() <= 0) {
+            throw new IllegalArgumentException("Không thể kích hoạt: sản phẩm đã hết hàng (stock = 0).");
+        }
+        if (product.getExpiryDate() != null && product.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Không thể kích hoạt: sản phẩm đã hết hạn (" +
+                product.getExpiryDate().toLocalDate().toString() + ").");
+        }
 
+        product.setActive(true);
+        product.setUpdatedAt(LocalDateTime.now());
         return productRepository.save(product);
     }
 

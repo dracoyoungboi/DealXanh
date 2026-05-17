@@ -1,5 +1,6 @@
 package com.dealxanh.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -75,18 +76,21 @@ public class DealProduct {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     // Helper methods
+    @JsonIgnore
     public Integer getRemainingQuantity() {
         if (maxQuantity == null) return -1; // Unlimited
-        return Math.max(0, maxQuantity - soldQuantity);
+        return Math.max(0, maxQuantity - (soldQuantity != null ? soldQuantity : 0));
     }
 
+    @JsonIgnore
     public Double getDiscountPercentage() {
         if (originalPrice == null || originalPrice == 0 || salePrice == null) return 0.0;
         return ((originalPrice - salePrice) / originalPrice) * 100;
     }
 
+    @JsonIgnore
     public boolean isAvailable() {
         if (maxQuantity == null) return true;
-        return soldQuantity < maxQuantity;
+        return (soldQuantity != null ? soldQuantity : 0) < maxQuantity;
     }
 }
