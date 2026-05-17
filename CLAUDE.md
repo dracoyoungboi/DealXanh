@@ -1,8 +1,8 @@
 # DealXanh - O2O Deal Marketplace Platform
 
-## 📊 Project Status: **~82% Complete**
+## 📊 Project Status: **~85% Complete**
 
-**Last Updated:** 2026-05-16 (end of day)
+**Last Updated:** 2026-05-17 (end of day)
 **Version:** 1.0.0-alpha
 
 ---
@@ -56,12 +56,14 @@ User mua với giá DEAL
 - ✅ Order Management (view by store)
 - ⚠️ Finance/Dispute (placeholder UI only)
 
-### **3. Seller Panel (~70%)**
-- ✅ Dashboard với deal statistics
+### **3. Seller Panel (~80%)**
+- ✅ Dashboard với KPIs + order list + tier badge (full rewrite 2026-05-17)
+- ✅ Shared bottom navigation bar (common/seller/bottom-nav fragment)
 - ✅ Store Profile Management
 - ✅ Deal Creation (full form with validation)
 - ✅ Deal Product Assignment (multi-select products)
 - ✅ Deal Management (pause/resume)
+- ✅ Partner tier system (BRONZE/SILVER/GOLD/DIAMOND with commission rates)
 - ⚠️ Order Fulfillment (UI exists, backend incomplete)
 - ⚠️ Employee Management (placeholder)
 
@@ -265,6 +267,36 @@ return result; // No metadata
 - ✅ Nếu endpoint cần POST/PUT/DELETE: thêm vào danh sách ignore HOẶC gửi đúng CSRF token (`_csrf.parameterName` = `_csrf`, không phải `_csrf.headerName`)
 - ✅ Pattern trong ignore list dùng AntPathMatcher: `/admin/path/*/action`
 
+### **7. LUÔN dùng #numbers.formatDecimal(val, 0, 0) cho số trong Thymeleaf**
+- ❌ `#numbers.formatInteger(doubleValue)` — chỉ nhận Integer, lỗi với Double
+- ❌ `#numbers.formatDecimal(val, 0, 'COMMA', 0, 'POINT')` — Thymeleaf 3.1 không hỗ trợ
+- ✅ `#numbers.formatDecimal(val, 0, 0)` — nhận Number, hoạt động với cả Integer và Double
+
+### **8. LUÔN @JsonIgnore @OneToMany trong Entity**
+- ❌ Jackson serialize @OneToMany lazy → LazyInitializationException hoặc infinite recursion → 500
+- ✅ Mọi `@OneToMany` phải có `@JsonIgnore`
+- ✅ Helper getter trả về primitive (`double`, `int`) phải có `@JsonIgnore` + null-safe
+
+### **9. LUÔN dùng th:classappend không dùng th:class**
+- ❌ `th:class="..."` ghi đè class gốc → mất style
+- ✅ `th:classappend="..."` thêm class vào class gốc
+
+### **10. LUÔN dùng pipe syntax \|...\| cho th:onclick**
+- ❌ `th:onclick="'func(' + ${id} + ')'"` — lỗi escape với quote/nested expression
+- ✅ `th:onclick="\|func(${id})\|"` — sạch, không cần escape
+
+### **11. LUÔN dùng HashMap khi Map.of() > 10 cặp**
+- ❌ `Map.of(k1,v1, k2,v2, ..., k11,v11)` — compile error
+- ✅ `new HashMap<>()` + `.put()` khi có >10 key-value pairs
+
+### **12. LUÔN check null/empty string trước khi parse date**
+- ❌ `LocalDateTime.parse("" + "T00:00:00")` → DateTimeParseException
+- ✅ `(str != null && !str.isEmpty()) ? LocalDateTime.parse(str + "T00:00:00") : default`
+
+### **13. LUÔN thêm event.stopPropagation() vào button trong card**
+- ❌ Click nút trong card → event bubble lên card → trigger sai handler
+- ✅ Mọi button trong clickable card phải có `event.stopPropagation()`
+
 ---
 
 ## 🔐 Security & Permissions
@@ -406,6 +438,83 @@ src/main/resources/templates/
 ---
 
 ## ⚠️ Known Issues & Fixes
+
+### **Recent Fixes (2026-05-17):**
+
+1. **Thymeleaf API Errors — formatDecimal & formatInteger**
+   - ❌ `#numbers.formatDecimal(val, 0, 'COMMA', 0, 'POINT')` — Thymeleaf 3.1 KHÔNG hỗ trợ tham số 'COMMA'/'POINT'
+   - ❌ `#numbers.formatInteger(doubleValue)` — chỉ nhận Integer, gây lỗi với Double
+   - ✅ Luôn dùng `#numbers.formatDecimal(val, 0, 0)` cho mọi kiểu số (Number: Integer + Double)
+   - Fixed 11 occurrences across `home.html`, `finance.html`, `products.html`
+
+2. **Jackson Serialization — @JsonIgnore toàn bộ @OneToMany**
+   - ❌ Jackson serialize entity → chạm @OneToMany lazy → LazyInitializationException hoặc circular reference vô hạn → 500
+   - ✅ Thêm `@JsonIgnore` trên TẤT CẢ @OneToMany trong 6 entity: Category, Product, Deal, Store, User, DealProduct
+   - ✅ Thêm `@JsonIgnore` trên helper getter gây NPE (`Product.getDiscountPercent()`, `DealProduct.getDiscountPercentage()`)
+
+3. **Map.of() > 10 cặp → HashMap**
+   - ❌ `Map.of()` chỉ hỗ trợ tối đa 10 cặp key-value
+   - ✅ Dùng `new HashMap<>()` + `.put()` khi cần >10 cặp (`AdminController.getAnalyticsOverview`)
+
+4. **Deal Card UI — Event Bubbling + th:onclick Pipe Syntax**
+   - ❌ Click nút trong card trigger card's `onclick` → mở popup detail thay vì popup mong muốn
+   - ✅ Thêm `event.stopPropagation()` vào mọi button trong card
+   - ✅ Dùng pipe syntax `th:onclick="|func(${var})|"` thay vì `th:onclick="'func(' + ${var} + ')'"` tránh lỗi escape quote
+
+5. **Deal Card — Buttons tràn sang panel phải**
+   - ❌ 4 nút `flex:1` trong 1 hàng ~175px → mỗi nút ~44px
+   - ✅ Đưa buttons ra ngoài flex row, dùng `grid-template-columns: repeat(2, 1fr)` full width
+
+6. **Session Expiration Redirect Loop**
+   - ❌ `CustomInvalidSessionStrategy` redirect loop: session hết hạn → redirect `/admin/login?expired=true` → vẫn gửi cookie JSESSIONID cũ → lại detect invalid → loop
+   - ✅ Thêm check `requestUrl.contains("/login")` → return early
+   - ✅ Xóa cookie JSESSIONID cũ trước khi redirect
+
+7. **Role-Based Login Redirect**
+   - ❌ Spring Security chỉ có 1 `loginPage("/login")` → admin vào `/admin/deals` (chưa login) redirect về `/login` (user) thay vì `/admin/login`
+   - ✅ Tạo `CustomAuthenticationEntryPoint` kiểm tra URL prefix → redirect đúng `/admin/login`, `/seller/login`, `/login`
+
+8. **DB Role Name Inconsistency**
+   - ❌ DB có `USER`, `STORE_OWNER` (thiếu prefix `ROLE_`) nhưng code tìm `ROLE_USER`, `ROLE_STORE_OWNER`
+   - ✅ `AdminController.findRoleByName()` thử cả 2 format
+   - ✅ `fix_roles.sql` để sửa root cause trong DB
+
+9. **Seller Dashboard — Full Rewrite**
+   - ✅ `SellerController.dashboard()`: KPI cards (total orders, active deals, pending, products), recent orders, tier badge
+   - ✅ `common/seller/bottom-nav.html`: shared bottom navigation fragment
+   - ✅ `getCurrentUser()` tự lookup store qua `storeRepository.findByOwner()` nếu `workStore` null
+
+10. **Partner Tier System (Đồng/Vàng/Bạch Kim/Kim Cương)**
+    - ✅ `Store.partnerTier` + `getCommissionRate()` (BRONZE 10%, SILVER 8%, GOLD 6%, DIAMOND 4%)
+    - ✅ Migration `V5__add_partner_tier.sql`
+    - ✅ `StoreService.upgradePartnerTiers()` — @Scheduled job chạy đầu tháng
+    - ✅ Tier badge hiển thị trên deal card + dashboard + reconciliation
+
+11. **Payout Balance Check**
+    - ✅ `processPayout()` validate `pendingAmount <= balance` trước khi xử lý
+
+12. **Reconciliation Print**
+    - ✅ Thêm nút "In biên bản" + `printReconciliation()` mở cửa sổ in với HTML đầy đủ
+
+13. **Product Toggle Validation**
+    - ✅ `ProductService.toggleActive()`: chỉ kích hoạt lại khi `stock > 0` và `expiryDate` chưa qua
+
+14. **Product Detail Popup**
+    - ✅ Thay nút xóa = nút "Chi tiết", thêm modal hiển thị toàn bộ thông tin SP
+
+15. **Product Filter Working**
+    - ✅ Filter bar trong `products.html` thành form thực sự với search/category/status
+
+16. **Dispute Detail Panel Fix**
+    - ❌ `selectDispute()` dùng `innerHTML` phá hủy structure panel → "stuck loading"
+    - ✅ Set `textContent` từng field, giữ nguyên HTML structure
+
+17. **Image Upload Dedup**
+    - ✅ `saveUploadedFile()` check `Files.exists()` trước khi copy, nếu đã có file thì dùng lại link
+
+18. **Finance Transaction Loading Fix**
+    - ❌ JS gửi `startDate=""` (empty string) → `LocalDateTime.parse("" + "T00:00:00")` → exception
+    - ✅ Thêm check `!startDate.isEmpty()` trước khi parse
 
 ### **Recent Fixes (2026-05-16):**
 
@@ -586,7 +695,7 @@ src/main/resources/templates/
 
 ## ✅ Checklist trước khi commit code
 
-- [ ] Không hardcoded sidebar/header
+- [ ] Không hardcoded sidebar/header — dùng fragment `common/admin/` hoặc `common/seller/`
 - [ ] Dùng fragment pattern đúng
 - [ ] Không duplicate CSS
 - [ ] Có service layer cho business logic
@@ -594,7 +703,15 @@ src/main/resources/templates/
 - [ ] Preserve URL parameters
 - [ ] Test cả happy path và edge cases
 - [ ] Check permissions (@PreAuthorize)
-- [ ] Run migration SQL
+- [ ] Check CSRF ignore list (`SecurityConfig.java`) cho POST endpoints mới
+- [ ] `#numbers.formatDecimal(val, 0, 0)` cho mọi số trong Thymeleaf (KHÔNG dùng formatInteger)
+- [ ] `@JsonIgnore` trên tất cả `@OneToMany` trong Entity mới
+- [ ] `th:classappend` không dùng `th:class` (tránh mất class gốc)
+- [ ] Pipe syntax `|...|` cho `th:onclick` phức tạp
+- [ ] `event.stopPropagation()` trong button nằm trong clickable card
+- [ ] `new HashMap<>()` khi cần >10 cặp (không dùng `Map.of()`)
+- [ ] Null-safe + empty string check trước `LocalDateTime.parse()`
+- [ ] Run migration SQL (nếu có schema change)
 
 ---
 
@@ -629,6 +746,9 @@ src/main/resources/templates/
 - [x] **M6.5: Admin User Management Enhancements** (Completed 2026-05-16)
 - [x] **M6.6: Seller Verification Reset-to-Pending** (Completed 2026-05-16)
 - [x] **M6.7: Deal Management Optimization** (Completed 2026-05-16)
+- [x] **M6.8: Jackson Serialization Fixes + UI Overhaul** (Completed 2026-05-17)
+- [x] **M6.9: Seller Dashboard + Partner Tier System** (Completed 2026-05-17)
+- [x] **M6.10: Session Management + Auth Redirect Fixes** (Completed 2026-05-17)
 - [ ] **M7: Order Processing** (In Progress - 50%)
 - [ ] **M8: Payment Integration** (Not Started)
 - [ ] **M9: Notification System** (Not Started)
