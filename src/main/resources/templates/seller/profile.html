@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ — DealXanh Seller</title>
+    <div th:replace="~{common/admin/css :: css}"></div>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{--primary:#0d5c2e;--primary-dark:#08421f;--surface:#fff;--bg:#f5f6f8;--text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--border:#e0e0e0;--border-light:#f0f0f0;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:9999px;--font:'Inter',sans-serif}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padding-bottom:70px}
+.page-header{background:var(--primary);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.back-btn{color:#fff;display:flex;align-items:center}.back-btn svg{width:20px;height:20px}
+.header-title{font-size:18px;font-weight:700;flex:1}
+.content{padding:16px}
+
+.profile-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:20px;margin-bottom:14px}
+.profile-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.avatar{width:64px;height:64px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;font-weight:700;flex-shrink:0}
+.store-logo{width:64px;height:64px;border-radius:var(--radius-md);object-fit:cover;border:2px solid var(--border-light)}
+.profile-name{font-size:18px;font-weight:800;margin-bottom:2px}
+.profile-role{font-size:12px;color:var(--text-secondary)}
+
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);font-size:13px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--text-secondary)}.info-value{font-weight:600;text-align:right}
+
+.tier-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:var(--radius-full);font-size:12px;font-weight:700;color:#fff}
+.tier-DIAMOND{background:linear-gradient(135deg,#667eea,#764ba2)}
+.tier-GOLD{background:linear-gradient(135deg,#d4af37,#b8932a)}
+.tier-SILVER{background:linear-gradient(135deg,#a8b8c8,#7a8a9a)}
+.tier-BRONZE{background:linear-gradient(135deg,#cd7f32,#a0522d)}
+
+.btn-logout{display:block;text-align:center;padding:12px;background:var(--danger);color:#fff;border-radius:var(--radius-md);font-weight:600;text-decoration:none;margin-top:16px;font-size:14px}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--border-light);padding:8px 0;z-index:20}
+.bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;text-decoration:none}
+.bottom-nav .nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
+.bottom-nav .nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
+.bottom-nav .nav-item.active svg,.bottom-nav .nav-item.active span{color:var(--primary)}
+    </style>
+</head>
+<body>
+<header class="page-header">
+    <a class="back-btn" href="/seller/dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></a>
+    <span class="header-title">Hồ sơ cửa hàng</span>
+</header>
+<div class="content">
+    <!-- Store info -->
+    <div class="profile-card">
+        <div class="profile-header">
+            <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" class="store-logo" onerror="this.src='/img/default-store.svg'">
+            <div>
+                <div class="profile-name" th:text="${store.storeName}">Store Name</div>
+                <div class="profile-role">
+                    <span th:text="${store.partnerTierLabel}">Đồng</span>
+                    <span th:class="'tier-badge tier-' + ${store.partnerTier}" th:text="${store.partnerTierLabel}" style="margin-left:6px;"></span>
+                </div>
+            </div>
+        </div>
+        <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value" th:text="${store.status == 'ACTIVE' ? '✅ Đang hoạt động' : store.status}" style="color:var(--success);">Active</span></div>
+        <div class="info-row"><span class="info-label">Địa chỉ</span><span class="info-value" th:text="${store.address != null ? store.address : 'Chưa có'}">Address</span></div>
+        <div class="info-row" th:if="${store.city != null}"><span class="info-label">Khu vực</span><span class="info-value" th:text="${store.city + (store.district != null ? ', ' + store.district : '')}">Location</span></div>
+        <div class="info-row" th:if="${store.phone != null}"><span class="info-label">SĐT</span><span class="info-value" th:text="${store.phone}">Phone</span></div>
+        <div class="info-row"><span class="info-label">Loại hình</span><span class="info-value" th:text="${store.businessType != null ? store.businessType : 'Chưa có'}">Type</span></div>
+        <div class="info-row"><span class="info-label">Danh mục</span><span class="info-value" th:text="${store.categories != null ? store.categories : 'Chưa có'}">Categories</span></div>
+        <div class="info-row"><span class="info-label">Đánh giá</span><span class="info-value" th:text="'⭐ ' + ${store.averageRating} + ' (' + ${store.totalReviews} + ' đánh giá)'">Rating</span></div>
+        <div class="info-row"><span class="info-label">Hoa hồng</span><span class="info-value" th:text="${#numbers.formatDecimal(store.getCommissionRate() * 100, 0, 0) + '%'}" style="color:var(--primary);">Commission</span></div>
+    </div>
+
+    <!-- Bank info -->
+    <div class="profile-card" th:if="${store.bankName != null}">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">🏦 Thông tin ngân hàng</div>
+        <div class="info-row"><span class="info-label">Ngân hàng</span><span class="info-value" th:text="${store.bankName}">Bank</span></div>
+        <div class="info-row"><span class="info-label">Chủ TK</span><span class="info-value" th:text="${store.bankAccountOwner}">Owner</span></div>
+        <div class="info-row"><span class="info-label">Số TK</span><span class="info-value" th:text="${store.bankAccountNumber}">Number</span></div>
+    </div>
+
+    <!-- User info -->
+    <div class="profile-card">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">👤 Tài khoản</div>
+        <div class="info-row"><span class="info-label">Tên đăng nhập</span><span class="info-value" th:text="${user.username}">Username</span></div>
+        <div class="info-row" th:if="${user.fullName != null}"><span class="info-label">Họ tên</span><span class="info-value" th:text="${user.fullName}">Name</span></div>
+        <div class="info-row" th:if="${user.email != null and !user.email.isEmpty()}"><span class="info-label">Email</span><span class="info-value" th:text="${user.email}">Email</span></div>
+        <div class="info-row" th:if="${user.phone != null}"><span class="info-label">SĐT</span><span class="info-value" th:text="${user.phone}">Phone</span></div>
+    </div>
+
+    <a href="/logout" class="btn-logout">Đăng xuất</a>
+</div>
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('profile')}"></div>
+</body>
+</html>

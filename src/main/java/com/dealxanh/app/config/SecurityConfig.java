@@ -124,6 +124,7 @@ public class SecurityConfig {
                     "/seller/deals/*/assign-products", "/seller/deals/*/remove-product/*",
                     "/seller/deals/*/pause", "/seller/deals/*/resume",
                     "/seller/products/*/toggle", "/seller/products/*/edit",
+                    "/seller/orders/*/status",
                     "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )
             )

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng — DealXanh Seller</title>
+    <div th:replace="~{common/admin/css :: css}"></div>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{--primary:#0d5c2e;--primary-dark:#08421f;--surface:#fff;--bg:#f5f6f8;--text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--border:#e0e0e0;--border-light:#f0f0f0;--danger:#ef4444;--warning:#f59e0b;--success:#10b981;--info:#3b82f6;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:9999px;--font:'Inter',sans-serif}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padding-bottom:70px}
+.page-header{background:var(--primary);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.back-btn{color:#fff;display:flex;align-items:center}.back-btn svg{width:20px;height:20px}
+.header-title{font-size:18px;font-weight:700;flex:1}
+.content{padding:16px}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.kpi-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:14px}
+.kpi-val{font-size:24px;font-weight:800}
+.kpi-lbl{font-size:11px;color:var(--text-tertiary)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:14px;overflow-x:auto}
+.tab{padding:8px 14px;border-radius:var(--radius-full);font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface);cursor:pointer;white-space:nowrap;text-decoration:none;color:var(--text-primary)}
+.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tab-count{font-size:10px;opacity:.7;margin-left:4px}
+
+/* Orders */
+.order-list{display:flex;flex-direction:column;gap:10px}
+.order-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:14px}
+.order-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.order-id{font-size:13px;font-weight:700;color:var(--primary)}
+.order-time{font-size:11px;color:var(--text-tertiary)}
+.order-customer{font-size:14px;font-weight:600;margin-bottom:4px}
+.order-items{font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+.order-bottom{display:flex;align-items:center;justify-content:space-between}
+.order-amount{font-size:16px;font-weight:800}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:3px 10px;border-radius:var(--radius-full)}
+.badge-pending{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+.badge-confirmed{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
+.badge-ready{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.badge-completed{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.badge-cancelled{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.action-btn{padding:6px 12px;border-radius:var(--radius-md);font-size:11px;font-weight:600;cursor:pointer;border:none;color:#fff}
+.action-confirm{background:var(--info)}
+.action-ready{background:var(--success)}
+.action-complete{background:var(--primary)}
+.action-cancel{background:var(--danger)}
+
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px}
+.page-link{padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-weight:600;text-decoration:none;color:var(--text-primary);background:var(--surface)}
+.page-info{padding:8px 14px;font-size:13px;color:var(--text-secondary)}
+
+.empty-state{text-align:center;padding:60px 20px}
+.empty-state svg{width:64px;height:64px;margin-bottom:16px;opacity:0.2}
+.empty-state h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.empty-state p{font-size:13px;color:var(--text-secondary)}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--border-light);padding:8px 0;z-index:20}
+.bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;text-decoration:none}
+.bottom-nav .nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
+.bottom-nav .nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
+.bottom-nav .nav-item.active svg,.bottom-nav .nav-item.active span{color:var(--primary)}
+    </style>
+</head>
+<body>
+<header class="page-header">
+    <a class="back-btn" href="/seller/dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></a>
+    <span class="header-title">Quản lý Đơn hàng</span>
+</header>
+<div class="content">
+    <!-- KPI -->
+    <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-val" style="color:var(--primary)" th:text="${#numbers.formatDecimal(todayRevenue, 0, 0) + 'đ'}">0đ</div><div class="kpi-lbl" th:text="'Doanh thu hôm nay · ' + ${todayOrders} + ' đơn'">0</div></div>
+        <div class="kpi-card"><div class="kpi-val" style="color:var(--warning)" th:text="${pendingCount}">0</div><div class="kpi-lbl">Đơn chờ xác nhận</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <a class="tab" th:classappend="${selectedStatus == null or selectedStatus == ''} ? 'active' : ''" th:href="@{/seller/orders}">Tất cả<span class="tab-count" th:text="${totalOrders}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'PENDING'} ? 'active' : ''" th:href="@{/seller/orders(status='PENDING')}">Chờ XN<span class="tab-count" th:text="${pendingCount}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'CONFIRMED'} ? 'active' : ''" th:href="@{/seller/orders(status='CONFIRMED')}">Đã XN<span class="tab-count" th:text="${confirmedCount}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'READY_FOR_PICKUP'} ? 'active' : ''" th:href="@{/seller/orders(status='READY_FOR_PICKUP')}">Sẵn sàng<span class="tab-count" th:text="${readyCount}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'COMPLETED'} ? 'active' : ''" th:href="@{/seller/orders(status='COMPLETED')}">Hoàn thành<span class="tab-count" th:text="${completedCount}">0</span></a>
+    </div>
+
+    <!-- Orders -->
+    <div class="order-list" th:if="${orders != null and !orders.isEmpty()}">
+        <div class="order-card" th:each="order : ${orders}">
+            <div class="order-top">
+                <span class="order-id" th:text="|#${order.orderId}|">#123</span>
+                <span class="badge" th:classappend="${order.status == 'PENDING'} ? 'badge-pending' : (${order.status == 'CONFIRMED'} ? 'badge-confirmed' : (${order.status == 'READY_FOR_PICKUP'} ? 'badge-ready' : (${order.status == 'COMPLETED'} ? 'badge-completed' : 'badge-cancelled')))" th:text="${order.status == 'PENDING' ? 'Chờ XN' : order.status == 'CONFIRMED' ? 'Đã XN' : order.status == 'READY_FOR_PICKUP' ? 'Sẵn sàng' : order.status == 'COMPLETED' ? 'Hoàn thành' : 'Đã hủy'}">Status</span>
+                <span class="order-time" th:if="${order.createdAt != null}" th:text="${#temporals.format(order.createdAt, 'dd/MM HH:mm')}">Time</span>
+            </div>
+            <div class="order-customer" th:text="${order.user != null ? (order.user.fullName != null ? order.user.fullName : order.user.username) : 'N/A'}">Customer</div>
+            <div class="order-items" th:if="${order.orderItems != null and !order.orderItems.isEmpty()}">
+                <th:block th:each="item, iterStat : ${order.orderItems}">
+                    <span th:text="${item.product != null ? item.product.name : 'SP'}">Item</span><span th:unless="${iterStat.last}">, </span>
+                </th:block>
+            </div>
+            <div class="order-bottom">
+                <span class="order-amount" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 0) + 'đ'}">0đ</span>
+                <div style="display:flex;gap:6px;">
+                    <button class="action-btn action-confirm" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CONFIRMED')|">✓ Xác nhận</button>
+                    <button class="action-btn action-ready" th:if="${order.status == 'CONFIRMED'}" th:onclick="|updateStatus(${order.orderId}, 'READY_FOR_PICKUP')|">📦 Sẵn sàng</button>
+                    <button class="action-btn action-complete" th:if="${order.status == 'READY_FOR_PICKUP'}" th:onclick="|updateStatus(${order.orderId}, 'COMPLETED')|">✅ Hoàn thành</button>
+                    <button class="action-btn action-cancel" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CANCELLED')|">✕ Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" th:if="${totalPages > 1}">
+        <a class="page-link" th:if="${hasPrevious}" th:href="@{/seller/orders(status=${selectedStatus}, page=${currentPage - 1})}">← Trước</a>
+        <span class="page-info" th:text="|${currentPage + 1} / ${totalPages}|">1/1</span>
+        <a class="page-link" th:if="${hasNext}" th:href="@{/seller/orders(status=${selectedStatus}, page=${currentPage + 1})}">Sau →</a>
+    </div>
+
+    <div class="empty-state" th:unless="${orders != null and !orders.isEmpty()}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+        <h3>Chưa có đơn hàng nào</h3>
+        <p>Đơn hàng sẽ xuất hiện khi khách đặt món</p>
+    </div>
+</div>
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('orders')}"></div>
+<script>
+async function updateStatus(orderId, newStatus){try{const r=await fetch(`/seller/orders/${orderId}/status?newStatus=${newStatus}`,{method:'POST'});const d=await r.json();if(d.success)location.reload();else alert(d.message)}catch(e){alert('Lỗi: '+e.message)}}
+</script>
+</body>
+</html>

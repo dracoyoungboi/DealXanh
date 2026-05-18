@@ -53,6 +53,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Count orders by store
     long countByStoreStoreId(Long storeId);
+    long countByStoreStoreIdAndStatus(Long storeId, String status);
 
     // Sum revenue by store (completed orders)
     @Query("SELECT COALESCE(SUM(o.finalAmount), 0.0) FROM Order o WHERE o.store.storeId = :storeId AND o.status = 'COMPLETED'")

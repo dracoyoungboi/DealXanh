@@ -765,6 +765,148 @@ public class SellerController {
         return "redirect:/seller/products";
     }
 
+    // ============ ORDER MANAGEMENT ============
+
+    @GetMapping("/orders")
+    public String orders(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) return "redirect:/login";
+        Store store = user.getWorkStore();
+        Long storeId = store.getStoreId();
+
+        // Status counts
+        long pendingCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "PENDING");
+        long confirmedCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "CONFIRMED");
+        long readyCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "READY_FOR_PICKUP");
+        long completedCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "COMPLETED");
+
+        // Today's revenue
+        java.time.LocalDateTime todayStart = java.time.LocalDateTime.now().toLocalDate().atStartOfDay();
+        java.time.LocalDateTime todayEnd = todayStart.plusDays(1).minusSeconds(1);
+        Double todayRevenue = orderRepository.sumRevenueByPeriod(todayStart, todayEnd);
+        Long todayOrders = orderRepository.countOrdersByPeriod(todayStart, todayEnd);
+
+        // Orders list
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
+        var ordersPage = status != null && !status.isEmpty()
+                ? orderRepository.findByStoreStoreIdAndStatusOrderByCreatedAtDesc(storeId, status, pageable)
+                : orderRepository.findByStoreStoreIdOrderByCreatedAtDesc(storeId, pageable);
+
+        model.addAttribute("user", user);
+        model.addAttribute("store", store);
+        model.addAttribute("orders", ordersPage.getContent());
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("confirmedCount", confirmedCount);
+        model.addAttribute("readyCount", readyCount);
+        model.addAttribute("completedCount", completedCount);
+        model.addAttribute("todayRevenue", todayRevenue != null ? todayRevenue : 0);
+        model.addAttribute("todayOrders", todayOrders != null ? todayOrders : 0);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", ordersPage.getTotalPages());
+        model.addAttribute("totalOrders", ordersPage.getTotalElements());
+        model.addAttribute("hasNext", ordersPage.hasNext());
+        model.addAttribute("hasPrevious", ordersPage.hasPrevious());
+        model.addAttribute("activeDeals", dealRepository.findByStoreStoreIdAndStatus(storeId, "ACTIVE").size());
+        model.addAttribute("pendingOrders", orderRepository.countPendingOrdersByStore(storeId));
+        return "seller/orders";
+    }
+
+    @PostMapping("/orders/{orderId}/status")
+    @ResponseBody
+    public java.util.Map<String, Object> updateOrderStatus(
+            @PathVariable Long orderId, @RequestParam String newStatus, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null)
+            return java.util.Map.of("success", false, "message", "Không tìm thấy cửa hàng");
+
+        com.dealxanh.app.entity.Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null || !order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
+            return java.util.Map.of("success", false, "message", "Đơn hàng không tồn tại");
+
+        // Valid transitions: PENDING→CONFIRMED→READY_FOR_PICKUP→COMPLETED
+        String current = order.getStatus();
+        boolean valid = false;
+        if ("PENDING".equals(current) && ("CONFIRMED".equals(newStatus) || "CANCELLED".equals(newStatus))) valid = true;
+        if ("CONFIRMED".equals(current) && "READY_FOR_PICKUP".equals(newStatus)) valid = true;
+        if ("READY_FOR_PICKUP".equals(current) && "COMPLETED".equals(newStatus)) valid = true;
+
+        if (!valid) return java.util.Map.of("success", false, "message",
+            "Không thể chuyển từ " + current + " sang " + newStatus);
+
+        order.setStatus(newStatus);
+        order.setUpdatedAt(java.time.LocalDateTime.now());
+        if ("COMPLETED".equals(newStatus)) order.setActualPickupTime(java.time.LocalDateTime.now());
+        orderRepository.save(order);
+        return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
+    }
+
+    // ============ FINANCE ============
+
+    @GetMapping("/finance")
+    public String finance(Model model, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) return "redirect:/login";
+        Store store = user.getWorkStore();
+        Long storeId = store.getStoreId();
+
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime todayStart = now.toLocalDate().atStartOfDay();
+        java.time.LocalDateTime todayEnd = todayStart.plusDays(1).minusSeconds(1);
+        java.time.LocalDateTime monthStart = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+
+        // Today
+        Double todayRevenue = orderRepository.sumCompletedRevenueByStore(storeId);
+        Long todayOrders = orderRepository.countByStoreStoreIdAndStatus(storeId, "COMPLETED");
+
+        // Month
+        long monthOrders = orderRepository.countByStoreStoreId(storeId);
+        Double monthRevenue = orderRepository.sumRevenueByPeriod(monthStart, now);
+
+        // Commission
+        double commissionRate = store.getCommissionRate();
+        double todayCommission = (todayRevenue != null ? todayRevenue : 0) * commissionRate;
+        double todayNet = (todayRevenue != null ? todayRevenue : 0) - todayCommission;
+
+        // Recent completed orders
+        org.springframework.data.domain.Pageable top10 = org.springframework.data.domain.PageRequest.of(0, 10,
+            org.springframework.data.domain.Sort.by("createdAt").descending());
+        var recentOrders = orderRepository.findByStoreStoreIdAndStatusOrderByCreatedAtDesc(storeId, "COMPLETED", top10);
+
+        model.addAttribute("user", user);
+        model.addAttribute("store", store);
+        model.addAttribute("todayRevenue", todayRevenue != null ? todayRevenue : 0);
+        model.addAttribute("todayOrders", todayOrders != null ? todayOrders : 0);
+        model.addAttribute("monthRevenue", monthRevenue != null ? monthRevenue : 0);
+        model.addAttribute("monthOrders", monthOrders);
+        model.addAttribute("commissionRate", Math.round(commissionRate * 100));
+        model.addAttribute("todayCommission", Math.round(todayCommission));
+        model.addAttribute("todayNet", Math.round(todayNet));
+        model.addAttribute("recentOrders", recentOrders.getContent());
+        model.addAttribute("activeDeals", dealRepository.findByStoreStoreIdAndStatus(storeId, "ACTIVE").size());
+        model.addAttribute("pendingOrders", orderRepository.countPendingOrdersByStore(storeId));
+        return "seller/finance";
+    }
+
+    // ============ PROFILE ============
+
+    @GetMapping("/profile")
+    public String profile(Model model, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) return "redirect:/login";
+        Store store = user.getWorkStore();
+
+        model.addAttribute("user", user);
+        model.addAttribute("store", store);
+        model.addAttribute("activeDeals", dealRepository.findByStoreStoreIdAndStatus(store.getStoreId(), "ACTIVE").size());
+        model.addAttribute("pendingOrders", orderRepository.countPendingOrdersByStore(store.getStoreId()));
+        return "seller/profile";
+    }
+
     // ============ HELPER METHODS ============
 
     private User getCurrentUser(Principal principal) {
