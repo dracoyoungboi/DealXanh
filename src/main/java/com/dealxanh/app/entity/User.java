@@ -46,6 +46,7 @@ public class User {
     private List<Review> reviews;
 
     // Dành cho STORE_STAFF: nhân viên này trực thuộc cửa hàng nào
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_store_id")
     private Store workStore;

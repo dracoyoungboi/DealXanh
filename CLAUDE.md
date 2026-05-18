@@ -297,6 +297,13 @@ return result; // No metadata
 - ❌ Click nút trong card → event bubble lên card → trigger sai handler
 - ✅ Mọi button trong clickable card phải có `event.stopPropagation()`
 
+### **14. LUÔN kiểm tra Jackson serialization trước khi tạo popup/API mới**
+- ❌ Tạo API `@ResponseBody` trả entity → Jackson serialize → `Infinite recursion` hoặc `LazyInitializationException` → popup "không thể tải"
+- ✅ Trước khi viết popup: trace toàn bộ path serialize từ entity gốc → tất cả `@OneToMany` (LAZY) phải có `@JsonIgnore`
+- ✅ Check circular reference: `A → B → A` phải bị chặn bởi `@JsonIgnore` ít nhất 1 đầu
+- ✅ Check helper getter trả về primitive (`double`, `int`): phải null-safe + `@JsonIgnore`
+- ✅ Test popup ngay sau khi viết để phát hiện lỗi Jackson sớm
+
 ---
 
 ## 🔐 Security & Permissions

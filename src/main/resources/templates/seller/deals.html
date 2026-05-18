@@ -314,14 +314,14 @@ img{display:block;max-width:100%}
 
 <!-- Tabs -->
 <div class="deal-tabs">
-    <button class="deal-tab active" onclick="switchTab('all')">Tất cả</button>
-    <button class="deal-tab" onclick="switchTab('ACTIVE')">
+    <button class="deal-tab" th:classappend="${selectedStatus == null or selectedStatus == ''} ? 'active' : ''" onclick="switchTab('all')">Tất cả</button>
+    <button class="deal-tab" th:classappend="${selectedStatus == 'ACTIVE'} ? 'active' : ''" onclick="switchTab('ACTIVE')">
         Live <span class="deal-tab__count success" th:text="${activeCount}">0</span>
     </button>
-    <button class="deal-tab" onclick="switchTab('SCHEDULED')">
+    <button class="deal-tab" th:classappend="${selectedStatus == 'SCHEDULED'} ? 'active' : ''" onclick="switchTab('SCHEDULED')">
         Lên lịch <span class="deal-tab__count warning" th:text="${scheduledCount}">0</span>
     </button>
-    <button class="deal-tab" onclick="switchTab('PAUSED')">Tạm dừng</button>
+    <button class="deal-tab" th:classappend="${selectedStatus == 'PAUSED'} ? 'active' : ''" onclick="switchTab('PAUSED')">Tạm dừng</button>
 </div>
 
 <!-- Search bar -->
@@ -362,7 +362,7 @@ img{display:block;max-width:100%}
     <div class="section-label" th:if="${deals != null and not deals.isEmpty()}">Danh sách Deals · <span th:text="${#lists.size(deals)}">0</span> deals</div>
 
     <th:block th:each="deal : ${deals}">
-        <div class="deal-card" th:id="'deal-' + ${deal.dealId}">
+        <div class="deal-card" th:id="'deal-' + ${deal.dealId}" th:onclick="|viewDealDetail(${deal.dealId})|" style="cursor:pointer;">
             <div class="deal-card__top">
                 <div class="deal-thumb">
                     <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/deals/default-banner.jpg'}" alt="">
@@ -387,15 +387,19 @@ img{display:block;max-width:100%}
                 </div>
             </div>
             <div class="deal-card__actions">
-                <button class="deal-action deal-action--primary" th:onclick="'openDealProductsModal(' + ${deal.dealId} + ')'" style="color:var(--primary);">
+                <button class="deal-action deal-action--primary" th:onclick="|event.stopPropagation();openDealProductsModal(${deal.dealId})|" style="color:var(--primary);">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                    Sản phẩm
+                    Gán SP
                 </button>
-                <button class="deal-action deal-action--success" th:if="${deal.status == 'PAUSED'}" th:onclick="'resumeDeal(' + ${deal.dealId} + ')'">
+                <button class="deal-action deal-action--info" th:onclick="|event.stopPropagation();openViewDealProductsModal(${deal.dealId})|" style="color:var(--info);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Xem SP
+                </button>
+                <button class="deal-action deal-action--success" th:if="${deal.status == 'PAUSED'}" th:onclick="|event.stopPropagation();resumeDeal(${deal.dealId})|">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     Kích hoạt
                 </button>
-                <button class="deal-action deal-action--danger" th:if="${deal.status == 'ACTIVE'}" th:onclick="'pauseDeal(' + ${deal.dealId} + ')'">
+                <button class="deal-action deal-action--danger" th:if="${deal.status == 'ACTIVE'}" th:onclick="|event.stopPropagation();pauseDeal(${deal.dealId})|">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                     Tạm dừng
                 </button>
@@ -405,6 +409,24 @@ img{display:block;max-width:100%}
 
 </main>
 
+<!-- Deal Detail Modal -->
+<div class="modal" id="dealDetailModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-header__title">Chi tiết Deal</div>
+            <div class="modal-header__close" onclick="closeDealDetailModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+        </div>
+        <div class="modal-body" id="dealDetailContent">
+            <div style="text-align:center;padding:40px;">Đang tải...</div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeDealDetailModal()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--bg);font-size:14px;font-weight:600;cursor:pointer;">Đóng</button>
+        </div>
+    </div>
+</div>
+
 <!-- FAB -->
 <a class="fab" href="/seller/deals/create">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -412,6 +434,24 @@ img{display:block;max-width:100%}
 
 <!-- Bottom nav -->
 <div th:replace="~{common/seller/bottom-nav :: bottom-nav('deals')}"></div>
+
+<!-- View Deal Products Modal -->
+<div class="modal" id="viewProductsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-header__title">Sản phẩm trong Deal</div>
+            <div class="modal-header__close" onclick="closeViewProductsModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+        </div>
+        <div class="modal-body" id="viewProductsContent">
+            <div style="text-align:center;padding:40px;">Đang tải...</div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeViewProductsModal()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--bg);font-size:14px;font-weight:600;cursor:pointer;">Đóng</button>
+        </div>
+    </div>
+</div>
 
 <!-- Deal Products Modal -->
 <div class="modal" id="dealProductsModal">
@@ -542,7 +582,7 @@ function renderProductsList(filter = '') {
 
     const filtered = availableProducts.filter(p =>
         p.name.toLowerCase().includes(filter.toLowerCase()) ||
-        (p.sku && p.sku.toLowerCase().includes(filter.toLowerCase()))
+        ((p.productId && String(p.productId).includes(filter)))
     );
 
     if (filtered.length === 0) {
@@ -566,7 +606,7 @@ function renderProductsList(filter = '') {
                 </div>
                 <div class="product-select-item__info">
                     <div class="product-select-item__name">${product.name}</div>
-                    <div class="product-select-item__price">${product.price ? product.price.toLocaleString() + 'đ' : 'Liên hệ'} ${product.sku ? '· SKU: ' + product.sku : ''}</div>
+                    <div class="product-select-item__price">${product.originalPrice ? product.originalPrice.toLocaleString() + 'đ' : 'Liên hệ'}</div>
                     ${isSelected ? renderPriceEditor(product, selectedData) : ''}
                 </div>
             </label>
@@ -575,7 +615,7 @@ function renderProductsList(filter = '') {
 }
 
 function renderPriceEditor(product, data) {
-    const originalPrice = data.originalPrice || product.price || 0;
+    const originalPrice = data.originalPrice || product.originalPrice || 0;
     const salePrice = data.salePrice || Math.ceil(originalPrice * 0.5);
     const discount = ((originalPrice - salePrice) / originalPrice * 100).toFixed(0);
     const hasError = salePrice >= originalPrice || salePrice < originalPrice * 0.15;
@@ -613,7 +653,7 @@ function toggleProduct(productId, isSelected) {
     const product = availableProducts.find(p => p.productId === productId);
     if (!product) return;
 
-    const originalPrice = product.price || 0;
+    const originalPrice = product.originalPrice || 0;
 
     if (isSelected) {
         // Default: 50% off, unlimited quantity
@@ -714,6 +754,113 @@ async function saveDealProducts() {
     } catch (error) {
         alert('Lỗi: ' + error.message);
     }
+}
+
+async function openViewDealProductsModal(dealId) {
+    const modal = document.getElementById('viewProductsModal');
+    const content = document.getElementById('viewProductsContent');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    content.innerHTML = '<div style="text-align:center;padding:40px;">Đang tải...</div>';
+
+    try {
+        const response = await fetch(`/seller/deals/${dealId}/products`, { headers: getCsrfHeaders() });
+        const data = await response.json();
+        if (data.products && data.products.length > 0) {
+            content.innerHTML = `<div style="margin-bottom:16px;"><h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Sản phẩm (${data.products.length})</h3><div class="products-list">` +
+                data.products.map(dp => `
+                    <div class="product-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg);border-radius:var(--radius-md);margin-bottom:8px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <img src="${dp.product.imageUrl || '/img/default-product.svg'}" style="width:48px;height:48px;border-radius:var(--radius-sm);object-fit:cover;">
+                            <div>
+                                <div style="font-weight:600;">${dp.product.name}</div>
+                                <div style="font-size:12px;color:var(--text-secondary);">Giá gốc: ${dp.originalPrice.toLocaleString()}đ</div>
+                                <div style="font-size:14px;font-weight:700;color:var(--danger);">Giá sale: ${dp.salePrice.toLocaleString()}đ (-${Math.round((dp.originalPrice - dp.salePrice) / dp.originalPrice * 100)}%)</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:12px;color:var(--text-secondary);">${dp.maxQuantity ? `Đã bán: ${dp.soldQuantity || 0}/${dp.maxQuantity}` : 'Không giới hạn'}</div>
+                            <button onclick="removeProductFromDeal(${dealId}, ${dp.product.productId})" style="margin-top:4px;padding:6px 12px;border-radius:var(--radius-md);background:var(--danger-bg);color:var(--danger);font-size:11px;font-weight:600;cursor:pointer;">Xóa</button>
+                        </div>
+                    </div>`).join('') + `</div></div>`;
+        } else {
+            content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">Chưa có sản phẩm nào trong deal</div>';
+        }
+    } catch (error) {
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);">Không thể tải sản phẩm</div>';
+    }
+}
+
+function closeViewProductsModal() {
+    document.getElementById('viewProductsModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+async function removeProductFromDeal(dealId, productId) {
+    if (!confirm('Xóa sản phẩm này khỏi deal?')) return;
+    try {
+        const response = await fetch(`/seller/deals/${dealId}/remove-product/${productId}`, {
+            method: 'POST', headers: getCsrfHeaders()
+        });
+        const data = await response.json();
+        if (data.success) {
+            openViewDealProductsModal(dealId);
+        } else {
+            alert(data.message || 'Lỗi');
+        }
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+}
+
+function viewDealDetail(dealId) {
+    const modal = document.getElementById('dealDetailModal');
+    const content = document.getElementById('dealDetailContent');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    content.innerHTML = '<div style="text-align:center;padding:40px;">Đang tải...</div>';
+
+    // Find deal data from card
+    const card = document.getElementById('deal-' + dealId);
+    if (!card) { content.innerHTML = '<div style="text-align:center;padding:40px;">Không tìm thấy deal</div>'; return; }
+
+    const name = card.querySelector('.deal-name')?.textContent || 'N/A';
+    const discount = card.querySelector('.deal-discount')?.textContent || 'N/A';
+    const status = card.querySelector('.deal-status')?.textContent || 'N/A';
+    const type = card.querySelector('.deal-type')?.textContent || 'N/A';
+    const expiry = card.querySelector('.deal-expiry span')?.textContent || 'N/A';
+    const img = card.querySelector('.deal-thumb img')?.src || '';
+
+    const statusLabels = {'Live':'ACTIVE','Lên lịch':'SCHEDULED','Tạm dừng':'PAUSED','Đã hết':'ENDED'};
+    const currentStatus = Object.entries(statusLabels).find(([k,v]) => status.includes(k))?.[1] || '';
+
+    content.innerHTML = `
+        <div style="text-align:center;margin-bottom:20px;">
+            <img src="${img}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:16px;" onerror="this.style.display='none'">
+            <h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">${name}</h2>
+            <div style="display:flex;gap:8px;justify-content:center;align-items:center;">
+                <span style="font-size:12px;font-weight:600;color:var(--${currentStatus === 'ACTIVE' ? 'success' : currentStatus === 'SCHEDULED' ? 'info' : currentStatus === 'PAUSED' ? 'warning' : 'text-secondary'});">${status}</span>
+                <span style="font-size:12px;color:var(--text-tertiary);">·</span>
+                <span style="font-size:12px;color:var(--text-secondary);">${type}</span>
+                <span style="font-size:12px;color:var(--text-tertiary);">·</span>
+                <span style="font-size:12px;color:var(--text-secondary);">Hết hạn: ${expiry}</span>
+            </div>
+        </div>
+        <div class="detail-section">
+            <div class="detail-section__title">Giảm giá</div>
+            <div style="font-size:24px;font-weight:800;color:var(--danger);">${discount}</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;justify-content:center;">
+            ${currentStatus === 'ACTIVE' ? `<button onclick="closeDealDetailModal();pauseDeal(${dealId})" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--warning);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">⏸ Tạm dừng</button>` : ''}
+            ${currentStatus === 'PAUSED' ? `<button onclick="closeDealDetailModal();resumeDeal(${dealId})" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--success);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">▶ Kích hoạt</button>` : ''}
+            ${currentStatus === 'ACTIVE' || currentStatus === 'PAUSED' ? `<button onclick="closeDealDetailModal();openDealProductsModal(${dealId})" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">+ Gán sản phẩm</button>` : ''}
+        </div>
+    `;
+}
+
+function closeDealDetailModal() {
+    document.getElementById('dealDetailModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
 }
 
 async function pauseDeal(dealId) {

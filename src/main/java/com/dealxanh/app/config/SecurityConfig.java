@@ -119,6 +119,8 @@ public class SecurityConfig {
                     "/admin/api/finance/**", "/admin/api/dispute/**",
                     "/admin/deals/*/assign-categories", "/admin/deals/*/remove-category/*",
                     "/admin/deals/*/assign-products", "/admin/deals/*/remove-product/*",
+                    "/seller/deals/*/assign-products", "/seller/deals/*/remove-product/*",
+                    "/seller/deals/*/pause", "/seller/deals/*/resume",
                     "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )
             )
