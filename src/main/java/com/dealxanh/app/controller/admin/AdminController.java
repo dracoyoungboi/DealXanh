@@ -1953,6 +1953,75 @@ public class AdminController {
         return "admin/deals";
     }
 
+    @PostMapping("/deals/{dealId}/update")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public String updateDeal(
+            @PathVariable Long dealId,
+            @RequestParam String dealName,
+            @RequestParam String dealCode,
+            @RequestParam String dealType,
+            @RequestParam(required = false) String description,
+            @RequestParam String discountType,
+            @RequestParam Double discountValue,
+            @RequestParam(required = false) Double maxDiscountAmount,
+            @RequestParam Double minOrderAmount,
+            @RequestParam(required = false) Long maxUsageCount,
+            @RequestParam LocalDateTime startTime,
+            @RequestParam LocalDateTime endTime,
+            @RequestParam(required = false) String bannerUrl,
+            @RequestParam(required = false) org.springframework.web.multipart.MultipartFile bannerFile,
+            @RequestParam(defaultValue = "CODE_REQUIRED") String applyMethod,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            Deal existingDeal = dealService.getDealById(dealId);
+            if (existingDeal == null) {
+                redirectAttributes.addFlashAttribute("error", "Deal không tồn tại");
+                return "redirect:/admin/deals";
+            }
+
+            String bannerPath = bannerUrl;
+            if (bannerFile != null && !bannerFile.isEmpty()) {
+                if (!isImageFile(bannerFile)) {
+                    redirectAttributes.addFlashAttribute("error", "File banner phải là ảnh (JPG, PNG, WEBP)");
+                    return "redirect:/admin/deals";
+                }
+                if (!isValidFileSize(bannerFile, 5 * 1024 * 1024)) {
+                    redirectAttributes.addFlashAttribute("error", "File banner không được vượt quá 5MB");
+                    return "redirect:/admin/deals";
+                }
+                bannerPath = saveUploadedFile(bannerFile);
+            }
+            if (bannerPath == null || bannerPath.isEmpty()) {
+                bannerPath = existingDeal.getBannerUrl();
+            }
+
+            existingDeal.setDealName(dealName);
+            existingDeal.setDealCode(dealCode);
+            existingDeal.setDealType(dealType);
+            existingDeal.setDescription(description);
+            existingDeal.setDiscountType(discountType);
+            existingDeal.setDiscountValue(discountValue);
+            existingDeal.setMaxDiscountAmount(maxDiscountAmount);
+            existingDeal.setMinOrderAmount(minOrderAmount);
+            existingDeal.setMaxUsageCount(maxUsageCount);
+            existingDeal.setStartTime(startTime);
+            existingDeal.setEndTime(endTime);
+            existingDeal.setBannerUrl(bannerPath);
+            existingDeal.setApplyMethod(applyMethod);
+            existingDeal.setUpdatedAt(LocalDateTime.now());
+
+            dealService.updateDeal(dealId, existingDeal);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật deal thành công!");
+
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi hệ thống: " + ex.getMessage());
+        }
+        return "redirect:/admin/deals";
+    }
+
     @PostMapping("/deals/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public String createDeal(
@@ -2029,6 +2098,37 @@ public class AdminController {
         }
     }
 
+    // ========== DEAL PAUSE / RESUME ==========
+
+    @PostMapping("/deals/{dealId}/pause")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> pauseDeal(@PathVariable Long dealId) {
+        Deal deal = dealService.getDealById(dealId);
+        if (deal == null) return java.util.Map.of("success", false, "message", "Deal không tồn tại");
+        if (!"ACTIVE".equals(deal.getStatus())) return java.util.Map.of("success", false, "message", "Chỉ có thể tạm dừng deal đang ACTIVE");
+        deal.setStatus("PAUSED");
+        deal.setUpdatedAt(LocalDateTime.now());
+        dealRepository.save(deal);
+        return java.util.Map.of("success", true, "message", "Đã tạm dừng deal");
+    }
+
+    @PostMapping("/deals/{dealId}/resume")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> resumeDeal(@PathVariable Long dealId) {
+        Deal deal = dealService.getDealById(dealId);
+        if (deal == null) return java.util.Map.of("success", false, "message", "Deal không tồn tại");
+        if (!"PAUSED".equals(deal.getStatus())) return java.util.Map.of("success", false, "message", "Chỉ có thể kích hoạt deal đang PAUSED");
+        if (deal.getEndTime() != null && deal.getEndTime().isBefore(LocalDateTime.now())) {
+            return java.util.Map.of("success", false, "message", "Không thể kích hoạt: deal đã hết hạn (" + deal.getEndTime().toLocalDate() + ")");
+        }
+        deal.setStatus("ACTIVE");
+        deal.setUpdatedAt(LocalDateTime.now());
+        dealRepository.save(deal);
+        return java.util.Map.of("success", true, "message", "Đã kích hoạt deal");
+    }
+
     // ========== File upload helpers for deal banner ==========
 
     private String saveUploadedFile(org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
@@ -2054,6 +2154,31 @@ public class AdminController {
 
     private boolean isValidFileSize(org.springframework.web.multipart.MultipartFile file, long maxSizeInBytes) {
         return file.getSize() <= maxSizeInBytes;
+    }
+
+    @GetMapping("/api/deals/{dealId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getDealData(@PathVariable Long dealId) {
+        Deal deal = dealService.getDealById(dealId);
+        if (deal == null) return java.util.Map.of("success", false, "message", "Deal không tồn tại");
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("dealId", deal.getDealId());
+        data.put("dealName", deal.getDealName());
+        data.put("dealCode", deal.getDealCode());
+        data.put("dealType", deal.getDealType());
+        data.put("description", deal.getDescription());
+        data.put("discountType", deal.getDiscountType());
+        data.put("discountValue", deal.getDiscountValue());
+        data.put("maxDiscountAmount", deal.getMaxDiscountAmount());
+        data.put("minOrderAmount", deal.getMinOrderAmount());
+        data.put("maxUsageCount", deal.getMaxUsageCount());
+        data.put("applyMethod", deal.getApplyMethod());
+        data.put("startTime", deal.getStartTime() != null ? deal.getStartTime().toString().replace("T", " ").substring(0, 16) : null);
+        data.put("endTime", deal.getEndTime() != null ? deal.getEndTime().toString().replace("T", " ").substring(0, 16) : null);
+        data.put("bannerUrl", deal.getBannerUrl());
+        return java.util.Map.of("success", true, "data", data);
     }
 
     // ============ DEAL CATEGORIES (Admin gán categories vào platform deals) ============

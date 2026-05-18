@@ -365,7 +365,7 @@ img{display:block;max-width:100%}
         <div class="deal-card" th:id="'deal-' + ${deal.dealId}" th:onclick="|viewDealDetail(${deal.dealId})|" style="cursor:pointer;">
             <div class="deal-card__top">
                 <div class="deal-thumb">
-                    <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/deals/default-banner.jpg'}" alt="">
+                    <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/default-banner.svg'}" alt="" onerror="this.src='/img/default-banner.svg'">
                     <span class="deal-thumb__badge" th:style="'background:' + ${deal.dealType == 'FLASH_SALE' ? 'var(--danger)' : deal.dealType == 'VOUCHER' ? 'var(--purple)' : 'var(--accent)'}" th:text="${deal.discountType == 'PERCENT' ? deal.discountValue + '%' : 'FIXED'}">-65%</span>
                 </div>
                 <div class="deal-info">
@@ -602,7 +602,7 @@ function renderProductsList(filter = '') {
             <label class="product-select-item ${isSelected ? 'selected' : ''}" data-id="${product.productId}">
                 <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleProduct(${product.productId}, this.checked)">
                 <div class="product-select-item__img">
-                    <img src="${product.imageUrl || '/img/default-product.svg'}" alt="${product.name}">
+                    <img src="${product.imageUrl || '/img/default-product.svg'}" alt="${product.name}" onerror="this.src='/img/default-product.svg'">
                 </div>
                 <div class="product-select-item__info">
                     <div class="product-select-item__name">${product.name}</div>
@@ -771,7 +771,7 @@ async function openViewDealProductsModal(dealId) {
                 data.products.map(dp => `
                     <div class="product-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg);border-radius:var(--radius-md);margin-bottom:8px;">
                         <div style="display:flex;align-items:center;gap:12px;">
-                            <img src="${dp.product.imageUrl || '/img/default-product.svg'}" style="width:48px;height:48px;border-radius:var(--radius-sm);object-fit:cover;">
+                            <img src="${dp.product.imageUrl || '/img/default-product.svg'}" style="width:48px;height:48px;border-radius:var(--radius-sm);object-fit:cover;" onerror="this.src='/img/default-product.svg'">
                             <div>
                                 <div style="font-weight:600;">${dp.product.name}</div>
                                 <div style="font-size:12px;color:var(--text-secondary);">Giá gốc: ${dp.originalPrice.toLocaleString()}đ</div>
@@ -836,7 +836,7 @@ function viewDealDetail(dealId) {
 
     content.innerHTML = `
         <div style="text-align:center;margin-bottom:20px;">
-            <img src="${img}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:16px;" onerror="this.style.display='none'">
+            <img src="${img}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:16px;" onerror="this.src='/img/default-banner.svg'">
             <h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">${name}</h2>
             <div style="display:flex;gap:8px;justify-content:center;align-items:center;">
                 <span style="font-size:12px;font-weight:600;color:var(--${currentStatus === 'ACTIVE' ? 'success' : currentStatus === 'SCHEDULED' ? 'info' : currentStatus === 'PAUSED' ? 'warning' : 'text-secondary'});">${status}</span>

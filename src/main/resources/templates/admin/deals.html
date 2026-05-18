@@ -208,6 +208,7 @@ a{text-decoration:none;color:inherit}
 .deal-card__store-logo{width:32px;height:32px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border-light);background:var(--bg);}
 .deal-card__store-logo img{width:100%;height:100%;object-fit:cover}
 .deal-card__store-name{font-size:13px;font-weight:600;}
+.form-input:focus{outline:none;border-color:var(--primary)}
 .store-tier-badge{padding:3px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
 .store-tier-badge.DIAMOND{background:linear-gradient(135deg,#667eea,#764ba2)}
 .store-tier-badge.GOLD{background:linear-gradient(135deg,#d4af37,#b8932a)}
@@ -338,7 +339,7 @@ a{text-decoration:none;color:inherit}
                 <div class="deal-card" th:each="deal : ${deals}" th:onclick="|viewDealDetail(${deal.dealId})|">
                     <!-- Banner -->
                     <div class="deal-card__banner">
-                        <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/deals/default-banner.jpg'}" alt="">
+                        <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/default-banner.svg'}" alt="" onerror="this.src='/img/default-banner.svg'">
                         <div class="deal-card__banner-overlay"></div>
                         <span class="deal-card__type" th:class="${deal.dealType}" th:text="${deal.dealType == 'FLASH_SALE' ? 'Flash Sale' : deal.dealType == 'VOUCHER' ? 'Voucher' : deal.dealType == 'COMBO' ? 'Combo' : 'Seasonal'}">Type</span>
                         <span class="deal-card__status" th:class="${deal.status}" th:text="${deal.status == 'SCHEDULED' ? 'Sắp diễn ra' : deal.status == 'ACTIVE' ? 'Đang diễn ra' : deal.status == 'PAUSED' ? 'Tạm dừng' : deal.status == 'ENDED' ? 'Đã kết thúc' : 'Đã hủy'}">Status</span>
@@ -402,7 +403,12 @@ a{text-decoration:none;color:inherit}
                                     </svg>
                                     <span th:if="${deal.endTime != null}" th:text="${#temporals.day(deal.startTime) + '/' + #temporals.month(deal.startTime) + ' - ' + #temporals.day(deal.endTime) + '/' + #temporals.month(deal.endTime)}">Duration</span>
                                 </div>
-                                <div style="font-size:11px;color:var(--text-tertiary);" th:if="${deal.createdAt != null}" th:text="${'Tạo: ' + #temporals.day(deal.createdAt) + '/' + #temporals.month(deal.createdAt)}">Created</div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:11px;color:var(--text-tertiary);" th:if="${deal.createdAt != null}" th:text="${'Tạo: ' + #temporals.day(deal.createdAt) + '/' + #temporals.month(deal.createdAt)}">Created</span>
+                                    <button th:onclick="|event.stopPropagation();openEditDealModal(${deal.dealId})|" style="font-size:11px;color:var(--info);cursor:pointer;border:none;background:none;font-weight:600;padding:0;">✏️ Sửa</button>
+                                    <button th:if="${deal.status == 'ACTIVE'}" th:onclick="|event.stopPropagation();pauseDeal(${deal.dealId})|" style="font-size:11px;color:var(--warning);cursor:pointer;border:none;background:none;font-weight:600;padding:0;">⏸ Dừng</button>
+                                    <button th:if="${deal.status == 'PAUSED'}" th:onclick="|event.stopPropagation();resumeDeal(${deal.dealId})|" style="font-size:11px;color:var(--success);cursor:pointer;border:none;background:none;font-weight:600;padding:0;">▶ Kích hoạt</button>
+                                </div>
                                 <div class="deal-card__usage">
                                     <th:block th:if="${deal.maxUsageCount != null}">
                                         <span th:class="${deal.usageCount >= deal.maxUsageCount ? 'full' : (deal.usageCount * 100 / deal.maxUsageCount > 80 ? 'warning' : 'progress')}"
@@ -799,6 +805,47 @@ a{text-decoration:none;color:inherit}
     </div>
 </div>
 
+<!-- Edit Deal Modal -->
+<div class="modal" id="editDealModal">
+    <div class="modal-content" style="max-width:700px;">
+        <div class="modal-header">
+            <div class="modal-header__title">Sửa Deal</div>
+            <div class="modal-header__close" onclick="closeEditDealModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </div>
+        </div>
+        <div class="modal-body">
+            <form id="editDealForm" method="post" th:action="@{/admin/deals/0/update}" enctype="multipart/form-data">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="scope" value="ALL_STORES">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div><label style="font-size:12px;font-weight:600;">Tên Deal *</label><input type="text" name="dealName" id="editDealName" class="form-input" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;"></div>
+                    <div><label style="font-size:12px;font-weight:600;">Mã Deal *</label><input type="text" name="dealCode" id="editDealCode" class="form-input" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;text-transform:uppercase;font-family:monospace;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;">
+                    <div><label style="font-size:12px;font-weight:600;">Loại *</label><select name="dealType" id="editDealType" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;"><option value="FLASH_SALE">Flash Sale</option><option value="VOUCHER">Voucher</option><option value="COMBO">Combo</option><option value="SEASONAL">Seasonal</option></select></div>
+                    <div><label style="font-size:12px;font-weight:600;">Kiểu giảm *</label><select name="discountType" id="editDiscountType" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;"><option value="PERCENT">% Phần trăm</option><option value="FIXED">đ Tiền cố định</option></select></div>
+                    <div><label style="font-size:12px;font-weight:600;">Giá trị *</label><input type="number" name="discountValue" id="editDiscountValue" required min="1" step="0.01" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;">
+                    <div><label style="font-size:12px;font-weight:600;">Giảm tối đa (đ)</label><input type="number" name="maxDiscountAmount" id="editMaxDiscount" min="0" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;"></div>
+                    <div><label style="font-size:12px;font-weight:600;">Đơn tối thiểu *</label><input type="number" name="minOrderAmount" id="editMinOrder" required min="0" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;"></div>
+                    <div><label style="font-size:12px;font-weight:600;">Lượt tối đa</label><input type="number" name="maxUsageCount" id="editMaxUsage" min="1" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;"></div>
+                </div>
+                <div style="margin-top:12px;"><label style="font-size:12px;font-weight:600;">Cách áp dụng</label><select name="applyMethod" id="editApplyMethod" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;"><option value="CODE_REQUIRED">Cần nhập mã</option><option value="AUTO_APPLY">Tự động áp dụng</option></select></div>
+                <div style="margin-top:12px;"><label style="font-size:12px;font-weight:600;">Mô tả</label><textarea name="description" id="editDescription" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px;"></textarea></div>
+                <div style="margin-top:12px;"><label style="font-size:12px;font-weight:600;">Banner (để trống = giữ ảnh cũ)</label><input type="file" name="bannerFile" accept="image/*" style="width:100%;padding:8px;border:2px dashed var(--border);border-radius:6px;margin-top:4px;"></div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+                    <button type="button" onclick="closeEditDealModal()" style="padding:10px 20px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:14px;font-weight:600;cursor:pointer;">Hủy</button>
+                    <button type="submit" style="padding:10px 20px;border-radius:6px;background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;border:none;">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- View Deal Products Modal -->
 <div class="modal" id="viewDealProductsModal">
     <div class="modal-content" style="max-width:700px;">
@@ -1170,6 +1217,56 @@ function openCreateDealModal() {
     updateDiscountType();
 }
 
+// ===== EDIT DEAL =====
+async function openEditDealModal(dealId) {
+    const modal = document.getElementById('editDealModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    try {
+        const res = await fetch(`/admin/api/deals/${dealId}`);
+        const json = await res.json();
+        if (!json.success) { alert(json.message); closeEditDealModal(); return; }
+        const d = json.data;
+        document.getElementById('editDealName').value = d.dealName || '';
+        document.getElementById('editDealCode').value = d.dealCode || '';
+        document.getElementById('editDealType').value = d.dealType || 'FLASH_SALE';
+        document.getElementById('editDiscountType').value = d.discountType || 'PERCENT';
+        document.getElementById('editDiscountValue').value = d.discountValue || '';
+        document.getElementById('editMaxDiscount').value = d.maxDiscountAmount || '';
+        document.getElementById('editMinOrder').value = d.minOrderAmount || '';
+        document.getElementById('editMaxUsage').value = d.maxUsageCount || '';
+        document.getElementById('editApplyMethod').value = d.applyMethod || 'CODE_REQUIRED';
+        document.getElementById('editDescription').value = d.description || '';
+        document.getElementById('editDealForm').action = `/admin/deals/${dealId}/update`;
+    } catch (e) {
+        alert('Không thể tải dữ liệu deal');
+        closeEditDealModal();
+    }
+}
+function closeEditDealModal() {
+    document.getElementById('editDealModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+async function pauseDeal(dealId) {
+    if (!confirm('Tạm dừng deal này?')) return;
+    try {
+        const res = await fetch(`/admin/deals/${dealId}/pause`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Lỗi: ' + e.message); }
+}
+
+async function resumeDeal(dealId) {
+    try {
+        const res = await fetch(`/admin/deals/${dealId}/resume`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Lỗi: ' + e.message); }
+}
+
 function closeCreateDealModal() {
     document.getElementById('createDealModal').classList.remove('active');
     document.body.style.overflow = 'auto';
@@ -1188,6 +1285,7 @@ document.addEventListener('keydown', function(e) {
         closeDealCategoriesModal();
         closeDealProductsModal();
         closeViewDealProductsModal();
+        closeEditDealModal();
     }
 });
 
@@ -1225,6 +1323,12 @@ document.getElementById('dealProductsModal').addEventListener('click', function(
 document.getElementById('viewDealProductsModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeViewDealProductsModal();
+    }
+});
+
+document.getElementById('editDealModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeEditDealModal();
     }
 });
 

@@ -53,11 +53,11 @@
 .table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border-light)}
 .table tr:last-child td{border-bottom:none}
 
-.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:var(--radius-full)}
-.status-badge--success{background:var(--success-bg);color:var(--success)}
-.status-badge--warning{background:var(--warning-bg);color:var(--warning)}
-.status-badge--danger{background:var(--danger-bg);color:var(--danger)}
-.status-badge--info{background:var(--info-bg);color:var(--info)}
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 12px;border-radius:var(--radius-full);letter-spacing:.2px}
+.status-badge--success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.status-badge--warning{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+.status-badge--danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.status-badge--info{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
 
 .btn-sm{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-md);font-size:12px;font-weight:600;transition:all var(--tr);cursor:pointer;border:none;text-decoration:none}
 .btn-sm--primary{background:var(--primary);color:#fff}
@@ -106,7 +106,7 @@
     <!-- Store info -->
     <div class="store-header">
         <div class="store-logo">
-            <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt="">
+            <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt="" onerror="this.src='/img/default-store.svg'">
         </div>
         <div style="flex:1;">
             <div class="store-name">
@@ -216,6 +216,10 @@
                 <a href="/seller/deals" class="btn-sm btn-sm--outline" style="justify-content:center;padding:12px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                     Quản lý Deals
+                </a>
+                <a href="/seller/products" class="btn-sm btn-sm--outline" style="justify-content:center;padding:12px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+                    Quản lý Sản phẩm
                 </a>
                 <a href="/seller/Fulfillment" class="btn-sm btn-sm--outline" style="justify-content:center;padding:12px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg>

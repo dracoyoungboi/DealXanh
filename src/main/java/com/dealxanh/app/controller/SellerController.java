@@ -44,6 +44,15 @@ public class SellerController {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private com.dealxanh.app.service.ProductService productService;
+
+    @Autowired
+    private com.dealxanh.app.repository.CategoryRepository categoryRepository;
+
+    @Autowired
+    private com.dealxanh.app.repository.DealCategoryRepository dealCategoryRepository;
+
     // ============ DASHBOARD ============
 
     @GetMapping({"", "/dashboard"})
@@ -433,6 +442,327 @@ public class SellerController {
         } catch (Exception ex) {
             return Map.of("success", false, "message", "Lỗi: " + ex.getMessage());
         }
+    }
+
+    // ============ PRODUCT MANAGEMENT ============
+
+    @GetMapping("/products")
+    public String products(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            Model model, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) return "redirect:/login";
+        Store store = user.getWorkStore();
+
+        java.util.List<Product> allProducts = productRepository.findByStoreStoreIdAndDeletedFalse(store.getStoreId());
+
+        // Filters
+        java.util.List<Product> filtered = allProducts;
+        if (status != null && !status.isEmpty()) {
+            if ("active".equals(status)) {
+                filtered = filtered.stream().filter(p -> p.getActive()).toList();
+            } else if ("inactive".equals(status)) {
+                filtered = filtered.stream().filter(p -> !p.getActive()).toList();
+            } else if ("outofstock".equals(status)) {
+                filtered = filtered.stream().filter(p -> p.getStockQuantity() <= 0).toList();
+            }
+        }
+        if (search != null && !search.isEmpty()) {
+            String s = search.toLowerCase();
+            filtered = filtered.stream().filter(p -> p.getName().toLowerCase().contains(s)).toList();
+        }
+        if (categoryId != null) {
+            filtered = filtered.stream().filter(p -> p.getCategory() != null && p.getCategory().getCategoryId().equals(categoryId)).toList();
+        }
+
+        // KPI (on filtered)
+        long approvedCount = filtered.stream().filter(p -> "APPROVED".equals(p.getApprovalStatus())).count();
+        long pendingCount = filtered.stream().filter(p -> "PENDING".equals(p.getApprovalStatus())).count();
+
+        // Pagination
+        int total = filtered.size();
+        int totalPages = total > 0 ? (int) Math.ceil((double) total / size) : 0;
+        if (page < 0) page = 0;
+        if (totalPages > 0 && page >= totalPages) page = totalPages - 1;
+        int start = page * size;
+        int end = Math.min(start + size, total);
+        java.util.List<Product> paged = total > 0 ? filtered.subList(start, end) : java.util.List.of();
+
+        model.addAttribute("user", user);
+        model.addAttribute("store", store);
+        model.addAttribute("products", paged);
+        model.addAttribute("totalProducts", total);
+        model.addAttribute("approvedCount", approvedCount);
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("searchQuery", search);
+        model.addAttribute("selectedCategory", categoryId);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageSize", size);
+        model.addAttribute("hasNext", page < totalPages - 1);
+        model.addAttribute("hasPrevious", page > 0);
+        model.addAttribute("activeDeals", dealRepository.findByStoreStoreIdAndStatus(store.getStoreId(), "ACTIVE").size());
+        model.addAttribute("pendingOrders", orderRepository.countPendingOrdersByStore(store.getStoreId()));
+        return "seller/products";
+    }
+
+    @PostMapping("/products/{productId}/toggle")
+    public String toggleProduct(@PathVariable Long productId, Principal principal,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) return "redirect:/login";
+
+        Product product = productRepository.findById(productId).orElse(null);
+        if (product == null || !product.getStore().getStoreId().equals(user.getWorkStore().getStoreId())) {
+            redirectAttributes.addFlashAttribute("error", "Sản phẩm không tồn tại");
+            return "redirect:/seller/products";
+        }
+
+        // Seller chỉ được DỪNG BÁN, không được kích hoạt lại
+        if (!product.getActive()) {
+            redirectAttributes.addFlashAttribute("error", "Sản phẩm đã bị dừng bán. Liên hệ admin để kích hoạt lại.");
+            return "redirect:/seller/products";
+        }
+
+        try {
+            product.setActive(false);
+            product.setUpdatedAt(java.time.LocalDateTime.now());
+            productRepository.save(product);
+            redirectAttributes.addFlashAttribute("success", "Đã ngừng bán sản phẩm: " + product.getName());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/seller/products";
+    }
+
+    @GetMapping("/products/create")
+    public String createProductForm(Model model, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) return "redirect:/login";
+
+        model.addAttribute("user", user);
+        model.addAttribute("store", user.getWorkStore());
+        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("activeDeals", dealRepository.findByStoreStoreIdAndStatus(user.getWorkStore().getStoreId(), "ACTIVE").size());
+        model.addAttribute("pendingOrders", orderRepository.countPendingOrdersByStore(user.getWorkStore().getStoreId()));
+        return "seller/create-product";
+    }
+
+    @PostMapping("/products/create")
+    public String createProduct(
+            @RequestParam String name,
+            @RequestParam(required = false) String description,
+            @RequestParam Double originalPrice,
+            @RequestParam(required = false) Integer stockQuantity,
+            @RequestParam(required = false) String productType,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String expiryDateStr,
+            @RequestParam(required = false) org.springframework.web.multipart.MultipartFile imageFile,
+            @RequestParam(required = false) String imageUrl,
+            Principal principal,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy cửa hàng");
+            return "redirect:/seller/products";
+        }
+
+        try {
+            String imgPath = imageUrl;
+            if (imageFile != null && !imageFile.isEmpty()) {
+                if (!isImageFile(imageFile)) {
+                    redirectAttributes.addFlashAttribute("error", "File ảnh phải là JPG, PNG hoặc WEBP");
+                    return "redirect:/seller/products/create";
+                }
+                imgPath = saveUploadedFile(imageFile);
+            }
+
+            Product product = new Product();
+            product.setName(name);
+            product.setDescription(description);
+            product.setOriginalPrice(originalPrice);
+            product.setStockQuantity(stockQuantity != null ? stockQuantity : 0);
+            product.setProductType(productType != null ? productType : "SPECIFIC_DEAL");
+            product.setImageUrl(imgPath);
+            product.setStore(user.getWorkStore());
+            product.setApprovalStatus("PENDING");
+            product.setActive(true);
+            product.setDeleted(false);
+
+            if (categoryId != null) {
+                categoryRepository.findById(categoryId).ifPresent(product::setCategory);
+            }
+            if (expiryDateStr != null && !expiryDateStr.isEmpty()) {
+                product.setExpiryDate(java.time.LocalDateTime.parse(expiryDateStr + "T23:59:59"));
+            }
+
+            productService.createProduct(product);
+            redirectAttributes.addFlashAttribute("success", "Tạo sản phẩm thành công! Sản phẩm đang chờ admin duyệt.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/seller/products";
+    }
+
+    @GetMapping("/api/products/{productId}/detail")
+    @ResponseBody
+    public java.util.Map<String, Object> getProductDetail(@PathVariable Long productId, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null)
+            return java.util.Map.of("error", "Không tìm thấy cửa hàng");
+
+        Product product = productRepository.findById(productId).orElse(null);
+        if (product == null || !product.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
+            return java.util.Map.of("error", "Sản phẩm không tồn tại");
+
+        // Build response
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("productId", product.getProductId());
+        data.put("name", product.getName());
+        data.put("description", product.getDescription());
+        data.put("imageUrl", product.getImageUrl());
+        data.put("originalPrice", product.getOriginalPrice());
+        data.put("stockQuantity", product.getStockQuantity());
+        data.put("productType", product.getProductType());
+        data.put("active", product.getActive());
+        data.put("approvalStatus", product.getApprovalStatus());
+        data.put("rejectionReason", product.getRejectionReason());
+        data.put("expiryDate", product.getExpiryDate() != null ? product.getExpiryDate().toString() : null);
+        if (product.getCategory() != null) {
+            data.put("categoryName", product.getCategory().getName());
+        }
+
+        // Platform deals on this product's category
+        java.util.List<java.util.Map<String, Object>> platformDeals = new java.util.ArrayList<>();
+        if (product.getCategory() != null) {
+            java.util.List<DealCategory> dealCategories = dealCategoryRepository.findActiveByCategory(product.getCategory());
+            if (dealCategories != null) {
+                for (DealCategory dc : dealCategories) {
+                    Deal d = dc.getDeal();
+                    if (d == null || !"ACTIVE".equals(d.getStatus())) continue;
+                    java.util.Map<String, Object> di = new java.util.HashMap<>();
+                    di.put("dealName", d.getDealName());
+                    di.put("dealType", d.getDealType());
+                    di.put("discountType", d.getDiscountType());
+                    di.put("discountValue", d.getDiscountValue());
+                    di.put("discountDisplay", "PERCENT".equals(d.getDiscountType()) ? d.getDiscountValue() + "%" : d.getDiscountValue() + "đ");
+                    double discountAmount = 0;
+                    if (product.getOriginalPrice() != null) {
+                        if ("PERCENT".equals(d.getDiscountType())) {
+                            discountAmount = product.getOriginalPrice() * d.getDiscountValue() / 100.0;
+                            if (d.getMaxDiscountAmount() != null) discountAmount = Math.min(discountAmount, d.getMaxDiscountAmount());
+                        } else {
+                            discountAmount = d.getDiscountValue();
+                        }
+                    }
+                    di.put("discountAmount", Math.round(discountAmount));
+                    platformDeals.add(di);
+                }
+            }
+        }
+        data.put("platformDeals", platformDeals);
+
+        // Store deals this product belongs to
+        java.util.List<java.util.Map<String, Object>> storeDeals = new java.util.ArrayList<>();
+        java.util.List<DealProduct> dealProducts = dealProductRepository.findByProduct(product);
+        if (dealProducts != null) {
+            for (DealProduct dp : dealProducts) {
+                Deal d = dp.getDeal();
+                if (d == null) continue;
+                java.util.Map<String, Object> di = new java.util.HashMap<>();
+                di.put("dealName", d.getDealName());
+                di.put("dealType", d.getDealType());
+                di.put("status", d.getStatus());
+                di.put("salePrice", dp.getSalePrice());
+                di.put("originalPrice", dp.getOriginalPrice());
+                di.put("discountDisplay", dp.getSalePrice() != null ? dp.getSalePrice().longValue() + "đ (-" + Math.round((1 - dp.getSalePrice() / dp.getOriginalPrice()) * 100) + "%)" : "");
+                storeDeals.add(di);
+            }
+        }
+        data.put("storeDeals", storeDeals);
+
+        // Calculate final price
+        double originalPrice = product.getOriginalPrice() != null ? product.getOriginalPrice() : 0;
+        double totalPlatformDiscount = 0;
+        for (java.util.Map<String, Object> pd : platformDeals) {
+            totalPlatformDiscount += ((Number) pd.get("discountAmount")).doubleValue();
+        }
+        double lowestStorePrice = originalPrice;
+        for (java.util.Map<String, Object> sd : storeDeals) {
+            double sp = ((Number) sd.get("salePrice")).doubleValue();
+            if (sp < lowestStorePrice) lowestStorePrice = sp;
+        }
+        double finalPrice = lowestStorePrice - totalPlatformDiscount;
+        if (finalPrice < originalPrice * 0.15) finalPrice = originalPrice * 0.15; // floor 15%
+
+        data.put("finalPrice", Math.round(finalPrice));
+        data.put("totalPlatformDiscount", Math.round(totalPlatformDiscount));
+        data.put("totalDiscountPercent", originalPrice > 0 ? Math.round((1 - finalPrice / originalPrice) * 100) : 0);
+
+        return data;
+    }
+
+    @PostMapping("/products/{productId}/edit")
+    public String editProduct(
+            @PathVariable Long productId,
+            @RequestParam String name,
+            @RequestParam(required = false) String description,
+            @RequestParam Double originalPrice,
+            @RequestParam(required = false) Integer stockQuantity,
+            @RequestParam(required = false) String productType,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String expiryDateStr,
+            @RequestParam(required = false) org.springframework.web.multipart.MultipartFile imageFile,
+            @RequestParam(required = false) String existingImageUrl,
+            Principal principal,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy cửa hàng");
+            return "redirect:/seller/products";
+        }
+
+        Product product = productRepository.findById(productId).orElse(null);
+        if (product == null || !product.getStore().getStoreId().equals(user.getWorkStore().getStoreId())) {
+            redirectAttributes.addFlashAttribute("error", "Sản phẩm không tồn tại");
+            return "redirect:/seller/products";
+        }
+
+        try {
+            String imgPath = existingImageUrl;
+            if (imageFile != null && !imageFile.isEmpty()) {
+                if (!isImageFile(imageFile)) {
+                    redirectAttributes.addFlashAttribute("error", "File ảnh phải là JPG, PNG hoặc WEBP");
+                    return "redirect:/seller/products";
+                }
+                imgPath = saveUploadedFile(imageFile);
+            }
+
+            product.setName(name);
+            product.setDescription(description);
+            product.setOriginalPrice(originalPrice);
+            product.setStockQuantity(stockQuantity != null ? stockQuantity : 0);
+            if (productType != null) product.setProductType(productType);
+            if (imgPath != null) product.setImageUrl(imgPath);
+            if (categoryId != null) categoryRepository.findById(categoryId).ifPresent(product::setCategory);
+            if (expiryDateStr != null && !expiryDateStr.isEmpty()) {
+                product.setExpiryDate(java.time.LocalDateTime.parse(expiryDateStr + "T23:59:59"));
+            }
+            product.setApprovalStatus("PENDING"); // re-submit for approval
+            productService.updateProduct(productId, product);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật sản phẩm thành công! Sản phẩm sẽ được duyệt lại.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/seller/products";
     }
 
     // ============ HELPER METHODS ============

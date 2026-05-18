@@ -117,10 +117,13 @@ public class SecurityConfig {
                     "/admin/seller-verify/*/approve", "/admin/seller-verify/*/reject",
                     "/admin/seller-verify/*/reset-to-pending",
                     "/admin/api/finance/**", "/admin/api/dispute/**",
+                    "/admin/deals/*/update", "/admin/deals/create",
+                    "/admin/deals/*/pause", "/admin/deals/*/resume",
                     "/admin/deals/*/assign-categories", "/admin/deals/*/remove-category/*",
                     "/admin/deals/*/assign-products", "/admin/deals/*/remove-product/*",
                     "/seller/deals/*/assign-products", "/seller/deals/*/remove-product/*",
                     "/seller/deals/*/pause", "/seller/deals/*/resume",
+                    "/seller/products/*/toggle", "/seller/products/*/edit",
                     "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )
             )
