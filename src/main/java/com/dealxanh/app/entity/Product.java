@@ -26,10 +26,13 @@ public class Product {
     // Giá deal sau khi giảm
     private Double dealPrice;
 
+    // Giá hiển thị hiện tại (bị ảnh hưởng bởi countdown HSD)
+    private Double currentPrice;
+
     // Số lượng còn lại
     private Integer stockQuantity = 0;
 
-    // Loại sản phẩm: SPECIFIC_DEAL hoặc BLIND_BOX
+    // Loại sản phẩm: SPECIFIC_DEAL, COMBO
     private String productType = "SPECIFIC_DEAL";
 
     // Hạn sử dụng / Ngày cận date
@@ -112,6 +115,17 @@ public class Product {
     public Double getDealPrice() { return dealPrice; }
     public void setDealPrice(Double dealPrice) { this.dealPrice = dealPrice; }
 
+    public Double getCurrentPrice() { return currentPrice != null ? currentPrice : originalPrice; }
+    public void setCurrentPrice(Double currentPrice) { this.currentPrice = currentPrice; }
+
+    // Giá hiển thị cho buyer: ưu tiên currentPrice (countdown), fallback originalPrice
+    @JsonIgnore
+    public double getDisplayPrice() {
+        if (currentPrice != null) return currentPrice;
+        if (originalPrice != null) return originalPrice;
+        return 0;
+    }
+
     public Integer getStockQuantity() { return stockQuantity != null ? stockQuantity : 0; }
     public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
 
@@ -165,6 +179,7 @@ public class Product {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (approvalStatus == null) approvalStatus = "PENDING";
+        if (currentPrice == null) currentPrice = originalPrice;
     }
 
     @PreUpdate

@@ -49,9 +49,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Find by category and deleted false
     List<Product> findByCategoryAndDeletedFalse(com.dealxanh.app.entity.Category category);
 
-    // Blind Box filter
+    // Combo / Blind Box filter (supports both legacy BLIND_BOX and new COMBO type)
     @Query("SELECT p FROM Product p WHERE p.active = true AND p.deleted = false AND p.stockQuantity > 0 " +
-           "AND p.productType = 'BLIND_BOX'" +
+           "AND (p.productType = 'BLIND_BOX' OR p.productType = 'COMBO') " +
            "AND (p.dealEndTime IS NULL OR p.dealEndTime >= :now)")
     Page<Product> findAvailableBlindBoxes(@Param("now") LocalDateTime now, Pageable pageable);
 
@@ -77,4 +77,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // Count all non-deleted products
     long countByDeletedFalse();
+
+    // For expiry countdown: get all active non-deleted products
+    List<Product> findByDeletedFalseAndActiveTrue();
+
+    // For combo: get active products with HSD warning
+    @Query("SELECT p FROM Product p WHERE p.deleted = false AND p.active = true AND p.store.storeId = :storeId AND p.productType = 'SPECIFIC_DEAL'")
+    List<Product> findComboAvailableByStore(@Param("storeId") Long storeId);
 }

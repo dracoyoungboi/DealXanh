@@ -362,8 +362,19 @@ public class AuthController {
     // Generic logout handler - handles GET /logout requests from admin/seller links
     @GetMapping("/logout")
     public String logout(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        String redirectTarget = "/login?logout=true"; // default: buyer login
         try {
             System.out.println("=== GENERIC LOGOUT START ===");
+
+            // Determine target login page BEFORE invalidating session
+            String referer = request.getHeader("Referer");
+            if (referer != null) {
+                if (referer.contains("/admin")) {
+                    redirectTarget = "/admin/login?logout=true";
+                } else if (referer.contains("/staff") || referer.contains("/seller")) {
+                    redirectTarget = "/seller/login?logout=true";
+                }
+            }
 
             // Invalidate session
             jakarta.servlet.http.HttpSession session = request.getSession(false);
@@ -390,13 +401,12 @@ public class AuthController {
                 }
             }
 
-            System.out.println("=== GENERIC LOGOUT END ===");
+            System.out.println("=== GENERIC LOGOUT END -> " + redirectTarget + " ===");
         } catch (Exception e) {
             System.err.println("ERROR during logout: " + e.getMessage());
             e.printStackTrace();
         }
 
-        // Redirect to admin login page with logout flag
-        return "redirect:/admin/login?logout=true";
+        return "redirect:" + redirectTarget;
     }
 }

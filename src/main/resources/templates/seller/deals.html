@@ -27,7 +27,7 @@
     --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary)}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary);height:auto;min-height:100%;padding-bottom:80px}
 button{cursor:pointer;border:none;background:none;font-family:inherit}
 img{display:block;max-width:100%}
 
@@ -112,7 +112,7 @@ img{display:block;max-width:100%}
 .search-input:focus{outline:none;border-color:var(--primary);background:var(--surface)}
 
 /* Body */
-.body{padding:12px 14px 100px}
+.body{padding:12px 14px}
 
 /* Deal card */
 .deal-card{
@@ -330,11 +330,8 @@ img{display:block;max-width:100%}
         <input type="hidden" name="status" th:value="${selectedStatus}">
         <div class="search-wrap" style="flex:1">
             <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-            <input type="text" name="search" class="search-input" placeholder="Tìm tên deal, mã deal..." th:value="${searchQuery}">
+            <input type="text" name="search" class="search-input" placeholder="Tìm tên deal, mã deal..." th:value="${searchQuery}" oninput="debounceSearch()">
         </div>
-        <button type="submit" class="hdr-btn" style="background:var(--primary);color:#fff;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </button>
     </form>
 </div>
 
@@ -503,6 +500,14 @@ img{display:block;max-width:100%}
 </style>
 
 <script>
+let searchTimer;
+function debounceSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        document.querySelector('.search-bar form').submit();
+    }, 300);
+}
+
 // Get CSRF token
 const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
 const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');

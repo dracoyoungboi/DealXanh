@@ -36,7 +36,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         String loginUrl;
         if (requestUrl.startsWith("/admin")) {
             loginUrl = "/admin/login";
-        } else if (requestUrl.startsWith("/seller") || requestUrl.startsWith("/store")) {
+        } else if (requestUrl.startsWith("/staff") || requestUrl.startsWith("/seller") || requestUrl.startsWith("/store")) {
             loginUrl = "/seller/login";
         } else {
             loginUrl = "/login";

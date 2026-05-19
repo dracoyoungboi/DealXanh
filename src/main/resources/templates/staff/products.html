@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sản phẩm — Nhân viên DealXanh</title>
+<div th:replace="~{common/staff/css :: css}"></div>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+.content{padding:14px}
+.kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.kpi-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:14px;text-align:center}
+.kpi-val{font-size:22px;font-weight:800}.kpi-lbl{font-size:11px;color:var(--text-tertiary);margin-top:2px}
+
+.filter-row{display:flex;gap:8px;margin-bottom:14px}
+.filter-input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-family:var(--font);background:var(--surface)}
+.filter-input:focus{outline:none;border-color:var(--primary)}
+.filter-select{padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-family:var(--font);background:var(--surface)}
+
+.product-list{display:flex;flex-direction:column;gap:10px}
+.product-row{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:14px;display:flex;gap:12px;align-items:center}
+.product-img{width:56px;height:56px;border-radius:var(--radius-md);object-fit:cover;flex-shrink:0;background:var(--bg)}
+.product-info{flex:1;min-width:0}
+.product-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.product-meta{font-size:12px;color:var(--text-secondary);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.product-price{font-size:16px;font-weight:800;color:var(--primary);text-align:right;flex-shrink:0}
+
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:var(--radius-full)}
+.badge-success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.badge-warning{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+.badge-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+
+.stock-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.stock-dot.in{background:var(--success)}.stock-dot.out{background:var(--danger)}
+
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px}
+.page-link{padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-weight:600;text-decoration:none;color:var(--text-primary);background:var(--surface)}
+.page-info{padding:8px 14px;font-size:13px;color:var(--text-secondary)}
+
+.empty-state{text-align:center;padding:60px 20px}
+.empty-state svg{width:64px;height:64px;margin-bottom:16px;opacity:0.2}
+.empty-state h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.empty-state p{font-size:13px;color:var(--text-secondary)}
+</style>
+</head>
+<body>
+
+<div th:replace="~{common/staff/header :: header}"></div>
+
+<div class="content">
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--primary)" th:text="${totalProducts}">0</div><div class="kpi-lbl">Tổng sản phẩm</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--success)" th:text="${products != null ? #lists.size(products) : 0}">0</div><div class="kpi-lbl">Đang hiển thị</div></div>
+  </div>
+
+  <!-- Filter -->
+  <form method="get" th:action="@{/staff/products}" class="filter-row">
+    <input type="text" name="search" class="filter-input" placeholder="Tìm sản phẩm..." th:value="${searchQuery}" oninput="debounceSearch()">
+    <select name="categoryId" class="filter-select" onchange="this.form.submit()">
+      <option value="">Tất cả DM</option>
+      <option th:each="cat : ${categories}" th:value="${cat.categoryId}" th:text="${cat.name}" th:selected="${selectedCategory != null && selectedCategory.toString() == cat.categoryId.toString()}"></option>
+    </select>
+  </form>
+
+  <!-- Product list -->
+  <div class="product-list" th:if="${products != null and !products.isEmpty()}">
+    <div class="product-row" th:each="product : ${products}">
+      <img th:src="${product.imageUrl != null ? product.imageUrl : '/img/default-product.svg'}" class="product-img" onerror="this.src='/img/default-product.svg'">
+      <div class="product-info">
+        <div class="product-name" th:text="${product.name}">Name</div>
+        <div class="product-meta">
+          <span th:if="${product.category != null}" th:text="${product.category.name}">Category</span>
+          <span class="stock-dot" th:class="${product.stockQuantity > 0 ? 'in' : 'out'}"></span>
+          <span th:text="${product.stockQuantity > 0 ? 'Còn ' + product.stockQuantity : 'Hết hàng'}" th:style="${product.stockQuantity > 0 ? 'color:var(--success)' : 'color:var(--danger)'}">Stock</span>
+          <span class="badge" th:classappend="${product.approvalStatus == 'APPROVED'} ? 'badge-success' : (${product.approvalStatus == 'PENDING'} ? 'badge-warning' : 'badge-danger')" th:text="${product.approvalStatus == 'APPROVED' ? 'Đã duyệt' : product.approvalStatus == 'PENDING' ? 'Chờ duyệt' : 'Từ chối'}">Status</span>
+        </div>
+      </div>
+      <div class="product-price"><span th:text="${#numbers.formatDecimal(product.originalPrice, 0, 0) + 'đ'}">0đ</span></div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" th:if="${totalPages > 1}">
+    <a class="page-link" th:if="${hasPrevious}" th:href="@{/staff/products(page=${currentPage - 1}, search=${searchQuery}, categoryId=${selectedCategory})}">← Trước</a>
+    <span class="page-info" th:text="|${currentPage + 1} / ${totalPages}|">1/1</span>
+    <a class="page-link" th:if="${hasNext}" th:href="@{/staff/products(page=${currentPage + 1}, search=${searchQuery}, categoryId=${selectedCategory})}">Sau →</a>
+  </div>
+
+  <div class="empty-state" th:unless="${products != null and !products.isEmpty()}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <h3>Chưa có sản phẩm nào</h3>
+    <p>Cửa hàng chưa có sản phẩm để hiển thị</p>
+  </div>
+</div>
+
+<div th:replace="~{common/staff/bottom-nav :: bottom-nav}"></div>
+
+<script>
+let searchTimer;
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { document.forms[0].submit(); }, 300);
+}
+</script>
+</body>
+</html>

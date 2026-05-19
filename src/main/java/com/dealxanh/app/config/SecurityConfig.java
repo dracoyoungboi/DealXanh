@@ -63,7 +63,10 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MODERATOR")
 
                 // Seller routes - chỉ STORE_OWNER và STORE_STAFF
-                .requestMatchers("/seller/**", "/store/dashboard/**").hasAnyRole("STORE_OWNER", "STORE_STAFF")
+                .requestMatchers("/seller/**", "/store/dashboard/**").hasAnyRole("STORE_OWNER")
+
+                // Staff routes - chỉ STORE_STAFF (dùng chung cổng login /seller/login)
+                .requestMatchers("/staff/**").hasRole("STORE_STAFF")
 
                 // Buyer routes - public (không cần đăng nhập)
                 .requestMatchers("/", "/home", "/shop/**", "/product/**", "/store/**").permitAll()
@@ -124,7 +127,15 @@ public class SecurityConfig {
                     "/seller/deals/*/assign-products", "/seller/deals/*/remove-product/*",
                     "/seller/deals/*/pause", "/seller/deals/*/resume",
                     "/seller/products/*/toggle", "/seller/products/*/edit",
+                    "/seller/api/products/*/delete", "/seller/api/products/quick-push",
                     "/seller/orders/*/status",
+                    "/seller/api/finance/**",
+                    "/seller/profile/update-store", "/seller/profile/update-documents", "/seller/profile/change-password",
+                    "/seller/store-page/update",
+                    "/seller/manage-staff/add", "/seller/manage-staff/*/remove", "/seller/manage-staff/*/toggle",
+                    "/staff/orders/*/status",
+                    "/staff/profile/update", "/staff/profile/change-password",
+                    "/pickup/*/confirm",
                     "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )
             )

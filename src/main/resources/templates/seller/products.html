@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sản phẩm — DealXanh Seller</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <div th:replace="~{common/admin/css :: css}"></div>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
 :root{--primary:#0d5c2e;--primary-dark:#08421f;--surface:#fff;--bg:#f5f6f8;--text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--border:#e0e0e0;--border-light:#f0f0f0;--danger:#ef4444;--warning:#f59e0b;--success:#10b981;--info:#3b82f6;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:9999px;--font:'Inter',sans-serif}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padding-bottom:70px}
+html{height:auto;min-height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padding-bottom:80px}
 .page-header{background:var(--primary);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
 .back-btn{color:#fff;display:flex;align-items:center}.back-btn svg{width:20px;height:20px}
 .header-title{font-size:18px;font-weight:700;flex:1}
@@ -54,6 +57,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 .btn-primary{background:var(--primary);color:#fff}
 .fab{position:fixed;bottom:80px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(13,92,46,.4);z-index:10;text-decoration:none}
 .fab svg{width:24px;height:24px}
+/* Quick Push */
+.quick-push-banner{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-radius:var(--radius-md);padding:14px;margin-bottom:12px;display:none}
+.quick-push-banner .head{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.quick-push-banner .head .icon{font-size:20px}
+.quick-push-banner .head .title{font-size:13px;font-weight:700;color:#92400e}
+.quick-push-banner .head .badge{background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:var(--radius-full);margin-left:auto}
+.quick-push-banner .desc{font-size:11px;color:#a16207;margin-bottom:8px}
+.quick-push-cats{display:flex;flex-direction:column;gap:6px}
+.quick-cat{background:#fff;border-radius:var(--radius-sm);padding:10px 12px;border:1px solid #fde68a}
+.quick-cat .cat-name{font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:6px}
+.quick-cat .cat-products{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.quick-cat .tag{font-size:10px;padding:3px 8px;background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius-full);cursor:pointer;transition:all 0.15s;user-select:none}
+.quick-cat .tag.selected{background:#fef3c7;border-color:#f59e0b;color:#92400e;font-weight:600}
+.quick-cat .tag .check{display:none;margin-right:2px}
+.quick-cat .tag.selected .check{display:inline}
+.quick-cat .cat-act{display:flex;align-items:center;gap:8px}
+.quick-cat .btn-push{font-size:10px;font-weight:700;padding:6px 14px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:var(--radius-full);cursor:pointer;font-family:var(--font)}
+.quick-cat .btn-push:disabled{opacity:0.4;cursor:not-allowed}
+.quick-cat .info{font-size:10px;color:var(--text-tertiary)}
+.quick-push-all{display:flex;gap:6px;margin-top:10px}
+.btn-push-all{flex:1;font-size:11px;font-weight:700;padding:10px;background:var(--danger);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font)}
+.btn-push-all:disabled{opacity:0.4;cursor:not-allowed}
+.btn-dismiss{font-size:10px;color:var(--text-tertiary);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--font)}
+
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--border-light);padding:8px 0;z-index:20}
 .bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;text-decoration:none}
 .bottom-nav .nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
@@ -82,7 +109,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 
     <!-- Filter -->
     <form method="get" th:action="@{/seller/products}" class="filter-row">
-        <input type="text" name="search" class="filter-input" placeholder="Tìm sản phẩm..." th:value="${searchQuery}">
+        <input type="text" name="search" class="filter-input" placeholder="Tìm sản phẩm..." th:value="${searchQuery}" oninput="debounceSearch()">
         <select name="status" class="filter-select" onchange="this.form.submit()">
             <option value="">Tất cả</option>
             <option value="active" th:selected="${selectedStatus == 'active'}">Đang bán</option>
@@ -93,8 +120,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
             <option value="">Tất cả DM</option>
             <option th:each="cat : ${categories}" th:value="${cat.categoryId}" th:text="${cat.name}" th:selected="${selectedCategory != null && selectedCategory.toString() == cat.categoryId.toString()}"></option>
         </select>
-        <button type="submit" class="btn-search">Tìm</button>
     </form>
+
+    <!-- Quick Push Banner -->
+    <div class="quick-push-banner" id="quickPushBanner">
+        <div class="head">
+            <span class="icon">⚡</span>
+            <span class="title">Đẩy hàng nhanh — Sản phẩm sắp hết hạn</span>
+            <span class="badge" id="qpBadge">0</span>
+            <button class="btn-dismiss" onclick="dismissQuickPush()">Ẩn</button>
+        </div>
+        <div class="desc">Tự động đóng gói 3 sản phẩm cùng danh mục thành combo giảm giá 35%</div>
+        <div class="quick-push-cats" id="qpCats"></div>
+        <div class="quick-push-all">
+            <button class="btn-push-all" id="btnPushAll" onclick="quickPushAll()" disabled>⚡ Tạo tất cả combo đẩy nhanh</button>
+        </div>
+    </div>
 
     <!-- Product list -->
     <div class="product-list" th:if="${products != null and !products.isEmpty()}">
@@ -107,7 +148,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
                     <span class="stock-dot" th:class="${product.stockQuantity > 0 ? 'in' : 'out'}"></span>
                     <span th:text="${product.stockQuantity > 0 ? 'Còn ' + product.stockQuantity : 'Hết hàng'}" th:style="${product.stockQuantity > 0 ? 'color:var(--success)' : 'color:var(--danger)'}">Stock</span>
                     <span class="badge" th:classappend="${product.approvalStatus == 'APPROVED'} ? 'badge-success' : (${product.approvalStatus == 'PENDING'} ? 'badge-warning' : 'badge-danger')" th:text="${product.approvalStatus == 'APPROVED' ? 'Đã duyệt' : product.approvalStatus == 'PENDING' ? 'Chờ duyệt' : 'Từ chối'}">Status</span>
-                    <span th:if="${product.expiryDate != null}" style="font-size:11px;color:var(--text-tertiary)" th:text="'HSD: ' + #temporals.format(product.expiryDate, 'dd/MM')">Expiry</span>
+                    <span th:if="${product.expiryDate != null}" style="font-size:11px;color:var(--text-tertiary)">HSD: <span th:text="${#temporals.format(product.expiryDate, 'dd/MM')}"></span></span>
                 </div>
             </div>
             <div class="product-price">
@@ -145,7 +186,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
             <div style="padding:16px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;"><span style="font-size:16px;font-weight:700;" id="detailTitle">Chi tiết</span><button onclick="closeProductDetail()" style="width:32px;height:32px;border-radius:8px;background:var(--bg);border:none;cursor:pointer;font-size:16px;">✕</button></div>
             <div id="detailBody" style="padding:16px;overflow-y:auto;flex:1;">Đang tải...</div>
             <div style="padding:12px 16px;border-top:1px solid var(--border-light);display:flex;gap:8px;justify-content:flex-end;">
-                <button onclick="openEditForm()" class="btn" style="background:var(--bg);font-size:12px;">✏️ Sửa</button>
+                <button onclick="openEditForm()" id="btnEditProduct" class="btn" style="background:var(--bg);font-size:12px;">✏️ Sửa</button>
+                <button onclick="deleteCurrentProduct()" id="btnDeleteProduct" class="btn" style="background:var(--danger);color:#fff;font-size:12px;display:none;">🗑 Xóa</button>
                 <button onclick="closeProductDetail()" class="btn" style="background:var(--bg);font-size:12px;">Đóng</button>
             </div>
         </div>
@@ -182,12 +224,116 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 </div>
 
 <script>
+let searchTimer;
+function debounceSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        document.forms[0].submit();
+    }, 300);
+}
+
 let currentProductId=null,currentProductData=null;
-async function viewProductDetail(id){currentProductId=id;const m=document.getElementById('productDetailModal'),b=document.getElementById('detailBody');m.style.display='block';b.innerHTML='<div style="text-align:center;padding:30px;">Đang tải...</div>';try{const r=await fetch(`/seller/api/products/${id}/detail`);const d=await r.json();if(d.error){b.innerHTML=`<div style="text-align:center;color:var(--danger);">${d.error}</div>`;return}currentProductData=d;const pt=(d.platformDeals||[]).map(x=>`<span class="badge" style="background:rgba(139,92,246,.1);color:#8b5cf6;margin:2px;">🌐 ${x.dealName}: -${x.discountDisplay}</span>`).join('')||'<span style="font-size:12px;color:var(--text-tertiary);">Không có</span>';const st=(d.storeDeals||[]).map(x=>`<span class="badge" style="background:rgba(13,92,46,.1);color:var(--primary);margin:2px;">🏪 ${x.dealName}: ${x.discountDisplay}</span>`).join('')||'<span style="font-size:12px;color:var(--text-tertiary);">Chưa gán</span>';b.innerHTML=`<div style="text-align:center;margin-bottom:12px;"><img src="${d.imageUrl||'/img/default-product.svg'}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-md);" onerror="this.src='/img/default-product.svg'"><h3 style="margin-top:8px;">${d.name}</h3>${d.description?`<p style="font-size:13px;color:var(--text-secondary);">${d.description}</p>`:''}</div><div style="display:flex;justify-content:center;align-items:baseline;gap:8px;margin-bottom:12px;"><span style="font-size:24px;font-weight:800;color:var(--danger);">${(d.finalPrice||0).toLocaleString()}đ</span><span style="font-size:14px;color:var(--text-tertiary);text-decoration:line-through;">${(d.originalPrice||0).toLocaleString()}đ</span><span style="font-size:12px;font-weight:700;color:var(--danger);">(-${d.totalDiscountPercent||0}%)</span></div><div style="font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;"><div>Tồn: <b>${d.stockQuantity||0}</b></div><div>DM: <b>${d.categoryName||'Chưa có'}</b></div><div>HSD: <b>${d.expiryDate?new Date(d.expiryDate).toLocaleDateString('vi-VN'):'Không có'}</b></div><div>Duyệt: <b>${d.approvalStatus}</b></div></div><div style="font-size:11px;font-weight:700;margin-bottom:4px;color:#8b5cf6;">🌐 Deal toàn sàn</div><div style="margin-bottom:10px;">${pt}</div><div style="font-size:11px;font-weight:700;margin-bottom:4px;color:var(--primary);">🏪 Deal của shop</div><div>${st}</div>`}catch(e){b.innerHTML='<div style="text-align:center;color:var(--danger);">Không thể tải</div>'}}
-function closeProductDetail(){document.getElementById('productDetailModal').style.display='none'}
+async function viewProductDetail(id){currentProductId=id;const m=document.getElementById('productDetailModal'),b=document.getElementById('detailBody');m.style.display='block';b.innerHTML='<div style="text-align:center;padding:30px;">Đang tải...</div>';try{const r=await fetch(`/seller/api/products/${id}/detail`);const d=await r.json();if(d.error){b.innerHTML=`<div style="text-align:center;color:var(--danger);">${d.error}</div>`;return}currentProductData=d;
+// Show/hide delete button based on approval status
+const delBtn = document.getElementById('btnDeleteProduct');
+if (delBtn) delBtn.style.display = d.approvalStatus === 'PENDING' ? 'inline-flex' : 'none';
+const pt=(d.platformDeals||[]).map(x=>`<span class="badge" style="background:rgba(139,92,246,.1);color:#8b5cf6;margin:2px;">🌐 ${x.dealName}: -${x.discountDisplay}</span>`).join('')||'<span style="font-size:12px;color:var(--text-tertiary);">Không có</span>';const st=(d.storeDeals||[]).map(x=>`<span class="badge" style="background:rgba(13,92,46,.1);color:var(--primary);margin:2px;">🏪 ${x.dealName}: ${x.discountDisplay}</span>`).join('')||'<span style="font-size:12px;color:var(--text-tertiary);">Chưa gán</span>';b.innerHTML=`<div style="text-align:center;margin-bottom:12px;"><img src="${d.imageUrl||'/img/default-product.svg'}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-md);" onerror="this.src='/img/default-product.svg'"><h3 style="margin-top:8px;">${d.name}</h3>${d.description?`<p style="font-size:13px;color:var(--text-secondary);">${d.description}</p>`:''}</div><div style="display:flex;justify-content:center;align-items:baseline;gap:8px;margin-bottom:12px;"><span style="font-size:24px;font-weight:800;color:var(--danger);">${(d.finalPrice||0).toLocaleString()}đ</span><span style="font-size:14px;color:var(--text-tertiary);text-decoration:line-through;">${(d.originalPrice||0).toLocaleString()}đ</span><span style="font-size:12px;font-weight:700;color:var(--danger);">(-${d.totalDiscountPercent||0}%)</span></div><div style="font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;"><div>Tồn: <b>${d.stockQuantity||0}</b></div><div>DM: <b>${d.categoryName||'Chưa có'}</b></div><div>HSD: <b>${d.expiryDate?new Date(d.expiryDate).toLocaleDateString('vi-VN'):'Không có'}</b></div><div>Duyệt: <b style="color:${d.approvalStatus==='PENDING'?'var(--warning)':d.approvalStatus==='APPROVED'?'var(--success)':'var(--danger)'}">${d.approvalStatus}</b></div></div><div style="font-size:11px;font-weight:700;margin-bottom:4px;color:#8b5cf6;">🌐 Deal toàn sàn</div><div style="margin-bottom:10px;">${pt}</div><div style="font-size:11px;font-weight:700;margin-bottom:4px;color:var(--primary);">🏪 Deal của shop</div><div>${st}</div>`}catch(e){b.innerHTML='<div style="text-align:center;color:var(--danger);">Không thể tải</div>'}}
+function closeProductDetail(){document.getElementById('productDetailModal').style.display='none';document.getElementById('btnDeleteProduct').style.display='none';}
+async function deleteCurrentProduct(){if(!currentProductId)return;if(!confirm('Bạn có chắc muốn xóa sản phẩm này? Sản phẩm đang chờ duyệt sẽ bị xóa vĩnh viễn.'))return;const token=document.querySelector('meta[name="_csrf"]')?.content||'';const fd=new URLSearchParams();fd.append('_csrf',token);try{const r=await fetch(`/seller/api/products/${currentProductId}/delete`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()});const d=await r.json();alert(d.message||'OK');if(d.success){closeProductDetail();location.reload()}}catch(e){alert('Lỗi: '+e.message)}}
 function openEditForm(){if(!currentProductData)return;closeProductDetail();document.getElementById('editName').value=currentProductData.name||'';document.getElementById('editDesc').value=currentProductData.description||'';document.getElementById('editPrice').value=currentProductData.originalPrice||'';document.getElementById('editStock').value=currentProductData.stockQuantity||0;document.getElementById('editExpiry').value=currentProductData.expiryDate?currentProductData.expiryDate.split('T')[0]:'';document.getElementById('editExistingImg').value=currentProductData.imageUrl||'';document.getElementById('editProductForm').action=`/seller/products/${currentProductId}/edit`;document.getElementById('editProductModal').style.display='block'}
 function closeEditProduct(){document.getElementById('editProductModal').style.display='none'}
 function submitEdit(){document.getElementById('editProductForm').submit()}
+
+// ===== QUICK PUSH =====
+let quickPushData = null;
+
+document.addEventListener('DOMContentLoaded', () => { loadQuickPushData(); });
+
+async function loadQuickPushData() {
+    try {
+        const r = await fetch('/seller/api/products/expiring-soon?days=1');
+        quickPushData = await r.json();
+        if (!quickPushData.success || !quickPushData.categories || !quickPushData.categories.length) return;
+        document.getElementById('quickPushBanner').style.display = 'block';
+        document.getElementById('qpBadge').textContent = quickPushData.totalExpiring + ' SP';
+        document.getElementById('btnPushAll').disabled = false;
+        renderQuickPushCats();
+    } catch(e) {}
+}
+
+function renderQuickPushCats() {
+    const container = document.getElementById('qpCats');
+    container.innerHTML = quickPushData.categories.map(cat => {
+        const productTags = cat.products.map(p => `
+            <span class="tag" data-pid="${p.productId}" data-cat="${cat.categoryId}" onclick="toggleQpTag(this)">${p.name} (${(p.originalPrice||0).toLocaleString('vi-VN')}đ)</span>
+        `).join('');
+        return `<div class="quick-cat">
+            <div class="cat-name">🏷️ ${cat.categoryName} (${cat.productCount} SP → tối đa ${cat.possibleCombos} combo)</div>
+            <div class="cat-products">${productTags}</div>
+            <div class="cat-act">
+                <button class="btn-push" onclick="quickPushCat('${cat.categoryId}')" id="btn-${cat.categoryId}">⚡ Đẩy combo 3 món</button>
+                <span class="info">Chọn 3 SP cùng danh mục</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function toggleQpTag(el) {
+    const catId = el.dataset.cat;
+    el.classList.toggle('selected');
+    const selected = document.querySelectorAll(`.tag.selected[data-cat="${catId}"]`);
+    const selectedIds = [...selected].map(s => s.dataset.pid);
+    const btn = document.getElementById('btn-' + catId);
+    if (btn) {
+        btn.disabled = selectedIds.length < 3;
+        btn.textContent = selectedIds.length >= 3 ? `⚡ Đẩy ${selectedIds.length} SP (${Math.floor(selectedIds.length/3)} combo)` : '⚡ Đẩy combo 3 món';
+    }
+}
+
+async function quickPushCat(catId) {
+    const selected = [...document.querySelectorAll(`.tag.selected[data-cat="${catId}"]`)].map(s => s.dataset.pid);
+    if (selected.length < 3) { alert('Chọn ít nhất 3 sản phẩm để tạo combo'); return; }
+    // Take first 3 selected products
+    const batch = selected.slice(0, 3);
+    await doQuickPush(batch.join(','));
+}
+
+async function quickPushAll() {
+    if (!quickPushData || !quickPushData.categories) return;
+    let totalCreated = 0;
+    for (const cat of quickPushData.categories) {
+        // Take first 3 products from each category (auto-select)
+        const batch = cat.products.slice(0, 3).map(p => p.productId);
+        const result = await doQuickPush(batch.join(','), true);
+        if (result) totalCreated++;
+    }
+    if (totalCreated > 0) alert('Đã tạo ' + totalCreated + ' combo đẩy nhanh!');
+    loadQuickPushData();
+}
+
+async function doQuickPush(productIds, silent) {
+    const token = document.querySelector('meta[name="_csrf"]')?.content || '';
+    const formData = new URLSearchParams();
+    formData.append('productIds', productIds);
+    formData.append('_csrf', token);
+    try {
+        const r = await fetch('/seller/api/products/quick-push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        });
+        const d = await r.json();
+        if (!silent) alert(d.message || 'OK');
+        return d.success;
+    } catch(e) {
+        if (!silent) alert('Lỗi: ' + e.message);
+        return false;
+    }
+}
+
+function dismissQuickPush() {
+    document.getElementById('quickPushBanner').style.display = 'none';
+}
 </script>
 </body>
 </html>

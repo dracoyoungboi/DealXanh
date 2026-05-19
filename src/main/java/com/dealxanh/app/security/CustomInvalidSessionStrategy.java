@@ -23,7 +23,7 @@ public class CustomInvalidSessionStrategy implements InvalidSessionStrategy {
         String loginUrl;
         if (requestUrl.startsWith("/admin")) {
             loginUrl = "/admin/login?expired=true";
-        } else if (requestUrl.startsWith("/seller") || requestUrl.startsWith("/store")) {
+        } else if (requestUrl.startsWith("/staff") || requestUrl.startsWith("/seller") || requestUrl.startsWith("/store")) {
             loginUrl = "/seller/login?expired=true";
         } else {
             loginUrl = "/login?expired=true";

@@ -65,4 +65,30 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     // Count stores with pending payouts
     @Query("SELECT COUNT(DISTINCT t.store.storeId) FROM Transaction t WHERE t.type = 'PAYOUT' AND t.status = 'PENDING'")
     Long countStoresWithPendingPayouts();
+
+    // ===== Store-Specific Wallet Queries =====
+
+    // Total earned (SALE COMPLETED) for a store
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.store.storeId = :storeId AND t.type = 'SALE' AND t.status = 'COMPLETED'")
+    Double sumEarnedByStore(@Param("storeId") Long storeId);
+
+    // Total commission paid by a store
+    @Query("SELECT COALESCE(SUM(t.platformFee), 0) FROM Transaction t WHERE t.store.storeId = :storeId AND t.status = 'COMPLETED'")
+    Double sumCommissionByStore(@Param("storeId") Long storeId);
+
+    // Total paid out (PAYOUT COMPLETED) for a store
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.store.storeId = :storeId AND t.type = 'PAYOUT' AND t.status = 'COMPLETED'")
+    Double sumPaidOutByStore(@Param("storeId") Long storeId);
+
+    // Pending payout for a store
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.store.storeId = :storeId AND t.type = 'PAYOUT' AND t.status = 'PENDING'")
+    Double sumPendingPayoutByStore(@Param("storeId") Long storeId);
+
+    // Store transactions with optional type filter, paginated
+    @Query("SELECT t FROM Transaction t WHERE t.store.storeId = :storeId AND (:type IS NULL OR t.type = :type) ORDER BY t.createdAt DESC")
+    List<Transaction> findByStoreAndType(@Param("storeId") Long storeId, @Param("type") String type, org.springframework.data.domain.Pageable pageable);
+
+    // Store transactions in date range with optional type filter
+    @Query("SELECT t FROM Transaction t WHERE t.store.storeId = :storeId AND t.createdAt BETWEEN :start AND :end AND (:type IS NULL OR t.type = :type) ORDER BY t.createdAt DESC")
+    List<Transaction> findByStoreAndDateRangeAndType(@Param("storeId") Long storeId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, @Param("type") String type, org.springframework.data.domain.Pageable pageable);
 }

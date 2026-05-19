@@ -95,7 +95,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                 break;
             } else if (role.equals("ROLE_STORE_STAFF")) {
                 isSeller = true;
-                redirectUrl = "/seller/dashboard";
+                redirectUrl = "/staff/dashboard";
                 roleFound = true;
                 System.out.println("DEBUG: Staff role, redirecting to: " + redirectUrl);
                 break;
@@ -110,8 +110,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         // Check if user logged in from WRONG login page - redirect to correct login page
         if ((isAdmin && referer != null && referer.contains("/login") && !referer.contains("/admin/login")) ||
-            (isSeller && referer != null && referer.contains("/login") && !referer.contains("/seller/login"))) {
-            System.out.println("DEBUG: Admin/Seller logged in from BUYER login page - redirecting to correct login page");
+            (isSeller && referer != null && referer.contains("/login") && !referer.contains("/seller/login") && !referer.contains("/staff/login"))) {
+            System.out.println("DEBUG: Admin/Seller/Staff logged in from BUYER login page - redirecting to correct login page");
 
             // Logout this session
             SecurityContextHolder.clearContext();

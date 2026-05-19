@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xác nhận nhận hàng — DealXanh</title>
+<div th:replace="~{common/admin/css :: css}"></div>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#0d5c2e;--primary-dark:#08421f;--surface:#fff;--bg:#f5f6f8;--text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--border:#e0e0e0;--border-light:#f0f0f0;--danger:#ef4444;--warning:#f59e0b;--success:#10b981;--radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-full:9999px}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text-primary)}
+.page{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:420px;text-align:center;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+.icon{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.icon.success{background:rgba(16,185,129,.1);color:var(--success)}
+.icon.error{background:rgba(239,68,68,.1);color:var(--danger)}
+.icon.warning{background:rgba(245,158,11,.1);color:var(--warning)}
+.icon svg{width:36px;height:36px}
+.title{font-size:20px;font-weight:800;margin-bottom:8px}
+.subtitle{font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.5}
+.order-info{background:var(--bg);border-radius:var(--radius-md);padding:14px;text-align:left;margin-bottom:16px}
+.info-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border-light)}
+.info-row:last-child{border-bottom:none}
+.info-lbl{color:var(--text-secondary)}.info-val{font-weight:600}
+.item-list{text-align:left;margin-bottom:12px}
+.item{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border-light)}
+.item:last-child{border-bottom:none}
+.item-qty{background:var(--primary);color:#fff;padding:2px 8px;border-radius:var(--radius-full);font-size:10px;font-weight:700;min-width:24px;text-align:center}
+.item-name{flex:1;font-weight:600}
+.item-price{font-weight:700;color:var(--primary)}
+.total{display:flex;justify-content:space-between;font-size:16px;font-weight:800;padding-top:10px;margin-top:8px;border-top:2px solid var(--border)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:14px 24px;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer;border:none;width:100%;font-family:'Inter',sans-serif;transition:all 0.15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-outline{background:var(--surface);color:var(--text-secondary);border:1px solid var(--border);margin-top:8px}
+
+.result-icon{font-size:48px;margin-bottom:12px}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:var(--radius-md);font-size:13px;font-weight:600;z-index:200}
+.toast.success{background:#059669;color:#fff}
+.toast.error{background:#dc2626;color:#fff}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="card">
+  <!-- Error state -->
+  <th:block th:if="${error != null}">
+    <div class="icon error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+    <div class="title">Không thể nhận hàng</div>
+    <div class="subtitle" th:text="${error}">Lỗi</div>
+    <a href="/" class="btn btn-outline">Về trang chủ</a>
+  </th:block>
+
+  <!-- Already completed -->
+  <th:block th:if="${alreadyCompleted}">
+    <div class="icon success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+    <div class="title">Đơn hàng đã được nhận</div>
+    <div class="subtitle">Đơn hàng này đã hoàn thành trước đó</div>
+    <a href="/" class="btn btn-outline">Về trang chủ</a>
+  </th:block>
+
+  <!-- Ready for pickup -->
+  <th:block th:if="${error == null && !alreadyCompleted && order != null}">
+    <div class="icon warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+    <div class="title">Xác nhận nhận hàng</div>
+    <div class="subtitle">Vui lòng kiểm tra đơn hàng trước khi xác nhận</div>
+
+    <div class="order-info">
+      <div class="info-row"><span class="info-lbl">Mã đơn</span><span class="info-val" th:text="'#' + ${order.orderId}">#0</span></div>
+      <div class="info-row"><span class="info-lbl">Cửa hàng</span><span class="info-val" th:text="${order.store?.storeName}">Store</span></div>
+      <div class="info-row"><span class="info-lbl">Ngày đặt</span><span class="info-val" th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : ''}">Date</span></div>
+    </div>
+
+    <div class="item-list" th:if="${items != null and !items.isEmpty()}">
+      <div class="item" th:each="item : ${items}">
+        <span class="item-qty" th:text="${item.quantity}">1</span>
+        <span class="item-name" th:text="${item.product?.name}">Sản phẩm</span>
+        <span class="item-price" th:text="${#numbers.formatDecimal(item.subtotal, 0, 0) + 'đ'}">0đ</span>
+      </div>
+    </div>
+
+    <div class="total">
+      <span>Tổng cộng</span>
+      <span style="color:var(--primary);" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 0) + 'đ'}">0đ</span>
+    </div>
+
+    <button class="btn btn-primary" id="confirmBtn" onclick="confirmPickup()">✅ Xác nhận đã nhận hàng</button>
+    <a href="/" class="btn btn-outline" style="display:block;text-align:center;text-decoration:none;">Về trang chủ</a>
+  </th:block>
+</div>
+</div>
+
+<script>
+async function confirmPickup() {
+    if (!confirm('Bạn chắc chắn đã nhận được hàng?')) return;
+    const btn = document.getElementById('confirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Đang xử lý...';
+    try {
+        const qrCode = window.location.pathname.split('/').pop();
+        const r = await fetch('/pickup/' + qrCode + '/confirm', { method: 'POST' });
+        const d = await r.json();
+        if (d.success) {
+            document.querySelector('.card').innerHTML = `
+                <div class="result-icon">🎉</div>
+                <div class="title">Nhận hàng thành công!</div>
+                <div class="subtitle">${d.message}</div>
+                <a href="/" class="btn btn-primary" style="margin-top:12px;">Về trang chủ</a>`;
+        } else {
+            alert(d.message);
+            btn.disabled = false;
+            btn.textContent = '✅ Xác nhận đã nhận hàng';
+        }
+    } catch(e) {
+        alert('Lỗi kết nối');
+        btn.disabled = false;
+        btn.textContent = '✅ Xác nhận đã nhận hàng';
+    }
+}
+</script>
+</body>
+</html>

@@ -3,14 +3,22 @@ package com.dealxanh.app.controller;
 import com.dealxanh.app.entity.Deal;
 import com.dealxanh.app.entity.DealCategory;
 import com.dealxanh.app.entity.DealProduct;
+import com.dealxanh.app.entity.Order;
+import com.dealxanh.app.entity.Product;
+import com.dealxanh.app.entity.Store;
 import com.dealxanh.app.repository.DealRepository;
 import com.dealxanh.app.repository.DealCategoryRepository;
 import com.dealxanh.app.repository.DealProductRepository;
+import com.dealxanh.app.repository.OrderRepository;
+import com.dealxanh.app.repository.ProductRepository;
 import com.dealxanh.app.repository.StoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,6 +40,12 @@ public class HomeController {
 
     @Autowired
     private StoreRepository storeRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     @GetMapping("/")
     public String home(Model model) {
@@ -113,5 +127,77 @@ public class HomeController {
     @GetMapping("/home")
     public String homePage(Model model) {
         return home(model);
+    }
+
+    @GetMapping("/store/{storeId}")
+    public String storePage(@PathVariable Long storeId, Model model) {
+        Store store = storeRepository.findById(storeId).orElse(null);
+        if (store == null || !"ACTIVE".equals(store.getStatus())) {
+            return "redirect:/home";
+        }
+
+        // Active deals for this store
+        LocalDateTime now = LocalDateTime.now();
+        List<Deal> activeDeals = dealRepository.findByStoreStoreIdAndStatus(storeId, "ACTIVE");
+        activeDeals = activeDeals.stream()
+            .filter(d -> d.getStartTime() != null && d.getStartTime().isBefore(now)
+                      && d.getEndTime() != null && d.getEndTime().isAfter(now))
+            .toList();
+
+        // Active products
+        List<Product> products = productRepository.findByStoreStoreIdAndDeletedFalse(storeId).stream()
+            .filter(p -> p.getActive() && "APPROVED".equals(p.getApprovalStatus()))
+            .toList();
+
+        model.addAttribute("store", store);
+        model.addAttribute("activeDeals", activeDeals);
+        model.addAttribute("products", products);
+        return "buyer/store";
+    }
+
+    // ============ PICKUP CONFIRMATION (QR scan) ============
+
+    @GetMapping("/pickup/{qrCode}")
+    public String pickupConfirm(@PathVariable String qrCode, Model model) {
+        Order order = orderRepository.findByPickupQrCode(qrCode).orElse(null);
+        if (order == null) {
+            model.addAttribute("error", "Mã QR không hợp lệ hoặc đơn hàng không tồn tại");
+            return "buyer/pickup-confirm";
+        }
+
+        if ("COMPLETED".equals(order.getStatus())) {
+            model.addAttribute("alreadyCompleted", true);
+            model.addAttribute("order", order);
+            return "buyer/pickup-confirm";
+        }
+
+        if (!"READY_FOR_PICKUP".equals(order.getStatus())) {
+            model.addAttribute("error", "Đơn hàng chưa sẵn sàng để nhận. Trạng thái hiện tại: " + order.getStatus());
+            model.addAttribute("order", order);
+            return "buyer/pickup-confirm";
+        }
+
+        model.addAttribute("order", order);
+        model.addAttribute("items", order.getOrderItems());
+        return "buyer/pickup-confirm";
+    }
+
+    @PostMapping("/pickup/{qrCode}/confirm")
+    @ResponseBody
+    public java.util.Map<String, Object> confirmPickup(@PathVariable String qrCode) {
+        Order order = orderRepository.findByPickupQrCode(qrCode).orElse(null);
+        if (order == null) return java.util.Map.of("success", false, "message", "Mã QR không hợp lệ");
+
+        if ("COMPLETED".equals(order.getStatus()))
+            return java.util.Map.of("success", false, "message", "Đơn hàng đã được nhận trước đó");
+
+        if (!"READY_FOR_PICKUP".equals(order.getStatus()))
+            return java.util.Map.of("success", false, "message", "Đơn hàng chưa sẵn sàng để nhận");
+
+        order.setStatus("COMPLETED");
+        order.setActualPickupTime(java.time.LocalDateTime.now());
+        orderRepository.save(order);
+
+        return java.util.Map.of("success", true, "message", "✅ Xác nhận nhận hàng thành công! Cảm ơn bạn đã mua sắm tại DealXanh.");
     }
 }
