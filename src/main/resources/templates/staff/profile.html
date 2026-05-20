@@ -64,7 +64,7 @@
   <!-- Profile header with avatar -->
   <div class="profile-header">
     <div class="avatar-wrap">
-      <div class="avatar">
+      <div class="avatar" id="avatarClickable" onclick="previewAvatarFull()" th:style="${user.avatarUrl != null} ? 'cursor:pointer' : ''">
         <img th:if="${user.avatarUrl != null}" th:src="${user.avatarUrl}" alt="" id="avatarImg">
         <span th:unless="${user.avatarUrl != null}" id="avatarPlaceholder" th:text="${user.fullName != null ? user.fullName.charAt(0) : user.username.charAt(0)}">N</span>
       </div>
@@ -159,9 +159,31 @@
   </div>
 </div>
 
+<!-- Avatar preview modal -->
+<div id="avatarPreviewModal" class="modal-overlay" style="display:none;" onclick="closeAvatarPreview(event)">
+  <div class="modal-box" style="max-width:360px;padding:12px;text-align:center;" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <span style="font-size:14px;font-weight:700;">Ảnh đại diện</span>
+      <button onclick="closeAvatarPreview()" style="width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <img id="avatarPreviewImg" src="" style="width:100%;max-height:60vh;border-radius:var(--radius-md);object-fit:cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23e0e0e0%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2240%22>📷</text></svg>';">
+  </div>
+</div>
+
 <div th:replace="~{common/staff/bottom-nav :: bottom-nav}"></div>
 
 <script>
+function previewAvatarFull() {
+  const img = document.getElementById('avatarImg');
+  if (!img || !img.src) return;
+  document.getElementById('avatarPreviewImg').src = img.src;
+  document.getElementById('avatarPreviewModal').style.display = 'flex';
+}
+function closeAvatarPreview(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('avatarPreviewModal').style.display = 'none';
+  document.getElementById('avatarPreviewImg').src = '';
+}
 function toggleEdit() {
   const view = document.getElementById('infoView');
   const form = document.getElementById('infoForm');
@@ -223,6 +245,11 @@ function checkMatch() {
 }
 
 setTimeout(() => { const t = document.querySelector('.toast'); if (t) t.style.opacity = '0'; }, 3000);
+
+// Auto-open password modal if redirected with ?changePassword=1
+if (window.location.search.includes('changePassword=1')) {
+  setTimeout(() => openPasswordModal(), 400);
+}
 </script>
 </body>
 </html>

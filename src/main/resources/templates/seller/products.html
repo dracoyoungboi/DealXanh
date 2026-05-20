@@ -149,6 +149,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
                     <span th:text="${product.stockQuantity > 0 ? 'Còn ' + product.stockQuantity : 'Hết hàng'}" th:style="${product.stockQuantity > 0 ? 'color:var(--success)' : 'color:var(--danger)'}">Stock</span>
                     <span class="badge" th:classappend="${product.approvalStatus == 'APPROVED'} ? 'badge-success' : (${product.approvalStatus == 'PENDING'} ? 'badge-warning' : 'badge-danger')" th:text="${product.approvalStatus == 'APPROVED' ? 'Đã duyệt' : product.approvalStatus == 'PENDING' ? 'Chờ duyệt' : 'Từ chối'}">Status</span>
                     <span th:if="${product.expiryDate != null}" style="font-size:11px;color:var(--text-tertiary)">HSD: <span th:text="${#temporals.format(product.expiryDate, 'dd/MM')}"></span></span>
+                    <span th:if="${product.createdBy != null}" style="font-size:11px;color:var(--info);display:flex;align-items:center;gap:3px;">👤 <span th:text="${product.createdBy.fullName != null ? product.createdBy.fullName : product.createdBy.username}">Creator</span></span>
                 </div>
             </div>
             <div class="product-price">

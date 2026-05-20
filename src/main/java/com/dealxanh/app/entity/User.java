@@ -22,6 +22,9 @@ public class User {
     private String avatarUrl;
     private Boolean active = true;
 
+    // Đánh dấu mật khẩu yếu (tự động sinh) — cần đổi khi login
+    private Boolean weakPassword = false;
+
     // OAuth2 (Google Login)
     private String provider; // local, google
     private String providerId;
@@ -80,6 +83,9 @@ public class User {
 
     public Boolean getActive() { return active != null ? active : true; }
     public void setActive(Boolean active) { this.active = active; }
+
+    public Boolean getWeakPassword() { return weakPassword != null ? weakPassword : false; }
+    public void setWeakPassword(Boolean weakPassword) { this.weakPassword = weakPassword; }
 
     public String getProvider() { return provider; }
     public void setProvider(String provider) { this.provider = provider; }

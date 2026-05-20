@@ -135,6 +135,7 @@ public class SecurityConfig {
                     "/seller/manage-staff/add", "/seller/manage-staff/*/remove", "/seller/manage-staff/*/toggle",
                     "/staff/orders/*/status",
                     "/staff/profile/update", "/staff/profile/change-password",
+                    "/staff/products/create",
                     "/pickup/*/confirm",
                     "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )

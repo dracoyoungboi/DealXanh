@@ -2,7 +2,7 @@
 
 ## 📊 Project Status: **~85% Complete**
 
-**Last Updated:** 2026-05-19 (end of day)
+**Last Updated:** 2026-05-20
 **Version:** 1.0.0-alpha
 
 ---
@@ -136,7 +136,7 @@ User mua với giá DEAL
 - ⚠️ Payment integration missing
 
 ### **9. Database & Migrations (100%)**
-- ✅ Flyway migrations (V1 - V4)
+- ✅ Flyway migrations (V1 - V7)
 - ✅ Soft delete pattern
 - ✅ Proper indexing
 - ✅ Foreign key constraints
@@ -471,6 +471,46 @@ function closeDocPreview(e) {
 - ❌ KHÔNG dùng `th:onclick="|func('${var}')|"` với string variable — Thymeleaf 3.1 chặn
 - ✅ Dùng `th:data-url="${var}" onclick="func(this.dataset.url)"` — an toàn, tương thích
 
+### **18. Phong cách coding — quy tắc chung**
+
+**Fragment:**
+- ✅ LUÔN dùng `th:replace` không parameter khi fragment dùng chung model — tránh conflict tên biến
+  ```html
+  <!-- ĐÚNG: fragment tự đọc từ model -->
+  <div th:replace="~{common/staff/header :: header}"></div>
+  <!-- SAI: parameter trùng tên model attribute gây lỗi -->
+  <div th:replace="~{common/staff/header :: header(user, store, ...)}"></div>
+  ```
+- ✅ Tách header + bottom-nav + css thành fragment riêng trong `common/[role]/` cho mỗi role
+
+**Controller:**
+- ✅ Controller riêng cho từng role: AdminController (`/admin/**`), SellerController (`/seller/**`), StaffController (`/staff/**`)
+- ✅ Mỗi controller có `@PreAuthorize` ở class level
+- ✅ Dùng `getCurrentUser(Principal)` helper để load user fresh từ DB mỗi request
+- ✅ Dùng `findRoleByName("ROLE_XXX", "XXX")` thử cả 2 format (DB có thể thiếu prefix `ROLE_`)
+
+**Trang mới:**
+- ✅ Tạo đủ endpoint GET + xử lý model trước khi viết template
+- ✅ Thêm CSRF ignore trong `SecurityConfig` cho POST endpoint mới
+- ✅ Dùng fragment chung cho header/bottom-nav/css
+- ✅ Set `activePage` trong model để bottom-nav highlight đúng tab
+- ✅ Set `pendingToday` cho staff pages để hiển thị badge số đơn chờ
+
+**Modal / Popup:**
+- ✅ Dùng pattern `data-url` + `onclick` cho button mở modal, không dùng `th:onclick` với string
+- ✅ Image preview: phân biệt ảnh (hiển thị `<img>`) vs PDF (mở tab mới)
+- ✅ Modal close: click overlay background hoặc nút ✕
+
+**File upload:**
+- ✅ LUÔN validate `contentType` + `fileSize` TRƯỚC khi `saveUploadedFile()`
+- ✅ `saveUploadedFile()` dùng MD5 hash — tự động dedup
+- ✅ Thêm hint frontend về định dạng + kích thước cho phép
+
+**QR / Pickup Flow:**
+- ✅ QR code format: `DX-{orderId}-{6 random chars}`
+- ✅ Generate QR khi order chuyển sang `READY_FOR_PICKUP`
+- ✅ Buyer confirm tại `/pickup/{qrCode}` → POST confirm → COMPLETED
+
 ---
 
 ## 🔐 Security & Permissions
@@ -550,6 +590,7 @@ src/main/java/com/dealxanh/app/
     ├── auth/
     │   └── AuthController.java ✅ (logout role-based redirect)
     ├── SellerController.java ✅ (1800+ lines - analytics, store-page, quick-push)
+    ├── StaffController.java ✅ (300+ lines - orders, products CRUD, profile)
     ├── HomeController.java ✅ (dynamic /store/{storeId})
     └── ... (2 more)
 
@@ -560,7 +601,8 @@ src/main/resources/
 │   ├── V3__add_apply_method_to_deals.sql
 │   ├── V4__add_deal_validations.sql
 │   ├── V5__add_partner_tier.sql
-│   └── V6__add_current_price.sql ✅ (NEW)
+│   ├── V6__add_current_price.sql ✅ (NEW)
+│   └── V7__add_created_by_to_products.sql ✅ (NEW)
 ├── templates/
 │   ├── common/admin/
 │   │   ├── admin-layout.html ✅
@@ -578,7 +620,7 @@ src/main/resources/
 │   │   ├── finance.html ✅
 │   │   ├── analytics.html ✅
 │   │   └── ... (3 more)
-│   ├── seller/ (8 pages)
+│   ├── seller/ (9 pages)
 │   │   ├── dashboard.html ✅
 │   │   ├── deals.html ✅
 │   │   ├── create-deal.html ✅
@@ -589,6 +631,16 @@ src/main/resources/
 │   │   ├── analytics.html ✅ (multi-chart, recommendations)
 │   │   ├── profile.html ✅ (store page link, password change)
 │   │   └── store-page.html ✅ (drag-drop builder)
+│   ├── common/staff/
+│   │   ├── css.html ✅
+│   │   ├── header.html ✅
+│   │   └── bottom-nav.html ✅ (4 tabs)
+│   ├── staff/ (5 pages)
+│   │   ├── dashboard.html ✅
+│   │   ├── orders.html ✅ (detail popup, status update)
+│   │   ├── products.html ✅ (create button, detail modal)
+│   │   ├── create-product.html ✅ (NEW)
+│   │   └── profile.html ✅ (avatar, info, password)
 │   └── buyer/ (16+ pages)
 │       ├── home.html ✅
 │       ├── store.html ✅ (NEW - dynamic store page)
@@ -642,6 +694,25 @@ src/main/resources/
 ---
 
 ## ⚠️ Known Issues & Fixes
+
+### **Recent Fixes (2026-05-20):**
+
+1. **Staff Product Management — Create & Detail**
+   - ✅ Staff can now create products: `GET /staff/products/create` (form) + `POST /staff/products/create` (submit)
+   - ✅ Staff product detail popup: click product row → modal with full info (name, price, stock, category, HSD, status, creator)
+   - ✅ API: `GET /staff/api/products/{id}/detail` returns product JSON with `createdByName`
+   - ✅ Template: `staff/create-product.html` with staff header/bottom-nav fragments, image upload validation
+   - ✅ Staff products page: added "+ Thêm sản phẩm" button, product rows clickable for detail
+   - ✅ CSRF: `/staff/products/create` added to ignore list
+
+2. **Product.createdBy — Track Who Created Product**
+   - ✅ Product entity: added `@ManyToOne User createdBy` field (FK `created_by` → `users.user_id`)
+   - ✅ Flyway migration `V7__add_created_by_to_products.sql`
+   - ✅ SellerController: `setCreatedBy(user)` in both normal create and quick-push combo create
+   - ✅ StaffController: `setCreatedBy(user)` when staff creates product
+   - ✅ Seller products page: shows "👤 {creator name}" in product meta row
+   - ✅ Staff product detail: shows "Người tạo" field
+   - ✅ Admin products page: already shows "🏪 Cửa hàng" (store name) — no change needed
 
 ### **Recent Fixes (2026-05-19):**
 

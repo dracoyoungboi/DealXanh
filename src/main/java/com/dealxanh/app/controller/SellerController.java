@@ -171,6 +171,7 @@ public class SellerController {
             newStaff.setRole(staffRole);
             newStaff.setWorkStore(store);
             newStaff.setActive(true);
+            newStaff.setWeakPassword(true);
             newStaff.setCreatedAt(java.time.LocalDateTime.now());
             userRepository.save(newStaff);
 
@@ -881,6 +882,7 @@ public class SellerController {
             combo.setStockQuantity(10); // Default stock for quick-push combo
             combo.setProductType("COMBO");
             combo.setStore(user.getWorkStore());
+            combo.setCreatedBy(user);
             combo.setApprovalStatus("PENDING");
             combo.setActive(true);
             combo.setDeleted(false);
@@ -956,6 +958,7 @@ public class SellerController {
             product.setProductType(productType != null ? productType : "SPECIFIC_DEAL");
             product.setImageUrl(imgPath);
             product.setStore(user.getWorkStore());
+            product.setCreatedBy(user);
             product.setApprovalStatus("PENDING");
             product.setActive(true);
             product.setDeleted(false);

@@ -67,6 +67,16 @@
 .eq-title{font-size:16px;font-weight:700}
 .eq-desc{font-size:13px;color:var(--text-secondary);line-height:1.6}
 
+/* Weak password modal */
+.pwd-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.pwd-modal{background:var(--surface);border-radius:var(--radius-xl);padding:24px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.pwd-modal .warn-icon{width:56px;height:56px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px}
+.pwd-modal h3{font-size:16px;font-weight:800;margin-bottom:8px}
+.pwd-modal p{font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.5}
+.pwd-modal .btn-row{display:flex;flex-direction:column;gap:8px}
+.pwd-modal .btn-accept{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.pwd-modal .btn-later{font-size:12px;color:var(--text-tertiary);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--font);padding:6px}
+
 .active-slot-badge{display:inline-flex;align-items:center;gap:3px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:var(--radius-full);font-size:10px;font-weight:600;cursor:pointer}
 </style>
 </head>
@@ -182,9 +192,37 @@
   </div>
 </div>
 
+<!-- Weak Password Modal -->
+<div class="pwd-modal-overlay" id="weakPasswordModal" style="display:none;" th:if="${weakPassword}">
+  <div class="pwd-modal">
+    <div class="warn-icon">⚠️</div>
+    <h3>Mật khẩu của bạn quá yếu</h3>
+    <p>Mật khẩu hiện tại là mật khẩu tự động, dễ bị đoán. Vui lòng đổi mật khẩu mới để bảo vệ tài khoản của bạn.</p>
+    <div class="btn-row">
+      <button class="btn-accept" onclick="goChangePassword()">Chấp nhận đổi mật khẩu</button>
+      <button class="btn-later" onclick="dismissWeakPassword()">Để sau</button>
+    </div>
+  </div>
+</div>
+
 <div th:replace="~{common/staff/bottom-nav :: bottom-nav}"></div>
 
 <script>
+// ===== WEAK PASSWORD MODAL =====
+(function() {
+    const modal = document.getElementById('weakPasswordModal');
+    if (modal) modal.style.display = 'flex';
+})();
+
+function goChangePassword() {
+    window.location.href = '/staff/profile?changePassword=1';
+}
+
+function dismissWeakPassword() {
+    const modal = document.getElementById('weakPasswordModal');
+    if (modal) modal.style.display = 'none';
+}
+
 // ===== TAP INDICATOR STEPS =====
 let currentStep = 0;
 const stepLabels = ['Bước 1/3 — Xem đơn chờ', 'Bước 2/3 — Xác nhận / Pickup', 'Bước 3/3 — Hoàn thành'];

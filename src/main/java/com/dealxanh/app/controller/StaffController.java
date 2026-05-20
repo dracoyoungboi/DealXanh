@@ -15,8 +15,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
@@ -71,6 +74,7 @@ public class StaffController {
         model.addAttribute("pendingToday", pendingToday);
         model.addAttribute("pickupSlots", slots);
         model.addAttribute("activePage", "dashboard");
+        model.addAttribute("weakPassword", user.getWeakPassword());
 
         return "staff/dashboard";
     }
@@ -207,6 +211,172 @@ public class StaffController {
         return "staff/products";
     }
 
+    // ============ CREATE PRODUCT ============
+
+    @GetMapping("/products/create")
+    public String createProductForm(Model model, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) return "redirect:/login";
+        Store store = user.getWorkStore();
+
+        model.addAttribute("user", user);
+        model.addAttribute("store", store);
+        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("pendingToday",
+            orderRepository.countByStoreStoreIdAndStatus(store.getStoreId(), "PENDING")
+            + orderRepository.countByStoreStoreIdAndStatus(store.getStoreId(), "CONFIRMED")
+            + orderRepository.countByStoreStoreIdAndStatus(store.getStoreId(), "READY_FOR_PICKUP"));
+        model.addAttribute("pickupSlots", store.getPickupSlots() != null ? store.getPickupSlots().split(",") : new String[]{"16:00-18:00", "17:00-19:00", "18:00-20:00"});
+        model.addAttribute("activePage", "products");
+        return "staff/create-product";
+    }
+
+    @PostMapping("/products/create")
+    public String createProduct(
+            @RequestParam String name,
+            @RequestParam(required = false) String description,
+            @RequestParam Double originalPrice,
+            @RequestParam(required = false) Integer stockQuantity,
+            @RequestParam(required = false) String productType,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String expiryDateStr,
+            @RequestParam(required = false) String comboProductIds,
+            @RequestParam(required = false) MultipartFile imageFile,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy cửa hàng");
+            return "redirect:/staff/products";
+        }
+
+        try {
+            String imgPath = null;
+            if (imageFile != null && !imageFile.isEmpty()) {
+                String contentType = imageFile.getContentType();
+                if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png") && !contentType.equals("image/webp"))) {
+                    redirectAttributes.addFlashAttribute("error", "File ảnh phải là JPG, PNG hoặc WEBP");
+                    return "redirect:/staff/products/create";
+                }
+                if (imageFile.getSize() > 5 * 1024 * 1024) {
+                    redirectAttributes.addFlashAttribute("error", "File ảnh tối đa 5MB");
+                    return "redirect:/staff/products/create";
+                }
+                imgPath = saveUploadedFile(imageFile);
+            }
+
+            Product product = new Product();
+            product.setName(name);
+            product.setDescription(description);
+            product.setOriginalPrice(originalPrice);
+            product.setCurrentPrice(originalPrice);
+            product.setStockQuantity(stockQuantity != null ? stockQuantity : 0);
+            product.setProductType(productType != null ? productType : "SPECIFIC_DEAL");
+            product.setImageUrl(imgPath);
+            product.setStore(user.getWorkStore());
+            product.setCreatedBy(user);
+            product.setApprovalStatus("PENDING");
+            product.setActive(true);
+            product.setDeleted(false);
+
+            if (categoryId != null) {
+                categoryRepository.findById(categoryId).ifPresent(product::setCategory);
+            }
+
+            // Combo: set expiry to earliest among selected products
+            if ("COMBO".equals(productType) && comboProductIds != null && !comboProductIds.isEmpty()) {
+                String[] ids = comboProductIds.split(",");
+                LocalDateTime earliestExpiry = null;
+                for (String idStr : ids) {
+                    Long pid = Long.parseLong(idStr.trim());
+                    Product comboItem = productRepository.findById(pid).orElse(null);
+                    if (comboItem != null && comboItem.getExpiryDate() != null) {
+                        if (earliestExpiry == null || comboItem.getExpiryDate().isBefore(earliestExpiry)) {
+                            earliestExpiry = comboItem.getExpiryDate();
+                        }
+                    }
+                }
+                if (earliestExpiry != null) {
+                    product.setExpiryDate(earliestExpiry);
+                }
+            } else if (expiryDateStr != null && !expiryDateStr.isEmpty()) {
+                product.setExpiryDate(LocalDateTime.parse(expiryDateStr + "T23:59:59"));
+            }
+
+            productRepository.save(product);
+            String msg = "COMBO".equals(productType)
+                ? "Tạo combo thành công! Sản phẩm đang chờ admin duyệt."
+                : "Tạo sản phẩm thành công! Sản phẩm đang chờ admin duyệt.";
+            redirectAttributes.addFlashAttribute("success", msg);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/staff/products";
+    }
+
+    // ============ COMBO AVAILABLE API ============
+
+    @GetMapping("/api/products/combo-available")
+    @ResponseBody
+    public java.util.Map<String, Object> getComboAvailableProducts(Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null)
+            return java.util.Map.of("error", "Không tìm thấy cửa hàng");
+
+        Long storeId = user.getWorkStore().getStoreId();
+        List<Product> products = productRepository.findComboAvailableByStore(storeId);
+
+        List<java.util.Map<String, Object>> result = products.stream().map(p -> {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("productId", p.getProductId());
+            m.put("name", p.getName());
+            m.put("originalPrice", Math.round(p.getOriginalPrice() != null ? p.getOriginalPrice() : 0));
+            m.put("stockQuantity", p.getStockQuantity());
+            m.put("expiryDate", p.getExpiryDate() != null ? p.getExpiryDate().toString() : null);
+            return m;
+        }).toList();
+
+        return java.util.Map.of("products", result);
+    }
+
+    // ============ PRODUCT DETAIL API ============
+
+    @GetMapping("/api/products/{productId}/detail")
+    @ResponseBody
+    public java.util.Map<String, Object> getProductDetail(@PathVariable Long productId, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null)
+            return java.util.Map.of("success", false, "message", "Không tìm thấy cửa hàng");
+
+        Product product = productRepository.findById(productId).orElse(null);
+        if (product == null || product.getDeleted())
+            return java.util.Map.of("success", false, "message", "Không tìm thấy sản phẩm");
+        if (!product.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
+            return java.util.Map.of("success", false, "message", "Sản phẩm không thuộc cửa hàng của bạn");
+
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("success", true);
+        result.put("productId", product.getProductId());
+        result.put("name", product.getName());
+        result.put("description", product.getDescription());
+        result.put("imageUrl", product.getImageUrl());
+        result.put("originalPrice", product.getOriginalPrice());
+        result.put("currentPrice", product.getCurrentPrice());
+        result.put("stockQuantity", product.getStockQuantity());
+        result.put("productType", product.getProductType());
+        result.put("approvalStatus", product.getApprovalStatus());
+        result.put("rejectionReason", product.getRejectionReason());
+        result.put("categoryName", product.getCategory() != null ? product.getCategory().getName() : null);
+        result.put("categoryId", product.getCategory() != null ? product.getCategory().getCategoryId() : null);
+        result.put("expiryDate", product.getExpiryDate() != null ? product.getExpiryDate().toString() : null);
+        result.put("createdAt", product.getCreatedAt() != null ? product.getCreatedAt().toString() : null);
+        result.put("createdByName", product.getCreatedBy() != null
+            ? (product.getCreatedBy().getFullName() != null ? product.getCreatedBy().getFullName() : product.getCreatedBy().getUsername())
+            : null);
+        return result;
+    }
+
     // ============ PROFILE ============
 
     @GetMapping("/profile")
@@ -297,6 +467,7 @@ public class StaffController {
                 return "redirect:/staff/profile";
             }
             user.setPassword(encoder.encode(newPassword));
+            user.setWeakPassword(false);
             userRepository.save(user);
             redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công!");
         } catch (Exception e) {

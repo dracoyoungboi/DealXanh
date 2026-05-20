@@ -154,6 +154,14 @@ function switchMode(mode) {
     document.getElementById('tabCreate').classList.toggle('active', mode === 'create');
     document.getElementById('formExisting').classList.toggle('active', mode === 'existing');
     document.getElementById('formCreate').classList.toggle('active', mode === 'create');
+    if (mode === 'create') {
+        // Auto-generate random 6-digit password
+        const pwdField = document.getElementById('newPassword');
+        if (!pwdField.value) {
+            pwdField.value = String(Math.floor(100000 + Math.random() * 900000));
+        }
+        pwdField.type = 'text'; // Show password so seller can see/copy it
+    }
 }
 
 async function addExistingStaff() {
