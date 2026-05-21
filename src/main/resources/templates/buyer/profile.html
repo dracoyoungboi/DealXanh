@@ -3,489 +3,609 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tài khoản - DealXanh</title>
-    <meta name="description" content="Quản lý thông tin tài khoản DealXanh">
+    <title>Thông tin tài khoản — DealXanh</title>
+    <meta name="description" content="Quản lý tài khoản và đơn hàng của bạn">
 
     <!-- CSS Fragment -->
-    <div th:replace="common/buyer/css :: css"></div>
-</head>
-<body>
-    <!-- Header Fragment -->
-    <div th:replace="common/buyer/header :: header"></div>
+    <div th:replace="~{common/buyer/css :: css}"></div>
 
-    <!-- Main Content -->
-    <main class="profile-page">
-        <div class="container">
-            <!-- Page Header -->
-            <div class="page-header">
-                <h1 class="page-title">Tài khoản</h1>
-                <p class="page-subtitle">Quản lý thông tin và cài đặt tài khoản</p>
-            </div>
-
-            <!-- Profile Overview Card -->
-            <div class="card profile-overview">
-                <div class="profile-overview__avatar">
-                    <div class="avatar avatar--lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                    </div>
-                </div>
-                <div class="profile-overview__info">
-                    <h2 class="profile-overview__name" th:text="${user != null ? user.fullName : 'Người dùng'}">Người dùng</h2>
-                    <p class="profile-overview__email" th:text="${user != null ? user.email : 'email@example.com'}">email@example.com</p>
-                    <div class="profile-overview__meta">
-                        <span class="badge badge--success" th:if="${user != null and user.active}">Hoạt động</span>
-                        <span class="badge badge--primary" th:if="${user != null and user.role != null}" th:text="${user.role.name}">USER</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Account Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-card__icon stat-card__icon--primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                        </svg>
-                    </div>
-                    <div class="stat-card__content">
-                        <div class="stat-card__value">0</div>
-                        <div class="stat-card__label">Đơn hàng</div>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-card__icon stat-card__icon--success">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                    </div>
-                    <div class="stat-card__content">
-                        <div class="stat-card__value">0</div>
-                        <div class="stat-card__label">Deal đã săn</div>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-card__icon stat-card__icon--warning">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                    </div>
-                    <div class="stat-card__content">
-                        <div class="stat-card__value">0</div>
-                        <div class="stat-card__label">Đã thích</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Account Menu -->
-            <div class="account-menu">
-                <h3 class="account-menu__title">Cài đặt tài khoản</h3>
-
-                <div class="account-menu__list">
-                    <!-- My Orders -->
-                    <a th:href="@{/buyer/orders}" class="account-menu__item">
-                        <div class="account-menu__icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                            </svg>
-                        </div>
-                        <div class="account-menu__content">
-                            <div class="account-menu__text">Đơn hàng của tôi</div>
-                            <div class="account-menu__desc">Xem lịch sử và trạng thái đơn hàng</div>
-                        </div>
-                        <div class="account-menu__arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </div>
-                    </a>
-
-                    <!-- Personal Info -->
-                    <div class="account-menu__item account-menu__item--disabled">
-                        <div class="account-menu__icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                        </div>
-                        <div class="account-menu__content">
-                            <div class="account-menu__text">Thông tin cá nhân</div>
-                            <div class="account-menu__desc">Cập nhật tên, email, số điện thoại</div>
-                        </div>
-                        <div class="account-menu__badge">
-                            <span class="badge badge--neutral">Sắp ra mắt</span>
-                        </div>
-                    </div>
-
-                    <!-- Addresses -->
-                    <div class="account-menu__item account-menu__item--disabled">
-                        <div class="account-menu__icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                        </div>
-                        <div class="account-menu__content">
-                            <div class="account-menu__text">Sổ địa chỉ</div>
-                            <div class="account-menu__desc">Quản lý địa chỉ giao hàng</div>
-                        </div>
-                        <div class="account-menu__badge">
-                            <span class="badge badge--neutral">Sắp ra mắt</span>
-                        </div>
-                    </div>
-
-                    <!-- Payment Methods -->
-                    <div class="account-menu__item account-menu__item--disabled">
-                        <div class="account-menu__icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                <line x1="1" y1="10" x2="23" y2="10"></line>
-                            </svg>
-                        </div>
-                        <div class="account-menu__content">
-                            <div class="account-menu__text">Phương thức thanh toán</div>
-                            <div class="account-menu__desc">Quản lý thẻ và ví điện tử</div>
-                        </div>
-                        <div class="account-menu__badge">
-                            <span class="badge badge--neutral">Sắp ra mắt</span>
-                        </div>
-                    </div>
-
-                    <!-- Logout -->
-                    <a href="#" onclick="handleLogout(event)" class="account-menu__item account-menu__item--danger">
-                        <div class="account-menu__icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                <polyline points="16 17 21 12 16 7"></polyline>
-                                <line x1="21" y1="12" x2="9" y2="12"></line>
-                            </svg>
-                        </div>
-                        <div class="account-menu__content">
-                            <div class="account-menu__text">Đăng xuất</div>
-                            <div class="account-menu__desc">Đăng xuất khỏi tài khoản</div>
-                        </div>
-                        <div class="account-menu__arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Mobile Nav Fragment -->
-    <div th:replace="common/buyer/mobile-nav :: mobileNav"></div>
-
-    <!-- JS Fragment -->
-    <div th:replace="common/buyer/js :: js"></div>
+    <!-- Page-specific stylesheet -->
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
 
     <style>
-        .profile-page {
-            min-height: 100vh;
-            background: var(--bg-light);
-            padding: 80px 0 100px;
+        /* ===== PROFILE PAGE ===== */
+        html {
+            height: auto;
+            min-height: 100%;
         }
 
-        @media (max-width: 768px) {
-            .profile-page {
-                padding: 60px 0 100px;
-            }
+        body {
+            padding-bottom: 80px;
+            min-height: 100%;
+            background: var(--background, #f5f5f5);
         }
 
-        .page-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .page-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0 0 8px 0;
-        }
-
-        .page-subtitle {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin: 0;
-        }
-
-        .profile-overview {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-
-        @media (max-width: 768px) {
-            .profile-overview {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
-
-        .avatar {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: var(--primary-light);
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .avatar--lg {
-            width: 80px;
-            height: 80px;
-        }
-
-        .profile-overview__info {
-            flex: 1;
-        }
-
-        .profile-overview__name {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin: 0 0 4px 0;
-        }
-
-        .profile-overview__email {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin: 0 0 8px 0;
-        }
-
-        .profile-overview__meta {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .badge--success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .badge--primary {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-
-        .badge--neutral {
-            background: var(--bg-light);
-            color: var(--text-secondary);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .stat-card__icon {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .stat-card__icon--primary {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-
-        .stat-card__icon--success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .stat-card__icon--warning {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .stat-card__value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 2px;
-        }
-
-        .stat-card__label {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .account-menu {
-            background: white;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
+        /* ---- Profile Header Card ---- */
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary, #0d5c2e) 0%, #0a4824 100%);
+            padding: 32px 20px 28px;
+            position: relative;
             overflow: hidden;
         }
-
-        .account-menu__title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            padding: 20px 20px 12px;
-            margin: 0;
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
         }
-
-        .account-menu__list {
-            display: flex;
-            flex-direction: column;
+        .profile-header::after {
+            content: '';
+            position: absolute;
+            bottom: -60px;
+            left: -40px;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
         }
-
-        .account-menu__item {
+        .ph-avatar {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.16);
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 16px 20px;
+            justify-content: center;
+            margin: 0 auto 14px;
+            border: 3px solid rgba(255,255,255,0.22);
+            position: relative;
+            z-index: 1;
+        }
+        .ph-avatar svg {
+            width: 36px;
+            height: 36px;
+            fill: rgba(255,255,255,0.88);
+        }
+        .ph-name {
+            font-size: 21px;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 4px;
+            letter-spacing: -0.2px;
+        }
+        .ph-email {
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 12px;
+        }
+        .ph-role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.14);
+            color: rgba(255,255,255,0.92);
+            font-size: 12px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+        .ph-role-badge::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #4ade80;
+            flex-shrink: 0;
+        }
+        .ph-role-wrap {
+            text-align: center;
+        }
+
+        /* ---- Stats Row ---- */
+        .stats-section {
+            background: var(--surface, #fff);
+            margin: -10px 12px 12px;
+            border-radius: 14px;
+            padding: 18px 4px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+        }
+        .stat-card {
+            flex: 1;
+            text-align: center;
+            padding: 6px 4px;
+            border-radius: 12px;
+            transition: background 0.15s;
+            cursor: pointer;
+            min-width: 0;
+        }
+        .stat-card:active {
+            background: var(--background, #f5f5f5);
+        }
+        .stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary, #0d5c2e);
+            line-height: 1.2;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary, #666);
+            margin-top: 3px;
+            font-weight: 500;
+        }
+        .stat-divider-v {
+            flex-shrink: 0;
+            width: 1px;
+            height: 36px;
+            background: var(--border, #e0e0e0);
+        }
+
+        /* ---- Recent Orders ---- */
+        .orders-section {
+            margin: 0 12px 12px;
+            background: var(--surface, #fff);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+        }
+        .orders-header {
+            padding: 18px 16px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .orders-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary, #1a1a1a);
+        }
+        .orders-see-all {
+            font-size: 13px;
+            color: var(--primary, #0d5c2e);
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .orders-see-all:active {
+            background: var(--background, #f5f5f5);
+        }
+        .orders-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .orders-empty {
+            padding: 44px 16px;
+            text-align: center;
+        }
+        .orders-empty svg {
+            width: 68px;
+            height: 68px;
+            fill: var(--border, #e0e0e0);
+            margin-bottom: 14px;
+        }
+        .orders-empty-text {
+            font-size: 14px;
+            color: var(--text-secondary, #666);
+            margin-bottom: 16px;
+        }
+        .orders-empty-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 28px;
+            border-radius: 24px;
+            background: var(--primary, #0d5c2e);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .orders-empty-btn:active {
+            opacity: 0.85;
+        }
+        .order-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
             text-decoration: none;
             color: inherit;
-            transition: background 0.2s;
-            border-top: 1px solid var(--border-light);
+            border-top: 1px solid var(--background, #f5f5f5);
+            transition: background 0.12s;
+            cursor: pointer;
         }
-
-        .account-menu__item:first-child {
-            border-top: none;
+        .order-item:active {
+            background: var(--background, #f5f5f5);
         }
-
-        .account-menu__item:hover:not(.account-menu__item--disabled):not(.account-menu__item--danger) {
-            background: var(--bg-light);
-        }
-
-        .account-menu__item--disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .account-menu__item--danger {
-            color: var(--status-danger);
-        }
-
-        .account-menu__item--danger:hover {
-            background: #fee;
-        }
-
-        .account-menu__icon {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-md);
-            background: var(--bg-light);
+        .order-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: var(--background, #f5f5f5);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            color: var(--primary);
+            margin-right: 13px;
         }
-
-        .account-menu__content {
+        .order-avatar svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--text-secondary, #666);
+        }
+        .order-info {
             flex: 1;
             min-width: 0;
         }
-
-        .account-menu__text {
-            font-size: 15px;
+        .order-store {
+            font-size: 14px;
             font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 2px;
+            color: var(--text-primary, #1a1a1a);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-
-        .account-menu__desc {
-            font-size: 13px;
-            color: var(--text-secondary);
+        .order-meta {
+            font-size: 12px;
+            color: var(--text-secondary, #666);
+            margin-top: 2px;
         }
+        .order-right {
+            text-align: right;
+            flex-shrink: 0;
+            margin-left: 14px;
+        }
+        .order-amount {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary, #1a1a1a);
+        }
+        .order-status-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+            margin-top: 5px;
+            display: inline-block;
+            letter-spacing: -0.2px;
+        }
+        .os-PENDING, .os-PENDING_CONFIRMATION { background: #fef3c7; color: #b45309; }
+        .os-CONFIRMED { background: #dbeafe; color: #1d4ed8; }
+        .os-PROCESSING, .os-PREPARING { background: #e0e7ff; color: #4338ca; }
+        .os-READY_FOR_PICKUP { background: #d1fae5; color: #065f46; }
+        .os-COMPLETED, .os-DELIVERED { background: #dcfce7; color: #166534; }
+        .os-CANCELLED, .os-CANCELED { background: #fee2e2; color: #991b1b; }
+        .os-RETURNED, .os-REFUNDED { background: #fce7f3; color: #9d174d; }
 
-        .account-menu__arrow {
-            color: var(--text-tertiary);
+        /* ---- Menu Section ---- */
+        .menu-section {
+            margin: 0 12px 12px;
+            background: var(--surface, #fff);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            text-decoration: none;
+            color: var(--text-primary, #1a1a1a);
+            border-bottom: 1px solid var(--background, #f5f5f5);
+            transition: background 0.12s;
+            cursor: pointer;
+        }
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        .menu-item:active:not(.menu-item--disabled) {
+            background: var(--background, #f5f5f5);
+        }
+        .menu-item--disabled {
+            opacity: 0.48;
+            cursor: not-allowed;
+        }
+        .menu-icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: var(--background, #f5f5f5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-right: 14px;
+        }
+        .menu-icon-box svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--text-secondary, #666);
+        }
+        .menu-icon-box--primary {
+            background: rgba(13, 92, 46, 0.07);
+        }
+        .menu-icon-box--primary svg {
+            fill: var(--primary, #0d5c2e);
+        }
+        .menu-icon-box--danger {
+            background: rgba(220, 38, 38, 0.07);
+        }
+        .menu-icon-box--danger svg {
+            fill: #dc2626;
+        }
+        .menu-label {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary, #1a1a1a);
+        }
+        .menu-badge {
+            font-size: 12px;
+            color: var(--text-secondary, #666);
+            margin-right: 6px;
+            background: var(--background, #f5f5f5);
+            padding: 3px 10px;
+            border-radius: 10px;
+        }
+        .menu-chevron {
+            width: 20px;
+            height: 20px;
+            fill: var(--border, #e0e0e0);
             flex-shrink: 0;
         }
+
+        /* ---- Logout Section ---- */
+        .logout-section {
+            margin: 0 12px 20px;
+        }
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            background: var(--surface, #fff);
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+        }
+        .btn-logout:active {
+            background: #fef2f2;
+        }
+        .btn-logout svg {
+            width: 20px;
+            height: 20px;
+            fill: #dc2626;
+        }
+
+        /* ---- Version ---- */
+        .app-version {
+            text-align: center;
+            padding: 6px 16px 24px;
+            font-size: 12px;
+            color: var(--text-secondary, #666);
+        }
     </style>
+</head>
+<body>
 
-    <script>
-    function handleLogout(event) {
-        event.preventDefault();
-        event.stopPropagation();
+<!-- Header -->
+<div th:replace="~{common/buyer/header :: header}"></div>
 
-        console.log('=== LOGOUT START ===');
+<!-- ===== PROFILE HEADER CARD ===== -->
+<div class="profile-header">
+    <div class="ph-avatar">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.93 0 3.5 1.57 3.5 3.5S13.93 12 12 12 8.5 10.43 8.5 8.5 10.07 5.5 12 5.5zm0 13.2c-2.73 0-5.12-1.4-6.5-3.52.03-1.21 3-2.08 6.5-2.08s6.47.87 6.5 2.08c-1.38 2.12-3.77 3.52-6.5 3.52z"/>
+        </svg>
+    </div>
+    <div class="ph-name" th:text="${user?.fullName != null and !user.fullName.isEmpty()} ? ${user.fullName} : 'Người dùng DealXanh'">Người dùng DealXanh</div>
+    <div class="ph-email" th:text="${user?.email}">email@example.com</div>
+    <div class="ph-role-wrap">
+        <span class="ph-role-badge" th:text="${user?.role?.name != null} ? ${user.role.name.replace('ROLE_','')} : 'User'">User</span>
+    </div>
+</div>
 
-        // Clear ALL client-side storage immediately
-        console.log('Clearing sessionStorage...');
-        sessionStorage.clear();
+<!-- ===== STATS ROW ===== -->
+<div class="stats-section">
+    <div class="stat-card">
+        <div class="stat-value" th:text="${#numbers.formatDecimal(totalOrders != null ? totalOrders : 0, 0, 0)}">0</div>
+        <div class="stat-label">Đơn hàng</div>
+    </div>
+    <div class="stat-divider-v"></div>
+    <div class="stat-card">
+        <div class="stat-value" th:text="${#numbers.formatDecimal(completedOrders != null ? completedOrders : 0, 0, 0)}">0</div>
+        <div class="stat-label">Đã hoàn thành</div>
+    </div>
+    <div class="stat-divider-v"></div>
+    <div class="stat-card">
+        <div class="stat-value" th:text="${#numbers.formatDecimal(pendingOrders != null ? pendingOrders : 0, 0, 0)}">0</div>
+        <div class="stat-label">Đang xử lý</div>
+    </div>
+</div>
 
-        console.log('Clearing localStorage COMPLETELY...');
-        localStorage.clear();
+<!-- ===== RECENT ORDERS ===== -->
+<div class="orders-section">
+    <div class="orders-header">
+        <span class="orders-title">Đơn hàng gần đây</span>
+        <a class="orders-see-all" th:href="@{/buyer/orders}">
+            Xem tất cả
+            <svg width="16" height="16" viewBox="0 0 24 24" style="fill:currentColor;">
+                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+            </svg>
+        </a>
+    </div>
 
-        // Call logout API to ensure server-side cleanup
-        console.log('Calling logout API...');
+    <!-- Has orders -->
+    <ul class="orders-list" th:if="${recentOrders != null and !recentOrders.isEmpty()}">
+        <li th:each="order : ${recentOrders}">
+            <a class="order-item" th:href="@{/buyer/orders}">
+                <div class="order-avatar">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                    </svg>
+                </div>
+                <div class="order-info">
+                    <div class="order-store" th:text="${order?.store?.storeName != null and !order.store.storeName.isEmpty()} ? ${order.store.storeName} : 'DealXanh'">Tên cửa hàng</div>
+                    <div class="order-meta">
+                        <span th:text="|#${order.orderId}|">#123</span>
+                        <span th:text="| · ${#temporals.format(order.createdAt, 'dd/MM/yyyy')}|"> · 01/01/2026</span>
+                    </div>
+                </div>
+                <div class="order-right">
+                    <div class="order-amount" th:text="|${#numbers.formatDecimal(order.finalAmount, 0, 0)}đ|">0đ</div>
+                    <span class="order-status-badge" th:classappend="|os-${order.status}|" th:text="${order.status}">STATUS</span>
+                </div>
+            </a>
+        </li>
+    </ul>
+
+    <!-- Empty state -->
+    <div class="orders-empty" th:unless="${recentOrders != null and !recentOrders.isEmpty()}">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+        </svg>
+        <p class="orders-empty-text">Bạn chưa có đơn hàng nào</p>
+        <a class="orders-empty-btn" th:href="@{/}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            Khám phá deal ngay
+        </a>
+    </div>
+</div>
+
+<!-- ===== ACCOUNT MENU ===== -->
+<div class="menu-section">
+    <!-- Đơn hàng của tôi -->
+    <a class="menu-item" th:href="@{/buyer/orders}">
+        <div class="menu-icon-box menu-icon-box--primary">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-1 13l-4-4 1.41-1.41L11 13.17l4.59-4.58L17 10l-6 6z"/>
+            </svg>
+        </div>
+        <span class="menu-label">Đơn hàng của tôi</span>
+        <svg class="menu-chevron" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+        </svg>
+    </a>
+
+    <!-- Thông tin cá nhân (disabled) -->
+    <div class="menu-item menu-item--disabled">
+        <div class="menu-icon-box">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+        </div>
+        <span class="menu-label">Thông tin cá nhân</span>
+        <span class="menu-badge">Sắp ra mắt</span>
+        <svg class="menu-chevron" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+        </svg>
+    </div>
+
+    <!-- Sổ địa chỉ (disabled) -->
+    <div class="menu-item menu-item--disabled">
+        <div class="menu-icon-box">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+        </div>
+        <span class="menu-label">Sổ địa chỉ</span>
+        <span class="menu-badge">Sắp ra mắt</span>
+        <svg class="menu-chevron" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+        </svg>
+    </div>
+
+    <!-- Phương thức thanh toán (disabled) -->
+    <div class="menu-item menu-item--disabled">
+        <div class="menu-icon-box">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+            </svg>
+        </div>
+        <span class="menu-label">Phương thức thanh toán</span>
+        <span class="menu-badge">Sắp ra mắt</span>
+        <svg class="menu-chevron" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+        </svg>
+    </div>
+</div>
+
+<!-- ===== LOGOUT ===== -->
+<div class="logout-section">
+    <button class="btn-logout" onclick="handleLogout()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+        </svg>
+        Đăng xuất
+    </button>
+</div>
+
+
+<!-- ===== LOGOUT SCRIPT ===== -->
+<script>
+    function handleLogout() {
+        if (!confirm('Bạn có chắc muốn đăng xuất?')) return;
+        var csrfToken = '';
+        var csrfMeta = document.querySelector('meta[name="_csrf"]');
+        if (csrfMeta) csrfToken = csrfMeta.content;
         fetch('/api/auth/logout', {
-            method: 'GET',
+            method: 'POST',
             credentials: 'same-origin',
             headers: {
-                'Accept': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-TOKEN': csrfToken
             }
-        })
-        .then(response => {
-            console.log('Logout API response status:', response.status);
-
-            // Clear storage one more time to be sure
-            sessionStorage.clear();
-            localStorage.clear();
-
-            // Force reload to go to /login
-            console.log('Redirecting to /login...');
-            window.location.href = '/login';
-        })
-        .catch(error => {
-            console.error('Logout API error:', error);
-            console.log('Even with API error, clearing storage and redirecting to /login...');
-
-            // Clear storage anyway
-            sessionStorage.clear();
-            localStorage.clear();
-
-            // Force redirect
-            window.location.href = '/login';
+        }).then(function(r) {
+            if (r.redirected) {
+                window.location.href = r.url;
+            } else {
+                window.location.href = '/login?logout';
+            }
+        }).catch(function() {
+            window.location.href = '/login?logout';
         });
     }
-    </script>
+</script>
+
+<!-- Mobile Nav -->
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+
+<!-- JS Fragment -->
+<div th:replace="~{common/buyer/js :: js}"></div>
+
 </body>
 </html>

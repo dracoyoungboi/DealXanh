@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng của tôi — DealXanh</title>
+    <meta name="description" content="Xem lịch sử và trạng thái đơn hàng của bạn trên DealXanh">
+    <div th:replace="~{common/buyer/css :: css}"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    <style>
+html{height:auto;min-height:100%}
+body{padding-bottom:80px;background:var(--background);font-family:var(--font-family)}
+*,*::before,*::after{box-sizing:border-box}
+
+/* Back bar */
+.back-bar{padding:12px 16px;display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.back-bar a{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none}
+.back-bar svg{width:18px;height:18px}
+.back-bar__title{flex:1;font-size:17px;font-weight:700;color:var(--text-primary);text-align:center}
+.back-bar__spacer{width:44px}
+
+/* ===== STATUS TABS ===== */
+.tabs-wrapper{background:var(--surface);padding:10px 8px;border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:9}
+.tabs-scroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs-scroll::-webkit-scrollbar{display:none}
+.status-tab{padding:8px 16px;border-radius:var(--radius-full);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);transition:all .15s;font-family:var(--font-family);white-space:nowrap;flex-shrink:0}
+.status-tab:hover{border-color:var(--primary);color:var(--primary)}
+.status-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ===== ORDER LIST ===== */
+.order-list{padding:12px 16px;display:flex;flex-direction:column;gap:12px}
+
+/* Order card */
+.order-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden;transition:box-shadow .15s}
+
+.order-card__header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border-light)}
+.order-card__store-logo{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--background)}
+.order-card__store-logo--fallback{width:32px;height:32px;border-radius:50%;background:var(--background);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-tertiary)}
+.order-card__store-name{font-size:13px;font-weight:600;color:var(--text-primary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.order-card__status{padding:4px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:700;flex-shrink:0;text-transform:uppercase;letter-spacing:.3px}
+
+.status-pending{background:#fff3e0;color:#e65100}
+.status-confirmed{background:#e3f2fd;color:#1565c0}
+.status-ready{background:#e8f5e9;color:#2e7d32}
+.status-completed{background:#f5f5f5;color:#757575}
+.status-cancelled{background:#ffebee;color:#c62828}
+
+.order-card__body{padding:12px 14px}
+.order-card__meta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:8px}
+.order-card__id{font-size:11px;color:var(--text-tertiary);font-family:monospace}
+.order-card__date{font-size:11px;color:var(--text-secondary)}
+.order-card__item-count{font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:3px}
+
+.order-card__footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border-light)}
+.order-card__total{font-size:16px;font-weight:700;color:var(--primary)}
+.order-card__total-label{font-size:10px;color:var(--text-tertiary);margin-bottom:1px}
+
+/* Empty state */
+.empty-state{text-align:center;padding:80px 24px}
+.empty-state__icon{width:80px;height:80px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;background:var(--background);border-radius:50%;color:var(--text-tertiary)}
+.empty-state__title{font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:8px}
+.empty-state__desc{font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.5}
+.empty-state__btn{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;background:var(--primary);color:#fff;border-radius:var(--radius-md);font-size:14px;font-weight:600;text-decoration:none;font-family:var(--font-family)}
+.empty-state__btn:hover{background:var(--primary-dark)}
+
+/* Filter count badge */
+.filter-count{font-size:11px;color:var(--text-secondary);padding:4px 0}
+    </style>
+</head>
+<body>
+
+<div th:replace="~{common/buyer/header :: header}"></div>
+
+<!-- Back bar -->
+<div class="back-bar">
+    <a href="javascript:history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <span class="back-bar__title">Đơn hàng của tôi</span>
+    <div class="back-bar__spacer"></div>
+</div>
+
+<!-- Status tabs -->
+<div class="tabs-wrapper">
+    <div class="tabs-scroll" id="statusTabs">
+        <button class="status-tab active" data-status="all" onclick="filterOrders('all', this)">Tất cả</button>
+        <button class="status-tab" data-status="PENDING" onclick="filterOrders('PENDING', this)">Chờ xác nhận</button>
+        <button class="status-tab" data-status="CONFIRMED" onclick="filterOrders('CONFIRMED', this)">Đang xử lý</button>
+        <button class="status-tab" data-status="READY_FOR_PICKUP" onclick="filterOrders('READY_FOR_PICKUP', this)">Sẵn sàng nhận</button>
+        <button class="status-tab" data-status="COMPLETED" onclick="filterOrders('COMPLETED', this)">Hoàn thành</button>
+        <button class="status-tab" data-status="CANCELLED" onclick="filterOrders('CANCELLED', this)">Đã hủy</button>
+    </div>
+</div>
+
+<!-- Order list -->
+<div class="order-list" id="orderList" th:if="${orders != null and !orders.isEmpty()}">
+    <th:block th:each="order : ${orders}">
+        <div class="order-card" th:attr="data-status=${order.status}">
+            <!-- Header: store info + status -->
+            <div class="order-card__header">
+                <img class="order-card__store-logo"
+                     th:if="${order.store != null and order.store.logoUrl != null}"
+                     th:src="${order.store.logoUrl}"
+                     alt=""
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="order-card__store-logo--fallback"
+                     th:if="${order.store == null or order.store.logoUrl == null}"
+                     style="display:flex">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7h18v2H3z"/><path d="M5 3h14l2 4H3l2-4z"/><path d="M3 9v12h18V9"/><path d="M10 21v-6h4v6"/>
+                    </svg>
+                </div>
+                <div class="order-card__store-logo--fallback" style="display:none">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7h18v2H3z"/><path d="M5 3h14l2 4H3l2-4z"/><path d="M3 9v12h18V9"/><path d="M10 21v-6h4v6"/>
+                    </svg>
+                </div>
+                <span class="order-card__store-name" th:text="${order.store != null ? order.store.storeName : 'Cửa hàng'}">Store Name</span>
+                <span class="order-card__status"
+                      th:classappend="${order.status == 'PENDING' ? 'status-pending' : (order.status == 'CONFIRMED' ? 'status-confirmed' : (order.status == 'READY_FOR_PICKUP' ? 'status-ready' : (order.status == 'COMPLETED' ? 'status-completed' : 'status-cancelled')))}"
+                      th:switch="${order.status}">
+                    <span th:case="'PENDING'">Chờ xác nhận</span>
+                    <span th:case="'CONFIRMED'">Đã xác nhận</span>
+                    <span th:case="'READY_FOR_PICKUP'">Sẵn sàng</span>
+                    <span th:case="'COMPLETED'">Hoàn thành</span>
+                    <span th:case="'CANCELLED'">Đã hủy</span>
+                    <span th:case="*" th:text="${order.status}">Unknown</span>
+                </span>
+            </div>
+
+            <!-- Body: meta info -->
+            <div class="order-card__body">
+                <div class="order-card__meta">
+                    <span class="order-card__id" th:text="|#${order.orderId}|">#12345</span>
+                    <span class="order-card__date" th:if="${order.createdAt != null}" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 12:00</span>
+                    <span class="order-card__item-count">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <path d="M16 10a4 4 0 0 1-8 0"/>
+                        </svg>
+                        <span th:text="${order.orderItems != null ? #lists.size(order.orderItems) : 0}">0</span>
+                        <span th:text="${(order.orderItems != null ? #lists.size(order.orderItems) : 0) > 1 ? 'sản phẩm' : 'sản phẩm'}"></span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Footer: total -->
+            <div class="order-card__footer">
+                <div>
+                    <div class="order-card__total-label">Tổng tiền</div>
+                    <div class="order-card__total" th:text="|${#numbers.formatDecimal(order.finalAmount != null ? order.finalAmount : (order.totalAmount != null ? order.totalAmount : 0), 0, 0)}đ|">0đ</div>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-tertiary)"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+        </div>
+    </th:block>
+</div>
+
+<!-- Empty state -->
+<div class="empty-state" id="emptyState" style="display:none;">
+    <div class="empty-state__icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+        </svg>
+    </div>
+    <div class="empty-state__title" id="emptyTitle">Chưa có đơn hàng nào</div>
+    <div class="empty-state__desc" id="emptyDesc">Hãy khám phá các deal hấp dẫn và đặt hàng ngày!</div>
+    <a href="/" class="empty-state__btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Khám phá deal
+    </a>
+</div>
+
+<!-- Empty: no orders at all (server-side) -->
+<div class="empty-state" th:unless="${orders != null and !orders.isEmpty()}" id="emptyAll">
+    <div class="empty-state__icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+        </svg>
+    </div>
+    <div class="empty-state__title">Chưa có đơn hàng nào</div>
+    <div class="empty-state__desc">Hãy khám phá các deal hấp dẫn và đặt hàng ngày!</div>
+    <a href="/" class="empty-state__btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Khám phá deal
+    </a>
+</div>
+
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
+
+<script>
+// ===== FILTER JS =====
+function filterOrders(status, btn){
+    // Update active tab
+    document.querySelectorAll('.status-tab').forEach(function(t){t.classList.remove('active')});
+    if(btn) btn.classList.add('active');
+
+    var orderCards = document.querySelectorAll('#orderList .order-card');
+    var emptyState = document.getElementById('emptyState');
+    var emptyAll = document.getElementById('emptyAll');
+    var list = document.getElementById('orderList');
+
+    if(!orderCards.length){
+        // No orders at all (server-rendered empty already showing)
+        return;
+    }
+
+    // Hide server empty if it exists
+    if(emptyAll) emptyAll.style.display = 'none';
+
+    var visibleCount = 0;
+    orderCards.forEach(function(card){
+        var cardStatus = card.getAttribute('data-status');
+        var match = (status === 'all' || cardStatus === status);
+        card.style.display = match ? '' : 'none';
+        if(match) visibleCount++;
+    });
+
+    if(visibleCount === 0){
+        list.style.display = 'none';
+        emptyState.style.display = '';
+        if(status === 'PENDING'){
+            document.getElementById('emptyTitle').textContent = 'Không có đơn chờ xác nhận';
+            document.getElementById('emptyDesc').textContent = 'Các đơn hàng đang chờ cửa hàng xác nhận sẽ xuất hiện ở đây';
+        } else if(status === 'CONFIRMED'){
+            document.getElementById('emptyTitle').textContent = 'Không có đơn đang xử lý';
+            document.getElementById('emptyDesc').textContent = 'Các đơn hàng đã được xác nhận sẽ xuất hiện ở đây';
+        } else if(status === 'READY_FOR_PICKUP'){
+            document.getElementById('emptyTitle').textContent = 'Không có đơn sẵn sàng nhận';
+            document.getElementById('emptyDesc').textContent = 'Khi cửa hàng chuẩn bị xong, đơn hàng sẽ xuất hiện ở đây';
+        } else if(status === 'COMPLETED'){
+            document.getElementById('emptyTitle').textContent = 'Chưa có đơn hoàn thành';
+            document.getElementById('emptyDesc').textContent = 'Các đơn hàng đã nhận thành công sẽ xuất hiện ở đây';
+        } else if(status === 'CANCELLED'){
+            document.getElementById('emptyTitle').textContent = 'Không có đơn đã hủy';
+            document.getElementById('emptyDesc').textContent = 'Rất tiếc! Các đơn hàng bị hủy sẽ xuất hiện ở đây';
+        } else {
+            document.getElementById('emptyTitle').textContent = 'Chưa có đơn hàng nào';
+            document.getElementById('emptyDesc').textContent = 'Hãy khám phá các deal hấp dẫn và đặt hàng ngày!';
+        }
+    } else {
+        list.style.display = '';
+        emptyState.style.display = 'none';
+    }
+}
+
+// Init: hide server-side empty if we're filtering (handled by Thymeleaf conditional above)
+</script>
+</body>
+</html>

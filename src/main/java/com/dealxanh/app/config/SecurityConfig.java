@@ -71,11 +71,16 @@ public class SecurityConfig {
                 // Buyer routes - public (không cần đăng nhập)
                 .requestMatchers("/", "/home", "/shop/**", "/product/**", "/store/**").permitAll()
 
-                // Buyer routes - cần đăng nhập (ROLE_USER)
-                .requestMatchers("/profile", "/checkout/**", "/my-orders/**", "/buyer/**").hasRole("USER")
+                // Buyer routes - cần đăng nhập
+                .requestMatchers("/profile", "/checkout/**", "/my-orders/**",
+                    "/buyer/profile", "/buyer/checkout/**",
+                    "/buyer/payment", "/buyer/order-complete",
+                    "/buyer/checkout/confirm").authenticated()
 
                 // Cart - public
-                .requestMatchers("/cart/**").permitAll()
+                .requestMatchers("/cart/**", "/buyer/cart", "/category/**", "/deals/**",
+                    "/buyer/search", "/buyer/store/**", "/buyer/deal-map",
+                    "/buyer/orders", "/buyer/orders/**").permitAll()
 
                 // Mặc định - cho phép tất cả
                 .anyRequest().permitAll()
@@ -92,7 +97,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionFixation().migrateSession()
                 .invalidSessionStrategy(new com.dealxanh.app.security.CustomInvalidSessionStrategy())
-                .maximumSessions(1)
+                .maximumSessions(5)
                 .maxSessionsPreventsLogin(false)
             )
             .logout(logout -> logout
@@ -137,6 +142,7 @@ public class SecurityConfig {
                     "/staff/profile/update", "/staff/profile/change-password",
                     "/staff/products/create",
                     "/pickup/*/confirm",
+                    "/buyer/checkout/confirm",
                     "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
                 )
             )

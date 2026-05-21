@@ -69,7 +69,7 @@ SELECT
 FROM users u
 JOIN roles r ON u.role_id = r.role_id
 WHERE r.name IN ('ROLE_ADMIN', 'ROLE_MODERATOR');
-
+ALTER TABLE users ADD COLUMN weak_password BIT DEFAULT 0; nhưng làm thế này có sợ chẳng hạn các 
 -- Lưu ý:
 -- 1. Password cho admin: admin123
 -- 2. Password cho moderator: moderator123

@@ -172,6 +172,9 @@ public class AuthController {
     @org.springframework.beans.factory.annotation.Autowired
     private com.dealxanh.app.repository.StoreRepository storeRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.dealxanh.app.repository.OrderRepository orderRepository;
+
     @GetMapping({"/seller/onboarding-pending", "/auth/onboarding-pending"})
     public String onboardingPending(java.security.Principal principal, org.springframework.ui.Model model) {
         if (principal == null) {
@@ -335,6 +338,16 @@ public class AuthController {
             }
 
             model.addAttribute("user", user);
+
+            // Order stats for profile page
+            java.util.List<com.dealxanh.app.entity.Order> orders = orderRepository.findByUserUserIdOrderByCreatedAtDesc(user.getUserId());
+            long total = orders != null ? orders.size() : 0;
+            long completed = orders != null ? orders.stream().filter(o -> "COMPLETED".equals(o.getStatus())).count() : 0;
+            model.addAttribute("totalOrders", total);
+            model.addAttribute("completedOrders", completed);
+            model.addAttribute("pendingOrders", total - completed);
+            model.addAttribute("recentOrders", orders != null ? orders.stream().limit(5).toList() : java.util.List.of());
+
             System.out.println("DEBUG: User found: " + user.getUsername() + " / " + user.getEmail());
             System.out.println("DEBUG: User full name: " + user.getFullName());
 

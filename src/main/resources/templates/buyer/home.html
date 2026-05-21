@@ -4,18 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DealXanh - Săn deal đồ ăn cận date giá rẻ</title>
-    <meta name="description" content="DealXanh - Ứng dụng săn deal đồ ăn cận date giá rẻ. Tiết kiệm đến 70% cho các món ăn ngon từ nhà hàng, quán ăn uy tín.">
-
-    <!-- CSS Fragment -->
-    <div th:replace="common/buyer/css :: css"></div>
+    <meta name="description" content="DealXanh - Săn deal đồ ăn cận date. Tiết kiệm đến 70% cho các món ăn ngon từ nhà hàng, quán ăn uy tín.">
+    <div th:replace="~{common/buyer/css :: css}"></div>
     <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    <style>
+html{height:auto;min-height:100%}
+body{padding-bottom:80px}
+
+/* ===== PRODUCT CARD (dùng chung CSS từ home.css .deal-card) ===== */
+.deal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:768px){.deal-grid{grid-template-columns:repeat(3,1fr);gap:16px}}
+@media(min-width:1024px){.deal-grid{grid-template-columns:repeat(4,1fr);gap:16px}}
+
+.deal-card__expiry{position:absolute;bottom:10px;right:10px;display:flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);border-radius:var(--radius-full);font-size:11px;color:#fff}
+.deal-card__expiry svg{width:12px;height:12px}
+.deal-card__expiry.urgent{background:var(--status-danger)}
+
+/* Quick filters */
+.quick-filters{margin-top:-30px;position:relative;z-index:10}
+.quick-filters>div{background:var(--surface);padding:12px 16px;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
+    </style>
 </head>
 <body>
 
-<!-- Header & Search Overlay Fragment -->
-<div th:replace="common/buyer/header :: header"></div>
+<div th:replace="~{common/buyer/header :: header}"></div>
 
-<!-- HERO SECTION -->
+<!-- ===== HERO ===== -->
 <section class="hero">
     <div class="hero__background">
         <video autoplay muted loop playsinline class="hero__video">
@@ -26,185 +40,391 @@
     <div class="container">
         <div class="hero__content">
             <div class="hero__badge">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.97 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-                <span>Được tin dùng bởi 50,000+ người</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.97 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span th:text="|Được tin dùng bởi ${#numbers.formatDecimal(totalUsers, 0, 0)}+ người|">Được tin dùng</span>
             </div>
-            <h1 class="hero__title">Săn deal đồ ăn ngon<br>
-                <span class="hero__title--accent">Giảm đến 70%</span>
-            </h1>
-            <p class="hero__subtitle">
-                Tiết kiệm chi phí ăn uống hàng ngày với các deal đồ ăn cận date chất lượng cao
-                từ nhà hàng, quán ăn uy tín.
-            </p>
+            <h1 class="hero__title">Săn deal đồ ăn ngon<br><span class="hero__title--accent">Giảm đến 70%</span></h1>
+            <p class="hero__subtitle">Tiết kiệm chi phí ăn uống hàng ngày với các deal đồ ăn cận date chất lượng cao từ nhà hàng, quán ăn uy tín.</p>
             <div class="hero__stats">
-                <div class="hero-stat">
-                    <div class="hero-stat__value" th:text="${totalStores != null ? totalStores + '+' : '1,000+'}">1,000+</div>
-                    <div class="hero-stat__label">Cửa hàng</div>
-                </div>
-                <div class="hero-stat">
-                    <div class="hero-stat__value" th:text="${totalUsers != null ? totalUsers : '50K+'}">50K+</div>
-                    <div class="hero-stat__label">Người dùng</div>
-                </div>
-                <div class="hero-stat">
-                    <div class="hero-stat__value" th:text="${totalDeals != null ? totalDeals : '100K+'}">100K+</div>
-                    <div class="hero-stat__label">Deal đã bán</div>
-                </div>
+                <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalStores, 0, 0)}+'+'">1,000+</div><div class="hero-stat__label">Cửa hàng</div></div>
+                <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalUsers, 0, 0)}+'+'">50K+</div><div class="hero-stat__label">Người dùng</div></div>
+                <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalDeals, 0, 0)}+'+'">100K+</div><div class="hero-stat__label">Deal đã bán</div></div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- QUICK FILTERS -->
-<section class="container" style="margin-top: -30px; position: relative; z-index: 10;">
-    <div class="quick-filters" style="background: var(--surface); padding: 15px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none;">
-        <button class="filter-chip filter-chip--active" style="padding: 8px 16px; border-radius: var(--radius-xl); background: var(--primary); color: white; border: none; font-weight: 600; white-space: nowrap;">Tất cả</button>
-        <button class="filter-chip" style="padding: 8px 16px; border-radius: var(--radius-xl); background: var(--background); color: var(--text-secondary); border: 1px solid var(--border); font-weight: 500; white-space: nowrap;">Đồ ăn</button>
-        <button class="filter-chip" style="padding: 8px 16px; border-radius: var(--radius-xl); background: var(--background); color: var(--text-secondary); border: 1px solid var(--border); font-weight: 500; white-space: nowrap;">Đồ uống</button>
-        <button class="filter-chip" style="padding: 8px 16px; border-radius: var(--radius-xl); background: var(--background); color: var(--text-secondary); border: 1px solid var(--border); font-weight: 500; white-space: nowrap;">Blind Box</button>
-        <button class="filter-chip" style="padding: 8px 16px; border-radius: var(--radius-xl); background: var(--background); color: var(--text-secondary); border: 1px solid var(--border); font-weight: 500; white-space: nowrap;">Ăn vặt</button>
+<!-- ===== QUICK FILTERS ===== -->
+<section class="container" style="margin-top:-30px;position:relative;z-index:10;margin-bottom:16px;">
+    <div class="quick-filters" style="background:var(--surface);padding:12px 16px;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);">
+        <button class="filter-chip filter-chip--active" onclick="filterProducts('all',this)">Tất cả</button>
+        <button class="filter-chip" onclick="filterProducts('FLASH_SALE',this)">⚡ Flash Sale</button>
+        <button class="filter-chip" onclick="filterProducts('COMBO',this)">📦 Combo</button>
+        <button class="filter-chip" onclick="filterProducts('VOUCHER',this)">🎫 Voucher</button>
+        <button class="filter-chip" onclick="filterProducts('SEASONAL',this)">🌟 Seasonal</button>
     </div>
 </section>
 
-<!-- FEATURED DEALS -->
-<section class="section" style="padding: 40px 0;">
+<!-- ===== FLASH SALE COUNTDOWN ===== -->
+<section class="section" th:if="${hasFlashSale}" style="padding:0 0 0 0;">
     <div class="container">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
-            <div>
-                <h2 style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px;">Deal nổi bật hôm nay</h2>
-                <p style="color: var(--status-danger); font-weight: 500; font-size: 14px;">🔥 Flash Sale - Nhanh tay kẻo lỡ</p>
+        <div class="flash-sale">
+            <div class="flash-sale__background">
+                <img th:src="${flashSaleProducts[0].productImage != null ? flashSaleProducts[0].productImage : '/img/default-banner.svg'}" alt="" onerror="this.src='/img/default-banner.svg'">
             </div>
-            <a href="#" style="color: var(--primary); font-weight: 600; font-size: 14px; text-decoration: none;">Xem tất cả</a>
+            <div class="flash-sale__overlay"></div>
+            <div class="flash-sale__content">
+                <div class="flash-sale__header">
+                    <div class="flash-sale__tag">⚡ ĐANG DIỄN RA</div>
+                </div>
+                <div class="flash-sale__title">Flash Sale</div>
+                <div class="flash-sale__description" th:text="|${flashSaleCount} sản phẩm giảm sâu — Kết thúc trong:|">Kết thúc trong:</div>
+                <div class="flash-sale__timer" id="flashTimer" th:if="${flashSaleEndTime != null}" th:attr="data-end=${flashSaleEndTime}">
+                    <div class="timer-item"><div class="timer-item__value" id="fsH">00</div><div class="timer-item__label">Giờ</div></div>
+                    <div class="timer-separator">:</div>
+                    <div class="timer-item"><div class="timer-item__value" id="fsM">00</div><div class="timer-item__label">Phút</div></div>
+                    <div class="timer-separator">:</div>
+                    <div class="timer-item"><div class="timer-item__value" id="fsS">00</div><div class="timer-item__label">Giây</div></div>
+                </div>
+                <a class="flash-sale__button" href="#flashGrid" onclick="document.getElementById('flashGrid')?.scrollIntoView({behavior:'smooth'});return true;">
+                    Săn ngay
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+            </div>
         </div>
 
-        <div class="deal-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
-            <!-- Deal Card 1 -->
-            <div class="deal-card" style="background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); transition: all 0.3s; cursor: pointer;">
-                <div style="position: relative; padding-top: 75%;">
-                    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&h=400&fit=crop" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" alt="">
-                    <span style="position: absolute; top: 8px; left: 8px; background: var(--status-danger); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">-50%</span>
-                </div>
-                <div style="padding: 12px;">
-                    <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">Combo Burger Cận Date</h3>
-                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">KFC Trần Duy Hưng</p>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 16px; font-weight: 800; color: var(--primary);">45.000đ</span>
-                        <span style="font-size: 13px; color: var(--text-tertiary); text-decoration: line-through;">90.000đ</span>
-                    </div>
-                </div>
+        <!-- Flash Sale products -->
+        <div class="section-header" style="margin-top:20px;">
+            <div class="section-header__left">
+                <h2 class="section-header__title">Sản phẩm Flash Sale</h2>
+                <p class="section-header__subtitle">⚡ Nhanh tay kẻo lỡ — Số lượng có hạn</p>
             </div>
-            
-            <!-- Deal Card 2 -->
-            <div class="deal-card" style="background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); transition: all 0.3s; cursor: pointer;">
-                <div style="position: relative; padding-top: 75%;">
-                    <img src="https://images.unsplash.com/photo-1579954115545-a95e0c52eb4b?w=500&h=400&fit=crop" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" alt="">
-                    <span style="position: absolute; top: 8px; left: 8px; background: var(--status-danger); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">-70%</span>
-                </div>
-                <div style="padding: 12px;">
-                    <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">Trà sữa trân châu</h3>
-                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">GongCha Láng Hạ</p>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 16px; font-weight: 800; color: var(--primary);">15.000đ</span>
-                        <span style="font-size: 13px; color: var(--text-tertiary); text-decoration: line-through;">50.000đ</span>
-                    </div>
-                </div>
-            </div>
-
-             <!-- Deal Card 3 -->
-             <div class="deal-card" style="background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); transition: all 0.3s; cursor: pointer;">
-                <div style="position: relative; padding-top: 75%;">
-                    <img src="https://images.unsplash.com/photo-1615814512903-8d6263595eb9?w=500&h=400&fit=crop" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" alt="">
-                    <span style="position: absolute; top: 8px; left: 8px; background: var(--status-success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">Blind Box</span>
-                </div>
-                <div style="padding: 12px;">
-                    <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">Hộp Bánh Ngọt Bất Ngờ</h3>
-                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Tous Les Jours</p>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 16px; font-weight: 800; color: var(--primary);">30.000đ</span>
-                        <span style="font-size: 13px; color: var(--text-tertiary); text-decoration: line-through;">100.000đ</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Deal động từ Server -->
-            <div class="deal-card" th:each="deal : ${featuredDeals}" style="background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); transition: all 0.3s; cursor: pointer;">
-                <a th:href="@{/deals/{id}(id=${deal.dealId})}" style="text-decoration:none; color:inherit;">
-                    <div style="position: relative; padding-top: 75%;">
-                        <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/deals/default-banner.jpg'}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" th:alt="${deal.dealName}">
-                        <span th:if="${deal.discountPercent > 0}" style="position: absolute; top: 8px; left: 8px; background: var(--status-danger); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;" th:text="${'-' + deal.discountPercent.intValue() + '%'}">-50%</span>
-                        <span th:if="${deal.dealType != null}" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #fff;"
-                              th:style="${deal.dealType == 'FLASH_SALE' ? 'background:var(--status-danger);' : (deal.dealType == 'VOUCHER' ? 'background:#7c3aed;' : (deal.dealType == 'COMBO' ? 'background:var(--status-warning);' : 'background:var(--accent);'))}"
-                              th:text="${deal.dealType == 'FLASH_SALE' ? 'Flash Sale' : (deal.dealType == 'VOUCHER' ? 'Voucher' : (deal.dealType == 'COMBO' ? 'Combo' : 'Seasonal'))}">Type</span>
-                    </div>
-                    <div style="padding: 12px;">
-                        <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);" th:text="${deal.dealName}">Tên Deal</h3>
-                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;" th:text="${deal.storeName != null ? deal.storeName : 'Toàn hệ thống'}">Tên cửa hàng</p>
-
-                        <!-- Danh mục áp dụng (cột dọc) -->
-                        <div th:if="${deal.categories != null and !deal.categories.isEmpty()}" style="margin-bottom: 6px;">
-                            <div style="font-size: 10px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 3px; text-transform: uppercase;">Danh mục áp dụng:</div>
-                            <div style="display: flex; flex-direction: column; gap: 2px;">
-                                <div th:each="cat : ${deal.categories}" style="font-size: 11px; color: var(--primary); display: flex; align-items: center; gap: 4px;">
-                                    <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0;"></span>
-                                    <span th:text="${cat}">Danh mục</span>
-                                </div>
-                            </div>
+        </div>
+        <div class="deal-grid" id="flashGrid">
+            <div class="deal-card" th:each="p : ${flashSaleProducts}">
+                <a th:href="@{/deals/{id}(id=${p.dealId})}" style="text-decoration:none;color:inherit;">
+                    <div class="deal-card__image">
+                        <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
+                        <div class="deal-card__badges">
+                            <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
                         </div>
-
-                        <!-- Sản phẩm áp dụng (hàng ngang, max 2 + ,...) -->
-                        <div th:if="${deal.products != null and !deal.products.isEmpty()}" style="margin-bottom: 6px;">
-                            <div style="font-size: 10px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 3px; text-transform: uppercase;">Sản phẩm áp dụng:</div>
-                            <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
-                                <span th:each="prod, iterStat : ${deal.products}" th:if="${iterStat.index < 2}"
-                                      style="font-size: 11px; background: var(--bg); color: var(--text-primary); padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); white-space: nowrap;"
-                                      th:text="${prod}">Sản phẩm</span>
-                                <span th:if="${deal.products.size() > 2}" style="font-size: 11px; color: var(--text-tertiary); font-style: italic;">, +${deal.products.size() - 2} sản phẩm khác...</span>
-                            </div>
+                        <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
+                            <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
                         </div>
-
-                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                            <span th:if="${deal.discountType == 'PERCENT'}" style="font-size: 16px; font-weight: 800; color: var(--primary);" th:text="'Giảm ' + ${deal.discountValue.intValue()} + '%'">Giảm 50%</span>
-                            <span th:if="${deal.discountType == 'FIXED'}" style="font-size: 16px; font-weight: 800; color: var(--primary);" th:text="'Giảm ' + ${#numbers.formatDecimal(deal.discountValue, 0, 0)} + 'đ'">Giảm 20k</span>
-                            <span th:if="${deal.minOrderAmount > 0}" style="font-size: 12px; color: var(--text-tertiary);" th:text="'Cho đơn từ ' + ${#numbers.formatDecimal(deal.minOrderAmount, 0, 0)} + 'đ'">Cho đơn từ 50k</span>
+                    </div>
+                    <div class="deal-card__content">
+                        <div class="deal-card__store">
+                            <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
+                            <span class="deal-card__store-name" th:text="${p.storeName}">Store</span>
+                        </div>
+                        <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
+                        <div class="deal-card__price">
+                            <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+                            <span class="deal-card__original" th:text="|${#numbers.formatDecimal(p.originalPrice, 0, 0)}đ|">100,000đ</span>
                         </div>
                     </div>
                 </a>
+                <div class="deal-card__actions">
+                    <button class="deal-card__btn deal-card__btn--cart"
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
+                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">+ Thêm vào giỏ</button>
+                    <button class="deal-card__btn deal-card__btn--buy"
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
+                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">Mua ngay</button>
+                </div>
             </div>
-            
         </div>
     </div>
 </section>
 
-<!-- CATEGORIES -->
-<section class="section" style="padding: 20px 0 60px 0; background: var(--background);">
+<!-- ===== DEAL NỔI BẬT ===== -->
+<section class="section" th:if="${allProducts != null and !allProducts.isEmpty()}" style="padding:24px 0 0 0;">
     <div class="container">
-        <h2 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">Danh mục Deal</h2>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-            <div style="position: relative; border-radius: var(--radius-lg); overflow: hidden; height: 100px; cursor: pointer;">
-                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&fit=crop" style="width: 100%; height: 100%; object-fit: cover;" alt="">
-                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
-                    <span style="color: white; font-weight: 700; font-size: 16px;">Đồ Ăn Trưa</span>
+        <div class="flash-sale" style="min-height:160px;">
+            <div class="flash-sale__background">
+                <img th:src="${allProducts[0].productImage != null ? allProducts[0].productImage : '/img/default-banner.svg'}" alt="" onerror="this.src='/img/default-banner.svg'">
+            </div>
+            <div class="flash-sale__overlay" style="background:linear-gradient(90deg,rgba(13,92,46,.9) 0%,rgba(8,66,31,.6) 100%);"></div>
+            <div class="flash-sale__content">
+                <div class="flash-sale__header">
+                    <div class="flash-sale__tag" style="background:var(--accent);">🔥 DEAL NỔI BẬT</div>
+                </div>
+                <div class="flash-sale__title">Deal nổi bật hôm nay</div>
+                <div class="flash-sale__description" th:text="|Sản phẩm ngon — Giá tốt nhất hôm nay · ${#lists.size(allProducts)} sản phẩm đang có deal|">Sản phẩm ngon — Giá tốt nhất hôm nay</div>
+            </div>
+        </div>
+
+        <div class="deal-grid" id="productGrid" style="margin-top:16px;">
+            <div class="deal-card" th:each="p : ${allProducts}" th:attr="data-type=${p.dealType}">
+                <a th:href="@{/deals/{id}(id=${p.dealId})}" style="text-decoration:none;color:inherit;">
+                    <div class="deal-card__image">
+                        <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
+                        <div class="deal-card__badges">
+                            <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
+                        </div>
+                        <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
+                            <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
+                        </div>
+                    </div>
+                    <div class="deal-card__content">
+                        <div class="deal-card__store">
+                            <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
+                            <span class="deal-card__store-name" th:text="${p.storeName}">Store</span>
+                        </div>
+                        <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
+                        <div class="deal-card__price">
+                            <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+                            <span class="deal-card__original" th:text="|${#numbers.formatDecimal(p.originalPrice, 0, 0)}đ|">100,000đ</span>
+                        </div>
+                    </div>
+                </a>
+                <div class="deal-card__actions">
+                    <button class="deal-card__btn deal-card__btn--cart"
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
+                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">+ Thêm vào giỏ</button>
+                    <button class="deal-card__btn deal-card__btn--buy"
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
+                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">Mua ngay</button>
                 </div>
             </div>
-            <div style="position: relative; border-radius: var(--radius-lg); overflow: hidden; height: 100px; cursor: pointer;">
-                <img src="https://images.unsplash.com/photo-1498837167922-41c54ba25226?w=400&fit=crop" style="width: 100%; height: 100%; object-fit: cover;" alt="">
-                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
-                    <span style="color: white; font-weight: 700; font-size: 16px;">Bánh Ngọt</span>
+        </div>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(allProducts)}" id="emptyDeals" style="display:none;">
+            <div class="empty-state__icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            </div>
+            <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Không có sản phẩm nào</h3>
+            <p style="font-size:14px;color:var(--text-secondary);">Không tìm thấy sản phẩm cho bộ lọc này</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== COMBO GIẢM GIÁ ===== -->
+<section class="section" th:if="${hasCombo}">
+    <div class="container">
+        <div class="blind-box-section">
+            <div class="blind-box-section__background">
+                <img src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=1200&fit=crop" alt="Combo Deal">
+            </div>
+            <div class="blind-box-section__overlay"></div>
+            <div class="blind-box-section__content">
+                <div class="blind-box-section__tag">📦 COMBO DEALS</div>
+                <div class="blind-box-section__title">Săn Combo — Tiết kiệm hơn nữa</div>
+                <div class="blind-box-section__description">Ghép nhiều sản phẩm thành combo giá tốt. Combo cận date giúp bạn tiết kiệm đến 65% so với giá gốc.</div>
+                <div class="blind-box-section__features">
+                    <div class="blind-box-feature">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span>Tiết kiệm đến 65%</span>
+                    </div>
+                    <div class="blind-box-feature">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span th:text="|${#lists.size(comboProducts)} combo đang có|">5 combo</span>
+                    </div>
+                </div>
+                <a class="blind-box-section__cta" href="#comboGrid" onclick="document.getElementById('comboGrid')?.scrollIntoView({behavior:'smooth'});return true;">
+                    Xem Combo ngay
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="section-header" style="margin-top:20px;">
+            <div class="section-header__left">
+                <h2 class="section-header__title">Sản phẩm Combo</h2>
+                <p class="section-header__subtitle">📦 Ghép nhiều món — Giá tốt hơn</p>
+            </div>
+        </div>
+        <div class="deal-grid" id="comboGrid">
+            <div class="deal-card" th:each="p : ${comboProducts}">
+                <a th:href="@{/deals/{id}(id=${p.dealId})}" style="text-decoration:none;color:inherit;">
+                    <div class="deal-card__image">
+                        <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
+                        <div class="deal-card__badges">
+                            <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
+                        </div>
+                        <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
+                            <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
+                        </div>
+                    </div>
+                    <div class="deal-card__content">
+                        <div class="deal-card__store">
+                            <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
+                            <span class="deal-card__store-name" th:text="${p.storeName}">Store</span>
+                        </div>
+                        <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
+                        <div class="deal-card__price">
+                            <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+                            <span class="deal-card__original" th:text="|${#numbers.formatDecimal(p.originalPrice, 0, 0)}đ|">100,000đ</span>
+                        </div>
+                    </div>
+                </a>
+                <div class="deal-card__actions">
+                    <button class="deal-card__btn deal-card__btn--cart"
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
+                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">+ Thêm vào giỏ</button>
+                    <button class="deal-card__btn deal-card__btn--buy"
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
+                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">Mua ngay</button>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Footer Fragment (máy tính) -->
-<div th:replace="common/buyer/footer :: footer"></div>
+<!-- ===== CATEGORIES ===== -->
+<section class="section categories-section" th:if="${categories != null and !categories.isEmpty()}">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-header__left">
+                <h2 class="section-header__title">Danh mục sản phẩm</h2>
+                <p class="section-header__subtitle">Khám phá deal theo danh mục yêu thích</p>
+            </div>
+        </div>
+        <div class="category-grid">
+            <a th:each="cat : ${categories}" th:href="@{/category/{id}(id=${cat.categoryId})}" class="category-card" style="text-decoration:none;">
+                <div class="category-card__image">
+                    <img th:src="${cat.iconUrl != null ? cat.iconUrl : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&fit=crop'}" th:alt="${cat.name}" onerror="this.src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&fit=crop'">
+                </div>
+                <div class="category-card__overlay">
+                    <div class="category-card__icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </div>
+                    <span class="category-card__name" th:text="${cat.name}">Danh mục</span>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
 
-<!-- Mobile Nav Fragment (điện thoại) -->
-<div th:replace="common/buyer/mobile-nav :: mobileNav"></div>
+<!-- ===== TRUST SECTION ===== -->
+<section class="section trust-section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-header__left">
+                <h2 class="section-header__title">Tại sao chọn DealXanh?</h2>
+                <p class="section-header__subtitle">Nền tảng săn deal đồ ăn cận date hàng đầu Việt Nam</p>
+            </div>
+        </div>
+        <div class="trust-grid">
+            <div class="trust-card">
+                <div class="trust-card__icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div class="trust-card__title">An toàn & Bảo mật</div>
+                <div class="trust-card__description">Thanh toán an toàn qua VNPay. Thông tin cá nhân được bảo mật tuyệt đối.</div>
+            </div>
+            <div class="trust-card">
+                <div class="trust-card__icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.97 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </div>
+                <div class="trust-card__title">Chất lượng đảm bảo</div>
+                <div class="trust-card__description">Mọi sản phẩm đều được kiểm duyệt bởi Admin. Hoàn tiền nếu không đúng mô tả.</div>
+            </div>
+            <div class="trust-card">
+                <div class="trust-card__icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </div>
+                <div class="trust-card__title">Hỗ trợ 24/7</div>
+                <div class="trust-card__description">Đội ngũ hỗ trợ sẵn sàng giải đáp mọi thắc mắc của bạn bất cứ lúc nào.</div>
+            </div>
+        </div>
+    </div>
+</section>
 
-<!-- JS Fragment -->
-<div th:replace="common/buyer/js :: js"></div>
+<div th:replace="~{common/buyer/footer :: footer}"></div>
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
 
+<script>
+// ===== QUICK FILTERS =====
+function filterProducts(type, btn) {
+    document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('filter-chip--active')});
+    if(btn) btn.classList.add('filter-chip--active');
+
+    var visible = 0;
+    document.querySelectorAll('#productGrid .deal-card').forEach(function(card){
+        var match = (type==='all' || card.getAttribute('data-type')===type);
+        card.style.display = match ? '' : 'none';
+        if(match) visible++;
+    });
+
+    var empty = document.getElementById('emptyDeals');
+    if(empty) empty.style.display = (visible===0) ? '' : 'none';
+}
+
+// ===== FLASH SALE COUNTDOWN =====
+// Dựa trên endTime của Flash Deal sớm nhất
+(function(){
+    var t = document.getElementById('flashTimer');
+    if(!t) return;
+    var end = t.getAttribute('data-end');
+    if(!end) return;
+    var d = new Date(end + (end.indexOf('T')>=0 ? '' : 'T00:00:00'));
+    if(isNaN(d.getTime())) return;
+    function tick(){
+        var s = Math.max(0, Math.floor((d - Date.now())/1000));
+        var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+        document.getElementById('fsH').textContent = String(h).padStart(2,'0');
+        document.getElementById('fsM').textContent = String(m).padStart(2,'0');
+        document.getElementById('fsS').textContent = String(sec).padStart(2,'0');
+    }
+    tick(); setInterval(tick, 1000);
+})();
+
+// ===== CART BUTTONS =====
+function addToCartHome(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId) {
+    var fd = new URLSearchParams();
+    fd.append('dealId', dealId);
+    fd.append('productId', productId);
+    fd.append('productName', productName);
+    fd.append('salePrice', salePrice);
+    fd.append('originalPrice', originalPrice);
+    fd.append('storeName', storeName);
+    fd.append('productImage', productImage || '');
+    if (storeId) fd.append('storeId', storeId);
+    fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
+        .then(function(r){return r.json()})
+        .then(function(d){
+            showToast(d.message || 'Đã thêm vào giỏ hàng');
+            updateCartBadge(d.count);
+        })
+        .catch(function(){showToast('Đã thêm vào giỏ hàng');});
+}
+
+function buyNowHome(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId) {
+    var fd = new URLSearchParams();
+    fd.append('dealId', dealId);
+    fd.append('productId', productId);
+    fd.append('productName', productName);
+    fd.append('salePrice', salePrice);
+    fd.append('originalPrice', originalPrice);
+    fd.append('storeName', storeName);
+    fd.append('productImage', productImage || '');
+    if (storeId) fd.append('storeId', storeId);
+    fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
+        .then(function(r){return r.json()})
+        .then(function(){window.location.href='/buyer/checkout';})
+        .catch(function(){window.location.href='/buyer/checkout';});
+}
+
+function showToast(msg) {
+    var t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;pointer-events:none;';
+    document.body.appendChild(t);
+    setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(function(){t.remove();},400);},2000);
+}
+
+function updateCartBadge(count) {
+    var b = document.querySelector('.mobile-nav__cart__badge');
+    if (b) { b.textContent = count || ''; b.style.display = (count > 0) ? 'flex' : 'none'; }
+}
+</script>
 </body>
 </html>

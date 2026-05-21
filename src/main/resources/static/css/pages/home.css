@@ -647,6 +647,48 @@
     color: var(--text-tertiary);
 }
 
+/* ===== DEAL CARD ACTION BUTTONS ===== */
+.deal-card__actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px 12px;
+}
+.deal-card__btn {
+    flex: 1;
+    padding: 8px 0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-decoration: none;
+}
+.deal-card__btn--cart {
+    background: var(--status-success-bg);
+    color: var(--primary);
+    border: 1.5px solid rgba(13,92,46,.18);
+}
+.deal-card__btn--cart:hover {
+    background: rgba(13,92,46,.12);
+}
+.deal-card__btn--buy {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(13,92,46,.2);
+}
+.deal-card__btn--buy:hover {
+    background: #0a4824;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13,92,46,.3);
+}
+
 .deal-card__distance,
 .deal-card__slots {
     display: flex;
