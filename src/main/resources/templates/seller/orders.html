@@ -49,6 +49,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 .action-ready{background:var(--success)}
 .action-complete{background:var(--primary)}
 .action-cancel{background:var(--danger)}
+.action-payos{background:var(--accent);color:#000;font-weight:700}
 
 /* Search */
 .search-wrap{position:relative;margin-bottom:12px}
@@ -121,6 +122,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
         <a class="tab" th:classappend="${selectedStatus == 'CONFIRMED'} ? 'active' : ''" th:href="@{/seller/orders(status='CONFIRMED', search=${searchQuery})}">Đã XN<span class="tab-count" th:text="${confirmedCount}">0</span></a>
         <a class="tab" th:classappend="${selectedStatus == 'READY_FOR_PICKUP'} ? 'active' : ''" th:href="@{/seller/orders(status='READY_FOR_PICKUP', search=${searchQuery})}">Sẵn sàng<span class="tab-count" th:text="${readyCount}">0</span></a>
         <a class="tab" th:classappend="${selectedStatus == 'COMPLETED'} ? 'active' : ''" th:href="@{/seller/orders(status='COMPLETED', search=${searchQuery})}">Hoàn thành<span class="tab-count" th:text="${completedCount}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'CANCELLED'} ? 'active' : ''" th:href="@{/seller/orders(status='CANCELLED', search=${searchQuery})}">Đã hủy<span class="tab-count" th:text="${cancelledCount}">0</span></a>
     </div>
 
     <!-- Orders -->
@@ -142,7 +144,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
                 <div style="display:flex;gap:6px;">
                     <button class="action-btn action-confirm" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CONFIRMED');event.stopPropagation()|">✓ Xác nhận</button>
                     <button class="action-btn action-ready" th:if="${order.status == 'CONFIRMED'}" th:onclick="|updateStatus(${order.orderId}, 'READY_FOR_PICKUP');event.stopPropagation()|">📦 Sẵn sàng</button>
-                    <button class="action-btn action-complete" th:if="${order.status == 'READY_FOR_PICKUP'}" th:onclick="|updateStatus(${order.orderId}, 'COMPLETED');event.stopPropagation()|">✅ Hoàn thành</button>
+                    <!-- CASH: hoàn thành tay. MOMO/BANK: phải qua PayOS QR -->
+                    <button class="action-btn action-complete" th:if="${order.status == 'READY_FOR_PICKUP' and (order.paymentMethod == 'CASH' or order.paymentMethod == null)}" th:onclick="|updateStatus(${order.orderId}, 'COMPLETED');event.stopPropagation()|">✅ Hoàn thành</button>
+                    <button class="action-btn action-payos" th:if="${order.status == 'READY_FOR_PICKUP' and order.paymentMethod != 'CASH' and order.paymentMethod != null}" th:onclick="|createPayOSQR(${order.orderId});event.stopPropagation()|">💳 QR PayOS</button>
                     <button class="action-btn action-cancel" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CANCELLED');event.stopPropagation()|">✕ Hủy</button>
                 </div>
             </div>
@@ -170,6 +174,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
         <div class="modal-title">📋 Chi tiết đơn hàng</div>
         <div id="detailBody"><div style="text-align:center;padding:20px;color:var(--text-tertiary);">Đang tải...</div></div>
         <button class="btn-detail" style="width:100%;margin-top:12px;padding:10px;font-size:12px;" onclick="closeDetailModal()">Đóng</button>
+    </div>
+</div>
+
+<!-- PayOS QR Payment Modal -->
+<div id="payosModal" class="modal-overlay" style="display:none;" onclick="closePayosModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()" style="text-align:center;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:16px;font-weight:700;">💳 Thanh toán PayOS</span>
+            <button onclick="closePayosModal()" style="width:28px;height:28px;border-radius:50%;border:none;background:var(--bg);cursor:pointer;font-size:16px;">✕</button>
+        </div>
+        <div id="payosBody"><div style="padding:20px;color:var(--text-tertiary);">Đang tạo mã...</div></div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:10px;">Khách quét mã này để thanh toán</div>
     </div>
 </div>
 
@@ -234,10 +250,67 @@ async function showOrderDetail(orderId) {
             ${d.totalAmount !== d.finalAmount ? `<div class="detail-row"><span class="detail-lbl">Giá gốc</span><span class="detail-val" style="text-decoration:line-through;color:var(--text-tertiary);">${fmt(d.totalAmount)}</span></div>
             <div class="detail-row"><span class="detail-lbl">Giảm giá</span><span class="detail-val" style="color:var(--danger);">-${fmt(d.discountAmount)}</span></div>` : ''}
             ${deadlineHtml}
+            ${d.status === 'READY_FOR_PICKUP' && d.paymentStatus !== 'PAID' ? `<button onclick="closeDetailModal();createPayOSQR(${d.orderId})" style="width:100%;margin-top:10px;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-md);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-family);">💳 Tạo mã QR thanh toán — ${fmt(d.finalAmount)}</button>` : ''}
         `;
     } catch(e) {
         document.getElementById('detailBody').innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);">Lỗi tải dữ liệu</div>';
     }
+}
+
+async function createPayOSQR(orderId) {
+    document.getElementById('payosModal').style.display = 'flex';
+    document.getElementById('payosBody').innerHTML = '<div style="padding:20px;color:var(--text-tertiary);">Đang tạo mã thanh toán...</div>';
+    try {
+        const r = await fetch('/api/payment/create/' + orderId, { method: 'POST' });
+        const d = await r.json();
+        console.log('PayOS API response:', d);
+        if (d.success) {
+            // PayOS trả về VietQR string, phải generate QR ảnh từ chuỗi này
+            var qrCode = d.qrCode || '';
+            var qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrCode);
+            var checkoutUrl = d.checkoutUrl || '';
+            document.getElementById('payosBody').innerHTML =
+                '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Đơn #' + orderId + ' — ' + fmt(d.amount) + '</div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Mã QR hết hạn sau 30 phút</div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Ngân hàng: ' + (d.bin || '') + ' — ' + (d.accountNumber || '') + '</div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Chủ TK: ' + (d.accountName || '') + '</div>' +
+                '<div style="display:flex;justify-content:center;margin:8px 0;"><img src="' + qrSrc + '" alt="PayOS QR" style="width:200px;height:200px;border-radius:8px;display:block;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"></div>' +
+                '<div style="display:none;padding:20px;color:var(--danger);">Không tải được QR. Dùng link bên dưới.</div>' +
+                '<div style="margin-top:12px;padding:8px 12px;background:rgba(13,92,46,.08);border-radius:var(--radius-md);font-size:12px;color:var(--text-secondary);word-break:break-all;">' +
+                    '<span style="font-weight:600;color:var(--primary);">Link thanh toán:</span><br><a href="' + checkoutUrl + '" target="_blank" style="color:var(--info);">' + checkoutUrl + '</a>' +
+                '</div>' +
+                '<button onclick="checkPaymentStatus(' + orderId + ')" style="margin-top:10px;padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-family);">🔄 Kiểm tra trạng thái</button>';
+        } else {
+            document.getElementById('payosBody').innerHTML = `<div style="padding:20px;color:var(--danger);">${d.message}</div>`;
+        }
+    } catch(e) {
+        document.getElementById('payosBody').innerHTML = '<div style="padding:20px;color:var(--danger);">Lỗi kết nối PayOS</div>';
+    }
+}
+
+async function checkPaymentStatus(orderId) {
+    try {
+        var btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Đang kiểm tra...';
+        const r = await fetch('/api/payment/status/' + orderId);
+        const d = await r.json();
+        if (d.paidFromPayOS) {
+            alert(d.message || '✅ Thanh toán thành công! Đơn hàng đã hoàn thành.');
+            location.reload();
+        } else {
+            alert(d.message || '⏳ Chưa nhận được thanh toán. Thử lại sau.');
+            btn.disabled = false;
+            btn.textContent = '🔄 Kiểm tra trạng thái';
+        }
+    } catch(e) {
+        alert('Lỗi kiểm tra trạng thái');
+    }
+}
+
+function closePayosModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('payosModal').style.display = 'none';
 }
 
 function closeDetailModal(e) {

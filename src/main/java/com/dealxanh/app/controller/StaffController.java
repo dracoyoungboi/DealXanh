@@ -20,7 +20,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.function.Predicate;
 
 @Controller
 @RequestMapping("/staff")
@@ -40,11 +42,20 @@ public class StaffController {
     private CategoryRepository categoryRepository;
 
     @GetMapping({"", "/dashboard"})
-    public String dashboard(Model model, Principal principal) {
+    public String dashboard(@RequestParam(required = false) String slot,
+            Model model, Principal principal) {
         User user = getCurrentUser(principal);
         if (user == null || user.getWorkStore() == null) return "redirect:/login";
         Store store = user.getWorkStore();
         Long storeId = store.getStoreId();
+
+        // Pickup slots from store config
+        String[] slots = store.getPickupSlots() != null
+                ? store.getPickupSlots().split(",")
+                : new String[]{"16:00-18:00", "17:00-19:00", "18:00-20:00"};
+
+        // Default active slot = first slot
+        String activeSlot = slot != null ? slot.trim() : slots[0].trim();
 
         // Today's orders by status
         var pendingPage = orderRepository.findByStoreStoreIdAndStatusOrderByCreatedAtDesc(
@@ -57,13 +68,29 @@ public class StaffController {
         List<Order> confirmedOrders = confirmedPage.getContent();
         List<Order> readyOrders = readyPage.getContent();
 
+        // Filter by selected slot (time range)
+        if (activeSlot != null && activeSlot.contains("-")) {
+            String[] parts = activeSlot.split("-");
+            try {
+                LocalTime slotStart = LocalTime.parse(parts[0].trim());
+                LocalTime slotEnd = LocalTime.parse(parts[1].trim());
+                Predicate<Order> slotFilter = o -> {
+                    if (o.getScheduledPickupTime() == null && o.getCreatedAt() == null) return true;
+                    java.time.LocalTime orderTime = o.getScheduledPickupTime() != null
+                        ? o.getScheduledPickupTime().toLocalTime()
+                        : o.getCreatedAt().toLocalTime();
+                    return !orderTime.isBefore(slotStart) && !orderTime.isAfter(slotEnd);
+                };
+                pendingOrders = pendingOrders.stream().filter(slotFilter).toList();
+                confirmedOrders = confirmedOrders.stream().filter(slotFilter).toList();
+                readyOrders = readyOrders.stream().filter(slotFilter).toList();
+            } catch (Exception ignored) {
+                // Invalid slot format, skip filtering
+            }
+        }
+
         long servedToday = orderRepository.countByStoreStoreIdAndStatus(storeId, "COMPLETED");
         long pendingToday = pendingOrders.size() + confirmedOrders.size() + readyOrders.size();
-
-        // Pickup slots from store config
-        String[] slots = store.getPickupSlots() != null
-                ? store.getPickupSlots().split(",")
-                : new String[]{"16:00-18:00", "17:00-19:00", "18:00-20:00"};
 
         model.addAttribute("user", user);
         model.addAttribute("store", store);
@@ -73,6 +100,7 @@ public class StaffController {
         model.addAttribute("servedToday", servedToday);
         model.addAttribute("pendingToday", pendingToday);
         model.addAttribute("pickupSlots", slots);
+        model.addAttribute("activeSlot", activeSlot);
         model.addAttribute("activePage", "dashboard");
         model.addAttribute("weakPassword", user.getWeakPassword());
 
@@ -98,6 +126,7 @@ public class StaffController {
         long confirmedCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "CONFIRMED");
         long readyCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "READY_FOR_PICKUP");
         long completedCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "COMPLETED");
+        long cancelledCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "CANCELLED");
 
         // Fetch orders with search
         int fetchSize = (search != null && !search.isEmpty()) ? 200 : size;
@@ -144,6 +173,7 @@ public class StaffController {
         model.addAttribute("confirmedCount", confirmedCount);
         model.addAttribute("readyCount", readyCount);
         model.addAttribute("completedCount", completedCount);
+        model.addAttribute("cancelledCount", cancelledCount);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("searchQuery", search);
         model.addAttribute("currentPage", page);
@@ -559,6 +589,16 @@ public class StaffController {
         if (order == null) return java.util.Map.of("success", false, "message", "Không tìm thấy đơn hàng");
         if (!order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
             return java.util.Map.of("success", false, "message", "Đơn hàng không thuộc cửa hàng của bạn");
+
+        // Valid transitions: PENDING→CONFIRMED→READY_FOR_PICKUP→COMPLETED, PENDING→CANCELLED
+        String current = order.getStatus();
+        boolean valid = false;
+        if ("PENDING".equals(current) && ("CONFIRMED".equals(newStatus) || "CANCELLED".equals(newStatus))) valid = true;
+        if ("CONFIRMED".equals(current) && "READY_FOR_PICKUP".equals(newStatus)) valid = true;
+        if ("READY_FOR_PICKUP".equals(current) && "COMPLETED".equals(newStatus)) valid = true;
+
+        if (!valid) return java.util.Map.of("success", false, "message",
+            "Không thể chuyển từ " + current + " sang " + newStatus);
 
         order.setStatus(newStatus);
         if ("READY_FOR_PICKUP".equals(newStatus) && order.getPickupQrCode() == null) {

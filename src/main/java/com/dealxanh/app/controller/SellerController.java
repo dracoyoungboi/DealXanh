@@ -1197,6 +1197,7 @@ public class SellerController {
         long confirmedCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "CONFIRMED");
         long readyCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "READY_FOR_PICKUP");
         long completedCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "COMPLETED");
+        long cancelledCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "CANCELLED");
 
         // Today's revenue
         java.time.LocalDateTime todayStart = java.time.LocalDateTime.now().toLocalDate().atStartOfDay();
@@ -1249,6 +1250,7 @@ public class SellerController {
         model.addAttribute("confirmedCount", confirmedCount);
         model.addAttribute("readyCount", readyCount);
         model.addAttribute("completedCount", completedCount);
+        model.addAttribute("cancelledCount", cancelledCount);
         model.addAttribute("todayRevenue", todayRevenue != null ? todayRevenue : 0);
         model.addAttribute("todayOrders", todayOrders != null ? todayOrders : 0);
         model.addAttribute("selectedStatus", status);

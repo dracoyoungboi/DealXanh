@@ -128,11 +128,11 @@ body{padding-bottom:80px}
                 </a>
                 <div class="deal-card__actions">
                     <button class="deal-card__btn deal-card__btn--cart"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
-                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">+ Thêm vào giỏ</button>
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Thêm vào giỏ</button>
                     <button class="deal-card__btn deal-card__btn--buy"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
-                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">Mua ngay</button>
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
                 </div>
             </div>
         </div>
@@ -184,11 +184,11 @@ body{padding-bottom:80px}
                 </a>
                 <div class="deal-card__actions">
                     <button class="deal-card__btn deal-card__btn--cart"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
-                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">+ Thêm vào giỏ</button>
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Thêm vào giỏ</button>
                     <button class="deal-card__btn deal-card__btn--buy"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
-                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">Mua ngay</button>
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
                 </div>
             </div>
         </div>
@@ -266,11 +266,11 @@ body{padding-bottom:80px}
                 </a>
                 <div class="deal-card__actions">
                     <button class="deal-card__btn deal-card__btn--cart"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
-                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">+ Thêm vào giỏ</button>
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Thêm vào giỏ</button>
                     <button class="deal-card__btn deal-card__btn--buy"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0}"
-                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">Mua ngay</button>
+                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
                 </div>
             </div>
         </div>
@@ -378,7 +378,7 @@ function filterProducts(type, btn) {
 })();
 
 // ===== CART BUTTONS =====
-function addToCartHome(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId) {
+function addToCartHome(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId, dealType, dealName) {
     var fd = new URLSearchParams();
     fd.append('dealId', dealId);
     fd.append('productId', productId);
@@ -388,6 +388,8 @@ function addToCartHome(productId, productName, salePrice, originalPrice, storeNa
     fd.append('storeName', storeName);
     fd.append('productImage', productImage || '');
     if (storeId) fd.append('storeId', storeId);
+    if (dealType) fd.append('dealType', dealType);
+    if (dealName) fd.append('dealName', dealName);
     fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
         .then(function(r){return r.json()})
         .then(function(d){
@@ -397,7 +399,7 @@ function addToCartHome(productId, productName, salePrice, originalPrice, storeNa
         .catch(function(){showToast('Đã thêm vào giỏ hàng');});
 }
 
-function buyNowHome(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId) {
+function buyNowHome(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId, dealType, dealName) {
     var fd = new URLSearchParams();
     fd.append('dealId', dealId);
     fd.append('productId', productId);
@@ -407,6 +409,8 @@ function buyNowHome(productId, productName, salePrice, originalPrice, storeName,
     fd.append('storeName', storeName);
     fd.append('productImage', productImage || '');
     if (storeId) fd.append('storeId', storeId);
+    if (dealType) fd.append('dealType', dealType);
+    if (dealName) fd.append('dealName', dealName);
     fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
         .then(function(r){return r.json()})
         .then(function(){window.location.href='/buyer/checkout';})

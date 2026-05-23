@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DealRepository extends JpaRepository<Deal, Long> {
@@ -70,6 +71,9 @@ public interface DealRepository extends JpaRepository<Deal, Long> {
     // Check if deal code exists (excluding current deal)
     @Query("SELECT COUNT(d) FROM Deal d WHERE d.dealCode = :code AND d.status <> 'CANCELLED' AND (:dealId IS NULL OR d.dealId <> :dealId)")
     Long countByDealCodeAndStatusNotCancelled(@Param("code") String code, @Param("dealId") Long dealId);
+
+    // Find active deal by code
+    Optional<Deal> findByDealCodeAndStatus(String dealCode, String status);
 
     // Find overlapping deals for same store
     @Query("SELECT d FROM Deal d WHERE d.store.storeId = :storeId AND d.status IN ('SCHEDULED', 'ACTIVE') " +

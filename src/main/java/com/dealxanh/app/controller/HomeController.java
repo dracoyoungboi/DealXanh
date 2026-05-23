@@ -4,6 +4,7 @@ import com.dealxanh.app.entity.Category;
 import com.dealxanh.app.entity.Deal;
 import com.dealxanh.app.entity.DealProduct;
 import com.dealxanh.app.entity.Order;
+import com.dealxanh.app.entity.OrderItem;
 import com.dealxanh.app.entity.Product;
 import com.dealxanh.app.entity.Store;
 import com.dealxanh.app.entity.User;
@@ -241,11 +242,21 @@ public class HomeController {
                         } else if (dp.getOriginalPrice() > 0) {
                             discountPercent = ((dp.getOriginalPrice() - dp.getSalePrice()) / dp.getOriginalPrice()) * 100;
                         }
+                        String typeLabel;
+                        switch (deal.getDealType() != null ? deal.getDealType() : "") {
+                            case "FLASH_SALE": typeLabel = "Flash Sale"; break;
+                            case "VOUCHER": typeLabel = "Voucher"; break;
+                            case "COMBO": typeLabel = "Combo"; break;
+                            case "SEASONAL": typeLabel = "Seasonal"; break;
+                            default: typeLabel = "Deal";
+                        }
                         Map<String, Object> info = new HashMap<>();
                         info.put("salePrice", Math.round(dp.getSalePrice()));
                         info.put("originalPrice", Math.round(dp.getOriginalPrice()));
                         info.put("discountPercent", Math.round(discountPercent));
                         info.put("dealType", deal.getDealType());
+                        info.put("dealName", deal.getDealName());
+                        info.put("typeLabel", typeLabel);
                         info.put("dealId", deal.getDealId());
                         info.put("storeName", deal.getStore() != null ? deal.getStore().getStoreName() : null);
                         info.put("storeLogo", deal.getStore() != null ? deal.getStore().getLogoUrl() : null);
@@ -343,7 +354,13 @@ public class HomeController {
         @SuppressWarnings("unchecked")
         java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
         if (cart == null) cart = java.util.List.of();
-        return java.util.Map.of("items", cart, "count", cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum());
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> voucher = (java.util.Map<String, Object>) session.getAttribute("appliedVoucher");
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("items", cart);
+        result.put("count", cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum());
+        result.put("voucher", voucher);
+        return result;
     }
 
     @PostMapping("/api/cart/add")
@@ -352,6 +369,8 @@ public class HomeController {
             @RequestParam String productName, @RequestParam double salePrice, @RequestParam double originalPrice,
             @RequestParam String storeName, @RequestParam(required = false) String productImage,
             @RequestParam(required = false) Long storeId,
+            @RequestParam(required = false) String dealType,
+            @RequestParam(required = false) String dealName,
             jakarta.servlet.http.HttpSession session) {
         @SuppressWarnings("unchecked")
         java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
@@ -377,6 +396,8 @@ public class HomeController {
         item.put("productImage", productImage != null ? productImage : "");
         item.put("storeId", storeId);
         item.put("quantity", 1);
+        item.put("dealType", dealType != null ? dealType : "");
+        item.put("dealName", dealName != null ? dealName : "");
         cart.add(item);
         session.setAttribute("cart", cart);
         return java.util.Map.of("success", true, "message", "Đã thêm vào giỏ hàng", "count", cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum());
@@ -418,6 +439,110 @@ public class HomeController {
         java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
         int count = cart == null ? 0 : cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum();
         return java.util.Map.of("count", count);
+    }
+
+    // ============ VOUCHER API ============
+
+    @GetMapping("/api/vouchers/available")
+    @ResponseBody
+    public java.util.Map<String, Object> availableVouchers() {
+        LocalDateTime now = LocalDateTime.now();
+        // Use findByDealType with unpaged, then filter by status and other conditions
+        List<Deal> vouchers = dealRepository.findByDealType("VOUCHER",
+            org.springframework.data.domain.Pageable.unpaged()).getContent();
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Deal v : vouchers) {
+            if (!"ACTIVE".equals(v.getStatus())) continue;
+            if (!"CODE_REQUIRED".equals(v.getApplyMethod())) continue;
+            if (v.getStartTime() != null && v.getStartTime().isAfter(now)) continue;
+            if (v.getEndTime() != null && v.getEndTime().isBefore(now)) continue;
+            Map<String, Object> vi = new HashMap<>();
+            vi.put("dealId", v.getDealId());
+            vi.put("code", v.getDealCode());
+            vi.put("dealName", v.getDealName());
+            vi.put("discountType", v.getDiscountType());
+            vi.put("discountValue", v.getDiscountValue());
+            vi.put("maxDiscountAmount", v.getMaxDiscountAmount());
+            vi.put("minOrderAmount", v.getMinOrderAmount());
+            vi.put("endTime", v.getEndTime() != null ? v.getEndTime().toString() : null);
+            vi.put("storeName", v.getStore() != null ? v.getStore().getStoreName() : "Toàn hệ thống");
+            list.add(vi);
+        }
+        return java.util.Map.of("success", true, "vouchers", list);
+    }
+
+    @PostMapping("/api/cart/apply-voucher")
+    @ResponseBody
+    public java.util.Map<String, Object> applyVoucher(@RequestParam String code,
+            jakarta.servlet.http.HttpSession session) {
+        @SuppressWarnings("unchecked")
+        java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
+        if (cart == null || cart.isEmpty())
+            return java.util.Map.of("success", false, "message", "Giỏ hàng trống");
+
+        // Calculate cart total
+        double cartTotal = 0;
+        for (java.util.Map<String, Object> item : cart) {
+            int qty = ((Number) item.getOrDefault("quantity", 1)).intValue();
+            double salePrice = ((Number) item.getOrDefault("salePrice", 0)).doubleValue();
+            cartTotal += salePrice * qty;
+        }
+
+        // Find active voucher by code
+        Deal voucher = dealRepository.findByDealCodeAndStatus(code.trim().toUpperCase(), "ACTIVE").orElse(null);
+        if (voucher == null)
+            return java.util.Map.of("success", false, "message", "Mã giảm giá không tồn tại hoặc đã hết hạn");
+
+        // Must be VOUCHER type with CODE_REQUIRED
+        if (!"VOUCHER".equals(voucher.getDealType()) || !"CODE_REQUIRED".equals(voucher.getApplyMethod()))
+            return java.util.Map.of("success", false, "message", "Mã này không phải mã giảm giá");
+
+        // Check time validity
+        LocalDateTime now = LocalDateTime.now();
+        if (voucher.getStartTime() != null && voucher.getStartTime().isAfter(now))
+            return java.util.Map.of("success", false, "message", "Mã giảm giá chưa có hiệu lực");
+        if (voucher.getEndTime() != null && voucher.getEndTime().isBefore(now))
+            return java.util.Map.of("success", false, "message", "Mã giảm giá đã hết hạn");
+
+        // Check minimum order amount
+        double minOrder = voucher.getMinOrderAmount() != null ? voucher.getMinOrderAmount() : 0;
+        if (cartTotal < minOrder)
+            return java.util.Map.of("success", false, "message",
+                "Đơn tối thiểu " + String.format("%,.0f", minOrder) + "đ để áp dụng mã này");
+
+        // Calculate discount
+        double voucherDiscount = 0;
+        if ("PERCENT".equals(voucher.getDiscountType())) {
+            voucherDiscount = cartTotal * (voucher.getDiscountValue() / 100.0);
+            double maxDiscount = voucher.getMaxDiscountAmount() != null ? voucher.getMaxDiscountAmount() : 999999999;
+            if (voucherDiscount > maxDiscount) voucherDiscount = maxDiscount;
+        } else {
+            voucherDiscount = voucher.getDiscountValue() != null ? voucher.getDiscountValue() : 0;
+        }
+        if (voucherDiscount > cartTotal) voucherDiscount = cartTotal;
+
+        // Store voucher in session
+        java.util.Map<String, Object> voucherInfo = new java.util.HashMap<>();
+        voucherInfo.put("dealId", voucher.getDealId());
+        voucherInfo.put("code", code.trim().toUpperCase());
+        voucherInfo.put("dealName", voucher.getDealName());
+        voucherInfo.put("discountType", voucher.getDiscountType());
+        voucherInfo.put("discountValue", voucher.getDiscountValue());
+        voucherInfo.put("voucherDiscount", Math.round(voucherDiscount * 100.0) / 100.0);
+        session.setAttribute("appliedVoucher", voucherInfo);
+
+        return java.util.Map.of(
+            "success", true,
+            "message", "Đã áp dụng mã " + code.trim().toUpperCase(),
+            "data", voucherInfo
+        );
+    }
+
+    @PostMapping("/api/cart/remove-voucher")
+    @ResponseBody
+    public java.util.Map<String, Object> removeVoucher(jakarta.servlet.http.HttpSession session) {
+        session.removeAttribute("appliedVoucher");
+        return java.util.Map.of("success", true, "message", "Đã xoá mã giảm giá");
     }
 
     // ============ DEAL DETAIL ============
@@ -591,11 +716,23 @@ public class HomeController {
         }
         long total = subtotal;
 
+        // Get applied voucher from session
+        @SuppressWarnings("unchecked")
+        Map<String, Object> appliedVoucher = (Map<String, Object>) session.getAttribute("appliedVoucher");
+        long voucherDiscount = 0;
+        if (appliedVoucher != null) {
+            voucherDiscount = ((Number) appliedVoucher.getOrDefault("voucherDiscount", 0)).longValue();
+            total -= voucherDiscount;
+            if (total < 0) total = 0;
+        }
+
         model.addAttribute("storeGroups", storeGroups);
         model.addAttribute("storeInfo", storeInfo);
         model.addAttribute("itemCount", itemCount);
         model.addAttribute("subtotal", subtotal);
         model.addAttribute("totalDiscount", totalDiscount);
+        model.addAttribute("voucherDiscount", voucherDiscount);
+        model.addAttribute("appliedVoucher", appliedVoucher);
         model.addAttribute("total", total);
         model.addAttribute("cart", cart);
 
@@ -604,6 +741,7 @@ public class HomeController {
 
     @PostMapping("/buyer/checkout/confirm")
     public String confirmCheckout(java.security.Principal principal,
+            @RequestParam(required = false, defaultValue = "CASH") String paymentMethod,
             jakarta.servlet.http.HttpSession session) {
         User user = getCurrentUser(principal);
         if (user == null) return "redirect:/login";
@@ -612,27 +750,96 @@ public class HomeController {
         List<Map<String, Object>> cart = (List<Map<String, Object>>) session.getAttribute("cart");
         if (cart == null || cart.isEmpty()) return "redirect:/buyer/cart";
 
-        // Create orders grouped by store
-        Map<Long, Order> storeOrders = new java.util.LinkedHashMap<>();
+        // Group cart items by store
+        Map<Long, List<Map<String, Object>>> storeGroups = new java.util.LinkedHashMap<>();
         for (Map<String, Object> item : cart) {
             Long storeId = item.get("storeId") != null ? ((Number) item.get("storeId")).longValue() : null;
             if (storeId == null) continue;
-            Order order = storeOrders.computeIfAbsent(storeId, k -> {
-                Order o = new Order();
-                o.setUser(user);
-                o.setStore(storeRepository.findById(k).orElse(null));
-                o.setStatus("PENDING");
-                o.setCreatedAt(LocalDateTime.now());
-                o.setPickupQrCode("DX-" + k + "-" + generateRandomCode(6));
-                return o;
-            });
+            storeGroups.computeIfAbsent(storeId, k -> new ArrayList<>()).add(item);
         }
 
-        // Save orders and clear cart
-        for (Order o : storeOrders.values()) {
-            orderRepository.save(o);
+        // Get applied voucher from session
+        @SuppressWarnings("unchecked")
+        Map<String, Object> appliedVoucher = (Map<String, Object>) session.getAttribute("appliedVoucher");
+        String voucherCode = null;
+        double voucherDiscountTotal = 0;
+        if (appliedVoucher != null) {
+            voucherCode = (String) appliedVoucher.get("code");
+            voucherDiscountTotal = ((Number) appliedVoucher.getOrDefault("voucherDiscount", 0)).doubleValue();
         }
+
+        List<Long> orderIds = new ArrayList<>();
+
+        for (Map.Entry<Long, List<Map<String, Object>>> entry : storeGroups.entrySet()) {
+            Long storeId = entry.getKey();
+            List<Map<String, Object>> items = entry.getValue();
+
+            Store store = storeRepository.findById(storeId).orElse(null);
+            if (store == null) continue;
+
+            Order order = new Order();
+            order.setUser(user);
+            order.setStore(store);
+            order.setStatus("PENDING");
+            order.setPaymentStatus("UNPAID");
+            order.setPaymentMethod(paymentMethod);
+            order.setCreatedAt(LocalDateTime.now());
+
+            double totalAmount = 0;
+            double discountAmount = 0;
+            List<OrderItem> orderItems = new ArrayList<>();
+
+            for (Map<String, Object> item : items) {
+                int qty = ((Number) item.getOrDefault("quantity", 1)).intValue();
+                double salePrice = ((Number) item.getOrDefault("salePrice", 0)).doubleValue();
+                double originalPrice = ((Number) item.getOrDefault("originalPrice", salePrice)).doubleValue();
+                Long productId = item.get("productId") != null ? ((Number) item.get("productId")).longValue() : null;
+
+                totalAmount += originalPrice * qty;
+                if (originalPrice > salePrice) {
+                    discountAmount += (originalPrice - salePrice) * qty;
+                }
+
+                if (productId != null) {
+                    Product product = productRepository.findById(productId).orElse(null);
+                    if (product != null) {
+                        OrderItem oi = new OrderItem();
+                        oi.setOrder(order);
+                        oi.setProduct(product);
+                        oi.setQuantity(qty);
+                        oi.setUnitPrice(salePrice);
+                        orderItems.add(oi);
+                    }
+                }
+            }
+
+            // Apply voucher discount (distributed to first store's order, or pro-rata)
+            double finalAmount = totalAmount - discountAmount;
+            if (voucherCode != null && voucherDiscountTotal > 0 && orderIds.isEmpty()) {
+                // Apply voucher to first store's order
+                double vd = Math.min(voucherDiscountTotal, finalAmount);
+                discountAmount += vd;
+                finalAmount -= vd;
+                order.setCouponCode(voucherCode);
+            }
+
+            order.setTotalAmount(totalAmount);
+            order.setDiscountAmount(discountAmount);
+            order.setFinalAmount(finalAmount);
+            order.setOrderItems(orderItems);
+            order.setPickupQrCode("DX-TMP-" + generateRandomCode(6));
+
+            // Save to get orderId, then update QR with real ID
+            order = orderRepository.save(order);
+            order.setPickupQrCode("DX-" + order.getOrderId() + "-" + generateRandomCode(6));
+            orderRepository.save(order);
+
+            orderIds.add(order.getOrderId());
+        }
+
         session.removeAttribute("cart");
+        session.removeAttribute("appliedVoucher");
+        session.setAttribute("lastOrderIds", orderIds);
 
         return "redirect:/buyer/order-complete";
     }
@@ -659,10 +866,24 @@ public class HomeController {
     // ============ ORDER COMPLETE ============
 
     @GetMapping("/buyer/order-complete")
-    public String orderComplete(java.security.Principal principal, Model model) {
+    public String orderComplete(java.security.Principal principal, Model model,
+            jakarta.servlet.http.HttpSession session) {
         User user = getCurrentUser(principal);
         if (user == null) return "redirect:/login";
+
+        @SuppressWarnings("unchecked")
+        List<Long> orderIds = (List<Long>) session.getAttribute("lastOrderIds");
+        session.removeAttribute("lastOrderIds");
+
+        List<Order> completedOrders = new ArrayList<>();
+        if (orderIds != null) {
+            for (Long id : orderIds) {
+                orderRepository.findById(id).ifPresent(completedOrders::add);
+            }
+        }
+
         model.addAttribute("user", user);
+        model.addAttribute("completedOrders", completedOrders);
         return "buyer/order-complete";
     }
 
@@ -686,8 +907,17 @@ public class HomeController {
 
     @GetMapping("/buyer/orders/{orderId}")
     public String orderDetail(@PathVariable Long orderId, java.security.Principal principal, Model model) {
-        // Redirect to orders list for now (detail page pending)
-        return "redirect:/buyer/orders";
+        User user = getCurrentUser(principal);
+        if (user == null) return "redirect:/login";
+
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null || !order.getUser().getUserId().equals(user.getUserId())) {
+            return "redirect:/buyer/orders";
+        }
+
+        model.addAttribute("user", user);
+        model.addAttribute("order", order);
+        return "buyer/order-detail";
     }
 
     // ============ SEARCH ============

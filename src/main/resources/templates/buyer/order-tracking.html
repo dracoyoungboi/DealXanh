@@ -95,7 +95,9 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
 <!-- Order list -->
 <div class="order-list" id="orderList" th:if="${orders != null and !orders.isEmpty()}">
     <th:block th:each="order : ${orders}">
-        <div class="order-card" th:attr="data-status=${order.status}">
+        <div class="order-card" th:attr="data-status=${order.status},data-oid=${order.orderId}"
+             onclick="window.location.href='/buyer/orders/' + this.dataset.oid"
+             style="cursor:pointer">
             <!-- Header: store info + status -->
             <div class="order-card__header">
                 <img class="order-card__store-logo"

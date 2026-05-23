@@ -36,8 +36,14 @@ public class Transaction {
     // Trạng thái: COMPLETED, PENDING, FAILED
     private String status = "PENDING";
 
+    // Mã tham chiếu PayOS (orderCode từ PayOS)
+    private String transactionRef;
+
+    // Phương thức thanh toán: CASH, MOMO, BANK_TRANSFER, ZALOPAY
+    private String paymentMethod;
+
     private String description;
-    
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
@@ -67,6 +73,12 @@ public class Transaction {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getTransactionRef() { return transactionRef; }
+    public void setTransactionRef(String transactionRef) { this.transactionRef = transactionRef; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

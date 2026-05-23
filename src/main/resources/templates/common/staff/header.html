@@ -22,9 +22,11 @@
       </a>
     </div>
   </div>
-  <div class="slot-strip">
+  <!-- Slot filter: chỉ hiển thị ở dashboard -->
+  <div class="slot-strip" th:if="${activePage == 'dashboard'}">
     <th:block th:each="slot, iterStat : ${pickupSlots}">
-      <div class="slot-pill" th:classappend="${iterStat.index == 0} ? 'active' : ''">
+      <div class="slot-pill" th:classappend="${activeSlot != null ? (activeSlot == slot.trim() ? 'active' : '') : (iterStat.index == 0 ? 'active' : '')}"
+           style="cursor:pointer;">
         <span class="slot-pill-dot"></span><span th:text="${slot.trim()}">17:00–18:00</span>
       </div>
     </th:block>

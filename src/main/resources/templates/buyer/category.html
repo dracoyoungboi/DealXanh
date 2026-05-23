@@ -8,7 +8,7 @@
     <link rel="stylesheet" th:href="@{/css/pages/home.css}">
     <style>
 html{height:auto;min-height:100%}
-body{font-family:var(--font-family);background:#f5f5f5;color:var(--text-primary);padding-bottom:70px}
+body{font-family:var(--font-family);background:#f5f5f5;color:var(--text-primary);padding-bottom:80px}
 *,*::before,*::after{box-sizing:border-box}
 
 /* Back bar */
@@ -214,11 +214,11 @@ body{font-family:var(--font-family);background:#f5f5f5;color:var(--text-primary)
                     </a>
                     <div class="prod-card__actions">
                         <button class="prod-card__btn prod-card__btn--cart"
-                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},data-oprice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice},data-sname=${p.store != null ? p.store.storeName : ''},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0}"
-                            onclick="event.stopPropagation();addToCartCat(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">+ Giỏ</button>
+                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},data-oprice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice},data-sname=${p.store != null ? p.store.storeName : ''},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
+                            onclick="event.stopPropagation();addToCartCat(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Giỏ</button>
                         <button class="prod-card__btn prod-card__btn--buy"
-                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},data-oprice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice},data-sname=${p.store != null ? p.store.storeName : ''},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0}"
-                            onclick="event.stopPropagation();buyNowCat(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid))">Mua</button>
+                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},data-oprice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice},data-sname=${p.store != null ? p.store.storeName : ''},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
+                            onclick="event.stopPropagation();buyNowCat(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua</button>
                     </div>
                 </div>
             </th:block>
@@ -244,7 +244,7 @@ function debounceSearch() {
     searchTimer = setTimeout(function(){document.getElementById('searchForm').submit();}, 300);
 }
 
-function addToCartCat(productId, productName, salePrice, originalPrice, storeName, imageUrl, dealId, storeId) {
+function addToCartCat(productId, productName, salePrice, originalPrice, storeName, imageUrl, dealId, storeId, dealType, dealName) {
     var fd = new URLSearchParams();
     fd.append('dealId', dealId || 0);
     fd.append('productId', productId);
@@ -254,13 +254,15 @@ function addToCartCat(productId, productName, salePrice, originalPrice, storeNam
     fd.append('storeName', storeName);
     fd.append('productImage', imageUrl || '');
     if (storeId) fd.append('storeId', storeId);
+    if (dealType) fd.append('dealType', dealType);
+    if (dealName) fd.append('dealName', dealName);
     fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
         .then(function(r){return r.json()})
         .then(function(d){toast(d.message || 'Đã thêm vào giỏ');updateBadge(d.count);})
         .catch(function(){toast('Đã thêm vào giỏ hàng');});
 }
 
-function buyNowCat(productId, productName, salePrice, originalPrice, storeName, imageUrl, dealId, storeId) {
+function buyNowCat(productId, productName, salePrice, originalPrice, storeName, imageUrl, dealId, storeId, dealType, dealName) {
     var fd = new URLSearchParams();
     fd.append('dealId', dealId || 0);
     fd.append('productId', productId);
@@ -270,6 +272,8 @@ function buyNowCat(productId, productName, salePrice, originalPrice, storeName, 
     fd.append('storeName', storeName);
     fd.append('productImage', imageUrl || '');
     if (storeId) fd.append('storeId', storeId);
+    if (dealType) fd.append('dealType', dealType);
+    if (dealName) fd.append('dealName', dealName);
     fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
         .then(function(){window.location.href='/buyer/checkout';})
         .catch(function(){window.location.href='/buyer/checkout';});

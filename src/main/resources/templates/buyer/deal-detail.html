@@ -152,6 +152,8 @@ body{padding-bottom:80px;background:var(--background)}
 
 <script th:inline="javascript">
 var dealId = /*[[${deal.dealId}]]*/ 0;
+var dealType = /*[[${deal.dealType}]]*/ '';
+var dealName = /*[[${deal.dealName}]]*/ '';
 
 function addToCart(productId, productName, salePrice, originalPrice, storeName, productImage, storeId) {
     var fd = new URLSearchParams();
@@ -163,6 +165,8 @@ function addToCart(productId, productName, salePrice, originalPrice, storeName, 
     fd.append('storeName', storeName);
     fd.append('productImage', productImage || '');
     if (storeId) fd.append('storeId', storeId);
+    if (dealType) fd.append('dealType', dealType);
+    if (dealName) fd.append('dealName', dealName);
 
     fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
         .then(function(r){return r.json()})

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="|Đơn hàng #${order.orderId} — DealXanh|">Chi tiết đơn hàng — DealXanh</title>
+    <meta name="description" content="Chi tiết đơn hàng DealXanh">
+    <div th:replace="~{common/buyer/css :: css}"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    <style>
+html{height:auto;min-height:100%}
+body{padding-bottom:80px;background:var(--background);font-family:var(--font-family)}
+*,*::before,*::after{box-sizing:border-box}
+
+/* ===== BACK BAR ===== */
+.back-bar{padding:12px 16px;display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.back-bar a{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none}
+.back-bar svg{width:18px;height:18px}
+.back-bar__title{flex:1;font-size:17px;font-weight:700;text-align:center;margin-right:38px}
+
+/* ===== STATUS BADGE ===== */
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:var(--radius-full);font-size:13px;font-weight:700}
+.status-PENDING{background:rgba(245,158,11,.12);color:#b45309}
+.status-CONFIRMED{background:rgba(59,130,246,.12);color:#1d4ed8}
+.status-READY_FOR_PICKUP{background:rgba(16,185,129,.12);color:var(--primary)}
+.status-COMPLETED{background:rgba(16,185,129,.12);color:#059669}
+.status-CANCELLED{background:rgba(239,68,68,.12);color:#b91c1c}
+
+/* ===== CONTENT ===== */
+.detail-body{padding:16px;display:flex;flex-direction:column;gap:12px}
+
+/* Card */
+.detail-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);box-shadow:var(--shadow-sm);overflow:hidden}
+.detail-card__header{padding:14px 16px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--text-primary)}
+.detail-card__header svg{width:15px;height:15px;color:var(--primary);flex-shrink:0}
+.detail-card__body{padding:14px 16px}
+
+/* Info rows */
+.info-rows{display:flex;flex-direction:column}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:13px}
+.info-row:last-child{border-bottom:none}
+.info-row__label{color:var(--text-secondary);flex-shrink:0}
+.info-row__value{font-weight:600;color:var(--text-primary);text-align:right;max-width:60%}
+
+/* Items list */
+.item-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light)}
+.item-row:last-child{border-bottom:none}
+.item-img{width:48px;height:48px;border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0;background:var(--background);display:flex;align-items:center;justify-content:center}
+.item-img img{width:100%;height:100%;object-fit:cover}
+.item-img svg{width:22px;height:22px;color:var(--text-tertiary)}
+.item-info{flex:1;min-width:0}
+.item-info__name{font-size:14px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item-info__meta{font-size:12px;color:var(--text-tertiary);margin-top:2px}
+.item-price{text-align:right;flex-shrink:0}
+.item-price__unit{font-size:12px;color:var(--text-secondary)}
+.item-price__subtotal{font-size:14px;font-weight:700;color:var(--primary)}
+
+/* Price breakdown */
+.price-breakdown{padding-top:10px;margin-top:4px}
+.price-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px}
+.price-row__label{color:var(--text-secondary)}
+.price-row__value{font-weight:600;color:var(--text-primary)}
+.price-row--discount .price-row__value{color:var(--danger)}
+.price-row--total{padding-top:8px;margin-top:6px;border-top:2px solid var(--border);font-weight:800;font-size:16px}
+.price-row--total .price-row__value{color:var(--primary);font-size:18px}
+
+/* QR Section */
+.qr-section{display:flex;align-items:center;gap:14px;padding:16px;background:rgba(13,92,46,.03);border-radius:var(--radius-md);border:1px solid rgba(13,92,46,.1)}
+.qr-box{width:90px;height:90px;flex-shrink:0;background:var(--surface);border-radius:var(--radius-md);border:2px solid var(--border-light);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm)}
+.qr-box__text{font-size:9px;font-weight:700;color:var(--text-primary);text-align:center;word-break:break-all;padding:6px;line-height:1.3}
+.qr-info{flex:1;min-width:0}
+.qr-info__label{font-size:11px;color:var(--text-secondary);margin-bottom:3px}
+.qr-info__code{font-size:12px;font-weight:700;color:var(--text-primary);word-break:break-all;margin-bottom:6px}
+.qr-info__otp{font-size:11px;color:var(--text-tertiary)}
+.qr-info__otp strong{font-size:18px;font-weight:800;color:#1d4ed8;letter-spacing:4px}
+
+/* Store info */
+.store-row{display:flex;align-items:center;gap:10px}
+.store-logo{width:44px;height:44px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0;background:var(--background);display:flex;align-items:center;justify-content:center}
+.store-logo img{width:100%;height:100%;object-fit:cover}
+.store-logo svg{width:24px;height:24px;color:var(--text-tertiary)}
+.store-info__name{font-size:15px;font-weight:700;color:var(--text-primary)}
+.store-info__addr{font-size:12px;color:var(--text-secondary);margin-top:2px}
+
+/* Action buttons */
+.action-area{padding:4px 16px 20px;display:flex;flex-direction:column;gap:10px}
+
+@media(min-width:768px){
+    .detail-body{max-width:520px;margin:0 auto}
+    .action-area{max-width:520px;margin:0 auto}
+}
+    </style>
+</head>
+<body>
+
+<!-- Back Bar -->
+<div class="back-bar">
+    <a href="javascript:history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Quay lại
+    </a>
+    <span class="back-bar__title" th:text="|Đơn hàng #${order.orderId}|">Chi tiết đơn hàng</span>
+</div>
+
+<div class="detail-body">
+
+    <!-- Status + Store -->
+    <div class="detail-card">
+        <div class="detail-card__body">
+            <div class="store-row" style="margin-bottom:10px;">
+                <div class="store-logo">
+                    <img th:if="${order.store != null and order.store.logoUrl != null and !order.store.logoUrl.isEmpty()}"
+                         th:src="${order.store.logoUrl}" alt="Store"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <svg th:if="${order.store == null or order.store.logoUrl == null or order.store.logoUrl.isEmpty()}"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         style="display:flex;">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         style="display:none;">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="store-info__name" th:text="${order.store?.storeName}">Tên cửa hàng</div>
+                    <div class="store-info__addr" th:text="${order.store?.address}">Địa chỉ cửa hàng</div>
+                </div>
+            </div>
+            <span class="status-badge" th:classappend="|status-${order.status}|" th:text="${order.status}">PENDING</span>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="detail-card">
+        <div class="detail-card__header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span th:text="|Sản phẩm (${#lists.size(order.orderItems)})|">Sản phẩm (0)</span>
+        </div>
+        <div class="detail-card__body">
+            <div class="item-row" th:each="item : ${order.orderItems}">
+                <div class="item-img">
+                    <img th:if="${item.product != null and item.product.imageUrl != null and !item.product.imageUrl.isEmpty()}"
+                         th:src="${item.product.imageUrl}" alt="Product"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <svg th:if="${item.product == null or item.product.imageUrl == null or item.product.imageUrl.isEmpty()}"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         style="display:flex;">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         style="display:none;">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                </div>
+                <div class="item-info">
+                    <div class="item-info__name" th:text="${item.product?.name}">Tên sản phẩm</div>
+                    <div class="item-info__meta" th:text="|${item.quantity} x ${#numbers.formatDecimal(item.unitPrice, 0, 0)}đ|">SL x Giá</div>
+                </div>
+                <div class="item-price">
+                    <div class="item-price__subtotal" th:text="|${#numbers.formatDecimal(item.subtotal, 0, 0)}đ|">0đ</div>
+                </div>
+            </div>
+
+            <!-- Price breakdown -->
+            <div class="price-breakdown">
+                <div class="price-row">
+                    <span class="price-row__label">Tạm tính</span>
+                    <span class="price-row__value" th:text="|${#numbers.formatDecimal(order.totalAmount, 0, 0)}đ|">0đ</span>
+                </div>
+                <div class="price-row price-row--discount" th:if="${order.discountAmount != null and order.discountAmount > 0}">
+                    <span class="price-row__label">Giảm giá</span>
+                    <span class="price-row__value" th:text="|-${#numbers.formatDecimal(order.discountAmount, 0, 0)}đ|">-0đ</span>
+                </div>
+                <div class="price-row price-row--total">
+                    <span class="price-row__label">Tổng cộng</span>
+                    <span class="price-row__value" th:text="|${#numbers.formatDecimal(order.finalAmount, 0, 0)}đ|">0đ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Info -->
+    <div class="detail-card">
+        <div class="detail-card__header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Thông tin đơn hàng
+        </div>
+        <div class="detail-card__body">
+            <div class="info-rows">
+                <div class="info-row">
+                    <span class="info-row__label">Mã đơn hàng</span>
+                    <span class="info-row__value" th:text="|DX-#${order.orderId}|">DX-#0</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-row__label">Trạng thái</span>
+                    <span class="info-row__value" th:text="${order.status}">PENDING</span>
+                </div>
+                <div class="info-row" th:if="${order.paymentMethod != null}">
+                    <span class="info-row__label">Phương thức thanh toán</span>
+                    <span class="info-row__value" th:text="${order.paymentMethod == 'CASH' ? 'Tiền mặt' : (order.paymentMethod == 'MOMO' ? 'Ví MoMo' : (order.paymentMethod == 'BANK_TRANSFER' ? 'Chuyển khoản' : order.paymentMethod))}">CASH</span>
+                </div>
+                <div class="info-row" th:if="${order.paymentStatus != null}">
+                    <span class="info-row__label">Trạng thái thanh toán</span>
+                    <span class="info-row__value" th:text="${order.paymentStatus == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus == 'PARTIAL' ? 'Thanh toán một phần' : 'Chưa thanh toán')}">UNPAID</span>
+                </div>
+                <div class="info-row" th:if="${order.createdAt != null}">
+                    <span class="info-row__label">Ngày đặt</span>
+                    <span class="info-row__value" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">-</span>
+                </div>
+                <div class="info-row" th:if="${order.note != null and !order.note.isEmpty()}">
+                    <span class="info-row__label">Ghi chú</span>
+                    <span class="info-row__value" th:text="${order.note}">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment QR (only if READY_FOR_PICKUP and not paid) -->
+    <div class="detail-card" th:if="${order.status == 'READY_FOR_PICKUP' and order.paymentStatus != 'PAID' and order.paymentMethod != 'CASH'}">
+        <div class="detail-card__header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M17 14h3"/><path d="M14 17v3"/><path d="M17 20h3v-3"/></svg>
+            Thanh toán PayOS
+        </div>
+        <div class="detail-card__body" style="text-align:center;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px;" th:text="|Số tiền: ${#numbers.formatDecimal(order.finalAmount, 0, 0)}đ|">0đ</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Quét mã QR để thanh toán tại cửa hàng</div>
+            <div class="qr-section" style="justify-content:center;">
+                <div class="qr-box" style="width:160px;height:160px;">
+                    <div class="qr-box__text" th:text="|Mã: ${order.pickupQrCode}|">PayOS Code</div>
+                </div>
+            </div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:8px;">Nhân viên sẽ tạo mã QR PayOS khi bạn đến nhận hàng</div>
+        </div>
+    </div>
+
+    <!-- Completed payment info -->
+    <div class="detail-card" th:if="${order.paymentStatus == 'PAID'}">
+        <div class="detail-card__header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--status-success)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Đã thanh toán
+        </div>
+        <div class="detail-card__body" style="text-align:center;color:var(--status-success);font-size:13px;font-weight:600;">
+            ✅ Đơn hàng đã được thanh toán thành công. Cảm ơn bạn!
+        </div>
+    </div>
+
+</div>
+
+<!-- Action buttons -->
+<div class="action-area">
+    <a th:href="@{/buyer/orders}" class="btn-secondary-action" style="text-decoration:none;display:flex;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Quay lại danh sách đơn hàng
+    </a>
+</div>
+
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
+
+</body>
+</html>
