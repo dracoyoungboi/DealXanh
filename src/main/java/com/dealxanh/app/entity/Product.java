@@ -83,9 +83,10 @@ public class Product {
 
     public Product() {}
 
-    // Helper: kiểm tra deal còn hiệu lực không
+    // Helper: kiểm tra sản phẩm còn khả dụng không
     public boolean isAvailable() {
         if (Boolean.TRUE.equals(deleted) || !Boolean.TRUE.equals(active)) return false;
+        if (!"APPROVED".equals(approvalStatus)) return false;
         if (stockQuantity == null || stockQuantity <= 0) return false;
         LocalDateTime now = LocalDateTime.now();
         if (dealStartTime != null && now.isBefore(dealStartTime)) return false;

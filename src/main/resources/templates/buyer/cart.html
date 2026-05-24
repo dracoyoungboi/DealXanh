@@ -237,26 +237,48 @@ function renderCart() {
     var html = '';
     cartItems.forEach(function(item){
         var qty = item.quantity || 1;
-        totalItems += qty;
-        totalPrice += (item.salePrice || 0) * qty;
-        totalOriginal += (item.originalPrice || item.salePrice || 0) * qty;
+        var maxStock = item.maxStock || 0;
+        var unavailable = item.unavailable === true;
+        var reason = item.unavailableReason || '';
+        var atMax = qty >= maxStock;
 
-        html += '<div class="cart-item">'
-            + '<img src="' + (item.productImage || '/img/default-banner.svg') + '" alt="" onerror="this.src=\'/img/default-banner.svg\'">'
-            + '<div class="ci-info">'
-            + '<div class="ci-name">' + esc(item.productName) + '</div>'
-            + '<div class="ci-store">' + esc(item.storeName) + (item.dealType ? '<span class="deal-badge deal-badge--' + esc(item.dealType) + '">' + esc(item.dealName || item.dealType) + '</span>' : '') + '</div>'
-            + '<div class="ci-price">'
-            + '<span class="ci-sale">' + fmt(item.salePrice) + '</span>'
-            + ('<span class="ci-original">' + (item.originalPrice && item.originalPrice > item.salePrice ? fmt(item.originalPrice) : '') + '</span>')
-            + '</div></div>'
-            + '<div class="ci-qty">'
-            + '<button onclick="updateQty(' + item.productId + ',' + (qty-1) + ')">−</button>'
-            + '<span class="qty-val">' + qty + '</span>'
-            + '<button onclick="updateQty(' + item.productId + ',' + (qty+1) + ')">+</button>'
-            + '</div>'
-            + '<button class="ci-remove" onclick="removeItem(' + item.productId + ')">✕</button>'
-            + '</div>';
+        if (unavailable) {
+            // Unavailable item: greyed out, no +/- buttons, only remove
+            html += '<div class="cart-item cart-item--unavailable" style="opacity:0.5;">'
+                + '<img src="' + (item.productImage || '/img/default-banner.svg') + '" alt="" onerror="this.src=\'/img/default-banner.svg\'" style="filter:grayscale(1)">'
+                + '<div class="ci-info">'
+                + '<div class="ci-name">' + esc(item.productName) + '</div>'
+                + '<div class="ci-store">' + esc(item.storeName) + '</div>'
+                + '<div class="ci-sale" style="text-decoration:line-through;">' + fmt(item.salePrice) + '</div>'
+                + '<div style="font-size:11px;color:var(--status-danger);margin-top:3px;font-weight:600;">' + esc(reason) + '</div>'
+                + '<div style="font-size:10px;color:var(--text-tertiary);">Kho: 0 sản phẩm</div>'
+                + '</div>'
+                + '<button class="ci-remove" onclick="removeItem(' + item.productId + ')" style="pointer-events:auto;">✕</button>'
+                + '</div>';
+        } else {
+            totalItems += qty;
+            totalPrice += (item.salePrice || 0) * qty;
+            totalOriginal += (item.originalPrice || item.salePrice || 0) * qty;
+
+            html += '<div class="cart-item">'
+                + '<img src="' + (item.productImage || '/img/default-banner.svg') + '" alt="" onerror="this.src=\'/img/default-banner.svg\'">'
+                + '<div class="ci-info">'
+                + '<div class="ci-name">' + esc(item.productName) + '</div>'
+                + '<div class="ci-store">' + esc(item.storeName) + (item.dealType ? '<span class="deal-badge deal-badge--' + esc(item.dealType) + '">' + esc(item.dealName || item.dealType) + '</span>' : '') + '</div>'
+                + '<div class="ci-price">'
+                + '<span class="ci-sale">' + fmt(item.salePrice) + '</span>'
+                + ('<span class="ci-original">' + (item.originalPrice && item.originalPrice > item.salePrice ? fmt(item.originalPrice) : '') + '</span>')
+                + '</div>'
+                + (maxStock > 0 ? '<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">Kho: ' + maxStock + ' sản phẩm</div>' : '')
+                + '</div>'
+                + '<div class="ci-qty">'
+                + '<button onclick="updateQty(' + item.productId + ',' + (qty-1) + ')">−</button>'
+                + '<span class="qty-val">' + qty + '</span>'
+                + '<button onclick="updateQty(' + item.productId + ',' + (qty+1) + ')"' + (atMax ? ' disabled style="opacity:.35;cursor:not-allowed"' : '') + '>+</button>'
+                + '</div>'
+                + '<button class="ci-remove" onclick="removeItem(' + item.productId + ')">✕</button>'
+                + '</div>';
+        }
     });
 
     list.innerHTML = html;
@@ -367,6 +389,7 @@ function removeVoucher() {
 }
 
 function updateQty(productId, qty) {
+    if (qty < 0) return;
     var fd = new URLSearchParams();
     fd.append('productId', productId);
     fd.append('quantity', qty);
@@ -374,6 +397,7 @@ function updateQty(productId, qty) {
         .then(function(r){return r.json()})
         .then(function(d){
             if (d.success) { loadCart(); updateCartBadge(d.count); }
+            else { showToast(d.message || 'Không thể cập nhật', true); }
         });
 }
 
@@ -397,12 +421,12 @@ function updateCartBadge(count) {
     if (top) top.textContent = count || 0;
 }
 
-function showToast(msg) {
+function showToast(msg, isError) {
     var t = document.createElement('div');
-    t.className = 'toast';
+    t.className = 'toast' + (isError ? ' error' : '');
     t.textContent = msg;
     document.body.appendChild(t);
-    setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},300)},2000);
+    setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},300)},2500);
 }
 
 function fmt(n) { return (n||0).toLocaleString('vi-VN') + 'đ'; }

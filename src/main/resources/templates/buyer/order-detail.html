@@ -202,7 +202,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                 </div>
                 <div class="info-row" th:if="${order.paymentMethod != null}">
                     <span class="info-row__label">Phương thức thanh toán</span>
-                    <span class="info-row__value" th:text="${order.paymentMethod == 'CASH' ? 'Tiền mặt' : (order.paymentMethod == 'MOMO' ? 'Ví MoMo' : (order.paymentMethod == 'BANK_TRANSFER' ? 'Chuyển khoản' : order.paymentMethod))}">CASH</span>
+                    <span class="info-row__value" th:text="${order.paymentMethod == 'CASH' ? 'Tiền mặt' : (order.paymentMethod == 'CREDIT_CARD' ? 'Thẻ tín dụng' : (order.paymentMethod == 'MOMO' ? 'Ví MoMo' : (order.paymentMethod == 'BANK_TRANSFER' ? 'Chuyển khoản' : order.paymentMethod)))}">-</span>
                 </div>
                 <div class="info-row" th:if="${order.paymentStatus != null}">
                     <span class="info-row__label">Trạng thái thanh toán</span>

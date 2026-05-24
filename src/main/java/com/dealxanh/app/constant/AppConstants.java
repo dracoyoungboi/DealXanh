@@ -15,6 +15,7 @@ public class AppConstants {
 
     // Payment methods
     public static final String PAYMENT_BANK_TRANSFER = "BANK_TRANSFER";
+    public static final String PAYMENT_CREDIT_CARD = "CREDIT_CARD";
     public static final String PAYMENT_MOMO = "MOMO";
     public static final String PAYMENT_ZALOPAY = "ZALOPAY";
     public static final String PAYMENT_CASH = "CASH";

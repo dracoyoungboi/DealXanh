@@ -393,10 +393,10 @@ function addToCartHome(productId, productName, salePrice, originalPrice, storeNa
     fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
         .then(function(r){return r.json()})
         .then(function(d){
-            showToast(d.message || 'Đã thêm vào giỏ hàng');
-            updateCartBadge(d.count);
+            showToast(d.message || 'Đã thêm vào giỏ hàng', !d.success);
+            if (d.success) updateCartBadge(d.count);
         })
-        .catch(function(){showToast('Đã thêm vào giỏ hàng');});
+        .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
 }
 
 function buyNowHome(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId, dealType, dealName) {
@@ -413,14 +413,17 @@ function buyNowHome(productId, productName, salePrice, originalPrice, storeName,
     if (dealName) fd.append('dealName', dealName);
     fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
         .then(function(r){return r.json()})
-        .then(function(){window.location.href='/buyer/checkout';})
-        .catch(function(){window.location.href='/buyer/checkout';});
+        .then(function(d){
+            if (d.success) { window.location.href='/buyer/checkout'; }
+            else { showToast(d.message || 'Không thể mua ngay', true); }
+        })
+        .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
 }
 
-function showToast(msg) {
+function showToast(msg, isError) {
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;pointer-events:none;';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:' + (isError ? '#dc2626' : '#1a1a1a') + ';color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;pointer-events:none;';
     document.body.appendChild(t);
     setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(function(){t.remove();},400);},2000);
 }

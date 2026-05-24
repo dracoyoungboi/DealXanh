@@ -140,46 +140,46 @@ body{padding-bottom:120px;background:var(--background)}
         </div>
     </div>
 
-    <!-- Payment method: Cash -->
+    <!-- Payment methods -->
     <div class="pay-section">
         <div class="pay-section__title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             Phương thức thanh toán
         </div>
 
-        <!-- Cash (default selected) -->
-        <div class="pay-method pay-method--selected" id="pm-cash" onclick="selectPayment('cash')">
+        <!-- Bank transfer (default selected, only active method) -->
+        <div class="pay-method pay-method--selected" id="pm-bank" onclick="selectPayment('bank')">
             <div class="pay-method__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             </div>
             <div class="pay-method__info">
-                <div class="pay-method__name">Tiền mặt</div>
-                <div class="pay-method__desc">Thanh toán bằng tiền mặt khi nhận hàng tại cửa hàng</div>
+                <div class="pay-method__name">Chuyển khoản ngân hàng</div>
+                <div class="pay-method__desc">Thanh toán qua PayOS — quét mã QR tại cửa hàng</div>
                 <span class="pay-method__badge">Khuyên dùng</span>
             </div>
             <div class="pay-method__radio"><div class="pay-method__radio-dot"></div></div>
         </div>
 
-        <!-- MoMo -->
-        <div class="pay-method" id="pm-momo" onclick="selectPayment('momo')">
-            <div class="pay-method__icon" style="background:#ae2070;border-color:#ae2070;color:#fff;font-size:16px;font-weight:900;">M</div>
+        <!-- Credit Card (disabled, coming soon) -->
+        <div class="pay-method pay-method--disabled" id="pm-credit">
+            <div class="pay-method__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="4" y1="14" x2="8" y2="14"/></svg>
+            </div>
             <div class="pay-method__info">
-                <div class="pay-method__name">Ví MoMo</div>
-                <div class="pay-method__desc">Thanh toán qua PayOS — quét mã QR tại cửa hàng</div>
-                <span class="pay-method__badge">Qua PayOS</span>
+                <div class="pay-method__name">Thẻ tín dụng / Ghi nợ</div>
+                <div class="pay-method__desc">Thanh toán bằng thẻ Visa, Mastercard, JCB</div>
+                <span class="pay-method__badge pay-method__badge--soon">Tính năng đang được phát triển</span>
             </div>
             <div class="pay-method__radio"><div class="pay-method__radio-dot"></div></div>
         </div>
 
-        <!-- Bank transfer -->
-        <div class="pay-method" id="pm-bank" onclick="selectPayment('bank')">
-            <div class="pay-method__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            </div>
+        <!-- MoMo (disabled, coming soon) -->
+        <div class="pay-method pay-method--disabled" id="pm-momo">
+            <div class="pay-method__icon" style="background:#ae2070;border-color:#ae2070;color:#fff;font-size:16px;font-weight:900;">M</div>
             <div class="pay-method__info">
-                <div class="pay-method__name">Chuyển khoản ngân hàng</div>
-                <div class="pay-method__desc">Thanh toán qua PayOS — quét mã QR tại cửa hàng</div>
-                <span class="pay-method__badge">Qua PayOS</span>
+                <div class="pay-method__name">Ví MoMo</div>
+                <div class="pay-method__desc">Thanh toán qua ví điện tử MoMo</div>
+                <span class="pay-method__badge pay-method__badge--soon">Tính năng đang được phát triển</span>
             </div>
             <div class="pay-method__radio"><div class="pay-method__radio-dot"></div></div>
         </div>
@@ -196,11 +196,11 @@ body{padding-bottom:120px;background:var(--background)}
 <!-- Sticky bottom bar -->
 <div class="sticky-bottom">
     <div class="sticky-bottom__row">
-        <span class="sticky-bottom__method" id="methodLabel">Tiền mặt <strong>khi nhận hàng</strong></span>
+        <span class="sticky-bottom__method" id="methodLabel">Chuyển khoản <strong>qua PayOS</strong></span>
         <span class="sticky-bottom__total" id="stickyTotal">0đ</span>
     </div>
     <form th:action="@{/buyer/checkout/confirm}" method="post" style="margin:0">
-        <input type="hidden" name="paymentMethod" id="paymentMethodInput" value="CASH">
+        <input type="hidden" name="paymentMethod" id="paymentMethodInput" value="BANK_TRANSFER">
         <button type="submit" class="btn-confirm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             Xác nhận đặt hàng
@@ -212,11 +212,14 @@ body{padding-bottom:120px;background:var(--background)}
 <div th:replace="~{common/buyer/js :: js}"></div>
 
 <script>
-var selectedPayment = 'cash';
+var selectedPayment = 'bank';
 
 function selectPayment(method) {
+    // Block selection of disabled methods
+    if (method === 'credit' || method === 'momo') return;
+
     selectedPayment = method;
-    document.querySelectorAll('.pay-method').forEach(function(el) {
+    document.querySelectorAll('.pay-method:not(.pay-method--disabled)').forEach(function(el) {
         el.classList.remove('pay-method--selected');
     });
     var el = document.getElementById('pm-' + method);
@@ -224,13 +227,11 @@ function selectPayment(method) {
 
     // Update hidden input
     var pmInput = document.getElementById('paymentMethodInput');
-    var methodMap = { cash: 'CASH', momo: 'MOMO', bank: 'BANK_TRANSFER' };
-    if (pmInput) pmInput.value = methodMap[method] || 'CASH';
+    var methodMap = { bank: 'BANK_TRANSFER' };
+    if (pmInput) pmInput.value = methodMap[method] || 'BANK_TRANSFER';
 
     // Update footer label
     var labels = {
-        cash: 'Tiền mặt <strong>khi nhận hàng</strong>',
-        momo: 'Ví MoMo <strong>qua PayOS</strong>',
         bank: 'Chuyển khoản <strong>qua PayOS</strong>'
     };
     document.getElementById('methodLabel').innerHTML = labels[method] || '';

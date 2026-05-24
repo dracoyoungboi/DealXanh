@@ -258,8 +258,11 @@ function addToCartCat(productId, productName, salePrice, originalPrice, storeNam
     if (dealName) fd.append('dealName', dealName);
     fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
         .then(function(r){return r.json()})
-        .then(function(d){toast(d.message || 'Đã thêm vào giỏ');updateBadge(d.count);})
-        .catch(function(){toast('Đã thêm vào giỏ hàng');});
+        .then(function(d){
+            toast(d.message || 'Đã thêm vào giỏ', !d.success);
+            if (d.success) updateBadge(d.count);
+        })
+        .catch(function(){toast('Lỗi kết nối, thử lại sau', true);});
 }
 
 function buyNowCat(productId, productName, salePrice, originalPrice, storeName, imageUrl, dealId, storeId, dealType, dealName) {
@@ -275,14 +278,18 @@ function buyNowCat(productId, productName, salePrice, originalPrice, storeName, 
     if (dealType) fd.append('dealType', dealType);
     if (dealName) fd.append('dealName', dealName);
     fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
-        .then(function(){window.location.href='/buyer/checkout';})
-        .catch(function(){window.location.href='/buyer/checkout';});
+        .then(function(r){return r.json()})
+        .then(function(d){
+            if (d.success) { window.location.href='/buyer/checkout'; }
+            else { toast(d.message || 'Không thể mua ngay', true); }
+        })
+        .catch(function(){toast('Lỗi kết nối, thử lại sau', true);});
 }
 
-function toast(msg) {
+function toast(msg, isError) {
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;pointer-events:none;';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:' + (isError ? '#dc2626' : '#1a1a1a') + ';color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;pointer-events:none;';
     document.body.appendChild(t);
     setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(function(){t.remove();},400);},2000);
 }

@@ -120,6 +120,7 @@
         <div style="display:flex;gap:6px;">
           <button class="action-btn action-confirm" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CONFIRMED');event.stopPropagation()|">✓ Xác nhận</button>
           <button class="action-btn action-ready" th:if="${order.status == 'CONFIRMED'}" th:onclick="|updateStatus(${order.orderId}, 'READY_FOR_PICKUP');event.stopPropagation()|">📦 Sẵn sàng</button>
+          <!-- CASH: hoàn thành tay. CREDIT_CARD/MOMO/BANK: phải qua PayOS QR -->
           <button class="action-btn action-complete" th:if="${order.status == 'READY_FOR_PICKUP' and (order.paymentMethod == 'CASH' or order.paymentMethod == null)}" th:onclick="|updateStatus(${order.orderId}, 'COMPLETED');event.stopPropagation()|">✅ Hoàn thành</button>
           <button class="action-btn action-payos" th:if="${order.status == 'READY_FOR_PICKUP' and order.paymentMethod != 'CASH' and order.paymentMethod != null}" th:onclick="|createPayOSQR(${order.orderId});event.stopPropagation()|">💳 QR PayOS</button>
           <button class="action-btn action-cancel" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CANCELLED');event.stopPropagation()|">✕ Hủy</button>
@@ -198,7 +199,7 @@ async function showOrderDetail(orderId) {
     const d = await r.json();
     if (!d.success) { document.getElementById('detailBody').innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);">'+d.message+'</div>'; return; }
     const statusLabels = {PENDING:'⏳ Chờ xác nhận',CONFIRMED:'✅ Đã xác nhận',READY_FOR_PICKUP:'📦 Sẵn sàng pickup',COMPLETED:'🏁 Hoàn thành',CANCELLED:'❌ Đã hủy'};
-    const payLabels = {CASH:'💵 Tiền mặt',BANK_TRANSFER:'🏦 Chuyển khoản',MOMO:'🟣 Momo',ZALOPAY:'🔵 ZaloPay'};
+    const payLabels = {CASH:'💵 Tiền mặt',CREDIT_CARD:'💳 Thẻ tín dụng',BANK_TRANSFER:'🏦 Chuyển khoản',MOMO:'🟣 Momo',ZALOPAY:'🔵 ZaloPay'};
     let itemsHtml = d.items && d.items.length > 0 ? d.items.map(i => `
       <div class="detail-item">
         <span class="qty">x${i.quantity}</span><span class="name">${i.productName}</span>

@@ -23,7 +23,7 @@ public class Order {
     // Thanh toán: UNPAID, PAID
     private String paymentStatus = "UNPAID";
 
-    // Phương thức: BANK_TRANSFER, CASH, MOMO, ZALOPAY
+    // Phương thức: BANK_TRANSFER, CREDIT_CARD, MOMO, ZALOPAY, CASH
     private String paymentMethod = "BANK_TRANSFER";
 
     // Giờ lấy hàng khách chọn

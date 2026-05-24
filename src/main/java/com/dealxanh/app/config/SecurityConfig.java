@@ -69,7 +69,7 @@ public class SecurityConfig {
                 .requestMatchers("/staff/**").hasRole("STORE_STAFF")
 
                 // Buyer routes - public (không cần đăng nhập)
-                .requestMatchers("/", "/home", "/shop/**", "/product/**", "/store/**").permitAll()
+                .requestMatchers("/", "/home", "/shop/**", "/product/**", "/products/**", "/store/**").permitAll()
 
                 // Buyer routes - cần đăng nhập
                 .requestMatchers("/profile", "/checkout/**", "/my-orders/**",

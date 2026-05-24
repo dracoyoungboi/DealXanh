@@ -16,11 +16,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // Available = active, not deleted, stock > 0, within deal time window
     @Query("SELECT p FROM Product p WHERE p.active = true AND p.deleted = false AND p.stockQuantity > 0 " +
+           "AND p.approvalStatus = 'APPROVED' " +
            "AND (p.dealStartTime IS NULL OR p.dealStartTime <= :now) " +
            "AND (p.dealEndTime IS NULL OR p.dealEndTime >= :now)")
     Page<Product> findAvailableProducts(@Param("now") LocalDateTime now, Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE p.active = true AND p.deleted = false AND p.stockQuantity > 0 " +
+           "AND p.approvalStatus = 'APPROVED' " +
            "AND p.category.categoryId = :categoryId " +
            "AND (p.dealStartTime IS NULL OR p.dealStartTime <= :now) " +
            "AND (p.dealEndTime IS NULL OR p.dealEndTime >= :now)")
@@ -28,6 +30,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                           @Param("now") LocalDateTime now, Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE p.active = true AND p.deleted = false AND p.stockQuantity > 0 " +
+           "AND p.approvalStatus = 'APPROVED' " +
            "AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "AND (p.dealStartTime IS NULL OR p.dealStartTime <= :now) " +
            "AND (p.dealEndTime IS NULL OR p.dealEndTime >= :now)")
@@ -35,6 +38,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                   @Param("now") LocalDateTime now, Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE p.active = true AND p.deleted = false AND p.stockQuantity > 0 " +
+           "AND p.approvalStatus = 'APPROVED' " +
            "AND p.store.storeId = :storeId " +
            "AND (p.dealStartTime IS NULL OR p.dealStartTime <= :now) " +
            "AND (p.dealEndTime IS NULL OR p.dealEndTime >= :now)")

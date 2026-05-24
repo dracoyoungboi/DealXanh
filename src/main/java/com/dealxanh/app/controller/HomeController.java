@@ -15,6 +15,7 @@ import com.dealxanh.app.repository.OrderRepository;
 import com.dealxanh.app.repository.ProductRepository;
 import com.dealxanh.app.repository.StoreRepository;
 import com.dealxanh.app.repository.UserRepository;
+import com.dealxanh.app.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -53,6 +54,9 @@ public class HomeController {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private CartService cartService;
 
     @GetMapping("/")
     public String home(Model model, jakarta.servlet.http.HttpServletRequest request) {
@@ -95,8 +99,8 @@ public class HomeController {
             if (dealProducts == null) continue;
 
             for (DealProduct dp : dealProducts) {
-                if (dp.getProduct() == null || !dp.getProduct().getActive()) continue;
                 Product prod = dp.getProduct();
+                if (prod == null || !prod.isAvailable()) continue;
 
                 Map<String, Object> card = new HashMap<>();
                 card.put("productId", prod.getProductId());
@@ -174,13 +178,12 @@ public class HomeController {
         return home(model, request);
     }
 
-    @SuppressWarnings("unchecked")
     private int getCartItemCount(jakarta.servlet.http.HttpServletRequest request) {
-        jakarta.servlet.http.HttpSession session = request.getSession(false);
-        if (session == null) return 0;
-        java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
-        if (cart == null) return 0;
-        return cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum();
+        java.security.Principal principal = request.getUserPrincipal();
+        if (principal == null) return 0;
+        User user = getCurrentUser(principal);
+        if (user == null) return 0;
+        return cartService.getItemCount(user);
     }
 
     @GetMapping("/category/{categoryId}")
@@ -192,13 +195,9 @@ public class HomeController {
         Category category = categoryRepository.findById(categoryId).orElse(null);
         if (category == null) return "redirect:/";
 
-        // Get approved active products in this category
-        List<Product> products = productRepository.findAll().stream()
-            .filter(p -> p.getActive() && !p.getDeleted()
-                && "APPROVED".equals(p.getApprovalStatus())
-                && p.getCategory() != null
-                && p.getCategory().getCategoryId().equals(categoryId))
-            .toList();
+        // Get available products in this category (active, approved, in stock, not deleted, within deal window)
+        List<Product> products = productRepository.findAvailableByCategory(categoryId, LocalDateTime.now(),
+                org.springframework.data.domain.Pageable.unpaged()).getContent();
 
         // Build featured stores with logo + product count
         java.util.Map<Long, String> storeMap = new java.util.LinkedHashMap<>();
@@ -350,17 +349,24 @@ public class HomeController {
 
     @GetMapping("/api/cart")
     @ResponseBody
-    public java.util.Map<String, Object> getCart(jakarta.servlet.http.HttpSession session) {
-        @SuppressWarnings("unchecked")
-        java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
-        if (cart == null) cart = java.util.List.of();
+    public java.util.Map<String, Object> getCart(java.security.Principal principal,
+            jakarta.servlet.http.HttpSession session) {
+        User user = getCurrentUser(principal);
+        if (user == null) {
+            java.util.Map<String, Object> empty = new java.util.HashMap<>();
+            empty.put("items", java.util.List.of());
+            empty.put("count", 0);
+            return empty;
+        }
+
+        // Migrate any session cart to DB
+        cartService.migrateSessionCart(session, user);
+
+        java.util.Map<String, Object> cartData = cartService.getCartData(user);
         @SuppressWarnings("unchecked")
         java.util.Map<String, Object> voucher = (java.util.Map<String, Object>) session.getAttribute("appliedVoucher");
-        java.util.Map<String, Object> result = new java.util.HashMap<>();
-        result.put("items", cart);
-        result.put("count", cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum());
-        result.put("voucher", voucher);
-        return result;
+        cartData.put("voucher", voucher);
+        return cartData;
     }
 
     @PostMapping("/api/cart/add")
@@ -371,73 +377,42 @@ public class HomeController {
             @RequestParam(required = false) Long storeId,
             @RequestParam(required = false) String dealType,
             @RequestParam(required = false) String dealName,
-            jakarta.servlet.http.HttpSession session) {
-        @SuppressWarnings("unchecked")
-        java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
-        if (cart == null) cart = new java.util.ArrayList<>();
+            java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null)
+            return java.util.Map.of("success", false, "message", "Vui lòng đăng nhập để thêm vào giỏ hàng");
 
-        // Check if already in cart
-        for (java.util.Map<String, Object> item : cart) {
-            if (item.get("productId").equals(productId)) {
-                int qty = ((Number) item.getOrDefault("quantity", 1)).intValue() + 1;
-                item.put("quantity", qty);
-                session.setAttribute("cart", cart);
-                return java.util.Map.of("success", true, "message", "Đã tăng số lượng", "count", cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum());
-            }
-        }
-
-        java.util.Map<String, Object> item = new java.util.HashMap<>();
-        item.put("dealId", dealId);
-        item.put("productId", productId);
-        item.put("productName", productName);
-        item.put("salePrice", salePrice);
-        item.put("originalPrice", originalPrice);
-        item.put("storeName", storeName);
-        item.put("productImage", productImage != null ? productImage : "");
-        item.put("storeId", storeId);
-        item.put("quantity", 1);
-        item.put("dealType", dealType != null ? dealType : "");
-        item.put("dealName", dealName != null ? dealName : "");
-        cart.add(item);
-        session.setAttribute("cart", cart);
-        return java.util.Map.of("success", true, "message", "Đã thêm vào giỏ hàng", "count", cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum());
+        return cartService.addItem(user, dealId, productId, productName, salePrice, originalPrice,
+                storeName, productImage, storeId, dealType, dealName);
     }
 
     @PostMapping("/api/cart/remove")
     @ResponseBody
-    public java.util.Map<String, Object> removeFromCart(@RequestParam Long productId, jakarta.servlet.http.HttpSession session) {
-        @SuppressWarnings("unchecked")
-        java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
-        if (cart == null) return java.util.Map.of("success", false, "message", "Giỏ hàng trống");
-        cart.removeIf(item -> item.get("productId").equals(productId));
-        session.setAttribute("cart", cart);
-        return java.util.Map.of("success", true, "count", cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum());
+    public java.util.Map<String, Object> removeFromCart(@RequestParam Long productId,
+            java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null)
+            return java.util.Map.of("success", false, "message", "Vui lòng đăng nhập");
+
+        return cartService.removeItem(user, productId);
     }
 
     @PostMapping("/api/cart/update")
     @ResponseBody
     public java.util.Map<String, Object> updateCartItem(@RequestParam Long productId, @RequestParam int quantity,
-            jakarta.servlet.http.HttpSession session) {
-        @SuppressWarnings("unchecked")
-        java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
-        if (cart == null) return java.util.Map.of("success", false, "message", "Giỏ hàng trống");
-        for (java.util.Map<String, Object> item : cart) {
-            if (item.get("productId").equals(productId)) {
-                if (quantity <= 0) cart.remove(item);
-                else item.put("quantity", quantity);
-                session.setAttribute("cart", cart);
-                return java.util.Map.of("success", true, "count", cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum());
-            }
-        }
-        return java.util.Map.of("success", false, "message", "Không tìm thấy sản phẩm");
+            java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null)
+            return java.util.Map.of("success", false, "message", "Vui lòng đăng nhập");
+
+        return cartService.updateItemQuantity(user, productId, quantity);
     }
 
     @GetMapping("/api/cart/count")
     @ResponseBody
-    public java.util.Map<String, Object> cartCount(jakarta.servlet.http.HttpSession session) {
-        @SuppressWarnings("unchecked")
-        java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
-        int count = cart == null ? 0 : cart.stream().mapToInt(i -> ((Number) i.getOrDefault("quantity", 1)).intValue()).sum();
+    public java.util.Map<String, Object> cartCount(java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        int count = user != null ? cartService.getItemCount(user) : 0;
         return java.util.Map.of("count", count);
     }
 
@@ -543,6 +518,69 @@ public class HomeController {
     public java.util.Map<String, Object> removeVoucher(jakarta.servlet.http.HttpSession session) {
         session.removeAttribute("appliedVoucher");
         return java.util.Map.of("success", true, "message", "Đã xoá mã giảm giá");
+    }
+
+    // ============ PRODUCT DETAIL ============
+
+    @GetMapping("/products/{productId}")
+    public String productDetail(@PathVariable Long productId, Model model) {
+        Product product = productRepository.findById(productId).orElse(null);
+        if (product == null || !product.isAvailable()) return "redirect:/";
+        if (!"APPROVED".equals(product.getApprovalStatus())) return "redirect:/";
+
+        // Get active deal info for this product
+        LocalDateTime now = LocalDateTime.now();
+        List<DealProduct> dealProducts = dealProductRepository.findByProduct(product);
+        Map<String, Object> dealInfo = null;
+        if (dealProducts != null) {
+            for (DealProduct dp : dealProducts) {
+                Deal deal = dp.getDeal();
+                if (deal != null && "ACTIVE".equals(deal.getStatus())
+                        && deal.getStartTime() != null && deal.getStartTime().isBefore(now)
+                        && deal.getEndTime() != null && deal.getEndTime().isAfter(now)) {
+                    dealInfo = new HashMap<>();
+                    dealInfo.put("dealId", deal.getDealId());
+                    dealInfo.put("dealName", deal.getDealName());
+                    dealInfo.put("dealType", deal.getDealType());
+                    dealInfo.put("discountType", deal.getDiscountType());
+                    dealInfo.put("discountValue", deal.getDiscountValue());
+                    dealInfo.put("salePrice", Math.round(dp.getSalePrice()));
+                    dealInfo.put("originalPrice", Math.round(dp.getOriginalPrice()));
+                    double discountPercent = 0;
+                    if ("PERCENT".equals(deal.getDiscountType())) {
+                        discountPercent = deal.getDiscountValue() != null ? deal.getDiscountValue() : 0;
+                    } else if (dp.getOriginalPrice() > 0) {
+                        discountPercent = ((dp.getOriginalPrice() - dp.getSalePrice()) / dp.getOriginalPrice()) * 100;
+                    }
+                    dealInfo.put("discountPercent", Math.round(discountPercent));
+                    String typeLabel;
+                    switch (deal.getDealType() != null ? deal.getDealType() : "") {
+                        case "FLASH_SALE": typeLabel = "Flash Sale"; break;
+                        case "VOUCHER": typeLabel = "Voucher"; break;
+                        case "COMBO": typeLabel = "Combo"; break;
+                        case "SEASONAL": typeLabel = "Seasonal"; break;
+                        default: typeLabel = "Deal";
+                    }
+                    dealInfo.put("typeLabel", typeLabel);
+                    dealInfo.put("storeName", deal.getStore() != null ? deal.getStore().getStoreName() : null);
+                    dealInfo.put("storeLogo", deal.getStore() != null ? deal.getStore().getLogoUrl() : null);
+                    break;
+                }
+            }
+        }
+
+        Store store = product.getStore();
+        Category category = product.getCategory();
+
+        model.addAttribute("product", product);
+        model.addAttribute("dealInfo", dealInfo);
+        model.addAttribute("store", store);
+        model.addAttribute("category", category);
+        if (product.getExpiryDate() != null) {
+            model.addAttribute("expiryDate", product.getExpiryDate().toString());
+        }
+
+        return "buyer/product-detail";
     }
 
     // ============ DEAL DETAIL ============
@@ -673,9 +711,9 @@ public class HomeController {
         User user = getCurrentUser(principal);
         if (user == null) return "redirect:/login";
 
-        // Get cart from session
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> cart = (List<Map<String, Object>>) session.getAttribute("cart");
+        // Get cart from DB (migrate session cart first if needed)
+        cartService.migrateSessionCart(session, user);
+        List<Map<String, Object>> cart = cartService.getCartItemsForCheckout(user);
         if (cart == null || cart.isEmpty()) return "redirect:/buyer/cart";
 
         // Group cart items by store
@@ -741,13 +779,13 @@ public class HomeController {
 
     @PostMapping("/buyer/checkout/confirm")
     public String confirmCheckout(java.security.Principal principal,
-            @RequestParam(required = false, defaultValue = "CASH") String paymentMethod,
+            @RequestParam(required = false, defaultValue = "BANK_TRANSFER") String paymentMethod,
             jakarta.servlet.http.HttpSession session) {
         User user = getCurrentUser(principal);
         if (user == null) return "redirect:/login";
 
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> cart = (List<Map<String, Object>>) session.getAttribute("cart");
+        // Get cart from DB (only available items)
+        List<Map<String, Object>> cart = cartService.getCartItemsForCheckout(user);
         if (cart == null || cart.isEmpty()) return "redirect:/buyer/cart";
 
         // Group cart items by store
@@ -837,7 +875,7 @@ public class HomeController {
             orderIds.add(order.getOrderId());
         }
 
-        session.removeAttribute("cart");
+        cartService.clearCart(user);
         session.removeAttribute("appliedVoucher");
         session.setAttribute("lastOrderIds", orderIds);
 

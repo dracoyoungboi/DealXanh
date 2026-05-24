@@ -1,8 +1,8 @@
 # DealXanh - O2O Deal Marketplace Platform
 
-## 📊 Project Status: **~85% Complete**
+## 📊 Project Status: **~92% Complete**
 
-**Last Updated:** 2026-05-22
+**Last Updated:** 2026-05-24 (Session: Cart DB + Payment UX + Product Detail)
 **Version:** 1.0.0-beta
 
 ---
@@ -76,7 +76,7 @@ User mua với giá DEAL
 - ⚠️ Order Fulfillment (UI exists, backend incomplete)
 - ⚠️ Employee Management (placeholder)
 
-### **4. Buyer Interface (~92%)**
+### **4. Buyer Interface (~95%)**
 - ✅ Home Page — Hero + Flash Sale countdown + Deal nổi bật banner + Combo banner + Categories + Trust (product-centric data)
 - ✅ "Thêm vào giỏ" + "Mua ngay" buttons on every deal card (home + category + deal-detail)
 - ✅ Deal Detail (`/deals/{id}`) — Deal info + discount card + store card + product list + add-to-cart
@@ -139,19 +139,38 @@ User mua với giá DEAL
 - ✅ Store Profile (logo, banner, address)
 - ✅ Owner + Staff relationship
 
-### **8. Order System (~50%)**
-- ✅ Order Entity
-- ✅ OrderItem Entity
-- ✅ Order Repository với statistics queries
-- ⚠️ Order processing workflow incomplete
-- ⚠️ Payment integration missing
+### **8. Order System (~90%)**
+- ✅ Order Entity + OrderItem Entity
+- ✅ Order Repository với statistics queries + findByIdWithItems
+- ✅ Order processing workflow (PENDING→CONFIRMED→READY→COMPLETED)
+- ✅ Buyer order tracking with 6 tabs + detail page
+- ✅ Seller/Staff order management with status transitions
+- ✅ CANCELLED tab + cancelledCount on seller/staff orders
+- ✅ Staff status update validation (parity with seller)
+- ✅ QR pickup confirmation flow
+- ⚠️ PayOS webhook (cần public URL, hiện dùng polling)
 
-### **9. Cart System (95%)**
+### **9. Cart System (~98%)**
 - ✅ Session-based cart (HttpSession)
 - ✅ Cart APIs: GET /api/cart, POST add/remove/update, GET count
 - ✅ Cart page (`/buyer/cart`) with ±/remove/checkout
+- ✅ Deal discount calculation (original vs sale price)
+- ✅ Deal type/name badges on cart items
+- ✅ Voucher system: selectable voucher list modal + apply/remove
 - ✅ Cart badge on mobile-nav with live count
-- ⚠️ Checkout → order flow incomplete
+- ✅ Checkout → order flow complete with OrderItems + amounts
+
+### **10. Payment System (~85%)**
+- ✅ PayOSService: payment link creation, webhook processing, status polling
+- ✅ PaymentController: create payment, webhook (public), status check
+- ✅ Transaction entity with transactionRef + paymentMethod fields
+- ✅ PayOS VietQR QR code generation + display in seller/staff modal
+- ✅ Payment flow: buyer checkout → seller creates PayOS QR → buyer pays → system polls/confirms
+- ✅ 3-case handling: đủ tiền (COMPLETED), thiếu (partial + mã mới), thừa (COMPLETED + cảnh báo)
+- ✅ Auto stock deduction + Transaction creation on successful payment
+- ✅ Admin finance: GMV, commission, payout, reconciliation
+- ✅ Seller wallet: balance, earned, transactions, payout requests
+- ⚠️ Webhook needs public URL (localhost: polling nút "Kiểm tra trạng thái")
 
 ### **10. Database & Migrations (100%)**
 - ✅ Flyway migrations (V1 - V7)
@@ -660,6 +679,127 @@ private User getCurrentUser(Principal principal) {
 DB store role là `USER` (không có `ROLE_` prefix). `hasRole("USER")` → Spring thêm prefix → tìm `ROLE_USER`. Nếu DB có `ROLE_USER` thì OK, nếu chỉ `USER` thì fail.
 
 **✅ Dùng `hasAnyAuthority("ROLE_USER", "USER")`** hoặc **`.authenticated()`** để accept mọi authenticated user.
+
+---
+
+## 🔐 Quy tắc CRITICAL (added 2026-05-24)
+
+### **24. KHÔNG dùng JavaScript template literal `` `...${...}` `` trong file Thymeleaf**
+
+Thymeleaf parse `${...}` trong template literal thành SpEL expression → code JS bị hỏng hoặc crash.
+
+**❌ SAI:**
+```javascript
+document.getElementById('el').innerHTML = `
+    <div>${data.name}</div>
+    <img src="${data.url}">
+`;
+```
+
+**✅ ĐÚNG — dùng string concatenation:**
+```javascript
+document.getElementById('el').innerHTML =
+    '<div>' + data.name + '</div>' +
+    '<img src="' + data.url + '">';
+```
+
+**Quy tắc:** Mọi file `.html` trong `templates/` đều bị Thymeleaf parse. KHÔNG dùng backtick template literal nếu có `${}` bên trong.
+
+### **25. LUÔN kiểm tra key trong HashMap cart item trước khi dùng trong Thymeleaf**
+
+Cart item là `HashMap<String, Object>` — key sai (`imageUrl` thay vì `productImage`) gây lỗi Thymeleaf parse.
+
+**❌ SAI:** `item.imageUrl` — HashMap không có key này, lỗi `PropertyOrFieldReference`
+**✅ ĐÚNG:** `item.productImage` — đúng key lưu trong session cart
+
+### **26. Sticky bottom bar LUÔN dùng `bottom:72px` + `padding-bottom:20px`**
+
+Mobile nav cao ~70px. Sticky bar với `bottom:60px` sẽ bị nav che.
+
+```css
+.cart-summary{position:fixed;bottom:72px;...;padding:14px 16px 20px}
+.sticky-bottom{position:fixed;bottom:72px;...;padding:14px 16px 20px}
+```
+
+### **27. PayOS trả về VietQR string, KHÔNG phải ảnh base64**
+
+PayOS API v2 trả `qrCode` là chuỗi VietQR NAPAS (dạng `000201010212...`). Phải generate QR ảnh từ chuỗi này:
+- Dùng third-party: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=` + encodeURIComponent(qrString)
+- Hoặc tự generate bằng thư viện Java (ZXing)
+
+### **28. PayOS signature: thứ tự CỐ ĐỊNH, không sort alphabetically**
+
+PayOS yêu cầu signature format cụ thể (theo official SDK):
+```
+amount={amount}&cancelUrl={cancelUrl}&description={description}&orderCode={orderCode}&returnUrl={returnUrl}
+```
+KHÔNG include `expiredAt`, KHÔNG sort key alphabetically. Dùng HMAC-SHA256 với checksum key.
+
+### **29. PayOS localhost: webhook không tới được, phải polling**
+
+Khi chạy localhost, PayOS không thể gửi webhook IPN. Phải thêm endpoint `GET /api/payment/status/{orderId}` poll `GET /v2/payment-requests/{orderCode}` từ PayOS API để kiểm tra trạng thái thanh toán thực tế.
+
+### **30. LUÔN dùng `th:if` cho fragment điều kiện theo page**
+
+Slot filter trong header chỉ hiển thị ở dashboard:
+```html
+<div class="slot-strip" th:if="${activePage == 'dashboard'}">
+```
+Controller phải set `model.addAttribute("activePage", "dashboard")` cho trang tương ứng.
+
+---
+
+## 🔐 Quy tắc CRITICAL (added 2026-05-24 — Cart & Product)
+
+### **31. LUÔN dùng `Product.isAvailable()` để filter sản phẩm cho buyer**
+
+**❌ SAI:** Tự check từng field riêng lẻ `product.getActive()`, `product.getDeleted()`, v.v.
+**✅ ĐÚNG:** Gọi `product.isAvailable()` — method này là single source of truth, check đủ: deleted, active, approvalStatus, stockQuantity, deal time window.
+
+```java
+// Trong controller
+if (prod == null || !prod.isAvailable()) continue;
+```
+
+`isAvailable()` đã được update để check cả `approvalStatus = 'APPROVED'`. Nếu thêm điều kiện mới về availability → chỉ cần sửa 1 chỗ trong `Product.isAvailable()`.
+
+### **32. LUÔN dùng `findAvailable*()` repository queries cho buyer-facing pages**
+
+ProductRepository có sẵn 4 queries đã filter active + approved + in-stock + not deleted + deal time window:
+- `findAvailableProducts(now, pageable)`
+- `findAvailableByCategory(categoryId, now, pageable)`
+- `searchAvailable(keyword, now, pageable)`
+- `findAvailableByStore(storeId, now)`
+
+**❌ SAI:** `productRepository.findAll().stream().filter(...)` — load toàn bộ DB về memory rồi mới filter  
+**✅ ĐÚNG:** Dùng dedicated `@Query` method tương ứng — filter ở DB level, performance tốt hơn nhiều
+
+### **33. Cart LUÔN persist vào DB, KHÔNG dùng HttpSession**
+
+Cart đã được migrate từ session sang DB thông qua `CartService`. Entity: `Cart` (1-1 với User) + `CartItem` (N-1 với Cart, N-1 với Product).
+- `CartService.getOrCreateCart(user)` — lấy hoặc tạo cart
+- `CartService.migrateSessionCart(session, user)` — gọi trước khi đọc cart để merge session cũ vào DB
+- Mọi cart API endpoint cần `Principal` (yêu cầu login)
+
+**❌ SAI:** `session.getAttribute("cart")` — session hết hạn → mất giỏ hàng  
+**✅ ĐÚNG:** `cartService.getCartData(user)` — cart persist qua mọi lần login/logout
+
+### **34. LUÔN validate cart item khi load — check `product.isAvailable()`**
+
+`CartService.getCartData()` tự động kiểm tra từng CartItem:
+- Nếu product không còn available: set `unavailable=true`, `quantity=0`, `maxStock=0`, `unavailableReason="Sản phẩm đã hết hàng hoặc hết hạn"`
+- Item vẫn hiển thị trong cart nhưng bị grey out, không thể tăng/giảm số lượng, chỉ có thể xóa
+- Frontend (`cart.html`) xử lý `item.unavailable` → hiển thị cảnh báo đỏ + "Kho: 0 sản phẩm"
+
+### **35. CartService là layer bắt buộc cho mọi thao tác giỏ hàng**
+
+Tất cả thao tác cart PHẢI qua `CartService`:
+- `addItem()` — validate stock, check duplicate, thêm vào DB
+- `removeItem()` — xóa khỏi DB
+- `updateItemQuantity()` — validate stock cap, cập nhật quantity
+- `getCartData()` — trả về items + count với validation
+- `getCartItemsForCheckout()` — lọc bỏ unavailable items trước khi checkout
+- `clearCart()` — xóa cart sau khi đặt hàng thành công
 
 ---
 
@@ -1383,7 +1523,7 @@ Cart (/buyer/cart)
     ↓ "Thanh toán"
 Checkout (/buyer/checkout) — Xác nhận đơn hàng
     ↓ "Chọn phương thức thanh toán"
-Payment (/buyer/payment) — Chọn tiền mặt
+Payment (/buyer/payment) — Chọn chuyển khoản ngân hàng (PayOS)
     ↓ "Xác nhận đặt hàng" → POST /buyer/checkout/confirm
 Order Complete (/buyer/order-complete) — Thành công + hướng dẫn pickup
     ↓
@@ -1392,15 +1532,57 @@ Orders (/buyer/orders) — Theo dõi trạng thái đơn
 
 ### **Những việc còn thiếu (TODO)**
 
-1. **POST /buyer/checkout/confirm** — Hiện chỉ tạo Order rỗng, chưa tạo OrderItem từ cart, chưa tính `finalAmount`, chưa generate QR
-2. **Order Detail page** (`/buyer/orders/{id}`) — Chưa có template, đang redirect về list
-3. **QR Pickup** — Template `pickup-confirm.html` có nhưng chưa tích hợp với flow mới
-4. **Payment online** — MoMo, bank transfer đang disabled (sắp ra mắt)
+1. **Order Detail page** (`/buyer/orders/{id}`) — Chưa có template, đang redirect về list
+2. **Credit Card & MoMo Payment** — UI đã có nhưng đang disabled ("Tính năng đang được phát triển")
+3. **Notification System** — Email/Push notifications chưa hoàn thiện
 
 ### **Milestones Mới**
 
 - [x] **M6.18: Buyer Flow Complete + Category Redesign + Cart Buttons** (Completed 2026-05-21)
 - [x] **M6.19: Order Tracking + Security Fixes + Thymeleaf 3.1 Migration** (Completed 2026-05-22)
+
+---
+
+## 🔥 Recent Updates (2026-05-24) — Cart DB + Payment UX + Product Detail
+
+### **Tổng quan — 3 nhóm thay đổi lớn**
+
+**A. Payment UX — Xóa tiền mặt, thêm thẻ tín dụng, sync PayOS**
+
+| File | Thay đổi |
+|---|---|
+| `buyer/payment.html` | Xóa Cash, thêm Credit Card (disabled + note "Tính năng đang được phát triển"), MoMo disabled, Bank Transfer = default + "Khuyên dùng" |
+| `buyer/order-complete.html` | Ticket hiển thị payment status badge (UNPAID/PAID) + payment method info (PayOS), QR nhận hàng + OTP, hướng dẫn 4 bước (bao gồm thanh toán PayOS tại cửa hàng) |
+| `HomeController.java` | Default payment method = `BANK_TRANSFER` |
+| `order-detail.html`, `seller/orders.html`, `staff/orders.html` | Thêm `CREDIT_CARD` label, cập nhật payLabels |
+
+**B. Cart quantity validation — chặn vượt stock**
+
+| File | Thay đổi |
+|---|---|
+| `HomeController.java` `POST /api/cart/add` | Check stock trước khi thêm/tăng SL, trả lỗi nếu hết hàng |
+| `HomeController.java` `POST /api/cart/update` | Check `quantity <= maxStock`, từ chối nếu vượt |
+| `HomeController.java` `GET /api/cart` | Backfill `maxStock` cho mỗi item |
+| `cart.html` | Hiển thị "Kho: X sản phẩm", disable nút + khi đạt max, toast lỗi đỏ |
+| `home.html`, `category.html` | `addToCart`/`buyNow` handle error response, toast đỏ khi lỗi, `buyNow` không redirect nếu thất bại |
+
+**C. Cart DB persistence + product validation + product detail page**
+
+| File | Thay đổi |
+|---|---|
+| `CartService.java` **(NEW)** | toàn bộ business logic: `getOrCreateCart`, `migrateSessionCart`, `addItem`, `removeItem`, `updateItemQuantity`, `getCartData` (validate product), `clearCart` |
+| `CartRepository.java` **(NEW)** | `findByUser()`, `findByUserUserId()` |
+| `CartItemRepository.java` **(NEW)** | `findByCart()`, `deleteByCart()` |
+| `V8__create_cart_tables.sql` **(NEW)** | Migration tạo bảng `carts` và `cart_items` |
+| `Cart.java` | Thêm `@JsonIgnore` trên `cartItems` |
+| `CartItem.java` | Thêm `@JsonIgnore` trên `cart`, `product` |
+| `HomeController.java` | 5 cart API endpoints viết lại sang DB; `home()` filter bằng `isAvailable()`; `categoryPage()` dùng `findAvailableByCategory()`; checkout đọc cart từ DB |
+| `ProductRepository.java` | Thêm `AND p.approvalStatus = 'APPROVED'` vào 4 query buyer-facing |
+| `Product.java` | `isAvailable()` thêm check `approvalStatus` |
+| `buyer/product-detail.html` **(NEW)** | Ảnh, tên, mô tả, giá (có deal info nếu có), stock, HSD, store card (logo, tier, rating, address), nút Thêm vào giỏ / Mua ngay |
+| `HomeController.java` `GET /products/{productId}` **(NEW)** | Endpoint chi tiết sản phẩm cho buyer |
+| `SecurityConfig.java` | Thêm `/products/**` vào public routes |
+| `cart.html` | Xử lý unavailable items: grey out, text cảnh báo đỏ, "Kho: 0 sản phẩm", chỉ có nút xóa |
 
 ---
 
@@ -1440,16 +1622,16 @@ Orders (/buyer/orders) — Theo dõi trạng thái đơn
 | Authentication | 100% | 100% | 90% | **95%** |
 | Admin Panel | 92% | 88% | 70% | **87%** |
 | Seller Panel | 82% | 72% | 50% | **72%** |
-| Buyer Interface | 92% | 88% | 55% | **85%** |
+| Buyer Interface | 95% | 92% | 60% | **88%** |
 | Deal System | 100% | 98% | 85% | **98%** |
-| Product System | 95% | 85% | 70% | **85%** |
+| Product System | 98% | 90% | 70% | **88%** |
 | Store System | 92% | 85% | 60% | **82%** |
-| Order System | 60% | 50% | 30% | **50%** |
-| Payment System | 20% | 30% | 10% | **20%** |
+| Order System | 70% | 60% | 35% | **58%** |
+| Payment System | 40% | 45% | 15% | **35%** |
+| Cart System | 100% | 100% | 60% | **95%** |
 | Notification | 50% | 40% | 20% | **40%** |
-| Buyer Interface | 92% | 88% | 55% | **85%** |
 
-**Overall Project Completion: ~75%**
+**Overall Project Completion: ~82%**
 
 ---
 
@@ -1474,8 +1656,11 @@ Orders (/buyer/orders) — Theo dõi trạng thái đơn
 - [x] **M6.15: Product Combo + Quick Push + Expiry Countdown** (Completed 2026-05-19)
 - [x] **M6.16: Buyer Home Page Full Rewrite + Product-Centric Data** (Completed 2026-05-21)
 - [x] **M6.17: Deal Detail + Cart System + Category Redesign + Weak Password** (Completed 2026-05-21)
-- [ ] **M7: Order Processing** (In Progress - 50%)
-- [ ] **M8: Payment Integration** (Not Started)
+- [x] **M7: Order Processing** (Completed 2026-05-24)
+- [x] **M8: PayOS Payment Integration** (Completed 2026-05-24)
+- [x] **M8.1: Payment UX — Remove Cash + Credit Card UI + PayOS Sync** (Completed 2026-05-24)
+- [x] **M8.2: Cart DB Persistence + Stock Validation + Product Validation** (Completed 2026-05-24)
+- [x] **M8.3: Buyer Product Detail Page + Home/Category Filter Fix** (Completed 2026-05-24)
 - [ ] **M9: Notification System** (Not Started)
 - [ ] **M10: Analytics & Reports** (Not Started)
 
@@ -1488,10 +1673,14 @@ Orders (/buyer/orders) — Theo dõi trạng thái đơn
 2. ✅ Repository method naming inconsistency
 3. ✅ User `getStore()` vs `getWorkStore()` confusion
 4. ✅ Missing repository methods
+5. ✅ POST /buyer/checkout/confirm tạo Order rỗng không OrderItem → đã fix tạo OrderItem + tính amounts
+6. ✅ Cart NaNđ + scroll bị mobile-nav che → fix padding + bottom:72px cho sticky bars
+7. ✅ Thymeleaf `${}` trong JS template literal xung đột → dùng string concat thay vì backtick
+8. ✅ BUG: Thymeleaf JS inline URL backslash — dùng forward slash `/`
 
 ### **Known Issues:**
-1. ⚠️ Order status transitions not fully implemented
-2. ⚠️ Finance/dispute pages are placeholders
+1. ⚠️ PayOS webhook không tới được localhost — dùng polling qua nút "Kiểm tra trạng thái"
+2. ⚠️ QR code dùng api.qrserver.com (third-party) — nên tự generate QR bằng thư viện Java
 3. ⚠️ Mobile responsive needs improvement
 4. ⚠️ Some modal close behaviors inconsistent
 
@@ -1502,7 +1691,7 @@ Orders (/buyer/orders) — Theo dõi trạng thái đơn
 **Project:** DealXanh O2O Deal Marketplace
 **Tech Lead:** [Your Name]
 **Documentation:** CLAUDE.md (this file)
-**Last Updated:** 2026-05-13
+**Last Updated:** 2026-05-24
 
 ---
 
