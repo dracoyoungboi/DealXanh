@@ -108,6 +108,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
     <form id="pageForm" method="post" th:action="@{/seller/store-page/update}" enctype="multipart/form-data">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
         <input type="hidden" name="sectionOrder" id="sectionOrderInput">
+        <input type="hidden" name="sectionToggles" id="sectionTogglesInput">
 
         <!-- DRAG LIST -->
         <div id="sectionList">
@@ -314,7 +315,22 @@ function toggleSection(header) {
 
 function toggleToggle(el) {
     el.classList.toggle('on');
+    updateSectionTogglesInput();
 }
+
+function updateSectionTogglesInput() {
+    var toggles = {};
+    document.querySelectorAll('.section-card').forEach(function(card) {
+        var toggle = card.querySelector('.section-toggle');
+        toggles[card.dataset.section] = toggle ? toggle.classList.contains('on') : true;
+    });
+    document.getElementById('sectionTogglesInput').value = JSON.stringify(toggles);
+}
+
+// Initialize sectionToggles on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateSectionTogglesInput();
+});
 
 // ===== DRAG AND DROP =====
 const list = document.getElementById('sectionList');

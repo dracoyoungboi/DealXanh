@@ -101,8 +101,8 @@ body{padding-bottom:80px}
             </div>
         </div>
         <div class="deal-grid" id="flashGrid">
-            <div class="deal-card" th:each="p : ${flashSaleProducts}">
-                <a th:href="@{/deals/{id}(id=${p.dealId})}" style="text-decoration:none;color:inherit;">
+            <div class="deal-card" th:each="p : ${flashSaleProducts}" th:attr="data-type=${p.dealType}">
+                <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
                     <div class="deal-card__image">
                         <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
                         <div class="deal-card__badges">
@@ -158,7 +158,7 @@ body{padding-bottom:80px}
 
         <div class="deal-grid" id="productGrid" style="margin-top:16px;">
             <div class="deal-card" th:each="p : ${allProducts}" th:attr="data-type=${p.dealType}">
-                <a th:href="@{/deals/{id}(id=${p.dealId})}" style="text-decoration:none;color:inherit;">
+                <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
                     <div class="deal-card__image">
                         <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
                         <div class="deal-card__badges">
@@ -193,7 +193,7 @@ body{padding-bottom:80px}
             </div>
         </div>
 
-        <div class="empty-state" th:if="${#lists.isEmpty(allProducts)}" id="emptyDeals" style="display:none;">
+        <div class="empty-state" id="emptyDeals" style="display:none;">
             <div class="empty-state__icon">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             </div>
@@ -239,8 +239,8 @@ body{padding-bottom:80px}
             </div>
         </div>
         <div class="deal-grid" id="comboGrid">
-            <div class="deal-card" th:each="p : ${comboProducts}">
-                <a th:href="@{/deals/{id}(id=${p.dealId})}" style="text-decoration:none;color:inherit;">
+            <div class="deal-card" th:each="p : ${comboProducts}" th:attr="data-type=${p.dealType}">
+                <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
                     <div class="deal-card__image">
                         <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
                         <div class="deal-card__badges">
@@ -348,11 +348,26 @@ function filterProducts(type, btn) {
     if(btn) btn.classList.add('filter-chip--active');
 
     var visible = 0;
-    document.querySelectorAll('#productGrid .deal-card').forEach(function(card){
+    var firstVisible = null;
+    document.querySelectorAll('.deal-grid .deal-card').forEach(function(card){
         var match = (type==='all' || card.getAttribute('data-type')===type);
         card.style.display = match ? '' : 'none';
-        if(match) visible++;
+        if(match) {
+            visible++;
+            if(!firstVisible) firstVisible = card;
+        }
     });
+
+    // Auto-scroll to the first visible card's section
+    if (firstVisible && type !== 'all') {
+        setTimeout(function() {
+            firstVisible.scrollIntoView({behavior:'smooth', block:'start'});
+        }, 100);
+    }
+    // Scroll back to top for "all"
+    if (type === 'all') {
+        window.scrollTo({top:0, behavior:'smooth'});
+    }
 
     var empty = document.getElementById('emptyDeals');
     if(empty) empty.style.display = (visible===0) ? '' : 'none';

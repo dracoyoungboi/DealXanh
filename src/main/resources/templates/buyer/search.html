@@ -107,7 +107,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
     <div class="prod-grid" th:if="${results != null and !results.isEmpty()}">
         <th:block th:each="p : ${results}">
             <th:block th:with="dealInfo=${dealProductMap != null ? dealProductMap[p.productId] : null}">
-                <a class="prod-card" th:href="${dealInfo != null ? '/deals/' + dealInfo.dealId : '#'}">
+                <a class="prod-card" th:href="@{'/products/' + ${p.productId}}">
                     <div class="prod-card__img-wrap">
                         <img th:src="${p.imageUrl != null ? p.imageUrl : '/img/default-banner.svg'}" th:alt="${p.name}" onerror="this.src='/img/default-banner.svg'" loading="lazy">
                         <div class="prod-card__badge" th:if="${dealInfo != null}" th:text="|${dealInfo.discountPercent}% GIAM|">50% GIAM</div>
@@ -141,6 +141,26 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                 </a>
             </th:block>
         </th:block>
+    </div>
+
+    <!-- Store results -->
+    <div th:if="${matchingStores != null and !matchingStores.isEmpty()}" style="padding:12px 16px">
+        <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:10px">Cua hang</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+            <a th:each="st : ${matchingStores}" th:href="@{'/store/' + ${st.storeId}}"
+               style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border-radius:var(--radius-md);text-decoration:none;color:inherit;border:1px solid var(--border)">
+                <img th:src="${st.logoUrl != null ? st.logoUrl : '/img/default-banner.svg'}"
+                     alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #eee"
+                     onerror="this.src='/img/default-banner.svg'">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;color:var(--text-primary)" th:text="${st.storeName}">Store</div>
+                    <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px" th:text="${st.city + (st.district != null ? ', ' + st.district : '')}">City</div>
+                </div>
+                <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;color:#fff"
+                      th:styleappend="${st.partnerTier == 'DIAMOND' ? 'background:linear-gradient(135deg,#667eea,#764ba2)' : st.partnerTier == 'GOLD' ? 'background:linear-gradient(135deg,#d4af37,#b8932a)' : st.partnerTier == 'SILVER' ? 'background:linear-gradient(135deg,#a8b8c8,#7a8a9a)' : 'background:linear-gradient(135deg,#cd7f32,#a0522d)'}"
+                      th:text="${st.getPartnerTierLabel()}">Tier</span>
+            </a>
+        </div>
     </div>
 
     <!-- Empty results -->

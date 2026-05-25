@@ -1,5 +1,6 @@
 package com.dealxanh.app.controller;
 
+import com.dealxanh.app.concurrency.ResourceLockManager;
 import com.dealxanh.app.entity.Category;
 import com.dealxanh.app.entity.Deal;
 import com.dealxanh.app.entity.DealProduct;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Controller
 public class HomeController {
@@ -57,6 +59,9 @@ public class HomeController {
 
     @Autowired
     private CartService cartService;
+
+    @Autowired
+    private ResourceLockManager lockManager;
 
     @GetMapping("/")
     public String home(Model model, jakarta.servlet.http.HttpServletRequest request) {
@@ -580,6 +585,16 @@ public class HomeController {
             model.addAttribute("expiryDate", product.getExpiryDate().toString());
         }
 
+        // Related products from same store (exclude current product, up to 6)
+        if (store != null) {
+            List<Product> relatedProducts = productRepository
+                .findByStoreStoreIdAndDeletedFalse(store.getStoreId()).stream()
+                .filter(p -> p.isAvailable() && !p.getProductId().equals(productId))
+                .limit(6)
+                .toList();
+            model.addAttribute("relatedProducts", relatedProducts);
+        }
+
         return "buyer/product-detail";
     }
 
@@ -673,14 +688,23 @@ public class HomeController {
     public java.util.Map<String, Object> confirmPickup(@PathVariable String qrCode) {
         Order order = orderRepository.findByPickupQrCode(qrCode).orElse(null);
         if (order == null) return java.util.Map.of("success", false, "message", "Mã QR không hợp lệ");
-        if ("COMPLETED".equals(order.getStatus()))
-            return java.util.Map.of("success", false, "message", "Đơn hàng đã được nhận trước đó");
-        if (!"READY_FOR_PICKUP".equals(order.getStatus()))
-            return java.util.Map.of("success", false, "message", "Đơn hàng chưa sẵn sàng để nhận");
-        order.setStatus("COMPLETED");
-        order.setActualPickupTime(java.time.LocalDateTime.now());
-        orderRepository.save(order);
-        return java.util.Map.of("success", true, "message", "✅ Xác nhận nhận hàng thành công! Cảm ơn bạn đã mua sắm tại DealXanh.");
+
+        ReentrantLock lock = lockManager.acquireLock("ORDER", order.getOrderId());
+        try {
+            // Re-read to get latest state
+            order = orderRepository.findById(order.getOrderId()).orElse(null);
+            if (order == null) return java.util.Map.of("success", false, "message", "Đơn hàng không tồn tại");
+            if ("COMPLETED".equals(order.getStatus()))
+                return java.util.Map.of("success", false, "message", "Đơn hàng đã được nhận trước đó");
+            if (!"READY_FOR_PICKUP".equals(order.getStatus()))
+                return java.util.Map.of("success", false, "message", "Đơn hàng chưa sẵn sàng để nhận");
+            order.setStatus("COMPLETED");
+            order.setActualPickupTime(java.time.LocalDateTime.now());
+            orderRepository.save(order);
+            return java.util.Map.of("success", true, "message", "Xác nhận nhận hàng thành công! Cảm ơn bạn đã mua sắm tại DealXanh.");
+        } finally {
+            lock.unlock();
+        }
     }
 
     // ============ BUYER PROFILE ============
@@ -784,102 +808,105 @@ public class HomeController {
         User user = getCurrentUser(principal);
         if (user == null) return "redirect:/login";
 
-        // Get cart from DB (only available items)
-        List<Map<String, Object>> cart = cartService.getCartItemsForCheckout(user);
-        if (cart == null || cart.isEmpty()) return "redirect:/buyer/cart";
+        // FIFO lock: prevent double-checkout from same user
+        ReentrantLock lock = lockManager.acquireLock("CART", user.getUserId());
+        try {
+            // Get cart from DB (only available items)
+            List<Map<String, Object>> cart = cartService.getCartItemsForCheckout(user);
+            if (cart == null || cart.isEmpty()) return "redirect:/buyer/cart";
 
-        // Group cart items by store
-        Map<Long, List<Map<String, Object>>> storeGroups = new java.util.LinkedHashMap<>();
-        for (Map<String, Object> item : cart) {
-            Long storeId = item.get("storeId") != null ? ((Number) item.get("storeId")).longValue() : null;
-            if (storeId == null) continue;
-            storeGroups.computeIfAbsent(storeId, k -> new ArrayList<>()).add(item);
-        }
+            // Group cart items by store
+            Map<Long, List<Map<String, Object>>> storeGroups = new java.util.LinkedHashMap<>();
+            for (Map<String, Object> item : cart) {
+                Long storeId = item.get("storeId") != null ? ((Number) item.get("storeId")).longValue() : null;
+                if (storeId == null) continue;
+                storeGroups.computeIfAbsent(storeId, k -> new ArrayList<>()).add(item);
+            }
 
-        // Get applied voucher from session
-        @SuppressWarnings("unchecked")
-        Map<String, Object> appliedVoucher = (Map<String, Object>) session.getAttribute("appliedVoucher");
-        String voucherCode = null;
-        double voucherDiscountTotal = 0;
-        if (appliedVoucher != null) {
-            voucherCode = (String) appliedVoucher.get("code");
-            voucherDiscountTotal = ((Number) appliedVoucher.getOrDefault("voucherDiscount", 0)).doubleValue();
-        }
+            // Get applied voucher from session
+            @SuppressWarnings("unchecked")
+            Map<String, Object> appliedVoucher = (Map<String, Object>) session.getAttribute("appliedVoucher");
+            String voucherCode = null;
+            double voucherDiscountTotal = 0;
+            if (appliedVoucher != null) {
+                voucherCode = (String) appliedVoucher.get("code");
+                voucherDiscountTotal = ((Number) appliedVoucher.getOrDefault("voucherDiscount", 0)).doubleValue();
+            }
 
-        List<Long> orderIds = new ArrayList<>();
+            List<Long> orderIds = new ArrayList<>();
 
-        for (Map.Entry<Long, List<Map<String, Object>>> entry : storeGroups.entrySet()) {
-            Long storeId = entry.getKey();
-            List<Map<String, Object>> items = entry.getValue();
+            for (Map.Entry<Long, List<Map<String, Object>>> entry : storeGroups.entrySet()) {
+                Long storeId = entry.getKey();
+                List<Map<String, Object>> items = entry.getValue();
 
-            Store store = storeRepository.findById(storeId).orElse(null);
-            if (store == null) continue;
+                Store store = storeRepository.findById(storeId).orElse(null);
+                if (store == null) continue;
 
-            Order order = new Order();
-            order.setUser(user);
-            order.setStore(store);
-            order.setStatus("PENDING");
-            order.setPaymentStatus("UNPAID");
-            order.setPaymentMethod(paymentMethod);
-            order.setCreatedAt(LocalDateTime.now());
+                Order order = new Order();
+                order.setUser(user);
+                order.setStore(store);
+                order.setStatus("PENDING");
+                order.setPaymentStatus("UNPAID");
+                order.setPaymentMethod(paymentMethod);
+                order.setCreatedAt(LocalDateTime.now());
 
-            double totalAmount = 0;
-            double discountAmount = 0;
-            List<OrderItem> orderItems = new ArrayList<>();
+                double totalAmount = 0;
+                double discountAmount = 0;
+                List<OrderItem> orderItems = new ArrayList<>();
 
-            for (Map<String, Object> item : items) {
-                int qty = ((Number) item.getOrDefault("quantity", 1)).intValue();
-                double salePrice = ((Number) item.getOrDefault("salePrice", 0)).doubleValue();
-                double originalPrice = ((Number) item.getOrDefault("originalPrice", salePrice)).doubleValue();
-                Long productId = item.get("productId") != null ? ((Number) item.get("productId")).longValue() : null;
+                for (Map<String, Object> item : items) {
+                    int qty = ((Number) item.getOrDefault("quantity", 1)).intValue();
+                    double salePrice = ((Number) item.getOrDefault("salePrice", 0)).doubleValue();
+                    double originalPrice = ((Number) item.getOrDefault("originalPrice", salePrice)).doubleValue();
+                    Long productId = item.get("productId") != null ? ((Number) item.get("productId")).longValue() : null;
 
-                totalAmount += originalPrice * qty;
-                if (originalPrice > salePrice) {
-                    discountAmount += (originalPrice - salePrice) * qty;
-                }
+                    totalAmount += originalPrice * qty;
+                    if (originalPrice > salePrice) {
+                        discountAmount += (originalPrice - salePrice) * qty;
+                    }
 
-                if (productId != null) {
-                    Product product = productRepository.findById(productId).orElse(null);
-                    if (product != null) {
-                        OrderItem oi = new OrderItem();
-                        oi.setOrder(order);
-                        oi.setProduct(product);
-                        oi.setQuantity(qty);
-                        oi.setUnitPrice(salePrice);
-                        orderItems.add(oi);
+                    if (productId != null) {
+                        Product product = productRepository.findById(productId).orElse(null);
+                        if (product != null) {
+                            OrderItem oi = new OrderItem();
+                            oi.setOrder(order);
+                            oi.setProduct(product);
+                            oi.setQuantity(qty);
+                            oi.setUnitPrice(salePrice);
+                            orderItems.add(oi);
+                        }
                     }
                 }
+
+                double finalAmount = totalAmount - discountAmount;
+                if (voucherCode != null && voucherDiscountTotal > 0 && orderIds.isEmpty()) {
+                    double vd = Math.min(voucherDiscountTotal, finalAmount);
+                    discountAmount += vd;
+                    finalAmount -= vd;
+                    order.setCouponCode(voucherCode);
+                }
+
+                order.setTotalAmount(totalAmount);
+                order.setDiscountAmount(discountAmount);
+                order.setFinalAmount(finalAmount);
+                order.setOrderItems(orderItems);
+                order.setPickupQrCode("DX-TMP-" + generateRandomCode(6));
+
+                order = orderRepository.save(order);
+                order.setPickupQrCode("DX-" + order.getOrderId() + "-" + generateRandomCode(6));
+                orderRepository.save(order);
+
+                orderIds.add(order.getOrderId());
             }
 
-            // Apply voucher discount (distributed to first store's order, or pro-rata)
-            double finalAmount = totalAmount - discountAmount;
-            if (voucherCode != null && voucherDiscountTotal > 0 && orderIds.isEmpty()) {
-                // Apply voucher to first store's order
-                double vd = Math.min(voucherDiscountTotal, finalAmount);
-                discountAmount += vd;
-                finalAmount -= vd;
-                order.setCouponCode(voucherCode);
-            }
+            cartService.clearCart(user);
+            session.removeAttribute("appliedVoucher");
+            session.setAttribute("lastOrderIds", orderIds);
 
-            order.setTotalAmount(totalAmount);
-            order.setDiscountAmount(discountAmount);
-            order.setFinalAmount(finalAmount);
-            order.setOrderItems(orderItems);
-            order.setPickupQrCode("DX-TMP-" + generateRandomCode(6));
-
-            // Save to get orderId, then update QR with real ID
-            order = orderRepository.save(order);
-            order.setPickupQrCode("DX-" + order.getOrderId() + "-" + generateRandomCode(6));
-            orderRepository.save(order);
-
-            orderIds.add(order.getOrderId());
+            return "redirect:/buyer/order-complete";
+        } finally {
+            lock.unlock();
         }
-
-        cartService.clearCart(user);
-        session.removeAttribute("appliedVoucher");
-        session.setAttribute("lastOrderIds", orderIds);
-
-        return "redirect:/buyer/order-complete";
     }
 
     private String generateRandomCode(int len) {
@@ -965,11 +992,20 @@ public class HomeController {
         model.addAttribute("searchQuery", q);
         if (q != null && !q.trim().isEmpty()) {
             String s = q.toLowerCase().trim();
+
+            // Search products by name
             List<Product> results = productRepository.findAll().stream()
                 .filter(p -> p.getActive() && !p.getDeleted()
                     && "APPROVED".equals(p.getApprovalStatus())
                     && (p.getName().toLowerCase().contains(s)))
                 .limit(50)
+                .toList();
+
+            // Search stores by name
+            List<Store> matchingStores = storeRepository.findAll().stream()
+                .filter(st -> "ACTIVE".equals(st.getStatus()))
+                .filter(st -> st.getStoreName() != null && st.getStoreName().toLowerCase().contains(s))
+                .limit(10)
                 .toList();
 
             // Get deal info for results
@@ -995,6 +1031,7 @@ public class HomeController {
                 }
             }
             model.addAttribute("results", results);
+            model.addAttribute("matchingStores", matchingStores);
             model.addAttribute("resultCount", results.size());
             model.addAttribute("dealProductMap", dealProductMap);
         }
@@ -1020,9 +1057,60 @@ public class HomeController {
 
     @GetMapping("/buyer/deal-map")
     public String dealMap(Model model) {
-        // Get active stores for map display
-        List<Store> activeStores = storeRepository.findByStatus("ACTIVE");
-        model.addAttribute("stores", activeStores != null ? activeStores : List.of());
+        LocalDateTime now = LocalDateTime.now();
+        List<Deal> activeDeals = dealRepository.findByStatusAndStartTimeBeforeAndEndTimeAfterOrderByPriorityDesc(
+            "ACTIVE", now, now);
+
+        List<Map<String, Object>> dealMarkers = new ArrayList<>();
+        for (Deal deal : activeDeals) {
+            Store store = deal.getStore();
+            if (store == null || store.getLatitude() == null || store.getLongitude() == null) continue;
+
+            List<DealProduct> dealProducts = dealProductRepository.findByDeal(deal);
+            if (dealProducts == null || dealProducts.isEmpty()) continue;
+
+            for (DealProduct dp : dealProducts) {
+                Product p = dp.getProduct();
+                if (p == null || !p.isAvailable()) continue;
+
+                Map<String, Object> marker = new HashMap<>();
+                marker.put("id", p.getProductId());
+                marker.put("name", p.getName());
+                marker.put("store", store.getStoreName());
+                marker.put("storeId", store.getStoreId());
+                marker.put("lat", store.getLatitude());
+                marker.put("lng", store.getLongitude());
+                marker.put("price", Math.round(dp.getSalePrice()));
+                marker.put("original", Math.round(dp.getOriginalPrice()));
+                double discount = "PERCENT".equals(deal.getDiscountType())
+                    ? deal.getDiscountValue()
+                    : dp.getOriginalPrice() > 0 ? ((dp.getOriginalPrice() - dp.getSalePrice()) / dp.getOriginalPrice()) * 100 : 0;
+                marker.put("discount", Math.round(discount));
+                marker.put("img", p.getImageUrl() != null ? p.getImageUrl() : "/img/default-banner.svg");
+                marker.put("slots", p.getStockQuantity());
+                marker.put("dealType", deal.getDealType());
+                marker.put("dealName", deal.getDealName());
+
+                // Urgency based on time remaining
+                long hoursLeft = java.time.Duration.between(now, deal.getEndTime()).toHours();
+                String urgency = hoursLeft < 1 ? "danger" : hoursLeft < 3 ? "warning" : "safe";
+                marker.put("urgency", urgency);
+                marker.put("timeLeft", hoursLeft < 1 ? "< 1h"
+                    : hoursLeft < 3 ? hoursLeft + "h" : "> 3h");
+
+                dealMarkers.add(marker);
+            }
+        }
+
+        // Serialize to JSON for the template
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+            model.addAttribute("dealsJson", om.writeValueAsString(dealMarkers));
+        } catch (Exception e) {
+            model.addAttribute("dealsJson", "[]");
+        }
+        model.addAttribute("dealCount", dealMarkers.size());
+
         return "buyer/deal-map";
     }
 

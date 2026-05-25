@@ -1,5 +1,6 @@
 package com.dealxanh.app.service;
 
+import com.dealxanh.app.concurrency.ResourceLockManager;
 import com.dealxanh.app.entity.Store;
 import com.dealxanh.app.repository.OrderRepository;
 import com.dealxanh.app.repository.StoreRepository;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class StoreService {
@@ -18,6 +20,9 @@ public class StoreService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private ResourceLockManager lockManager;
 
     /**
      * Scheduled job: runs at 2:00 AM on the 1st of every month.
@@ -53,9 +58,14 @@ public class StoreService {
 
             String currentTier = store.getPartnerTier();
             if (!newTier.equals(currentTier)) {
-                store.setPartnerTier(newTier);
-                store.setUpdatedAt(now);
-                storeRepository.save(store);
+                ReentrantLock lock = lockManager.acquireLock("STORE", store.getStoreId());
+                try {
+                    store.setPartnerTier(newTier);
+                    store.setUpdatedAt(now);
+                    storeRepository.save(store);
+                } finally {
+                    lock.unlock();
+                }
                 System.out.println("Partner tier upgraded: " + store.getStoreName()
                     + " " + currentTier + " → " + newTier
                     + " (revenue: " + String.format("%,.0f", rev)

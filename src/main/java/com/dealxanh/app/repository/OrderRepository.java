@@ -2,9 +2,11 @@ package com.dealxanh.app.repository;
 
 import com.dealxanh.app.entity.Order;
 import com.dealxanh.app.entity.Store;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -50,6 +52,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Find by QR code (for store scan pickup)
     Optional<Order> findByPickupQrCode(String qrCode);
+
+    // Pessimistic write lock for payment concurrency (SELECT ... FOR UPDATE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM Order o WHERE o.orderId = :id")
+    Optional<Order> findByIdWithLock(@Param("id") Long id);
 
     // ============== ADMIN ORDERS PAGE STATISTICS ==============
 

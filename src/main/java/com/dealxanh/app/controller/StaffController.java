@@ -1,5 +1,6 @@
 package com.dealxanh.app.controller;
 
+import com.dealxanh.app.concurrency.ResourceLockManager;
 import com.dealxanh.app.entity.Order;
 import com.dealxanh.app.entity.Product;
 import com.dealxanh.app.entity.Store;
@@ -22,6 +23,7 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 @Controller
@@ -40,6 +42,9 @@ public class StaffController {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ResourceLockManager lockManager;
 
     @GetMapping({"", "/dashboard"})
     public String dashboard(@RequestParam(required = false) String slot,
@@ -585,32 +590,37 @@ public class StaffController {
         if (user == null || user.getWorkStore() == null)
             return java.util.Map.of("success", false, "message", "Không tìm thấy cửa hàng");
 
-        Order order = orderRepository.findById(orderId).orElse(null);
-        if (order == null) return java.util.Map.of("success", false, "message", "Không tìm thấy đơn hàng");
-        if (!order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
-            return java.util.Map.of("success", false, "message", "Đơn hàng không thuộc cửa hàng của bạn");
+        // FIFO lock: serialize concurrent status updates on same order
+        ReentrantLock lock = lockManager.acquireLock("ORDER", orderId);
+        try {
+            // Re-read order to get latest state
+            Order order = orderRepository.findById(orderId).orElse(null);
+            if (order == null) return java.util.Map.of("success", false, "message", "Không tìm thấy đơn hàng");
+            if (!order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
+                return java.util.Map.of("success", false, "message", "Đơn hàng không thuộc cửa hàng của bạn");
 
-        // Valid transitions: PENDING→CONFIRMED→READY_FOR_PICKUP→COMPLETED, PENDING→CANCELLED
-        String current = order.getStatus();
-        boolean valid = false;
-        if ("PENDING".equals(current) && ("CONFIRMED".equals(newStatus) || "CANCELLED".equals(newStatus))) valid = true;
-        if ("CONFIRMED".equals(current) && "READY_FOR_PICKUP".equals(newStatus)) valid = true;
-        if ("READY_FOR_PICKUP".equals(current) && "COMPLETED".equals(newStatus)) valid = true;
+            String current = order.getStatus();
+            boolean valid = false;
+            if ("PENDING".equals(current) && ("CONFIRMED".equals(newStatus) || "CANCELLED".equals(newStatus))) valid = true;
+            if ("CONFIRMED".equals(current) && "READY_FOR_PICKUP".equals(newStatus)) valid = true;
+            if ("READY_FOR_PICKUP".equals(current) && "COMPLETED".equals(newStatus)) valid = true;
 
-        if (!valid) return java.util.Map.of("success", false, "message",
-            "Không thể chuyển từ " + current + " sang " + newStatus);
+            if (!valid) return java.util.Map.of("success", false, "message",
+                "Không thể chuyển từ " + current + " sang " + newStatus);
 
-        order.setStatus(newStatus);
-        if ("READY_FOR_PICKUP".equals(newStatus) && order.getPickupQrCode() == null) {
-            // Generate QR code
-            String qrCode = "DX-" + orderId + "-" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-            order.setPickupQrCode(qrCode);
+            order.setStatus(newStatus);
+            if ("READY_FOR_PICKUP".equals(newStatus) && order.getPickupQrCode() == null) {
+                String qrCode = "DX-" + orderId + "-" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+                order.setPickupQrCode(qrCode);
+            }
+            if ("COMPLETED".equals(newStatus)) {
+                order.setActualPickupTime(java.time.LocalDateTime.now());
+            }
+            orderRepository.save(order);
+            return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
+        } finally {
+            lock.unlock();
         }
-        if ("COMPLETED".equals(newStatus)) {
-            order.setActualPickupTime(java.time.LocalDateTime.now());
-        }
-        orderRepository.save(order);
-        return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
     }
 
     private User getCurrentUser(Principal principal) {

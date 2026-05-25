@@ -1,5 +1,6 @@
 package com.dealxanh.app.service;
 
+import com.dealxanh.app.concurrency.ResourceLockManager;
 import com.dealxanh.app.entity.Order;
 import com.dealxanh.app.entity.Product;
 import com.dealxanh.app.entity.Store;
@@ -20,6 +21,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class PayOSService {
@@ -42,14 +44,17 @@ public class PayOSService {
     private final OrderRepository orderRepository;
     private final TransactionRepository transactionRepository;
     private final ProductRepository productRepository;
+    private final ResourceLockManager lockManager;
 
     public PayOSService(OrderRepository orderRepository,
                         TransactionRepository transactionRepository,
-                        ProductRepository productRepository) {
+                        ProductRepository productRepository,
+                        ResourceLockManager lockManager) {
         this.restTemplate = new RestTemplate();
         this.orderRepository = orderRepository;
         this.transactionRepository = transactionRepository;
         this.productRepository = productRepository;
+        this.lockManager = lockManager;
     }
 
     /**
@@ -143,6 +148,7 @@ public class PayOSService {
      */
     @Transactional
     public Map<String, Object> checkPaymentStatus(long orderCode, Order order) {
+        ReentrantLock lock = lockManager.acquireLock("ORDER", order.getOrderId());
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.set("x-client-id", clientId);
@@ -162,42 +168,74 @@ public class PayOSService {
                 if (respData != null) {
                     String status = (String) respData.get("status");
                     if ("PAID".equals(status)) {
-                        // Đã thanh toán - cập nhật order nếu chưa
                         if (!"PAID".equals(order.getPaymentStatus())) {
-                            order.setStatus("COMPLETED");
-                            order.setPaymentStatus("PAID");
-                            order.setActualPickupTime(LocalDateTime.now());
-                            order.setUpdatedAt(LocalDateTime.now());
-                            orderRepository.save(order);
-
-                            // Trừ kho
-                            if (order.getOrderItems() != null) {
-                                for (var item : order.getOrderItems()) {
-                                    Product product = item.getProduct();
-                                    if (product != null && product.getStockQuantity() != null) {
-                                        int newStock = product.getStockQuantity() - (item.getQuantity() != null ? item.getQuantity() : 0);
-                                        product.setStockQuantity(Math.max(0, newStock));
-                                        if (newStock <= 0) product.setActive(false);
-                                        productRepository.save(product);
-                                    }
-                                }
-                            }
-
-                            // Tạo Transaction
+                            long expectedAmount = Math.round(order.getFinalAmount() != null ? order.getFinalAmount() : 0);
+                            int amountPaid = respData.get("amount") != null ? ((Number) respData.get("amount")).intValue() : (int) expectedAmount;
                             String method = respData.get("counterAccountBankId") != null ? "BANK_TRANSFER" : "MOMO";
-                            createSaleTransaction(order, method);
-
-                            return Map.of("paid", true, "message", "✅ Thanh toán thành công! Đã cập nhật đơn hàng.");
+                            return confirmPaymentAndDeductStock(order, orderCode, method, amountPaid, expectedAmount);
                         }
-                        return Map.of("paid", true, "message", "✅ Đơn hàng đã được thanh toán.");
+                        return Map.of("paid", true, "message", "Don hang da duoc thanh toan.");
                     }
-                    return Map.of("paid", false, "message", "⏳ Trạng thái PayOS: " + status);
+                    return Map.of("paid", false, "message", "Trang thai PayOS: " + status);
                 }
             }
-            return Map.of("paid", false, "message", "⏳ Chưa có thông tin thanh toán");
+            return Map.of("paid", false, "message", "Chua co thong tin thanh toan");
         } catch (Exception e) {
             log.error("PayOS checkPaymentStatus error: {}", e.getMessage());
-            return Map.of("paid", false, "message", "Lỗi kiểm tra: " + e.getMessage());
+            return Map.of("paid", false, "message", "Loi kiem tra: " + e.getMessage());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Critical section for payment confirmation. Protected by FIFO lock
+     * and PESSIMISTIC_WRITE to ensure exactly-once stock deduction.
+     */
+    private Map<String, Object> confirmPaymentAndDeductStock(Order order, long orderCode,
+            String paymentMethod, int amountPaid, long expectedAmount) {
+        // Re-read with PESSIMISTIC_WRITE lock to get latest committed state
+        Order lockedOrder = orderRepository.findByIdWithLock(order.getOrderId())
+            .orElseThrow(() -> new RuntimeException("Order not found: " + order.getOrderId()));
+
+        if ("PAID".equals(lockedOrder.getPaymentStatus())) {
+            return Map.of("paid", true, "message", "Don hang da duoc thanh toan.");
+        }
+
+        if (amountPaid >= expectedAmount) {
+            lockedOrder.setStatus("COMPLETED");
+            lockedOrder.setPaymentStatus("PAID");
+            lockedOrder.setActualPickupTime(LocalDateTime.now());
+            lockedOrder.setUpdatedAt(LocalDateTime.now());
+            orderRepository.save(lockedOrder);
+
+            // Deduct stock
+            if (lockedOrder.getOrderItems() != null) {
+                for (var item : lockedOrder.getOrderItems()) {
+                    Product product = item.getProduct();
+                    if (product != null && product.getStockQuantity() != null) {
+                        int newStock = product.getStockQuantity() - (item.getQuantity() != null ? item.getQuantity() : 0);
+                        product.setStockQuantity(Math.max(0, newStock));
+                        if (newStock <= 0) product.setActive(false);
+                        productRepository.save(product);
+                    }
+                }
+            }
+
+            createSaleTransaction(lockedOrder, paymentMethod);
+
+            String msg = amountPaid > expectedAmount
+                ? "Thanh toan thanh cong. Ban da chuyen thua " + (amountPaid - expectedAmount) + "d."
+                : "Thanh toan thanh cong! Da cap nhat don hang.";
+            return Map.of("paid", true, "message", msg);
+        } else {
+            long remaining = expectedAmount - amountPaid;
+            lockedOrder.setPaymentStatus("PARTIAL");
+            lockedOrder.setNote((lockedOrder.getNote() != null ? lockedOrder.getNote() : "")
+                + " [Da thanh toan: " + amountPaid + "d - Con thieu: " + remaining + "d]");
+            lockedOrder.setUpdatedAt(LocalDateTime.now());
+            orderRepository.save(lockedOrder);
+            return Map.of("paid", false, "message", "Con thieu " + remaining + "d.");
         }
     }
 
@@ -235,83 +273,19 @@ public class PayOSService {
             // Chỉ xử lý khi trạng thái là PAID (đã thanh toán, không hủy)
             if (!"PAID".equals(status)) {
                 log.info("Webhook status is '{}' for order {}, ignoring", status, order.getOrderId());
-                return Map.of("success", true, "message", "Trạng thái không phải PAID, bỏ qua");
+                return Map.of("success", true, "message", "Trang thai khong phai PAID, bo qua");
             }
 
-            // Kiểm tra đã xử lý chưa
-            if ("PAID".equals(order.getPaymentStatus())) {
-                return Map.of("success", true, "message", "Đơn hàng đã được xử lý trước đó");
+            // FIFO queue: protect concurrent webhook + polling for same order
+            ReentrantLock lock = lockManager.acquireLock("ORDER", order.getOrderId());
+            try {
+                long expectedAmount = Math.round(order.getFinalAmount() != null ? order.getFinalAmount() : 0);
+                Map<String, Object> result = confirmPaymentAndDeductStock(
+                    order, orderCode, paymentMethod, amountPaid, expectedAmount);
+                return Map.of("success", true, "message", result.get("message"));
+            } finally {
+                lock.unlock();
             }
-
-            long expectedAmount = Math.round(order.getFinalAmount() != null ? order.getFinalAmount() : 0);
-            String resultMessage;
-
-            if (amountPaid >= expectedAmount) {
-                // Đủ tiền → COMPLETED
-                order.setStatus("COMPLETED");
-                order.setPaymentStatus("PAID");
-                order.setPaymentMethod(paymentMethod);
-                order.setActualPickupTime(LocalDateTime.now());
-                order.setUpdatedAt(LocalDateTime.now());
-                orderRepository.save(order);
-
-                // Trừ kho
-                if (order.getOrderItems() != null) {
-                    for (var item : order.getOrderItems()) {
-                        Product product = item.getProduct();
-                        if (product != null && product.getStockQuantity() != null) {
-                            int newStock = product.getStockQuantity() - (item.getQuantity() != null ? item.getQuantity() : 0);
-                            product.setStockQuantity(Math.max(0, newStock));
-                            if (newStock <= 0) product.setActive(false);
-                            productRepository.save(product);
-                        }
-                    }
-                }
-
-                // Tạo Transaction record
-                createSaleTransaction(order, paymentMethod);
-
-                if (amountPaid > expectedAmount) {
-                    resultMessage = "Thanh toán thành công. Bạn đã chuyển thừa " + (amountPaid - expectedAmount)
-                        + "đ, vui lòng liên hệ hotline để được hoàn lại.";
-                } else {
-                    resultMessage = "Thanh toán thành công. Cảm ơn bạn đã mua sắm tại DealXanh!";
-                }
-
-            } else {
-                // Chưa đủ tiền → lưu partial, tạo mã mới
-                long remaining = expectedAmount - amountPaid;
-                order.setPaymentStatus("PARTIAL");
-                order.setNote((order.getNote() != null ? order.getNote() : "") +
-                    " [Đã thanh toán: " + amountPaid + "đ - Còn thiếu: " + remaining + "đ - " +
-                    LocalDateTime.now() + "]");
-                order.setUpdatedAt(LocalDateTime.now());
-
-                // Tạo mã PayOS mới cho số tiền còn lại
-                String newQrCode = String.valueOf(System.currentTimeMillis() / 1000 + 1);
-                order.setPickupQrCode(newQrCode);
-                orderRepository.save(order);
-
-                // Tạo transaction ghi nhận partial
-                Transaction partialTx = new Transaction();
-                partialTx.setStore(order.getStore());
-                partialTx.setOrder(order);
-                partialTx.setType("Sale");
-                partialTx.setAmount((double) amountPaid);
-                partialTx.setPlatformFee(calculatePlatformFee(amountPaid, order.getStore()));
-                partialTx.setNetAmount(amountPaid - partialTx.getPlatformFee());
-                partialTx.setStatus("COMPLETED");
-                partialTx.setPaymentMethod(paymentMethod);
-                partialTx.setTransactionRef("partial-" + orderCode);
-                partialTx.setDescription("Thanh toán một phần - còn thiếu " + remaining + "đ");
-                partialTx.setCreatedAt(LocalDateTime.now());
-                transactionRepository.save(partialTx);
-
-                resultMessage = "Bạn mới chuyển " + amountPaid + "đ, còn thiếu " + remaining
-                    + "đ. Vui lòng quét mã mới để thanh toán phần còn lại.";
-            }
-
-            return Map.of("success", true, "message", resultMessage);
 
         } catch (Exception e) {
             log.error("PayOS webhook processing error: {}", e.getMessage(), e);

@@ -1,5 +1,6 @@
 package com.dealxanh.app.controller;
 
+import com.dealxanh.app.concurrency.ResourceLockManager;
 import com.dealxanh.app.entity.*;
 import com.dealxanh.app.repository.*;
 import com.dealxanh.app.service.DealService;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Controller
 @RequestMapping("/seller")
@@ -58,6 +60,9 @@ public class SellerController {
 
     @Autowired
     private com.dealxanh.app.repository.RoleRepository roleRepository;
+
+    @Autowired
+    private ResourceLockManager lockManager;
 
     // ============ DASHBOARD ============
 
@@ -605,21 +610,20 @@ public class SellerController {
     @PreAuthorize("hasAnyRole('STORE_OWNER', 'STORE_STAFF')")
     @ResponseBody
     public Map<String, Object> pauseDeal(@PathVariable Long dealId, Principal principal) {
+        ReentrantLock lock = lockManager.acquireLock("DEAL", dealId);
         try {
             User user = getCurrentUser(principal);
             Deal deal = dealRepository.findById(dealId).orElse(null);
-
-            if (deal == null || !user.getWorkStore().getStoreId().equals(deal.getStore().getStoreId())) {
+            if (deal == null || !user.getWorkStore().getStoreId().equals(deal.getStore().getStoreId()))
                 return Map.of("success", false, "message", "Deal không tồn tại");
-            }
-
             deal.setStatus("PAUSED");
             deal.setUpdatedAt(LocalDateTime.now());
             dealRepository.save(deal);
-
             return Map.of("success", true, "message", "Đã tạm dừng deal");
         } catch (Exception ex) {
             return Map.of("success", false, "message", "Lỗi: " + ex.getMessage());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -627,26 +631,23 @@ public class SellerController {
     @PreAuthorize("hasAnyRole('STORE_OWNER', 'STORE_STAFF')")
     @ResponseBody
     public Map<String, Object> resumeDeal(@PathVariable Long dealId, Principal principal) {
+        ReentrantLock lock = lockManager.acquireLock("DEAL", dealId);
         try {
             User user = getCurrentUser(principal);
             Deal deal = dealRepository.findById(dealId).orElse(null);
-
-            if (deal == null || !user.getWorkStore().getStoreId().equals(deal.getStore().getStoreId())) {
+            if (deal == null || !user.getWorkStore().getStoreId().equals(deal.getStore().getStoreId()))
                 return Map.of("success", false, "message", "Deal không tồn tại");
-            }
-
             LocalDateTime now = LocalDateTime.now();
-            if (now.isBefore(deal.getStartTime()) || now.isAfter(deal.getEndTime())) {
+            if (now.isBefore(deal.getStartTime()) || now.isAfter(deal.getEndTime()))
                 return Map.of("success", false, "message", "Deal không trong thời gian chạy");
-            }
-
             deal.setStatus("ACTIVE");
             deal.setUpdatedAt(LocalDateTime.now());
             dealRepository.save(deal);
-
             return Map.of("success", true, "message", "Đã kích hoạt deal");
         } catch (Exception ex) {
             return Map.of("success", false, "message", "Lỗi: " + ex.getMessage());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -724,25 +725,25 @@ public class SellerController {
         User user = getCurrentUser(principal);
         if (user == null || user.getWorkStore() == null) return "redirect:/login";
 
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product == null || !product.getStore().getStoreId().equals(user.getWorkStore().getStoreId())) {
-            redirectAttributes.addFlashAttribute("error", "Sản phẩm không tồn tại");
-            return "redirect:/seller/products";
-        }
-
-        // Seller chỉ được DỪNG BÁN, không được kích hoạt lại
-        if (!product.getActive()) {
-            redirectAttributes.addFlashAttribute("error", "Sản phẩm đã bị dừng bán. Liên hệ admin để kích hoạt lại.");
-            return "redirect:/seller/products";
-        }
-
+        ReentrantLock lock = lockManager.acquireLock("PRODUCT", productId);
         try {
+            Product product = productRepository.findById(productId).orElse(null);
+            if (product == null || !product.getStore().getStoreId().equals(user.getWorkStore().getStoreId())) {
+                redirectAttributes.addFlashAttribute("error", "Sản phẩm không tồn tại");
+                return "redirect:/seller/products";
+            }
+            if (!product.getActive()) {
+                redirectAttributes.addFlashAttribute("error", "Sản phẩm đã bị dừng bán. Liên hệ admin để kích hoạt lại.");
+                return "redirect:/seller/products";
+            }
             product.setActive(false);
             product.setUpdatedAt(java.time.LocalDateTime.now());
             productRepository.save(product);
             redirectAttributes.addFlashAttribute("success", "Đã ngừng bán sản phẩm: " + product.getName());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        } finally {
+            lock.unlock();
         }
         return "redirect:/seller/products";
     }
@@ -1273,29 +1274,35 @@ public class SellerController {
         if (user == null || user.getWorkStore() == null)
             return java.util.Map.of("success", false, "message", "Không tìm thấy cửa hàng");
 
-        com.dealxanh.app.entity.Order order = orderRepository.findById(orderId).orElse(null);
-        if (order == null || !order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
-            return java.util.Map.of("success", false, "message", "Đơn hàng không tồn tại");
+        // FIFO lock: serialize concurrent status updates on same order
+        ReentrantLock lock = lockManager.acquireLock("ORDER", orderId);
+        try {
+            // Re-read order to get latest state
+            com.dealxanh.app.entity.Order order = orderRepository.findById(orderId).orElse(null);
+            if (order == null || !order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
+                return java.util.Map.of("success", false, "message", "Đơn hàng không tồn tại");
 
-        // Valid transitions: PENDING→CONFIRMED→READY_FOR_PICKUP→COMPLETED
-        String current = order.getStatus();
-        boolean valid = false;
-        if ("PENDING".equals(current) && ("CONFIRMED".equals(newStatus) || "CANCELLED".equals(newStatus))) valid = true;
-        if ("CONFIRMED".equals(current) && "READY_FOR_PICKUP".equals(newStatus)) valid = true;
-        if ("READY_FOR_PICKUP".equals(current) && "COMPLETED".equals(newStatus)) valid = true;
+            String current = order.getStatus();
+            boolean valid = false;
+            if ("PENDING".equals(current) && ("CONFIRMED".equals(newStatus) || "CANCELLED".equals(newStatus))) valid = true;
+            if ("CONFIRMED".equals(current) && "READY_FOR_PICKUP".equals(newStatus)) valid = true;
+            if ("READY_FOR_PICKUP".equals(current) && "COMPLETED".equals(newStatus)) valid = true;
 
-        if (!valid) return java.util.Map.of("success", false, "message",
-            "Không thể chuyển từ " + current + " sang " + newStatus);
+            if (!valid) return java.util.Map.of("success", false, "message",
+                "Không thể chuyển từ " + current + " sang " + newStatus);
 
-        order.setStatus(newStatus);
-        order.setUpdatedAt(java.time.LocalDateTime.now());
-        if ("READY_FOR_PICKUP".equals(newStatus) && order.getPickupQrCode() == null) {
-            String qrCode = "DX-" + orderId + "-" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-            order.setPickupQrCode(qrCode);
+            order.setStatus(newStatus);
+            order.setUpdatedAt(java.time.LocalDateTime.now());
+            if ("READY_FOR_PICKUP".equals(newStatus) && order.getPickupQrCode() == null) {
+                String qrCode = "DX-" + orderId + "-" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+                order.setPickupQrCode(qrCode);
+            }
+            if ("COMPLETED".equals(newStatus)) order.setActualPickupTime(java.time.LocalDateTime.now());
+            orderRepository.save(order);
+            return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
+        } finally {
+            lock.unlock();
         }
-        if ("COMPLETED".equals(newStatus)) order.setActualPickupTime(java.time.LocalDateTime.now());
-        orderRepository.save(order);
-        return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
     }
 
     @GetMapping("/api/orders/{orderId}/detail")
@@ -1513,17 +1520,16 @@ public class SellerController {
             @RequestParam(required = false) String bankName,
             @RequestParam(required = false) String bankAccountNumber,
             Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null)
+            return Map.of("success", false, "message", "Không tìm thấy cửa hàng");
+
+        Store store = user.getWorkStore();
+        ReentrantLock lock = lockManager.acquireLock("STORE", store.getStoreId());
         try {
-            User user = getCurrentUser(principal);
-            if (user == null || user.getWorkStore() == null)
-                return Map.of("success", false, "message", "Không tìm thấy cửa hàng");
-
-            Store store = user.getWorkStore();
             Long storeId = store.getStoreId();
-
             if (amount == null || amount <= 0)
                 return Map.of("success", false, "message", "Số tiền phải lớn hơn 0");
-
             if (amount < 50000)
                 return Map.of("success", false, "message", "Số tiền rút tối thiểu là 50.000đ");
 
@@ -1561,6 +1567,8 @@ public class SellerController {
             return Map.of("success", true, "message", "Đã gửi yêu cầu đối soát " + Math.round(amount) + "đ");
         } catch (Exception e) {
             return Map.of("success", false, "message", "Lỗi: " + e.getMessage());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -1903,6 +1911,7 @@ public class SellerController {
             @RequestParam(required = false) Integer pickupDurationMinutes,
             @RequestParam(required = false) String approvalMode,
             @RequestParam(required = false) String sectionOrder,
+            @RequestParam(required = false) String sectionToggles,
             @RequestParam(required = false) org.springframework.web.multipart.MultipartFile coverFile,
             Principal principal,
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
@@ -1923,6 +1932,13 @@ public class SellerController {
             if (maxSlotsPerTime != null) store.setMaxSlotsPerTime(maxSlotsPerTime);
             if (pickupDurationMinutes != null) store.setPickupDurationMinutes(pickupDurationMinutes);
             if (approvalMode != null) store.setApprovalMode(approvalMode);
+
+            // Save store page config: section toggles + order
+            if (sectionToggles != null || sectionOrder != null) {
+                String config = (sectionToggles != null ? sectionToggles : "{}")
+                    + "||" + (sectionOrder != null ? sectionOrder : "");
+                store.setStorePageConfig(config);
+            }
 
             if (coverFile != null && !coverFile.isEmpty()) {
                 if (!isImageFile(coverFile)) {

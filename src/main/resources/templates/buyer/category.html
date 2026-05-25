@@ -180,7 +180,7 @@ body{font-family:var(--font-family);background:#f5f5f5;color:var(--text-primary)
         <th:block th:each="p : ${products}">
             <th:block th:with="dealInfo=${dealProductMap != null ? dealProductMap[p.productId] : null}">
                 <div class="prod-card">
-                    <a th:href="${dealInfo != null ? '/deals/' + dealInfo.dealId : '#'}" style="text-decoration:none;color:inherit;display:block;">
+                    <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;display:block;">
                     <div class="prod-card__img-wrap">
                         <img th:src="${p.imageUrl != null ? p.imageUrl : '/img/default-banner.svg'}" th:alt="${p.name}" onerror="this.src='/img/default-banner.svg'" loading="lazy">
                         <div class="prod-card__badge" th:if="${dealInfo != null}" th:text="|${dealInfo.discountPercent}% GIẢM|">50% GIẢM</div>

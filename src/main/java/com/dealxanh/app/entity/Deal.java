@@ -67,6 +67,9 @@ public class Deal {
     private String imageUrl;
     private String bannerUrl;
 
+    @Version
+    private Long version;
+
     // Sắp xếp (ưu tiên hiển thị)
     private Integer priority;
 

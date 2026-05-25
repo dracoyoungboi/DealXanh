@@ -14,7 +14,7 @@
         </a>
     </div>
     <div class="mobile-header__actions">
-        <button class="mobile-header__button" id="search-toggle" aria-label="Tìm kiếm">
+        <button class="mobile-header__button" id="search-toggle" aria-label="Tìm kiếm" onclick="openSearch()">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -31,5 +31,34 @@
 </header>
 <!-- Search Overlay Container -->
 <div th:replace="~{common/buyer/search-overlay :: searchOverlay}"></div>
+<script>
+// Search overlay toggling
+function openSearch() {
+    var overlay = document.getElementById('search-overlay');
+    if (overlay) { overlay.style.display = 'flex'; overlay.setAttribute('aria-hidden', 'false');
+        setTimeout(function() {
+            var input = document.getElementById('search-input');
+            if (input) input.focus();
+        }, 100);
+    }
+}
+function closeSearch() {
+    var overlay = document.getElementById('search-overlay');
+    if (overlay) { overlay.style.display = 'none'; overlay.setAttribute('aria-hidden', 'true'); }
+}
+// Debounced search (shared with overlay)
+var searchTimer;
+function debouncedSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function() {
+        var q = document.getElementById('search-input').value.trim();
+        if (q.length > 0) window.location.href = '/buyer/search?q=' + encodeURIComponent(q);
+    }, 300);
+}
+function performSearchNow() {
+    var q = document.getElementById('search-input').value.trim();
+    if (q.length > 0) window.location.href = '/buyer/search?q=' + encodeURIComponent(q);
+}
+</script>
 </body>
 </html>

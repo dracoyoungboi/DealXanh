@@ -8,8 +8,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.security.SpringSessionBackedSessionRegistry;
 
 @Configuration
 @EnableWebSecurity
@@ -38,7 +41,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SessionRegistry sessionRegistry(FindByIndexNameSessionRepository<?> sessionRepository) {
+        return new SpringSessionBackedSessionRegistry<>(sessionRepository);
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, SessionRegistry sessionRegistry) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
                 // Static resources - luôn public
@@ -97,8 +105,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionFixation().migrateSession()
                 .invalidSessionStrategy(new com.dealxanh.app.security.CustomInvalidSessionStrategy())
-                .maximumSessions(5)
+                .maximumSessions(1)
                 .maxSessionsPreventsLogin(false)
+                .expiredSessionStrategy(new com.dealxanh.app.security.CustomSessionExpiredStrategy())
+                .sessionRegistry(sessionRegistry)
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")

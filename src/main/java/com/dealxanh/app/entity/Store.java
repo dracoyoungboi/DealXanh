@@ -80,6 +80,10 @@ public class Store {
 
     // Partner tier: BRONZE, SILVER, GOLD, DIAMOND
     private String partnerTier = "BRONZE";
+
+    // Store page builder config: JSON with sectionToggles + sectionOrder
+    @Column(columnDefinition = "TEXT")
+    private String storePageConfig;
     // ----------------------------------------
 
     private LocalDateTime createdAt;
@@ -213,6 +217,9 @@ public class Store {
 
     public String getPartnerTier() { return partnerTier != null ? partnerTier : "BRONZE"; }
     public void setPartnerTier(String partnerTier) { this.partnerTier = partnerTier; }
+
+    public String getStorePageConfig() { return storePageConfig; }
+    public void setStorePageConfig(String storePageConfig) { this.storePageConfig = storePageConfig; }
 
     /** Commission rate based on partner tier */
     public double getCommissionRate() {

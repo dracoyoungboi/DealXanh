@@ -1,5 +1,6 @@
 package com.dealxanh.app.service;
 
+import com.dealxanh.app.concurrency.ResourceLockManager;
 import com.dealxanh.app.entity.*;
 import com.dealxanh.app.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class DealService {
@@ -67,6 +69,9 @@ public class DealService {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private ResourceLockManager lockManager;
+
     // ============ DEAL CRUD ============
 
     public Page<Deal> getAllDeals(Pageable pageable) {
@@ -79,85 +84,105 @@ public class DealService {
 
     @Transactional
     public Deal createDeal(Deal deal) {
-        validateDeal(deal, null); // null = new deal (no existing dealId)
-        deal.setCreatedAt(LocalDateTime.now());
-        deal.setUpdatedAt(LocalDateTime.now());
-        deal.setStatus("SCHEDULED");
-        deal.setUsageCount(0L);
-        return dealRepository.save(deal);
+        // FIFO lock on store to prevent concurrent deal creation with overlapping times
+        ReentrantLock lock = null;
+        if (deal.getStore() != null) {
+            lock = lockManager.acquireLock("STORE", deal.getStore().getStoreId());
+        }
+        try {
+            validateDeal(deal, null); // null = new deal (no existing dealId)
+            deal.setCreatedAt(LocalDateTime.now());
+            deal.setUpdatedAt(LocalDateTime.now());
+            deal.setStatus("SCHEDULED");
+            deal.setUsageCount(0L);
+            return dealRepository.save(deal);
+        } finally {
+            if (lock != null) lock.unlock();
+        }
     }
 
     @Transactional
     public Deal updateDeal(Long dealId, Deal dealDetails) {
-        Deal deal = getDealById(dealId);
-        if (deal == null) return null;
+        ReentrantLock lock = lockManager.acquireLock("DEAL", dealId);
+        try {
+            Deal deal = getDealById(dealId);
+            if (deal == null) return null;
 
-        deal.setDealName(dealDetails.getDealName());
-        deal.setDealCode(dealDetails.getDealCode());
-        deal.setDescription(dealDetails.getDescription());
-        deal.setDealType(dealDetails.getDealType());
-        deal.setDiscountType(dealDetails.getDiscountType());
-        deal.setDiscountValue(dealDetails.getDiscountValue());
-        deal.setMaxDiscountAmount(dealDetails.getMaxDiscountAmount());
-        deal.setMinOrderAmount(dealDetails.getMinOrderAmount());
-        deal.setMaxUsageCount(dealDetails.getMaxUsageCount());
-        deal.setUsagePerUser(dealDetails.getUsagePerUser());
-        deal.setStartTime(dealDetails.getStartTime());
-        deal.setEndTime(dealDetails.getEndTime());
-        deal.setApplyMethod(dealDetails.getApplyMethod());
-        deal.setScope(dealDetails.getScope());
-        deal.setImageUrl(dealDetails.getImageUrl());
-        deal.setBannerUrl(dealDetails.getBannerUrl());
-        deal.setPriority(dealDetails.getPriority());
-        deal.setUpdatedAt(LocalDateTime.now());
+            deal.setDealName(dealDetails.getDealName());
+            deal.setDealCode(dealDetails.getDealCode());
+            deal.setDescription(dealDetails.getDescription());
+            deal.setDealType(dealDetails.getDealType());
+            deal.setDiscountType(dealDetails.getDiscountType());
+            deal.setDiscountValue(dealDetails.getDiscountValue());
+            deal.setMaxDiscountAmount(dealDetails.getMaxDiscountAmount());
+            deal.setMinOrderAmount(dealDetails.getMinOrderAmount());
+            deal.setMaxUsageCount(dealDetails.getMaxUsageCount());
+            deal.setUsagePerUser(dealDetails.getUsagePerUser());
+            deal.setStartTime(dealDetails.getStartTime());
+            deal.setEndTime(dealDetails.getEndTime());
+            deal.setApplyMethod(dealDetails.getApplyMethod());
+            deal.setScope(dealDetails.getScope());
+            deal.setImageUrl(dealDetails.getImageUrl());
+            deal.setBannerUrl(dealDetails.getBannerUrl());
+            deal.setPriority(dealDetails.getPriority());
+            deal.setUpdatedAt(LocalDateTime.now());
 
-        return dealRepository.save(deal);
+            return dealRepository.save(deal);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Transactional
     public boolean deleteDeal(Long dealId) {
-        Deal deal = getDealById(dealId);
-        if (deal == null) return false;
+        ReentrantLock lock = lockManager.acquireLock("DEAL", dealId);
+        try {
+            Deal deal = getDealById(dealId);
+            if (deal == null) return false;
 
-        deal.setStatus("CANCELLED");
-        deal.setUpdatedAt(LocalDateTime.now());
-        dealRepository.save(deal);
+            deal.setStatus("CANCELLED");
+            deal.setUpdatedAt(LocalDateTime.now());
+            dealRepository.save(deal);
 
-        return true;
+            return true;
+        } finally {
+            lock.unlock();
+        }
     }
 
     // ============ DEAL CATEGORIES (Admin gán categories vào platform deals) ============
 
     @Transactional
     public DealCategory addCategoryToDeal(Long dealId, Long categoryId, Integer priority) {
-        Deal deal = getDealById(dealId);
-        Category category = categoryRepository.findById(categoryId).orElse(null);
+        ReentrantLock lock = lockManager.acquireLock("DEAL", dealId);
+        try {
+            Deal deal = getDealById(dealId);
+            Category category = categoryRepository.findById(categoryId).orElse(null);
 
-        if (deal == null || category == null) {
-            return null;
+            if (deal == null || category == null) return null;
+
+            if ("ALL_STORES".equals(deal.getScope()) && deal.getStore() == null) {
+                validatePlatformCategoryDiscount(deal, category);
+            }
+
+            DealCategory existingDealCategory = dealCategoryRepository
+                    .findByDealAndCategory(deal, category);
+            if (existingDealCategory != null) {
+                existingDealCategory.setActive(true);
+                existingDealCategory.setPriority(priority);
+                return dealCategoryRepository.save(existingDealCategory);
+            }
+
+            DealCategory dealCategory = new DealCategory();
+            dealCategory.setDeal(deal);
+            dealCategory.setCategory(category);
+            dealCategory.setPriority(priority != null ? priority : 0);
+            dealCategory.setActive(true);
+
+            return dealCategoryRepository.save(dealCategory);
+        } finally {
+            lock.unlock();
         }
-
-        // Platform deal validation: check products in category don't exceed 30% platform discount
-        if ("ALL_STORES".equals(deal.getScope()) && deal.getStore() == null) {
-            validatePlatformCategoryDiscount(deal, category);
-        }
-
-        // Check if deal category already exists
-        DealCategory existingDealCategory = dealCategoryRepository
-                .findByDealAndCategory(deal, category);
-        if (existingDealCategory != null) {
-            existingDealCategory.setActive(true);
-            existingDealCategory.setPriority(priority);
-            return dealCategoryRepository.save(existingDealCategory);
-        }
-
-        DealCategory dealCategory = new DealCategory();
-        dealCategory.setDeal(deal);
-        dealCategory.setCategory(category);
-        dealCategory.setPriority(priority != null ? priority : 0);
-        dealCategory.setActive(true);
-
-        return dealCategoryRepository.save(dealCategory);
     }
 
     /**
@@ -230,23 +255,24 @@ public class DealService {
 
     @Transactional
     public boolean removeCategoryFromDeal(Long dealId, Long categoryId) {
-        Deal deal = getDealById(dealId);
-        Category category = categoryRepository.findById(categoryId).orElse(null);
+        ReentrantLock lock = lockManager.acquireLock("DEAL", dealId);
+        try {
+            Deal deal = getDealById(dealId);
+            Category category = categoryRepository.findById(categoryId).orElse(null);
 
-        if (deal == null || category == null) {
-            return false;
+            if (deal == null || category == null) return false;
+
+            DealCategory dealCategory = dealCategoryRepository
+                    .findByDealAndCategory(deal, category);
+            if (dealCategory == null) return false;
+
+            dealCategory.setActive(false);
+            dealCategoryRepository.save(dealCategory);
+
+            return true;
+        } finally {
+            lock.unlock();
         }
-
-        DealCategory dealCategory = dealCategoryRepository
-                .findByDealAndCategory(deal, category);
-        if (dealCategory == null) {
-            return false;
-        }
-
-        dealCategory.setActive(false);
-        dealCategoryRepository.save(dealCategory);
-
-        return true;
     }
 
     public List<DealCategory> getDealCategories(Long dealId) {
@@ -331,57 +357,64 @@ public class DealService {
             throw new IllegalArgumentException("Deal hoặc Product không tồn tại");
         }
 
-        validateProductPrices(originalPrice, salePrice);
+        // FIFO lock on product to prevent concurrent addition to overlapping deals
+        ReentrantLock lock = lockManager.acquireLock("PRODUCT", productId);
+        try {
+            validateProductPrices(originalPrice, salePrice);
 
-        if (maxQuantity != null && maxQuantity <= 0) {
-            throw new IllegalArgumentException("Số lượng tối đa phải lớn hơn 0");
+            if (maxQuantity != null && maxQuantity <= 0) {
+                throw new IllegalArgumentException("Số lượng tối đa phải lớn hơn 0");
+            }
+
+            // Validate product is not in another overlapping active deal
+            validateProductNotInOverlappingDeal(product, deal);
+
+            // Validate cumulative discount from platform deals (category-based) doesn't exceed 65%
+            validateCumulativeDiscount(product, deal, salePrice, originalPrice);
+
+            DealProduct existingDealProduct = dealProductRepository
+                    .findByDealAndProduct(deal, product);
+            if (existingDealProduct != null) {
+                existingDealProduct.setOriginalPrice(originalPrice);
+                existingDealProduct.setSalePrice(salePrice);
+                existingDealProduct.setMaxQuantity(maxQuantity);
+                existingDealProduct.setPriority(priority);
+                return dealProductRepository.save(existingDealProduct);
+            }
+
+            DealProduct dealProduct = new DealProduct();
+            dealProduct.setDeal(deal);
+            dealProduct.setProduct(product);
+            dealProduct.setOriginalPrice(originalPrice);
+            dealProduct.setSalePrice(salePrice);
+            dealProduct.setMaxQuantity(maxQuantity);
+            dealProduct.setSoldQuantity(0);
+            dealProduct.setPriority(priority != null ? priority : 0);
+
+            return dealProductRepository.save(dealProduct);
+        } finally {
+            lock.unlock();
         }
-
-        // Validate product is not in another overlapping active deal
-        validateProductNotInOverlappingDeal(product, deal);
-
-        // Validate cumulative discount from platform deals (category-based) doesn't exceed 65%
-        validateCumulativeDiscount(product, deal, salePrice, originalPrice);
-
-        DealProduct existingDealProduct = dealProductRepository
-                .findByDealAndProduct(deal, product);
-        if (existingDealProduct != null) {
-            existingDealProduct.setOriginalPrice(originalPrice);
-            existingDealProduct.setSalePrice(salePrice);
-            existingDealProduct.setMaxQuantity(maxQuantity);
-            existingDealProduct.setPriority(priority);
-            return dealProductRepository.save(existingDealProduct);
-        }
-
-        DealProduct dealProduct = new DealProduct();
-        dealProduct.setDeal(deal);
-        dealProduct.setProduct(product);
-        dealProduct.setOriginalPrice(originalPrice);
-        dealProduct.setSalePrice(salePrice);
-        dealProduct.setMaxQuantity(maxQuantity);
-        dealProduct.setSoldQuantity(0);
-        dealProduct.setPriority(priority != null ? priority : 0);
-
-        return dealProductRepository.save(dealProduct);
     }
 
     @Transactional
     public boolean removeProductFromDeal(Long dealId, Long productId) {
-        Deal deal = getDealById(dealId);
-        Product product = productRepository.findById(productId).orElse(null);
+        ReentrantLock lock = lockManager.acquireLock("PRODUCT", productId);
+        try {
+            Deal deal = getDealById(dealId);
+            Product product = productRepository.findById(productId).orElse(null);
 
-        if (deal == null || product == null) {
-            return false;
+            if (deal == null || product == null) return false;
+
+            DealProduct dealProduct = dealProductRepository
+                    .findByDealAndProduct(deal, product);
+            if (dealProduct == null) return false;
+
+            dealProductRepository.delete(dealProduct);
+            return true;
+        } finally {
+            lock.unlock();
         }
-
-        DealProduct dealProduct = dealProductRepository
-                .findByDealAndProduct(deal, product);
-        if (dealProduct == null) {
-            return false;
-        }
-
-        dealProductRepository.delete(dealProduct);
-        return true;
     }
 
     @Transactional
@@ -389,12 +422,18 @@ public class DealService {
         DealProduct dealProduct = dealProductRepository.findById(dealProductId).orElse(null);
         if (dealProduct == null) return null;
 
-        dealProduct.setOriginalPrice(details.getOriginalPrice());
-        dealProduct.setSalePrice(details.getSalePrice());
-        dealProduct.setMaxQuantity(details.getMaxQuantity());
-        dealProduct.setPriority(details.getPriority());
+        Long productId = dealProduct.getProduct() != null ? dealProduct.getProduct().getProductId() : null;
+        ReentrantLock lock = productId != null ? lockManager.acquireLock("PRODUCT", productId) : null;
+        try {
+            dealProduct.setOriginalPrice(details.getOriginalPrice());
+            dealProduct.setSalePrice(details.getSalePrice());
+            dealProduct.setMaxQuantity(details.getMaxQuantity());
+            dealProduct.setPriority(details.getPriority());
 
-        return dealProductRepository.save(dealProduct);
+            return dealProductRepository.save(dealProduct);
+        } finally {
+            if (lock != null) lock.unlock();
+        }
     }
 
     public List<DealProduct> getDealProducts(Long dealId) {

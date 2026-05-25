@@ -1,5 +1,6 @@
 package com.dealxanh.app.service;
 
+import com.dealxanh.app.concurrency.ResourceLockManager;
 import com.dealxanh.app.entity.*;
 import com.dealxanh.app.repository.*;
 import jakarta.servlet.http.HttpSession;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class CartService {
@@ -16,6 +18,7 @@ public class CartService {
     @Autowired private CartRepository cartRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private DealProductRepository dealProductRepository;
+    @Autowired private ResourceLockManager lockManager;
 
     public Cart getOrCreateCart(User user) {
         return cartRepository.findByUser(user).orElseGet(() -> {
@@ -76,87 +79,101 @@ public class CartService {
             String productName, double salePrice, double originalPrice,
             String storeName, String productImage, Long storeId,
             String dealType, String dealName) {
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product == null || !product.isAvailable()) {
-            return Map.of("success", false, "message", "Sản phẩm không khả dụng");
-        }
-        if (!"APPROVED".equals(product.getApprovalStatus())) {
-            return Map.of("success", false, "message", "Sản phẩm không khả dụng");
-        }
-
-        int maxStock = product.getStockQuantity();
-        if (maxStock <= 0) {
-            return Map.of("success", false, "message", "Sản phẩm đã hết hàng");
-        }
-
-        Cart cart = getOrCreateCart(user);
-
-        // Check if already in cart
-        for (CartItem ci : cart.getCartItems()) {
-            if (ci.getProduct() != null && ci.getProduct().getProductId().equals(productId)) {
-                if (ci.getQuantity() >= maxStock) {
-                    return Map.of("success", false, "message",
-                            "Chỉ còn " + maxStock + " sản phẩm trong kho. Bạn đã có " + ci.getQuantity() + " trong giỏ.");
-                }
-                ci.setQuantity(ci.getQuantity() + 1);
-                ci.setUnitPrice(salePrice);
-                cart.setUpdatedAt(LocalDateTime.now());
-                cartRepository.save(cart);
-                return Map.of("success", true, "message", "Đã tăng số lượng",
-                        "count", getItemCount(cart));
+        ReentrantLock lock = lockManager.acquireLock("CART", user.getUserId());
+        try {
+            Product product = productRepository.findById(productId).orElse(null);
+            if (product == null || !product.isAvailable()) {
+                return Map.of("success", false, "message", "Sản phẩm không khả dụng");
             }
+            if (!"APPROVED".equals(product.getApprovalStatus())) {
+                return Map.of("success", false, "message", "Sản phẩm không khả dụng");
+            }
+
+            int maxStock = product.getStockQuantity();
+            if (maxStock <= 0) {
+                return Map.of("success", false, "message", "Sản phẩm đã hết hàng");
+            }
+
+            Cart cart = getOrCreateCart(user);
+
+            for (CartItem ci : cart.getCartItems()) {
+                if (ci.getProduct() != null && ci.getProduct().getProductId().equals(productId)) {
+                    if (ci.getQuantity() >= maxStock) {
+                        return Map.of("success", false, "message",
+                                "Chỉ còn " + maxStock + " sản phẩm trong kho. Bạn đã có " + ci.getQuantity() + " trong giỏ.");
+                    }
+                    ci.setQuantity(ci.getQuantity() + 1);
+                    ci.setUnitPrice(salePrice);
+                    cart.setUpdatedAt(LocalDateTime.now());
+                    cartRepository.save(cart);
+                    return Map.of("success", true, "message", "Đã tăng số lượng",
+                            "count", getItemCount(cart));
+                }
+            }
+
+            CartItem ci = new CartItem();
+            ci.setCart(cart);
+            ci.setProduct(product);
+            ci.setQuantity(1);
+            ci.setUnitPrice(salePrice);
+            cart.getCartItems().add(ci);
+            cart.setUpdatedAt(LocalDateTime.now());
+            cartRepository.save(cart);
+
+            return Map.of("success", true, "message", "Đã thêm vào giỏ hàng",
+                    "count", getItemCount(cart));
+        } finally {
+            lock.unlock();
         }
-
-        CartItem ci = new CartItem();
-        ci.setCart(cart);
-        ci.setProduct(product);
-        ci.setQuantity(1);
-        ci.setUnitPrice(salePrice);
-        cart.getCartItems().add(ci);
-        cart.setUpdatedAt(LocalDateTime.now());
-        cartRepository.save(cart);
-
-        return Map.of("success", true, "message", "Đã thêm vào giỏ hàng",
-                "count", getItemCount(cart));
     }
 
     @Transactional
     public Map<String, Object> removeItem(User user, Long productId) {
-        Cart cart = cartRepository.findByUser(user).orElse(null);
-        if (cart == null) return Map.of("success", false, "message", "Giỏ hàng trống");
+        ReentrantLock lock = lockManager.acquireLock("CART", user.getUserId());
+        try {
+            Cart cart = cartRepository.findByUser(user).orElse(null);
+            if (cart == null) return Map.of("success", false, "message", "Giỏ hàng trống");
 
-        cart.getCartItems().removeIf(ci -> ci.getProduct() != null
-                && ci.getProduct().getProductId().equals(productId));
-        cart.setUpdatedAt(LocalDateTime.now());
-        cartRepository.save(cart);
+            cart.getCartItems().removeIf(ci -> ci.getProduct() != null
+                    && ci.getProduct().getProductId().equals(productId));
+            cart.setUpdatedAt(LocalDateTime.now());
+            cartRepository.save(cart);
 
-        return Map.of("success", true, "count", getItemCount(cart));
+            return Map.of("success", true, "count", getItemCount(cart));
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Transactional
     public Map<String, Object> updateItemQuantity(User user, Long productId, int quantity) {
-        Cart cart = cartRepository.findByUser(user).orElse(null);
-        if (cart == null) return Map.of("success", false, "message", "Giỏ hàng trống");
+        ReentrantLock lock = lockManager.acquireLock("CART", user.getUserId());
+        try {
+            Cart cart = cartRepository.findByUser(user).orElse(null);
+            if (cart == null) return Map.of("success", false, "message", "Giỏ hàng trống");
 
-        Product product = productRepository.findById(productId).orElse(null);
-        int maxStock = product != null ? product.getStockQuantity() : 0;
+            Product product = productRepository.findById(productId).orElse(null);
+            int maxStock = product != null ? product.getStockQuantity() : 0;
 
-        for (CartItem ci : cart.getCartItems()) {
-            if (ci.getProduct() != null && ci.getProduct().getProductId().equals(productId)) {
-                if (quantity <= 0) {
-                    cart.getCartItems().remove(ci);
-                } else if (quantity > maxStock) {
-                    return Map.of("success", false, "message",
-                            "Chỉ còn " + maxStock + " sản phẩm trong kho. Không thể thêm " + quantity + " vào giỏ.");
-                } else {
-                    ci.setQuantity(quantity);
+            for (CartItem ci : cart.getCartItems()) {
+                if (ci.getProduct() != null && ci.getProduct().getProductId().equals(productId)) {
+                    if (quantity <= 0) {
+                        cart.getCartItems().remove(ci);
+                    } else if (quantity > maxStock) {
+                        return Map.of("success", false, "message",
+                                "Chỉ còn " + maxStock + " sản phẩm trong kho. Không thể thêm " + quantity + " vào giỏ.");
+                    } else {
+                        ci.setQuantity(quantity);
+                    }
+                    cart.setUpdatedAt(LocalDateTime.now());
+                    cartRepository.save(cart);
+                    return Map.of("success", true, "count", getItemCount(cart));
                 }
-                cart.setUpdatedAt(LocalDateTime.now());
-                cartRepository.save(cart);
-                return Map.of("success", true, "count", getItemCount(cart));
             }
+            return Map.of("success", false, "message", "Không tìm thấy sản phẩm trong giỏ");
+        } finally {
+            lock.unlock();
         }
-        return Map.of("success", false, "message", "Không tìm thấy sản phẩm trong giỏ");
     }
 
     public Map<String, Object> getCartData(User user) {
@@ -255,10 +272,15 @@ public class CartService {
 
     @Transactional
     public void clearCart(User user) {
-        Cart cart = cartRepository.findByUser(user).orElse(null);
-        if (cart != null) {
-            cart.getCartItems().clear();
-            cartRepository.save(cart);
+        ReentrantLock lock = lockManager.acquireLock("CART", user.getUserId());
+        try {
+            Cart cart = cartRepository.findByUser(user).orElse(null);
+            if (cart != null) {
+                cart.getCartItems().clear();
+                cartRepository.save(cart);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 

@@ -45,6 +45,9 @@ public class Product {
     // Khách phải đến lấy trước giờ này
     private LocalDateTime pickupDeadline;
 
+    @Version
+    private Long version;
+
     // Cờ kích hoạt
     private Boolean active = true;
 

@@ -237,29 +237,6 @@ public class AuthController {
             System.out.println("DEBUG: Auth Context: " + (org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()));
             System.out.println("DEBUG: Session ID: " + (request.getSession(false) != null ? request.getSession().getId() : "no session"));
 
-            // IMPORTANT: Force check if we're in a fresh application start
-            // If app was restarted, old sessions are invalid
-            jakarta.servlet.http.HttpSession session = request.getSession(false);
-            boolean isFreshStart = false;
-
-            if (session != null) {
-                long creationTime = session.getCreationTime();
-                long currentTime = System.currentTimeMillis();
-                long sessionAge = (currentTime - creationTime) / 1000; // in seconds
-
-                System.out.println("DEBUG: Session age: " + sessionAge + " seconds");
-
-                // If session is older than 1 second, this might be a stale session from before restart
-                // Force logout to be safe
-                if (sessionAge > 60) { // More than 1 minute = likely stale session
-                    System.out.println("DEBUG: Session is old (" + sessionAge + "s), forcing logout");
-                    isFreshStart = true;
-                }
-            } else {
-                System.out.println("DEBUG: No session found");
-                isFreshStart = true; // No session = fresh start
-            }
-
             if (principal == null) {
                 System.out.println("DEBUG: No principal, redirecting to /login");
                 return "redirect:/login";
@@ -283,6 +260,7 @@ public class AuthController {
                 System.out.println("DEBUG: This is a STALE/OLD session. Forcing logout...");
 
                 // Force logout: invalidate session and clear authentication
+                jakarta.servlet.http.HttpSession session = request.getSession(false);
                 if (session != null) {
                     System.out.println("DEBUG: Invalidating session...");
                     session.invalidate();
@@ -311,30 +289,6 @@ public class AuthController {
             if (user.getActive() == null || !user.getActive()) {
                 System.out.println("DEBUG: User is inactive, redirecting to /login");
                 return "redirect:/login";
-            }
-
-            // Double-check: if session is too old, force logout even if user exists
-            if (isFreshStart) {
-                System.out.println("=== FRESH APP START DETECTED ===");
-                System.out.println("DEBUG: App was restarted, forcing re-login for security");
-
-                if (session != null) {
-                    session.invalidate();
-                }
-                org.springframework.security.core.context.SecurityContextHolder.clearContext();
-
-                // Clear cookies
-                jakarta.servlet.http.Cookie[] cookies = request.getCookies();
-                for (jakarta.servlet.http.Cookie cookie : cookies) {
-                    if (cookie.getName().equals("JSESSIONID") || cookie.getName().equals("remember-me")) {
-                        cookie.setMaxAge(0);
-                        cookie.setPath("/");
-                        cookie.setValue("");
-                        response.addCookie(cookie);
-                    }
-                }
-
-                return "redirect:/login?app_restarted=true";
             }
 
             model.addAttribute("user", user);

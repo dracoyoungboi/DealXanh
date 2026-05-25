@@ -195,6 +195,14 @@
                 errorDiv.style.color = '#f59e0b';
             }
 
+            // Check for kicked (concurrent login from another device)
+            if (urlParams.get('kicked') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = '🔒 Tài khoản của bạn đang đăng nhập ở nơi khác. Phiên này đã bị ngắt.';
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#ef4444';
+            }
+
             if (urlParams.get('error') === 'true') {
                 const errorDiv = document.getElementById('password-error');
                 errorDiv.textContent = 'Tài khoản hoặc mật khẩu không chính xác';

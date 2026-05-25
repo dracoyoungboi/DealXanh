@@ -150,8 +150,9 @@ body{padding-bottom:100px;background:var(--background);font-family:var(--font-fa
         <div class="prod-meta">
             <div class="prod-meta__row">
                 <span class="prod-meta__label">Kho</span>
-                <span class="prod-meta__val"
-                      th:classappend="${product.stockQuantity > 0 ? 'prod-meta__val--green' : 'prod-meta__val--red'}"
+                <span class="prod-meta__val prod-meta__val--green" th:if="${product.stockQuantity > 0}"
+                      th:text="|${product.stockQuantity} sản phẩm|">0 sản phẩm</span>
+                <span class="prod-meta__val prod-meta__val--red" th:unless="${product.stockQuantity > 0}"
                       th:text="|${product.stockQuantity} sản phẩm|">0 sản phẩm</span>
             </div>
             <div class="prod-meta__row" th:if="${product.expiryDate != null}">
@@ -173,33 +174,52 @@ body{padding-bottom:100px;background:var(--background);font-family:var(--font-fa
         </div>
     </div>
 
-    <!-- Store card -->
-    <div class="store-card" th:if="${store != null}">
-        <div class="store-card__img">
-            <img th:if="${store.logoUrl != null and !store.logoUrl.isEmpty()}"
-                 th:src="${store.logoUrl}" alt="Store"
-                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-            <svg th:if="${store.logoUrl == null or store.logoUrl.isEmpty()}"
-                 class="fallback-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 style="display:flex;">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            <svg class="fallback-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-        </div>
-        <div class="store-card__info">
-            <div class="store-card__name" th:text="${store.storeName}">Tên cửa hàng</div>
-            <div class="store-card__addr" th:text="${store.address}">Địa chỉ</div>
-            <div class="store-card__meta">
-                <span class="store-card__rating" th:if="${store.averageRating != null and store.averageRating > 0}"
-                      th:text="|★ ${#numbers.formatDecimal(store.averageRating, 0, 1)}|">★ 4.5</span>
-                <span class="store-card__tier"
-                      th:classappend="|tier--${store.partnerTier}|"
-                      th:text="${store.getPartnerTierLabel()}">Đồng</span>
+    <!-- Store card - clickable to store page -->
+    <a th:if="${store != null}" th:href="@{'/store/' + ${store.storeId}}" style="text-decoration:none;color:inherit;">
+        <div class="store-card">
+            <div class="store-card__img">
+                <img th:if="${store.logoUrl != null and !store.logoUrl.isEmpty()}"
+                     th:src="${store.logoUrl}" alt="Store"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <svg th:if="${store.logoUrl == null or store.logoUrl.isEmpty()}"
+                     class="fallback-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     style="display:flex;">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
             </div>
+            <div class="store-card__info">
+                <div class="store-card__name" th:text="${store.storeName}">Tên cửa hàng</div>
+                <div class="store-card__addr" th:text="${store.address}">Địa chỉ</div>
+                <div class="store-card__meta">
+                    <span class="store-card__rating" th:if="${store.averageRating != null and store.averageRating > 0}"
+                          th:text="|★ ${#numbers.formatDecimal(store.averageRating, 0, 1)}|">★ 4.5</span>
+                    <span class="store-card__tier"
+                          th:classappend="|tier--${store.partnerTier}|"
+                          th:text="${store.getPartnerTierLabel()}">Đồng</span>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <!-- Related products from same store -->
+    <div th:if="${relatedProducts != null and !relatedProducts.isEmpty()}" style="margin-top:8px">
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:10px;padding-left:4px">
+            San pham khac tu shop nay
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <a th:each="rp : ${relatedProducts}" th:href="@{'/products/' + ${rp.productId}}"
+               style="background:var(--surface);border-radius:var(--radius-md);overflow:hidden;text-decoration:none;color:inherit;border:1px solid var(--border-light)">
+                <div style="width:100%;padding-top:75%;position:relative;overflow:hidden;background:#fafafa">
+                    <img th:src="${rp.imageUrl != null ? rp.imageUrl : '/img/default-banner.svg'}"
+                         th:alt="${rp.name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover"
+                         onerror="this.src='/img/default-banner.svg'" loading="lazy">
+                </div>
+                <div style="padding:6px 8px 8px">
+                    <div style="font-size:10px;font-weight:500;color:#222;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px" th:text="${rp.name}">Name</div>
+                    <div style="font-size:12px;font-weight:700;color:#ee4d2d" th:text="|${#numbers.formatDecimal(rp.getDisplayPrice(), 0, 0)}d|">0d</div>
+                </div>
+            </a>
         </div>
     </div>
 

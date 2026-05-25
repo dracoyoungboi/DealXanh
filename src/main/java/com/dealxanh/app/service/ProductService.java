@@ -1,5 +1,6 @@
 package com.dealxanh.app.service;
 
+import com.dealxanh.app.concurrency.ResourceLockManager;
 import com.dealxanh.app.entity.Product;
 import com.dealxanh.app.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,12 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private ResourceLockManager lockManager;
 
     // Get all products with pagination
     public Page<Product> getAllProducts(Pageable pageable) {
@@ -65,99 +70,114 @@ public class ProductService {
     // Update product
     @Transactional
     public Product updateProduct(Long id, Product productDetails) {
-        Product product = getProductById(id);
-        if (product == null) {
-            return null;
+        ReentrantLock lock = lockManager.acquireLock("PRODUCT", id);
+        try {
+            Product product = getProductById(id);
+            if (product == null) return null;
+
+            product.setName(productDetails.getName());
+            product.setDescription(productDetails.getDescription());
+            product.setImageUrl(productDetails.getImageUrl());
+            product.setOriginalPrice(productDetails.getOriginalPrice());
+            product.setDealPrice(productDetails.getDealPrice());
+            product.setStockQuantity(productDetails.getStockQuantity());
+            product.setExpiryDate(productDetails.getExpiryDate());
+            product.setDealStartTime(productDetails.getDealStartTime());
+            product.setDealEndTime(productDetails.getDealEndTime());
+            product.setPickupDeadline(productDetails.getPickupDeadline());
+            product.setCategory(productDetails.getCategory());
+            product.setUpdatedAt(LocalDateTime.now());
+
+            return productRepository.save(product);
+        } finally {
+            lock.unlock();
         }
-
-        product.setName(productDetails.getName());
-        product.setDescription(productDetails.getDescription());
-        product.setImageUrl(productDetails.getImageUrl());
-        product.setOriginalPrice(productDetails.getOriginalPrice());
-        product.setDealPrice(productDetails.getDealPrice());
-        product.setStockQuantity(productDetails.getStockQuantity());
-        product.setExpiryDate(productDetails.getExpiryDate());
-        product.setDealStartTime(productDetails.getDealStartTime());
-        product.setDealEndTime(productDetails.getDealEndTime());
-        product.setPickupDeadline(productDetails.getPickupDeadline());
-        product.setCategory(productDetails.getCategory());
-        product.setUpdatedAt(LocalDateTime.now());
-
-        return productRepository.save(product);
     }
 
     // Approve product
     @Transactional
     public Product approveProduct(Long id) {
-        Product product = getProductById(id);
-        if (product == null) {
-            return null;
+        ReentrantLock lock = lockManager.acquireLock("PRODUCT", id);
+        try {
+            Product product = getProductById(id);
+            if (product == null) return null;
+
+            product.setApprovalStatus("APPROVED");
+            product.setActive(true);
+            product.setRejectionReason(null);
+            product.setUpdatedAt(LocalDateTime.now());
+
+            return productRepository.save(product);
+        } finally {
+            lock.unlock();
         }
-
-        product.setApprovalStatus("APPROVED");
-        product.setActive(true);
-        product.setRejectionReason(null);
-        product.setUpdatedAt(LocalDateTime.now());
-
-        return productRepository.save(product);
     }
 
     // Reject product
     @Transactional
     public Product rejectProduct(Long id, String reason) {
-        Product product = getProductById(id);
-        if (product == null) {
-            return null;
+        ReentrantLock lock = lockManager.acquireLock("PRODUCT", id);
+        try {
+            Product product = getProductById(id);
+            if (product == null) return null;
+
+            product.setApprovalStatus("REJECTED");
+            product.setActive(false);
+            product.setRejectionReason(reason);
+            product.setUpdatedAt(LocalDateTime.now());
+
+            return productRepository.save(product);
+        } finally {
+            lock.unlock();
         }
-
-        product.setApprovalStatus("REJECTED");
-        product.setActive(false);
-        product.setRejectionReason(reason);
-        product.setUpdatedAt(LocalDateTime.now());
-
-        return productRepository.save(product);
     }
 
     // Toggle active status (Ngừng bán / Kích hoạt)
     @Transactional
     public Product toggleActive(Long id) {
-        Product product = getProductById(id);
-        if (product == null) return null;
+        ReentrantLock lock = lockManager.acquireLock("PRODUCT", id);
+        try {
+            Product product = getProductById(id);
+            if (product == null) return null;
 
-        // Nếu đang kích hoạt → ngừng bán (luôn được phép)
-        if (product.getActive()) {
-            product.setActive(false);
+            if (product.getActive()) {
+                product.setActive(false);
+                product.setUpdatedAt(LocalDateTime.now());
+                return productRepository.save(product);
+            }
+
+            if (product.getStockQuantity() != null && product.getStockQuantity() <= 0) {
+                throw new IllegalArgumentException("Không thể kích hoạt: sản phẩm đã hết hàng (stock = 0).");
+            }
+            if (product.getExpiryDate() != null && product.getExpiryDate().isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("Không thể kích hoạt: sản phẩm đã hết hạn (" +
+                    product.getExpiryDate().toLocalDate().toString() + ").");
+            }
+
+            product.setActive(true);
             product.setUpdatedAt(LocalDateTime.now());
             return productRepository.save(product);
+        } finally {
+            lock.unlock();
         }
-
-        // Nếu đang ngừng → chỉ kích hoạt lại khi còn hàng và chưa hết hạn
-        if (product.getStockQuantity() != null && product.getStockQuantity() <= 0) {
-            throw new IllegalArgumentException("Không thể kích hoạt: sản phẩm đã hết hàng (stock = 0).");
-        }
-        if (product.getExpiryDate() != null && product.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Không thể kích hoạt: sản phẩm đã hết hạn (" +
-                product.getExpiryDate().toLocalDate().toString() + ").");
-        }
-
-        product.setActive(true);
-        product.setUpdatedAt(LocalDateTime.now());
-        return productRepository.save(product);
     }
 
     // Soft delete
     @Transactional
     public boolean deleteProduct(Long id) {
-        Product product = getProductById(id);
-        if (product == null) {
-            return false;
+        ReentrantLock lock = lockManager.acquireLock("PRODUCT", id);
+        try {
+            Product product = getProductById(id);
+            if (product == null) return false;
+
+            product.setDeleted(true);
+            product.setUpdatedAt(LocalDateTime.now());
+            productRepository.save(product);
+
+            return true;
+        } finally {
+            lock.unlock();
         }
-
-        product.setDeleted(true);
-        product.setUpdatedAt(LocalDateTime.now());
-        productRepository.save(product);
-
-        return true;
     }
 
     // Get statistics

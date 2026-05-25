@@ -39,6 +39,9 @@ public class DealProduct {
     // Sắp xếp ưu tiên trong danh sách deal
     private Integer priority;
 
+    @Version
+    private Long version;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bản đồ deal — DealXanh</title>
+<div th:replace="~{common/buyer/css :: css}"></div>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
@@ -28,7 +29,7 @@ button{cursor:pointer;border:none;font-family:inherit;background:none}
 
 /* ===== HEADER ===== */
 .map-header{
-  position:fixed;top:0;left:0;right:0;z-index:100;
+  position:fixed;top:56px;left:0;right:0;z-index:100;
   height:var(--header);
   padding:0 12px;
   display:flex;align-items:center;gap:8px;
@@ -76,7 +77,7 @@ button{cursor:pointer;border:none;font-family:inherit;background:none}
 
 /* ===== FLOATING CONTROLS ===== */
 .map-controls{
-  position:fixed;right:12px;top:calc(var(--header) + 12px);
+  position:fixed;right:12px;top:calc(56px + var(--header) + 12px);
   z-index:100;display:flex;flex-direction:column;gap:8px;
 }
 .ctrl-btn{
@@ -359,7 +360,7 @@ input[type=range]::-webkit-slider-thumb{
 
 /* Toast */
 .map-toast{
-  position:fixed;top:calc(var(--header) + 56px);left:50%;transform:translateX(-50%);
+  position:fixed;top:calc(56px + var(--header) + 56px);left:50%;transform:translateX(-50%);
   background:rgba(13,26,15,.9);color:#fff;
   padding:10px 18px;border-radius:var(--radius-full);
   font-size:13px;font-weight:500;
@@ -386,17 +387,20 @@ input[type=range]::-webkit-slider-thumb{
 </head>
 <body>
 
+<!-- Shared Buyer Header -->
+<div th:replace="~{common/buyer/header :: header}"></div>
+
 <!-- Map -->
 <div id="map"></div>
 
-<!-- Header -->
+<!-- Map Header (overlay) -->
 <header class="map-header">
   <button class="header-back" onclick="history.back()" aria-label="Quay lại">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
   </button>
-  <div class="header-search" onclick="window.location.href='search.html'">
+  <div class="header-search">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" placeholder="Tìm deal quanh đây..." readonly style="cursor:pointer">
+    <input type="text" id="map-search-input" placeholder="Tìm deal quanh đây..." oninput="debounceMapSearch()" onkeydown="if(event.key==='Enter')doMapSearch()">
   </div>
   <button class="header-filter-btn" onclick="openFilter()" aria-label="Bộ lọc">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
@@ -405,15 +409,14 @@ input[type=range]::-webkit-slider-thumb{
 </header>
 
 <!-- Category pills (below header) -->
-<div class="category-pills" id="cat-pills" style="top:calc(56px + 8px)">
+<div class="category-pills" id="cat-pills" style="top:calc(56px + 56px + 8px)">
   <button class="pill active" data-cat="all" onclick="filterCat(this,'all')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Tất cả
   </button>
-  <button class="pill" data-cat="food" onclick="filterCat(this,'food')">🍜 Đồ ăn</button>
-  <button class="pill" data-cat="beverage" onclick="filterCat(this,'beverage')">🧋 Đồ uống</button>
-  <button class="pill" data-cat="blindbox" onclick="filterCat(this,'blindbox')">🎁 Blind Box</button>
-  <button class="pill" data-cat="bakery" onclick="filterCat(this,'bakery')">🍰 Bánh ngọt</button>
-  <button class="pill" data-cat="snack" onclick="filterCat(this,'snack')">🍟 Ăn vặt</button>
+  <button class="pill" data-cat="FLASH_SALE" onclick="filterCat(this,'FLASH_SALE')">⚡ Flash Sale</button>
+  <button class="pill" data-cat="VOUCHER" onclick="filterCat(this,'VOUCHER')">🎫 Voucher</button>
+  <button class="pill" data-cat="COMBO" onclick="filterCat(this,'COMBO')">🎁 Combo</button>
+  <button class="pill" data-cat="SEASONAL" onclick="filterCat(this,'SEASONAL')">🌸 Seasonal</button>
 </div>
 
 <!-- Map Controls -->
@@ -535,40 +538,28 @@ input[type=range]::-webkit-slider-thumb{
 </div>
 
 <!-- Mobile Nav -->
-<nav class="mobile-nav">
-  <a class="nav-item" href="../home.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Trang chủ</span></a>
-  <a class="nav-item active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg><span>Bản đồ</span></a>
-  <a class="nav-item" href='cart.html'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span>Giỏ hàng</span></a>
-  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Đơn hàng</span></a>
-  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Tài khoản</span></a>
-</nav>
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ===== MOCK DATA =====
-const DEALS = [
-  {id:1,name:'Bánh mì pate nóng hổi',store:'Bánh mì Hòa Mai',cat:'food',lat:21.0285,lng:105.8542,price:12500,original:25000,discount:50,urgency:'warning',timeLeft:'1h 45m',dist:350,img:'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=300&q=70',slots:5},
-  {id:2,name:'Bún bò Huế cận date',store:'Bún bò Thảo',cat:'food',lat:21.0325,lng:105.8512,price:27000,original:45000,discount:40,urgency:'warning',timeLeft:'55m',dist:520,img:'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=300&q=70',slots:2},
-  {id:3,name:'Blind Box Mystery 3 món',store:'Cơm Niêu Nhà',cat:'blindbox',lat:21.0255,lng:105.8582,price:48000,original:80000,discount:40,urgency:'safe',timeLeft:'3h 10m',dist:780,img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&q=70',slots:10},
-  {id:4,name:'Trà sữa trân châu đường đen',store:'Mixue Hòa Lạc',cat:'beverage',lat:21.0305,lng:105.8502,price:15000,original:30000,discount:50,urgency:'danger',timeLeft:'28m',dist:1200,img:'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=300&q=70',slots:20},
-  {id:5,name:'Gà rán KFC 2 miếng',store:'KFC Hòa Lạc',cat:'food',lat:21.0225,lng:105.8562,price:33000,original:55000,discount:40,urgency:'safe',timeLeft:'4h',dist:1500,img:'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=300&q=70',slots:7},
-  {id:6,name:'Blind Box Sweet 3 bánh',store:'Bánh Mousse',cat:'blindbox',lat:21.0280,lng:105.8522,price:36000,original:60000,discount:40,urgency:'safe',timeLeft:'5h',dist:950,img:'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=300&q=70',slots:8},
-  {id:7,name:'Cà phê sữa đá cận date',store:'Coffee House',cat:'beverage',lat:21.0298,lng:105.8558,price:18000,original:35000,discount:49,urgency:'warning',timeLeft:'2h 20m',dist:430,img:'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=300&q=70',slots:15},
-  {id:8,name:'Sushi combo 10 miếng',store:'Sushi Yuki',cat:'food',lat:21.0242,lng:105.8530,price:45000,original:90000,discount:50,urgency:'danger',timeLeft:'35m',dist:860,img:'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=300&q=70',slots:3},
-];
+// ===== REAL DATA FROM SERVER =====
+const DEALS = /*[[${dealsJson != null ? dealsJson : '[]'}]]*/ [];
+const dealCount = /*[[${dealCount != null ? dealCount : 0}]]*/ 0;
 
 const urgencyColor = {danger:'#ef4444',warning:'#f59e0b',safe:'#10b981'};
-const urgencyClass = {danger:'pin-danger',warning:'pin-warning',safe:'pin-safe',blindbox:'pin-blind'};
+const urgencyClass = {danger:'pin-danger',warning:'pin-warning',safe:'pin-safe'};
 
 // ===== MAP INIT =====
-const USER_LAT = 21.0270, USER_LNG = 105.8540;
-const map = L.map('map',{zoomControl:false,attributionControl:false}).setView([USER_LAT,USER_LNG],15);
+const DEFAULT_LAT = 21.0270, DEFAULT_LNG = 105.8540;
+const USER_LAT = DEALS.length > 0 ? DEALS[0].lat : DEFAULT_LAT;
+const USER_LNG = DEALS.length > 0 ? DEALS[0].lng : DEFAULT_LNG;
+const map = L.map('map',{zoomControl:false,attributionControl:false}).setView([USER_LAT,USER_LNG],14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
 // User location marker
 const userIcon = L.divIcon({
-  html:`<div style="width:18px;height:18px;background:#3b82f6;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(59,130,246,.5)"></div>`,
+  html:'<div style="width:18px;height:18px;background:#3b82f6;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(59,130,246,.5)"></div>',
   className:'',iconSize:[18,18],iconAnchor:[9,9]
 });
 const userMarker = L.marker([USER_LAT,USER_LNG],{icon:userIcon,zIndexOffset:1000}).addTo(map);
@@ -583,12 +574,12 @@ const markers = [];
 let activeFilter = 'all';
 
 function buildPinHtml(d){
-  const cls = d.cat === 'blindbox' ? 'pin-blind' : `pin-${d.urgency}`;
-  const color = d.cat === 'blindbox' ? '#7c3aed' : urgencyColor[d.urgency];
-  return `<div class="custom-pin">
-    <div class="pin-bubble ${cls}" style="border-color:rgba(255,255,255,.6)">${d.cat==='blindbox'?'🎁':'-'+d.discount+'%'}</div>
-    <div class="pin-tail" style="border-top:7px solid ${color};border-left:5px solid transparent;border-right:5px solid transparent"></div>
-  </div>`;
+  const color = urgencyColor[d.urgency] || '#10b981';
+  const label = d.dealType === 'COMBO' ? '🎁' : '-' + d.discount + '%';
+  return '<div class="custom-pin">' +
+    '<div class="pin-bubble" style="background:' + color + ';border-color:rgba(255,255,255,.6)">' + label + '</div>' +
+    '<div class="pin-tail" style="border-top:7px solid ' + color + ';border-left:5px solid transparent;border-right:5px solid transparent"></div>' +
+    '</div>';
 }
 
 function addMarkers(deals){
@@ -602,35 +593,49 @@ function addMarkers(deals){
   });
 }
 
+function calcDist(lat1,lon1,lat2,lon2){
+  var R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1000);
+}
+
 function showDealPopup(d,marker){
-  const timeColor = d.urgency==='danger'?'#ef4444':d.urgency==='warning'?'#f59e0b':'#10b981';
-  const popup = L.popup({maxWidth:280,className:'deal-popup-container'})
+  var dist = calcDist(USER_LAT,USER_LNG,d.lat,d.lng);
+  var timeColor = d.urgency==='danger'?'#ef4444':d.urgency==='warning'?'#f59e0b':'#10b981';
+  var popup = L.popup({maxWidth:280,className:'deal-popup-container'})
     .setLatLng([d.lat,d.lng])
-    .setContent(`
-      <div class="deal-popup" onclick="window.location.href='deal-detail.html?id=${d.id}'">
-        <img class="deal-popup-img" src="${d.img}" alt="${d.name}" loading="lazy">
-        <div class="deal-popup-body">
-          <div class="deal-popup-store">${d.store}</div>
-          <div class="deal-popup-name">${d.name}</div>
-          <div class="deal-popup-row">
-            <div class="deal-popup-price">
-              <span class="popup-price-new">${d.price.toLocaleString('vi-VN')}đ</span>
-              <span class="popup-price-old">${d.original.toLocaleString('vi-VN')}đ</span>
-            </div>
-            <button class="deal-popup-cta">Mua <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-          </div>
-          <div class="deal-popup-tags">
-            <span class="popup-tag" style="background:rgba(239,68,68,.1);color:${timeColor}">⏰ ${d.timeLeft}</span>
-            <span class="popup-tag" style="background:var(--background);color:var(--text-secondary)">📍 ${d.dist}m</span>
-            <span class="popup-tag" style="background:rgba(13,92,46,.1);color:var(--primary)">Còn ${d.slots} suất</span>
-          </div>
-        </div>
-      </div>`);
+    .setContent(
+      '<div class="deal-popup" onclick="window.location.href=\'/products/\'+d.id">' +
+        '<img class="deal-popup-img" src="' + d.img + '" alt="' + d.name + '" loading="lazy">' +
+        '<div class="deal-popup-body">' +
+          '<div class="deal-popup-store">' + d.store + '</div>' +
+          '<div class="deal-popup-name">' + d.name + '</div>' +
+          '<div class="deal-popup-row">' +
+            '<div class="deal-popup-price">' +
+              '<span class="popup-price-new">' + d.price.toLocaleString('vi-VN') + 'đ</span>' +
+              '<span class="popup-price-old">' + d.original.toLocaleString('vi-VN') + 'đ</span>' +
+            '</div>' +
+            '<a href="/products/' + d.id + '" class="deal-popup-cta" onclick="event.stopPropagation()">Mua <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>' +
+          '</div>' +
+          '<div class="deal-popup-tags">' +
+            '<span class="popup-tag" style="background:rgba(239,68,68,.1);color:' + timeColor + '">⏰ ' + d.timeLeft + '</span>' +
+            '<span class="popup-tag" style="background:var(--background);color:var(--text-secondary)">📍 ' + dist + 'm</span>' +
+            '<span class="popup-tag" style="background:rgba(13,92,46,.1);color:var(--primary)">Còn ' + d.slots + ' suất</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>');
   popup.openOn(map);
 }
 
 // Init markers
-addMarkers(DEALS);
+if (DEALS.length > 0) {
+    addMarkers(DEALS);
+    renderDeals(DEALS);
+    map.setView([DEALS[0].lat, DEALS[0].lng], 14);
+} else {
+    document.getElementById('deal-count').textContent = '0';
+    document.getElementById('deal-list').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-tertiary);font-size:13px">Chua co deal nao co vi tri ban do. Cac cua hang can cap nhat toa do.</div>';
+}
 
 // ===== BOTTOM SHEET DRAG =====
 let sheetExpanded = false;
@@ -657,29 +662,33 @@ handle.addEventListener('click',()=>{sheetExpanded?collapseSheet():expandSheet()
 
 // ===== RENDER DEAL LIST =====
 function renderDeals(deals){
-  const list = document.getElementById('deal-list');
+  var list = document.getElementById('deal-list');
   document.getElementById('deal-count').textContent = deals.length;
-  list.innerHTML = deals.map(d=>`
-    <div class="deal-row" onclick="window.location.href='deal-detail.html?id=${d.id}'">
-      <div class="deal-row-img">
-        <img src="${d.img}" alt="${d.name}" loading="lazy">
-        <span class="deal-row-badge" style="background:${d.urgency==='danger'?'#ef4444':d.urgency==='warning'?'#f59e0b':'#10b981'}">-${d.discount}%</span>
-      </div>
-      <div class="deal-row-body">
-        <div class="deal-row-store">${d.store}</div>
-        <div class="deal-row-name">${d.name}</div>
-        <div class="deal-row-bottom">
-          <div class="deal-row-price">
-            <span class="price-new">${d.price.toLocaleString('vi-VN')}đ</span>
-            <span class="price-old">${d.original.toLocaleString('vi-VN')}đ</span>
-          </div>
-          <div class="deal-row-meta">
-            <span class="meta-chip chip-dist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${d.dist}m</span>
-            <span class="meta-chip chip-${d.urgency}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${d.timeLeft}</span>
-          </div>
-        </div>
-      </div>
-    </div>`).join('');
+  list.innerHTML = deals.map(function(d){
+    var dist = calcDist(USER_LAT,USER_LNG,d.lat,d.lng);
+    var badgeColor = d.urgency==='danger'?'#ef4444':d.urgency==='warning'?'#f59e0b':'#10b981';
+    var discountLabel = d.dealType==='COMBO'?'🎁 Combo':'-'+d.discount+'%';
+    return '<div class="deal-row" onclick="window.location.href=\'/products/\'+d.id">' +
+      '<div class="deal-row-img">' +
+        '<img src="' + d.img + '" alt="' + d.name + '" loading="lazy" onerror="this.src=\'/img/default-banner.svg\'">' +
+        '<span class="deal-row-badge" style="background:' + badgeColor + '">' + discountLabel + '</span>' +
+      '</div>' +
+      '<div class="deal-row-body">' +
+        '<div class="deal-row-store">' + d.store + '</div>' +
+        '<div class="deal-row-name">' + d.name + '</div>' +
+        '<div class="deal-row-bottom">' +
+          '<div class="deal-row-price">' +
+            '<span class="price-new">' + d.price.toLocaleString('vi-VN') + 'đ</span>' +
+            '<span class="price-old">' + d.original.toLocaleString('vi-VN') + 'đ</span>' +
+          '</div>' +
+          '<div class="deal-row-meta">' +
+            '<span class="meta-chip chip-dist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + dist + 'm</span>' +
+            '<span class="meta-chip" style="background:rgba(' + (d.urgency==='danger'?'239,68,68':d.urgency==='warning'?'245,158,11':'16,185,129') + ',.1);color:' + badgeColor + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + d.timeLeft + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 renderDeals(DEALS);
 
@@ -688,21 +697,50 @@ function filterCat(btn, cat){
   document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');
   activeFilter = cat;
-  const filtered = cat==='all' ? DEALS : DEALS.filter(d=>d.cat===cat);
+  const filtered = cat==='all' ? DEALS : DEALS.filter(d=>d.dealType===cat);
   renderDeals(filtered);
   addMarkers(filtered);
 }
 
-// ===== LOCATE =====
+// ===== MAP SEARCH (real-time) =====
+var mapSearchTimer;
+function debounceMapSearch(){
+    clearTimeout(mapSearchTimer);
+    mapSearchTimer = setTimeout(doMapSearch, 400);
+}
+function doMapSearch(){
+    var q = document.getElementById('map-search-input').value.trim();
+    if(q.length > 0) window.location.href = '/buyer/search?q=' + encodeURIComponent(q);
+}
+
+// ===== LOCATE (real GPS) =====
 function locateUser(){
   const btn = document.getElementById('locate-btn');
   btn.classList.add('active');
-  showToast('📍 Đang xác định vị trí...');
-  setTimeout(()=>{
-    map.flyTo([USER_LAT,USER_LNG],16,{animate:true,duration:1.2});
-    btn.classList.remove('active');
-    showToast('✅ Đã tìm thấy vị trí của bạn');
-  },1200);
+  showToast('Dang xac dinh vi tri...');
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      map.flyTo([lat, lng], 16, {animate:true, duration:1.2});
+      userMarker.setLatLng([lat, lng]);
+      // Recalculate distances
+      renderDeals(DEALS);
+      btn.classList.remove('active');
+      showToast('Da tim thay vi tri cua ban');
+    }, function(){
+      // Fallback
+      map.flyTo([USER_LAT, USER_LNG], 15, {animate:true, duration:1.2});
+      btn.classList.remove('active');
+      showToast('Khong the lay vi tri, hien thi mac dinh');
+    }, {timeout:8000, enableHighAccuracy:true});
+  } else {
+    setTimeout(function(){
+      map.flyTo([USER_LAT, USER_LNG], 15, {animate:true, duration:1.2});
+      btn.classList.remove('active');
+      showToast('Trinh duyet khong ho tro GPS');
+    }, 800);
+  }
 }
 
 // ===== RADIUS TOGGLE =====
@@ -767,5 +805,7 @@ document.querySelectorAll('.check-chip').forEach(chip=>{
   });
 });
 </script>
+<div th:replace="~{common/buyer/footer :: footer}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
 </body>
 </html>

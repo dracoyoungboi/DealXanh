@@ -124,7 +124,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 </div>
 
 <!-- Description -->
-<div class="section" th:if="${store.description != null and !store.description.isEmpty()}">
+<div class="section" data-section="description" th:if="${store.description != null and !store.description.isEmpty()}">
     <div class="section-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Về chúng tôi
@@ -133,7 +133,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 </div>
 
 <!-- Categories -->
-<div class="section" th:if="${store.categories != null and !store.categories.isEmpty()}">
+<div class="section" data-section="categories" th:if="${store.categories != null and !store.categories.isEmpty()}">
     <div class="section-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Danh mục sản phẩm
@@ -144,7 +144,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 </div>
 
 <!-- Active Deals -->
-<div class="section" th:if="${activeDeals != null and !activeDeals.isEmpty()}">
+<div class="section" data-section="deals" th:if="${activeDeals != null and !activeDeals.isEmpty()}">
     <div class="section-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
         Deal đang chạy
@@ -167,7 +167,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 </div>
 
 <!-- Products -->
-<div class="section">
+<div class="section" data-section="products">
     <div class="section-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
         Sản phẩm
@@ -182,6 +182,60 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
     </div>
     <div class="empty" th:unless="${products != null and !products.isEmpty()}">Cửa hàng chưa có sản phẩm nào</div>
 </div>
+
+<script>
+// Apply store page config (section toggles + order from seller store-page builder)
+(function() {
+    var config = /*[[${store.storePageConfig != null ? store.storePageConfig : ''}]]*/ '';
+    if (!config) return;
+    var parts = config.split('||');
+    var toggles = {};
+    var order = '';
+    try { toggles = JSON.parse(parts[0] || '{}'); } catch(e) {}
+    order = parts[1] || '';
+
+    // Apply section visibility based on toggles (use data-section attributes)
+    document.querySelectorAll('.section[data-section]').forEach(function(sec) {
+        var name = sec.dataset.section;
+        if (name && toggles[name] === false) {
+            sec.style.display = 'none';
+        }
+    });
+
+    // Apply section order if specified
+    if (order) {
+        var orderList = order.split(',');
+        var container = document.querySelector('.store-header') ? document.querySelector('.store-header').parentNode : null;
+        if (!container) return;
+        var sectionsByKey = {};
+        document.querySelectorAll('.section[data-section]').forEach(function(sec) {
+            sectionsByKey[sec.dataset.section] = sec;
+        });
+        var allSections = document.querySelectorAll('.section[data-section]');
+        var orderedSections = [];
+        orderList.forEach(function(sectionName) {
+            if (sectionsByKey[sectionName]) {
+                orderedSections.push(sectionsByKey[sectionName]);
+            }
+        });
+        // Append remaining sections not in order
+        allSections.forEach(function(sec) {
+            if (orderedSections.indexOf(sec) === -1) {
+                orderedSections.push(sec);
+            }
+        });
+        var storeHeader = document.querySelector('.store-header');
+        var anchor = storeHeader ? storeHeader.nextSibling : null;
+        orderedSections.forEach(function(sec) {
+            if (anchor) {
+                container.insertBefore(sec, anchor);
+            } else {
+                container.appendChild(sec);
+            }
+        });
+    }
+})();
+</script>
 
 </body>
 </html>

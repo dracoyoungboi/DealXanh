@@ -35,6 +35,9 @@ public class Order {
     // QR code để cửa hàng quét xác nhận lấy hàng
     private String pickupQrCode;
 
+    @Version
+    private Long version;
+
     private String note;
     private String cancellationReason;
     private LocalDateTime createdAt;
