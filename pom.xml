@@ -105,6 +105,12 @@
       <version>2.3.0</version>
     </dependency>
 
+    <!-- Spring Session JDBC - persist sessions to survive restarts -->
+    <dependency>
+      <groupId>org.springframework.session</groupId>
+      <artifactId>spring-session-jdbc</artifactId>
+    </dependency>
+
     <!-- Dev Tools (hot reload) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
