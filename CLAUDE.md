@@ -2,7 +2,7 @@
 
 ## 📊 Project Status: **~92% Complete**
 
-**Last Updated:** 2026-05-24 (Session: Cart DB + Payment UX + Product Detail)
+**Last Updated:** 2026-05-28 (Session: Home Quick Filter → Scroll Navigation)
 **Version:** 1.0.0-beta
 
 ---
@@ -1583,6 +1583,26 @@ Orders (/buyer/orders) — Theo dõi trạng thái đơn
 | `HomeController.java` `GET /products/{productId}` **(NEW)** | Endpoint chi tiết sản phẩm cho buyer |
 | `SecurityConfig.java` | Thêm `/products/**` vào public routes |
 | `cart.html` | Xử lý unavailable items: grey out, text cảnh báo đỏ, "Kho: 0 sản phẩm", chỉ có nút xóa |
+
+---
+
+## 🔥 Recent Updates (2026-05-28) — Home Quick Filter → Scroll Navigation
+
+### **Thay đổi**
+
+Quick filter chips trên trang chủ buyer trước đây dùng JS để filter/hiển thị/ẩn từng `.deal-card` dựa trên `data-type`. Cách này gây nhầm lẫn vì khi chọn "Flash Sale", toàn bộ card không phải Flash Sale trên trang đều bị ẩn (bao gồm cả section Deal Nổi Bật và Combo).
+
+**Fix:** Chuyển từ filter JS sang scroll navigation — không thay đổi dữ liệu hiển thị, chỉ cuộn trang đến section tương ứng.
+
+| File | Thay đổi |
+|---|---|
+| `buyer/home.html` | Xóa chip "Voucher" và "Seasonal". Chip "Tất cả" → `scrollTo('all')` cuộn lên đầu trang. Chip "Flash Sale" → `scrollTo('flash')` cuộn đến `#flashGrid`. Chip "Combo" → `scrollTo('combo')` cuộn đến `#comboGrid`. Xóa hàm `filterProducts()`, thay bằng `scrollToSection()`. |
+
+### **Hành vi mới**
+- **Tất cả**: giữ nguyên toàn bộ sản phẩm, cuộn lên đầu trang
+- **Flash Sale**: cuộn xuống section Sản phẩm Flash Sale (`#flashGrid`)
+- **Combo**: cuộn xuống section Sản phẩm Combo (`#comboGrid`)
+- Controller/backend không thay đổi — dữ liệu vẫn load đầy đủ như "Tất cả"
 
 ---
 
