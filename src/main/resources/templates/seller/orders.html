@@ -210,7 +210,7 @@ function clearSearch() {
     document.getElementById('searchForm').submit();
 }
 
-async function updateStatus(orderId, newStatus){try{const r=await fetch(`/seller/orders/${orderId}/status?newStatus=${newStatus}`,{method:'POST'});const d=await r.json();if(d.success)location.reload();else alert(d.message)}catch(e){alert('Lỗi: '+e.message)}}
+async function updateStatus(orderId,newStatus){try{const r=await fetch(`/seller/orders/${orderId}/status?newStatus=${newStatus}`,{method:'POST'});if(!r.ok){alert('Lỗi server: '+r.status);return}const ct=r.headers.get('content-type')||'';if(!ct.includes('application/json')){alert('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại');return}const d=await r.json();if(d.success)location.reload();else alert(d.message)}catch(e){alert('Lỗi: '+e.message)}}
 
 async function showOrderDetail(orderId) {
     document.getElementById('detailModal').style.display = 'flex';

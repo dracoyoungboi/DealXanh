@@ -4,23 +4,28 @@ import com.dealxanh.app.concurrency.ResourceLockManager;
 import com.dealxanh.app.entity.Category;
 import com.dealxanh.app.entity.Deal;
 import com.dealxanh.app.entity.DealProduct;
+import com.dealxanh.app.entity.Notification;
 import com.dealxanh.app.entity.Order;
 import com.dealxanh.app.entity.OrderItem;
 import com.dealxanh.app.entity.Product;
 import com.dealxanh.app.entity.Store;
 import com.dealxanh.app.entity.User;
+import com.dealxanh.app.entity.UserAddress;
 import com.dealxanh.app.repository.CategoryRepository;
 import com.dealxanh.app.repository.DealRepository;
 import com.dealxanh.app.repository.DealProductRepository;
 import com.dealxanh.app.repository.OrderRepository;
 import com.dealxanh.app.repository.ProductRepository;
 import com.dealxanh.app.repository.StoreRepository;
+import com.dealxanh.app.repository.UserAddressRepository;
 import com.dealxanh.app.repository.UserRepository;
 import com.dealxanh.app.service.CartService;
+import com.dealxanh.app.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -55,21 +60,41 @@ public class HomeController {
     private UserRepository userRepository;
 
     @Autowired
+    private UserAddressRepository userAddressRepository;
+
+    @Autowired
     private CategoryRepository categoryRepository;
 
     @Autowired
     private CartService cartService;
 
     @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private ResourceLockManager lockManager;
+
+    /**
+     * Global model attribute — adds notification count for all buyer pages.
+     * The header fragment reads ${notifCount} to show/hide the badge.
+     */
+    @ModelAttribute
+    public void addNotifCount(Model model, java.security.Principal principal) {
+        int count = 0;
+        if (principal != null) {
+            User user = getCurrentUser(principal);
+            if (user != null) {
+                count = (int) notificationService.getUnreadCount(user);
+            }
+        }
+        model.addAttribute("notifCount", count);
+    }
 
     @GetMapping("/")
     public String home(Model model, jakarta.servlet.http.HttpServletRequest request) {
         int cartCount = getCartItemCount(request);
         model.addAttribute("activeNav", "home");
         model.addAttribute("cartItemCount", cartCount);
-        model.addAttribute("notifCount", 0);
-
         // Stats from DB
         model.addAttribute("totalStores", storeRepository.countByStatus("ACTIVE"));
         model.addAttribute("totalUsers", userRepository.countByActive(true));
@@ -336,9 +361,41 @@ public class HomeController {
             .filter(p -> p.getActive() && "APPROVED".equals(p.getApprovalStatus()))
             .toList();
 
+        // Build deal product map for pricing display
+        Map<Long, Map<String, Object>> dealProductMap = new HashMap<>();
+        for (Deal deal : activeDeals) {
+            List<DealProduct> dps = dealProductRepository.findByDeal(deal);
+            if (dps != null) {
+                for (DealProduct dp : dps) {
+                    if (dp.getProduct() == null) continue;
+                    Long pid = dp.getProduct().getProductId();
+                    double dpct = "PERCENT".equals(deal.getDiscountType()) ? deal.getDiscountValue() : 0;
+                    if (dpct == 0 && dp.getOriginalPrice() > 0)
+                        dpct = ((dp.getOriginalPrice() - dp.getSalePrice()) / dp.getOriginalPrice()) * 100;
+                    String typeLabel;
+                    switch (deal.getDealType() != null ? deal.getDealType() : "") {
+                        case "FLASH_SALE": typeLabel = "⚡ Flash Sale"; break;
+                        case "COMBO": typeLabel = "📦 Combo"; break;
+                        case "VOUCHER": typeLabel = "🎫 Voucher"; break;
+                        case "SEASONAL": typeLabel = "🌟 Seasonal"; break;
+                        default: typeLabel = "Deal";
+                    }
+                    Map<String, Object> di = new HashMap<>();
+                    di.put("salePrice", Math.round(dp.getSalePrice()));
+                    di.put("originalPrice", Math.round(dp.getOriginalPrice()));
+                    di.put("discountPercent", Math.round(dpct));
+                    di.put("dealType", deal.getDealType());
+                    di.put("dealId", deal.getDealId());
+                    di.put("typeLabel", typeLabel);
+                    dealProductMap.put(pid, di);
+                }
+            }
+        }
+
         model.addAttribute("store", store);
         model.addAttribute("activeDeals", activeDeals);
         model.addAttribute("products", products);
+        model.addAttribute("dealProductMap", dealProductMap);
         return "buyer/store";
     }
 
@@ -713,6 +770,7 @@ public class HomeController {
     public String buyerProfile(java.security.Principal principal, Model model) {
         User user = getCurrentUser(principal);
         if (user == null) return "redirect:/login";
+        model.addAttribute("activeNav", "account");
         model.addAttribute("user", user);
 
         // Order stats
@@ -958,6 +1016,7 @@ public class HomeController {
     public String orderTracking(java.security.Principal principal, Model model) {
         User user = getCurrentUser(principal);
         if (user == null) return "redirect:/login?require_login=true";
+        model.addAttribute("activeNav", "orders");
 
         try {
             List<Order> orders = orderRepository.findByUserUserIdOrderByCreatedAtDesc(user.getUserId());
@@ -988,8 +1047,14 @@ public class HomeController {
     // ============ SEARCH ============
 
     @GetMapping("/buyer/search")
-    public String search(@RequestParam(required = false) String q, Model model) {
+    public String search(@RequestParam(required = false) String q,
+                         @RequestParam(required = false) String dealType,
+                         @RequestParam(required = false) String priceRange,
+                         @RequestParam(required = false) String sort, Model model) {
         model.addAttribute("searchQuery", q);
+        model.addAttribute("selectedDealType", dealType);
+        model.addAttribute("selectedPriceRange", priceRange);
+        model.addAttribute("selectedSort", sort);
         if (q != null && !q.trim().isEmpty()) {
             String s = q.toLowerCase().trim();
 
@@ -998,7 +1063,7 @@ public class HomeController {
                 .filter(p -> p.getActive() && !p.getDeleted()
                     && "APPROVED".equals(p.getApprovalStatus())
                     && (p.getName().toLowerCase().contains(s)))
-                .limit(50)
+                .limit(80)
                 .toList();
 
             // Search stores by name
@@ -1030,12 +1095,68 @@ public class HomeController {
                     }
                 }
             }
+
+            // Filter by deal type
+            if (dealType != null && !dealType.isEmpty() && !"all".equals(dealType)) {
+                results = results.stream().filter(p -> {
+                    Map<String, Object> di = dealProductMap.get(p.getProductId());
+                    return di != null && dealType.equals(di.get("dealType"));
+                }).toList();
+            }
+
+            // Filter by price range
+            if (priceRange != null && !priceRange.isEmpty() && !"all".equals(priceRange)) {
+                results = results.stream().filter(p -> {
+                    Map<String, Object> di = dealProductMap.get(p.getProductId());
+                    double price = di != null ? ((Number) di.get("salePrice")).doubleValue() : p.getOriginalPrice();
+                    switch (priceRange) {
+                        case "under50k": return price < 50000;
+                        case "50k-100k": return price >= 50000 && price < 100000;
+                        case "100k-200k": return price >= 100000 && price < 200000;
+                        case "over200k": return price >= 200000;
+                        default: return true;
+                    }
+                }).toList();
+            }
+
+            // Sort
+            if (sort != null && !sort.isEmpty()) {
+                switch (sort) {
+                    case "price-asc":
+                        results = results.stream().sorted((a, b) -> {
+                            double pa = getEffectivePrice(a, dealProductMap);
+                            double pb = getEffectivePrice(b, dealProductMap);
+                            return Double.compare(pa, pb);
+                        }).toList();
+                        break;
+                    case "price-desc":
+                        results = results.stream().sorted((a, b) -> {
+                            double pa = getEffectivePrice(a, dealProductMap);
+                            double pb = getEffectivePrice(b, dealProductMap);
+                            return Double.compare(pb, pa);
+                        }).toList();
+                        break;
+                    case "discount":
+                        results = results.stream().sorted((a, b) -> {
+                            double da = getDiscountPercent(a, dealProductMap);
+                            double db = getDiscountPercent(b, dealProductMap);
+                            return Double.compare(db, da);
+                        }).toList();
+                        break;
+                }
+            }
+
             model.addAttribute("results", results);
             model.addAttribute("matchingStores", matchingStores);
             model.addAttribute("resultCount", results.size());
             model.addAttribute("dealProductMap", dealProductMap);
         }
         return "buyer/search";
+    }
+
+    private double getDiscountPercent(Product p, Map<Long, Map<String, Object>> dealProductMap) {
+        Map<String, Object> di = dealProductMap.get(p.getProductId());
+        return di != null ? ((Number) di.get("discountPercent")).doubleValue() : 0;
     }
 
     // ============ STORE PROFILE ============
@@ -1057,6 +1178,7 @@ public class HomeController {
 
     @GetMapping("/buyer/deal-map")
     public String dealMap(Model model) {
+        model.addAttribute("activeNav", "map");
         LocalDateTime now = LocalDateTime.now();
         List<Deal> activeDeals = dealRepository.findByStatusAndStartTimeBeforeAndEndTimeAfterOrderByPriorityDesc(
             "ACTIVE", now, now);
@@ -1114,6 +1236,267 @@ public class HomeController {
         return "buyer/deal-map";
     }
 
+    // ============ SEARCH SUGGESTIONS ============
+
+    @GetMapping("/api/search/suggest")
+    @ResponseBody
+    public Map<String, Object> searchSuggest(@RequestParam String q) {
+        Map<String, Object> result = new HashMap<>();
+        if (q == null || q.trim().length() < 2) {
+            result.put("success", true);
+            result.put("products", List.of());
+            result.put("stores", List.of());
+            return result;
+        }
+        String keyword = q.trim().toLowerCase();
+        LocalDateTime now = LocalDateTime.now();
+
+        // Find products matching keyword (limit 4)
+        List<Product> products = productRepository.searchAvailable(keyword, now,
+            org.springframework.data.domain.PageRequest.of(0, 4)).getContent();
+
+        List<Map<String, Object>> productList = new ArrayList<>();
+        for (Product p : products) {
+            if (!p.isAvailable()) continue;
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", p.getProductId());
+            item.put("name", p.getName());
+            item.put("image", p.getImageUrl() != null ? p.getImageUrl() : "/img/default-banner.svg");
+            item.put("storeName", p.getStore() != null ? p.getStore().getStoreName() : null);
+            productList.add(item);
+        }
+
+        // Find stores matching keyword (limit 3)
+        List<Store> stores = storeRepository.findByStoreNameContainingIgnoreCaseAndStatus(
+            keyword, "ACTIVE", org.springframework.data.domain.PageRequest.of(0, 3)).getContent();
+
+        List<Map<String, Object>> storeList = new ArrayList<>();
+        for (Store st : stores) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", st.getStoreId());
+            item.put("name", st.getStoreName());
+            item.put("image", st.getLogoUrl() != null ? st.getLogoUrl() : "/img/default-banner.svg");
+            item.put("address", (st.getCity() != null ? st.getCity() : "") +
+                (st.getDistrict() != null ? ", " + st.getDistrict() : ""));
+            item.put("tier", st.getPartnerTierLabel());
+            storeList.add(item);
+        }
+
+        result.put("success", true);
+        result.put("products", productList);
+        result.put("stores", storeList);
+        return result;
+    }
+
+    // ============ BUYER PROFILE APIs ============
+
+    @PostMapping("/api/buyer/profile/update")
+    @ResponseBody
+    public Map<String, Object> updateProfile(@RequestParam String fullName,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String address,
+            java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
+        user.setFullName(fullName.trim());
+        if (phone != null) user.setPhone(phone.trim());
+        if (address != null) user.setAddress(address.trim());
+        userRepository.save(user);
+        return Map.of("success", true, "message", "Đã cập nhật thông tin");
+    }
+
+    @PostMapping("/api/buyer/profile/change-password")
+    @ResponseBody
+    public Map<String, Object> changePassword(@RequestParam String currentPassword,
+            @RequestParam String newPassword,
+            java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
+        // Verify current password
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            return Map.of("success", false, "message", "Mật khẩu hiện tại không đúng");
+        }
+        if (newPassword.length() < 6) {
+            return Map.of("success", false, "message", "Mật khẩu mới phải có ít nhất 6 ký tự");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setWeakPassword(false);
+        userRepository.save(user);
+        return Map.of("success", true, "message", "Đã đổi mật khẩu");
+    }
+
+        // ============ ADDRESS BOOK APIs ============
+
+    @GetMapping("/api/buyer/addresses")
+    @ResponseBody
+    public Map<String, Object> getAddresses(java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
+        List<UserAddress> addresses = userAddressRepository.findByUserUserIdOrderByIsDefaultDesc(user.getUserId());
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (UserAddress a : addresses) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", a.getId());
+            item.put("name", a.getName());
+            item.put("phone", a.getPhone());
+            item.put("address", a.getAddress());
+            item.put("city", a.getCity());
+            item.put("district", a.getDistrict());
+            item.put("ward", a.getWard());
+            item.put("isDefault", a.getIsDefault());
+            item.put("fullAddress", a.getFullAddress());
+            list.add(item);
+        }
+        return Map.of("success", true, "addresses", list);
+    }
+
+    @PostMapping("/api/buyer/addresses/add")
+    @ResponseBody
+    public Map<String, Object> addAddress(@RequestParam String name, @RequestParam String phone,
+            @RequestParam String address, @RequestParam(required = false) String city,
+            @RequestParam(required = false) String district, @RequestParam(required = false) String ward,
+            @RequestParam(defaultValue = "false") boolean isDefault, java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
+        UserAddress ua = new UserAddress();
+        ua.setUser(user);
+        ua.setName(name.trim());
+        ua.setPhone(phone.trim());
+        ua.setAddress(address.trim());
+        ua.setCity(city != null ? city.trim() : null);
+        ua.setDistrict(district != null ? district.trim() : null);
+        ua.setWard(ward != null ? ward.trim() : null);
+        if (isDefault) {
+            userAddressRepository.clearDefault(user.getUserId());
+        }
+        ua.setIsDefault(isDefault);
+        ua = userAddressRepository.save(ua);
+        Map<String, Object> item = new HashMap<>();
+        item.put("id", ua.getId());
+        item.put("fullAddress", ua.getFullAddress());
+        return Map.of("success", true, "message", "Đã thêm địa chỉ", "address", item);
+    }
+
+    @PostMapping("/api/buyer/addresses/update")
+    @ResponseBody
+    public Map<String, Object> updateAddress(@RequestParam Long id, @RequestParam String name,
+            @RequestParam String phone, @RequestParam String address,
+            @RequestParam(required = false) String city, @RequestParam(required = false) String district,
+            @RequestParam(required = false) String ward,
+            @RequestParam(defaultValue = "false") boolean isDefault, java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
+        UserAddress ua = userAddressRepository.findById(id).orElse(null);
+        if (ua == null || !ua.getUser().getUserId().equals(user.getUserId())) {
+            return Map.of("success", false, "message", "Địa chỉ không tồn tại");
+        }
+        ua.setName(name.trim());
+        ua.setPhone(phone.trim());
+        ua.setAddress(address.trim());
+        if (city != null) ua.setCity(city.trim());
+        if (district != null) ua.setDistrict(district.trim());
+        if (ward != null) ua.setWard(ward.trim());
+        if (isDefault) userAddressRepository.clearDefault(user.getUserId());
+        ua.setIsDefault(isDefault);
+        userAddressRepository.save(ua);
+        return Map.of("success", true, "message", "Đã cập nhật địa chỉ");
+    }
+
+    @PostMapping("/api/buyer/addresses/delete")
+    @ResponseBody
+    public Map<String, Object> deleteAddress(@RequestParam Long id, java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
+        UserAddress ua = userAddressRepository.findById(id).orElse(null);
+        if (ua == null || !ua.getUser().getUserId().equals(user.getUserId())) {
+            return Map.of("success", false, "message", "Địa chỉ không tồn tại");
+        }
+        userAddressRepository.delete(ua);
+        return Map.of("success", true, "message", "Đã xoá địa chỉ");
+    }
+
+    @PostMapping("/api/buyer/profile/avatar")
+    @ResponseBody
+    public Map<String, Object> updateAvatar(@RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
+        // Validate
+        if (file.isEmpty()) return Map.of("success", false, "message", "Vui lòng chọn file");
+        String ct = file.getContentType();
+        if (ct == null || (!ct.equals("image/jpeg") && !ct.equals("image/png") && !ct.equals("image/webp") && !ct.equals("image/gif"))) {
+            return Map.of("success", false, "message", "Chỉ chấp nhận ảnh JPG, PNG, WEBP hoặc GIF");
+        }
+        if (file.getSize() > 3 * 1024 * 1024) {
+            return Map.of("success", false, "message", "Ảnh quá lớn (tối đa 3MB)");
+        }
+        try {
+            String url = saveUploadedFile(file);
+            user.setAvatarUrl(url);
+            userRepository.save(user);
+            return Map.of("success", true, "avatarUrl", url, "message", "Đã cập nhật ảnh đại diện");
+        } catch (Exception e) {
+            return Map.of("success", false, "message", "Lỗi upload: " + e.getMessage());
+        }
+    }
+
+    // ============ NOTIFICATION APIs ============
+
+    @GetMapping("/api/notifications")
+    @ResponseBody
+    public Map<String, Object> getNotifications(java.security.Principal principal) {
+        Map<String, Object> result = new HashMap<>();
+        User user = getCurrentUser(principal);
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "Vui lòng đăng nhập");
+            return result;
+        }
+        List<Notification> notifications = notificationService.getRecentNotifications(user, 20);
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Notification n : notifications) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", n.getNotificationId());
+            item.put("title", n.getTitle());
+            item.put("message", n.getMessage());
+            item.put("type", n.getType());
+            item.put("linkUrl", n.getLinkUrl());
+            item.put("isRead", n.getIsRead());
+            item.put("createdAt", n.getCreatedAt() != null ? n.getCreatedAt().toString() : null);
+            list.add(item);
+        }
+        result.put("success", true);
+        result.put("notifications", list);
+        result.put("unreadCount", notificationService.getUnreadCount(user));
+        return result;
+    }
+
+    @PostMapping("/api/notifications/read")
+    @ResponseBody
+    public Map<String, Object> markNotificationRead(@RequestParam Long id, java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
+        notificationService.markAsRead(id);
+        return Map.of("success", true, "unreadCount", notificationService.getUnreadCount(user));
+    }
+
+    @PostMapping("/api/notifications/read-all")
+    @ResponseBody
+    public Map<String, Object> markAllNotificationsRead(java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
+        notificationService.markAllAsRead(user);
+        return Map.of("success", true, "unreadCount", 0L);
+    }
+
+    @GetMapping("/api/notifications/count")
+    @ResponseBody
+    public Map<String, Object> getNotificationCount(java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        long count = user != null ? notificationService.getUnreadCount(user) : 0;
+        return Map.of("success", true, "count", count);
+    }
+
     // ============ HELPER: GET CURRENT USER ============
 
     private User getCurrentUser(java.security.Principal principal) {
@@ -1123,5 +1506,30 @@ public class HomeController {
         User user = userRepository.findByUsername(name).orElse(null);
         if (user == null) user = userRepository.findByEmail(name).orElse(null);
         return user;
+    }
+
+    @Autowired
+    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
+
+    private String saveUploadedFile(org.springframework.web.multipart.MultipartFile file) throws Exception {
+        // Generate MD5-based filename for dedup
+        java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+        byte[] digest = md.digest(file.getBytes());
+        StringBuilder sb = new StringBuilder();
+        for (byte b : digest) sb.append(String.format("%02x", b));
+        String originalFilename = file.getOriginalFilename();
+        String ext = ".jpg";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            ext = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        String filename = sb.toString() + ext;
+        String uploadDir = System.getProperty("user.dir") + "/uploads";
+        java.io.File dir = new java.io.File(uploadDir);
+        if (!dir.exists()) dir.mkdirs();
+        java.io.File dest = new java.io.File(dir, filename);
+        if (!dest.exists()) {
+            file.transferTo(dest);
+        }
+        return "/uploads/" + filename;
     }
 }

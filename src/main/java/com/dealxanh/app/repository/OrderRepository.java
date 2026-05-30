@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -119,4 +120,21 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // Total orders between dates
     @Query("SELECT COUNT(o) FROM Order o WHERE o.createdAt BETWEEN :from AND :to")
     Long totalOrdersBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    // Direct update queries for status changes (avoid JPA cascade issues)
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Order o SET o.status = :status, o.updatedAt = CURRENT_TIMESTAMP WHERE o.orderId = :orderId")
+    void updateOrderStatus(@Param("orderId") Long orderId, @Param("status") String status);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Order o SET o.pickupQrCode = :qrCode, o.updatedAt = CURRENT_TIMESTAMP WHERE o.orderId = :orderId")
+    void updateOrderQrCode(@Param("orderId") Long orderId, @Param("qrCode") String qrCode);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Order o SET o.actualPickupTime = :time, o.updatedAt = CURRENT_TIMESTAMP WHERE o.orderId = :orderId")
+    void updateOrderPickupTime(@Param("orderId") Long orderId, @Param("time") LocalDateTime time);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Order o SET o.status = 'CANCELLED', o.cancellationReason = :reason, o.updatedAt = CURRENT_TIMESTAMP WHERE o.orderId = :orderId")
+    void cancelOrder(@Param("orderId") Long orderId, @Param("reason") String reason);
 }

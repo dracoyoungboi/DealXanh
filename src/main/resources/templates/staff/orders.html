@@ -185,6 +185,14 @@ function clearSearch() {
 async function updateStatus(orderId, newStatus) {
   try {
     const r = await fetch('/staff/orders/' + orderId + '/status?newStatus=' + newStatus, { method: 'POST' });
+    if (!r.ok) { showToast('Lỗi server: ' + r.status); return; }
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      const text = await r.text();
+      if (text.includes('login')) { showToast('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại'); }
+      else { showToast('Lỗi: Server trả về HTML thay vì JSON (có thể session hết hạn)'); }
+      return;
+    }
     const d = await r.json();
     if (d.success) location.reload();
     else showToast(d.message);

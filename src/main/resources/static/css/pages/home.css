@@ -171,6 +171,11 @@
     color: white;
 }
 
+.search-overlay__loading,
+.search-overlay__no-results {
+    margin-top: 16px;
+}
+
 /* ==================== HERO SECTION ==================== */
 .hero {
     position: relative;

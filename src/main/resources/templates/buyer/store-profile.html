@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="|${store.storeName} — DealXanh|">Cua hang — DealXanh</title>
-    <meta name="description" th:text="|Thong tin cua hang ${store.storeName} tren DealXanh — ${productCount} san pham dang co deal|">
+    <title th:text="|${store.storeName} — DealXanh|">Cửa hàng — DealXanh</title>
+    <meta name="description" th:text="|Thông tin cửa hàng ${store.storeName} trên DealXanh — ${productCount} sản phẩm đang có deal|">
     <div th:replace="~{common/buyer/css :: css}"></div>
     <link rel="stylesheet" th:href="@{/css/pages/home.css}">
     <style>
@@ -105,7 +105,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
 
     <div class="store-header__address" th:if="${store.address != null and !store.address.isEmpty()}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span th:text="${store.address}">Dia chi cua hang</span>
+        <span th:text="${store.address}">Địa chỉ cửa hàng</span>
     </div>
 
     <div class="store-header__meta">
@@ -119,25 +119,25 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
         <span class="tier-badge"
               th:classappend="${store.partnerTier == null or store.partnerTier == 'BRONZE' ? 'tier-bronze' : (store.partnerTier == 'SILVER' ? 'tier-silver' : (store.partnerTier == 'GOLD' ? 'tier-gold' : 'tier-diamond'))}"
               th:switch="${store.partnerTier != null ? store.partnerTier : 'BRONZE'}">
-            <span th:case="'BRONZE'">Dong</span>
-            <span th:case="'SILVER'">Bac</span>
-            <span th:case="'GOLD'">Vang</span>
-            <span th:case="'DIAMOND'">Kim Cuong</span>
-            <span th:case="*">Dong</span>
+            <span th:case="'BRONZE'">Đồng</span>
+            <span th:case="'SILVER'">Bạc</span>
+            <span th:case="'GOLD'">Vàng</span>
+            <span th:case="'DIAMOND'">Kim Cương</span>
+            <span th:case="*">Đồng</span>
         </span>
     </div>
 </div>
 
 <!-- Description -->
 <div class="desc-section" th:if="${store.description != null and !store.description.isEmpty()}">
-    <div class="desc-section__title">Gioi thieu</div>
-    <div class="desc-section__text" th:text="${store.description}">Mo ta cua hang...</div>
+    <div class="desc-section__title">Giới thiệu</div>
+    <div class="desc-section__text" th:text="${store.description}">Mô tả cửa hàng...</div>
 </div>
 
 <!-- Products -->
 <div class="products-section">
     <div class="products-section__header">
-        <span class="products-section__title" th:text="|San pham cua cua hang (${productCount})|">San pham cua cua hang (0)</span>
+        <span class="products-section__title" th:text="|Sản phẩm của cửa hàng (${productCount})|">Sản phẩm của cửa hàng (0)</span>
     </div>
 
     <div class="prod-grid" th:if="${products != null and !products.isEmpty()}">
@@ -148,7 +148,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                 </div>
                 <div class="prod-card__body">
                     <div class="prod-card__name" th:text="${p.name}">Product name</div>
-                    <div class="prod-card__price" th:text="|${#numbers.formatDecimal(p.currentPrice != null ? p.currentPrice : p.originalPrice, 0, 0)}d|">50,000d</div>
+                    <div class="prod-card__price" th:text="|${#numbers.formatDecimal(p.currentPrice != null ? p.currentPrice : p.originalPrice, 0, 0)}đ|">50,000đ</div>
                 </div>
             </a>
         </th:block>
@@ -158,7 +158,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
         <div class="empty-products__icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         </div>
-        <div class="empty-products__text">Cua hang chua co san pham nao</div>
+        <div class="empty-products__text">Cửa hàng chưa có sản phẩm nào</div>
     </div>
 </div>
 

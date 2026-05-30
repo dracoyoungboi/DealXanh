@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${store.storeName + ' — DealXanh'}">Cửa hàng — DealXanh</title>
-    <div th:replace="~{common/admin/css :: css}"></div>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <div th:replace="~{common/buyer/css :: css}"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
     <style>
 :root{--primary:#0d5c2e;--primary-dark:#08421f;--surface:#fff;--bg:#f5f6f8;--text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--border:#e0e0e0;--border-light:#f0f0f0;--danger:#ef4444;--warning:#f59e0b;--success:#10b981;--radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-full:9999px;--font:'Inter',sans-serif}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -74,23 +74,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 .back-bar a{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none}
 .back-bar svg{width:18px;height:18px}
 
+/* Products - using category page card styles from home.css */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+@media(min-width:768px){.prod-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}}
+
 /* Empty */
 .empty{text-align:center;padding:30px;color:var(--text-tertiary);font-size:12px}
     </style>
 </head>
 <body>
 
+<div th:replace="~{common/buyer/header :: header}"></div>
+
 <!-- Cover -->
 <img th:if="${store.coverImageUrl != null}" th:src="${store.coverImageUrl}" class="cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
 <div class="cover-placeholder" th:if="${store.coverImageUrl == null}" style="display:flex;"></div>
-
-<!-- Back -->
-<div class="back-bar">
-    <a href="/home">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Khám phá
-    </a>
-</div>
 
 <!-- Store Header -->
 <div class="store-header">
@@ -167,23 +165,129 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 </div>
 
 <!-- Products -->
-<div class="section" data-section="products">
-    <div class="section-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
-        Sản phẩm
-    </div>
-    <div class="prod-grid" th:if="${products != null and !products.isEmpty()}">
-        <div class="prod-card" th:each="p : ${products}">
-            <img th:src="${p.imageUrl != null ? p.imageUrl : '/img/default-product.svg'}" class="prod-img" onerror="this.src='/img/default-product.svg'">
-            <div class="prod-name" th:text="${p.name}">Product</div>
-            <div class="prod-price" th:text="${#numbers.formatDecimal(p.originalPrice, 0, 0) + 'đ'}">0đ</div>
-            <div class="prod-status" th:text="${p.active ? '✅ Đang bán' : '⏸ Ngừng bán'}">Status</div>
+<div class="section" data-section="products" style="padding:12px 16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px">
+        <span style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="width:18px;height:18px"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
+            Sản phẩm
+        </span>
+        <div style="display:flex;align-items:center;gap:6px;flex:1;max-width:260px">
+            <div style="position:relative;flex:1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:13px;height:13px;pointer-events:none"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" id="store-prod-search" placeholder="Tìm sản phẩm..." oninput="filterStoreProducts()" style="width:100%;padding:6px 8px 6px 26px;border:1.5px solid var(--border);border-radius:var(--radius-full);font-size:11px;font-family:var(--font);outline:none;background:var(--surface)">
+            </div>
+            <select id="store-prod-sort" onchange="filterStoreProducts()" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-full);font-size:10px;font-family:var(--font);background:var(--surface);color:var(--text-secondary);cursor:pointer;flex-shrink:0">
+                <option value="">Mặc định</option>
+                <option value="price-asc">Giá ↑</option>
+                <option value="price-desc">Giá ↓</option>
+                <option value="name">Tên A-Z</option>
+            </select>
         </div>
     </div>
-    <div class="empty" th:unless="${products != null and !products.isEmpty()}">Cửa hàng chưa có sản phẩm nào</div>
+    <div class="prod-grid" th:if="${products != null and !products.isEmpty()}" id="store-prod-grid">
+        <th:block th:each="p : ${products}">
+            <th:block th:with="dealInfo=${dealProductMap != null ? dealProductMap[p.productId] : null}">
+                <div class="prod-card" th:attr="data-name=${p.name},data-price=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)}">
+                    <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;display:block;">
+                    <div class="prod-card__img-wrap">
+                        <img th:src="${p.imageUrl != null ? p.imageUrl : '/img/default-banner.svg'}" th:alt="${p.name}" onerror="this.src='/img/default-banner.svg'" loading="lazy">
+                        <div class="prod-card__badge" th:if="${dealInfo != null}" th:text="|${dealInfo.discountPercent}% GIẢM|">50% GIẢM</div>
+                        <div class="prod-card__type-tag" th:if="${dealInfo != null}" th:text="${dealInfo.typeLabel}">Deal</div>
+                    </div>
+                    <div class="prod-card__body">
+                        <div class="prod-card__name" th:text="${p.name}">Product</div>
+                        <div class="prod-card__price-row">
+                            <span class="prod-card__price" th:if="${dealInfo != null}" th:text="|${#numbers.formatDecimal(dealInfo.salePrice, 0, 0)}đ|">50,000đ</span>
+                            <span class="prod-card__price" th:unless="${dealInfo != null}" th:text="|${#numbers.formatDecimal(p.currentPrice != null ? p.currentPrice : p.originalPrice, 0, 0)}đ|">50,000đ</span>
+                            <span class="prod-card__original" th:if="${dealInfo != null}" th:text="|${#numbers.formatDecimal(dealInfo.originalPrice, 0, 0)}đ|">100,000đ</span>
+                            <span class="prod-card__nodeal" th:unless="${dealInfo != null}">Giá gốc</span>
+                        </div>
+                    </div>
+                    </a>
+                    <div class="prod-card__actions">
+                        <button class="prod-card__btn prod-card__btn--cart"
+                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},data-oprice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
+                            onclick="event.stopPropagation();addToCartStore(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Giỏ</button>
+                        <button class="prod-card__btn prod-card__btn--buy"
+                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},data-oprice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
+                            onclick="event.stopPropagation();buyNowStore(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua</button>
+                    </div>
+                </div>
+            </th:block>
+        </th:block>
+    </div>
+    <div class="empty" th:unless="${products != null and !products.isEmpty()}" id="store-prod-empty">Cửa hàng chưa có sản phẩm nào</div>
+    <div class="empty" id="store-prod-no-match" style="display:none">Không tìm thấy sản phẩm phù hợp</div>
 </div>
 
 <script>
+// Product filter/search
+function filterStoreProducts() {
+    var q = (document.getElementById('store-prod-search').value || '').toLowerCase().trim();
+    var sort = document.getElementById('store-prod-sort').value;
+    var cards = document.querySelectorAll('.prod-card');
+    var visible = 0;
+    cards.forEach(function(c) {
+        var name = (c.dataset.name || '').toLowerCase();
+        var match = !q || name.indexOf(q) >= 0;
+        c.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    if (sort && visible > 0) {
+        var grid = document.getElementById('store-prod-grid');
+        var sorted = Array.from(cards).filter(function(c) { return c.style.display !== 'none'; });
+        sorted.sort(function(a, b) {
+            var pa = parseFloat(a.dataset.price) || 0;
+            var pb = parseFloat(b.dataset.price) || 0;
+            if (sort === 'price-asc') return pa - pb;
+            if (sort === 'price-desc') return pb - pa;
+            if (sort === 'name') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+            return 0;
+        });
+        sorted.forEach(function(c) { grid.appendChild(c); });
+    }
+    document.getElementById('store-prod-empty').style.display = visible === 0 && !q ? '' : 'none';
+    document.getElementById('store-prod-no-match').style.display = visible === 0 && q ? '' : 'none';
+}
+
+// Cart functions for store page
+function addToCartStore(pid, pname, sprice, oprice, did, sid, dtype, dname) {
+    var formData = new FormData();
+    formData.append('dealId', did);
+    formData.append('productId', pid);
+    formData.append('productName', pname);
+    formData.append('salePrice', sprice);
+    formData.append('originalPrice', oprice);
+    formData.append('storeName', '');
+    formData.append('storeId', sid);
+    if (dtype) formData.append('dealType', dtype);
+    if (dname) formData.append('dealName', dname);
+    fetch('/api/cart/add', {method:'POST',body:formData})
+    .then(function(r){return r.json()})
+    .then(function(d){
+        if(d.success){showStoreToast('Đã thêm vào giỏ');updateCartBadge()}else{showStoreToast(d.message||'Lỗi',true)}
+    }).catch(function(){showStoreToast('Lỗi kết nối',true)});
+}
+function buyNowStore(pid, pname, sprice, oprice, img, did, sid, dtype, dname) {
+    var formData = new FormData();
+    formData.append('dealId', did);
+    formData.append('productId', pid);
+    formData.append('productName', pname);
+    formData.append('salePrice', sprice);
+    formData.append('originalPrice', oprice);
+    formData.append('storeName', '');
+    formData.append('productImage', img||'');
+    formData.append('storeId', sid);
+    if (dtype) formData.append('dealType', dtype);
+    if (dname) formData.append('dealName', dname);
+    fetch('/api/cart/add', {method:'POST',body:formData})
+    .then(function(r){return r.json()})
+    .then(function(d){if(d.success)window.location.href='/buyer/checkout';else showStoreToast(d.message||'Lỗi',true)})
+    .catch(function(){showStoreToast('Lỗi kết nối',true)});
+}
+function showStoreToast(msg,isErr){var t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:'+(isErr?'var(--danger)':'var(--primary)')+';color:#fff;padding:8px 20px;border-radius:var(--radius-full);font-size:13px;font-weight:600;z-index:9999;box-shadow:var(--shadow-md)';document.body.appendChild(t);setTimeout(function(){t.remove()},2000);}
+function updateCartBadge(){fetch('/api/cart/count').then(function(r){return r.json()}).then(function(d){var b=document.getElementById('mobile-nav-cart-badge');if(b){b.textContent=d.count||0;b.style.display=d.count>0?'':'none'}}).catch(function(){})}
+
 // Apply store page config (section toggles + order from seller store-page builder)
 (function() {
     var config = /*[[${store.storePageConfig != null ? store.storePageConfig : ''}]]*/ '';
@@ -237,5 +341,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 })();
 </script>
 
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
 </body>
 </html>

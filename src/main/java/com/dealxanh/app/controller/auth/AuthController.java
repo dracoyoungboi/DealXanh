@@ -305,6 +305,7 @@ public class AuthController {
             System.out.println("DEBUG: User found: " + user.getUsername() + " / " + user.getEmail());
             System.out.println("DEBUG: User full name: " + user.getFullName());
 
+            model.addAttribute("activeNav", "account");
             System.out.println("=== PROFILE PAGE SUCCESS ===");
             return "buyer/profile";
         } catch (Exception e) {

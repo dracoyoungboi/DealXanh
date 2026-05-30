@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bản đồ deal — DealXanh</title>
 <div th:replace="~{common/buyer/css :: css}"></div>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/pages/home.css}">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 :root{
@@ -27,57 +27,13 @@ button{cursor:pointer;border:none;font-family:inherit;background:none}
 /* ===== MAP FULL SCREEN ===== */
 #map{position:fixed;inset:0;z-index:0}
 
-/* ===== HEADER ===== */
-.map-header{
-  position:fixed;top:56px;left:0;right:0;z-index:100;
-  height:var(--header);
-  padding:0 12px;
-  display:flex;align-items:center;gap:8px;
-  background:rgba(255,255,255,0.92);
-  backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--border-light);
-  box-shadow:var(--shadow-sm);
-}
-.header-back{
-  width:38px;height:38px;border-radius:var(--radius-md);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--text-primary);transition:background var(--tr);flex-shrink:0;
-}
-.header-back:hover{background:var(--background)}
-.header-back svg{width:20px;height:20px}
-.header-search{
-  flex:1;display:flex;align-items:center;gap:8px;
-  padding:8px 14px;
-  background:var(--background);
-  border-radius:var(--radius-full);
-  border:1.5px solid var(--border-light);
-  transition:border-color var(--tr);cursor:pointer;
-}
-.header-search:focus-within{border-color:var(--primary)}
-.header-search svg{width:16px;height:16px;color:var(--text-tertiary);flex-shrink:0}
-.header-search input{
-  flex:1;border:none;background:none;outline:none;
-  font-size:14px;color:var(--text-primary);font-family:var(--font);
-}
-.header-search input::placeholder{color:var(--text-tertiary)}
-.header-filter-btn{
-  width:38px;height:38px;border-radius:var(--radius-md);
-  background:var(--primary);
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;flex-shrink:0;transition:background var(--tr);
-  position:relative;
-}
-.header-filter-btn:hover{background:var(--primary-dark)}
-.header-filter-btn svg{width:18px;height:18px}
-.filter-dot{
-  position:absolute;top:6px;right:6px;
-  width:8px;height:8px;border-radius:50%;
-  background:var(--accent);border:1.5px solid var(--primary);
-}
-
 /* ===== FLOATING CONTROLS ===== */
-.map-controls{
-  position:fixed;right:12px;top:calc(56px + var(--header) + 12px);
+.map-controls-left{
+  position:fixed;left:12px;top:88px;
+  z-index:100;display:flex;flex-direction:column;gap:8px;
+}
+.map-controls-right{
+  position:fixed;right:12px;top:88px;
   z-index:100;display:flex;flex-direction:column;gap:8px;
 }
 .ctrl-btn{
@@ -92,12 +48,14 @@ button{cursor:pointer;border:none;font-family:inherit;background:none}
 .ctrl-btn:hover{background:var(--background);color:var(--primary)}
 .ctrl-btn svg{width:18px;height:18px}
 .ctrl-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.ctrl-btn.ctrl-filter{background:var(--primary);color:#fff;border-color:var(--primary)}
+.ctrl-btn.ctrl-filter:hover{background:var(--primary-dark)}
 
 /* Category pills */
 .category-pills{
-  position:fixed;top:calc(var(--header) + 8px);left:0;right:60px;
+  position:fixed;top:84px;left:60px;right:60px;
   z-index:100;
-  display:flex;gap:6px;padding:0 12px;
+  display:flex;gap:6px;padding:0 4px;
   overflow-x:auto;scrollbar-width:none;
 }
 .category-pills::-webkit-scrollbar{display:none}
@@ -346,21 +304,9 @@ input[type=range]::-webkit-slider-thumb{
 .deal-popup-tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
 .popup-tag{padding:2px 8px;border-radius:var(--radius-full);font-size:10px;font-weight:600}
 
-/* Mobile bottom nav */
-.mobile-nav{
-  position:fixed;bottom:0;left:0;right:0;z-index:300;
-  background:rgba(255,255,255,.95);backdrop-filter:blur(12px);
-  border-top:1px solid var(--border-light);
-  display:flex;height:64px;
-}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-tertiary);font-size:10px;font-weight:500;transition:color var(--tr);position:relative}
-.nav-item.active{color:var(--primary)}
-.nav-item svg{width:22px;height:22px}
-.nav-badge{position:absolute;top:8px;right:calc(50% - 16px);width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
-
 /* Toast */
 .map-toast{
-  position:fixed;top:calc(56px + var(--header) + 56px);left:50%;transform:translateX(-50%);
+  position:fixed;top:120px;left:50%;transform:translateX(-50%);
   background:rgba(13,26,15,.9);color:#fff;
   padding:10px 18px;border-radius:var(--radius-full);
   font-size:13px;font-weight:500;
@@ -393,36 +339,20 @@ input[type=range]::-webkit-slider-thumb{
 <!-- Map -->
 <div id="map"></div>
 
-<!-- Map Header (overlay) -->
-<header class="map-header">
-  <button class="header-back" onclick="history.back()" aria-label="Quay lại">
+<!-- Floating Controls - Left -->
+<div class="map-controls-left">
+  <button class="ctrl-btn" onclick="history.back()" title="Quay lại">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
   </button>
-  <div class="header-search">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" id="map-search-input" placeholder="Tìm deal quanh đây..." oninput="debounceMapSearch()" onkeydown="if(event.key==='Enter')doMapSearch()">
-  </div>
-  <button class="header-filter-btn" onclick="openFilter()" aria-label="Bộ lọc">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-    <span class="filter-dot"></span>
-  </button>
-</header>
-
-<!-- Category pills (below header) -->
-<div class="category-pills" id="cat-pills" style="top:calc(56px + 56px + 8px)">
-  <button class="pill active" data-cat="all" onclick="filterCat(this,'all')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Tất cả
-  </button>
-  <button class="pill" data-cat="FLASH_SALE" onclick="filterCat(this,'FLASH_SALE')">⚡ Flash Sale</button>
-  <button class="pill" data-cat="VOUCHER" onclick="filterCat(this,'VOUCHER')">🎫 Voucher</button>
-  <button class="pill" data-cat="COMBO" onclick="filterCat(this,'COMBO')">🎁 Combo</button>
-  <button class="pill" data-cat="SEASONAL" onclick="filterCat(this,'SEASONAL')">🌸 Seasonal</button>
-</div>
-
-<!-- Map Controls -->
-<div class="map-controls">
   <button class="ctrl-btn" id="locate-btn" onclick="locateUser()" title="Vị trí của tôi">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+  </button>
+</div>
+
+<!-- Floating Controls - Right -->
+<div class="map-controls-right">
+  <button class="ctrl-btn ctrl-filter" onclick="openFilter()" title="Bộ lọc">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
   </button>
   <button class="ctrl-btn" onclick="map.zoomIn()" title="Phóng to">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -433,6 +363,17 @@ input[type=range]::-webkit-slider-thumb{
   <button class="ctrl-btn" id="radius-btn" onclick="toggleRadius()" title="Bán kính 1km">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
   </button>
+</div>
+
+<!-- Category pills -->
+<div class="category-pills" id="cat-pills">
+  <button class="pill active" data-cat="all" onclick="filterCat(this,'all')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Tất cả
+  </button>
+  <button class="pill" data-cat="FLASH_SALE" onclick="filterCat(this,'FLASH_SALE')">⚡ Flash Sale</button>
+  <button class="pill" data-cat="VOUCHER" onclick="filterCat(this,'VOUCHER')">🎫 Voucher</button>
+  <button class="pill" data-cat="COMBO" onclick="filterCat(this,'COMBO')">🎁 Combo</button>
+  <button class="pill" data-cat="SEASONAL" onclick="filterCat(this,'SEASONAL')">🌸 Seasonal</button>
 </div>
 
 <!-- Radius legend -->
@@ -551,16 +492,24 @@ const urgencyClass = {danger:'pin-danger',warning:'pin-warning',safe:'pin-safe'}
 
 // ===== MAP INIT =====
 const DEFAULT_LAT = 21.0270, DEFAULT_LNG = 105.8540;
-const USER_LAT = DEALS.length > 0 ? DEALS[0].lat : DEFAULT_LAT;
-const USER_LNG = DEALS.length > 0 ? DEALS[0].lng : DEFAULT_LNG;
+// Dynamic user location — starts at default, updated by GPS
+let USER_LAT = DEFAULT_LAT;
+let USER_LNG = DEFAULT_LNG;
+// Try to center on first deal if available
+if (DEALS.length > 0) { USER_LAT = DEALS[0].lat; USER_LNG = DEALS[0].lng; }
+
 const map = L.map('map',{zoomControl:false,attributionControl:false}).setView([USER_LAT,USER_LNG],14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
 // User location marker
 const userIcon = L.divIcon({
-  html:'<div style="width:18px;height:18px;background:#3b82f6;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(59,130,246,.5)"></div>',
-  className:'',iconSize:[18,18],iconAnchor:[9,9]
+  html:'<div class="locating-pulse"></div>',
+  className:'',iconSize:[20,20],iconAnchor:[10,10]
+});
+const userIconAccurate = L.divIcon({
+  html:'<div style="width:16px;height:16px;background:#3b82f6;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(59,130,246,.5)"></div>',
+  className:'',iconSize:[16,16],iconAnchor:[8,8]
 });
 const userMarker = L.marker([USER_LAT,USER_LNG],{icon:userIcon,zIndexOffset:1000}).addTo(map);
 userMarker.bindTooltip('Vị trí của bạn',{permanent:false,direction:'top'});
@@ -568,13 +517,15 @@ userMarker.bindTooltip('Vị trí của bạn',{permanent:false,direction:'top'}
 // Radius circle
 let radiusCircle = null;
 let radiusOn = false;
+let gpsLocated = false;
 
 // Add deal pins
 const markers = [];
 let activeFilter = 'all';
 
-function buildPinHtml(d){
+function buildPinHtml(d, distM){
   const color = urgencyColor[d.urgency] || '#10b981';
+  const distKm = distM != null ? (distM >= 1000 ? (distM/1000).toFixed(1) + 'km' : distM + 'm') : '';
   const label = d.dealType === 'COMBO' ? '🎁' : '-' + d.discount + '%';
   return '<div class="custom-pin">' +
     '<div class="pin-bubble" style="background:' + color + ';border-color:rgba(255,255,255,.6)">' + label + '</div>' +
@@ -586,7 +537,8 @@ function addMarkers(deals){
   markers.forEach(m=>map.removeLayer(m));
   markers.length=0;
   deals.forEach(d=>{
-    const icon = L.divIcon({html:buildPinHtml(d),className:'',iconSize:[60,36],iconAnchor:[30,36]});
+    const distM = calcDist(USER_LAT, USER_LNG, d.lat, d.lng);
+    const icon = L.divIcon({html:buildPinHtml(d, distM),className:'',iconSize:[60,36],iconAnchor:[30,36]});
     const m = L.marker([d.lat,d.lng],{icon}).addTo(map);
     m.on('click',()=>showDealPopup(d,m));
     markers.push(m);
@@ -694,54 +646,70 @@ renderDeals(DEALS);
 
 // ===== CATEGORY FILTER =====
 function filterCat(btn, cat){
-  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.pill').forEach(function(p){p.classList.remove('active');});
   btn.classList.add('active');
   activeFilter = cat;
-  const filtered = cat==='all' ? DEALS : DEALS.filter(d=>d.dealType===cat);
+  // Re-apply all active filters (panel filters + category)
+  var filtered = getFilteredDeals();
   renderDeals(filtered);
   addMarkers(filtered);
-}
-
-// ===== MAP SEARCH (real-time) =====
-var mapSearchTimer;
-function debounceMapSearch(){
-    clearTimeout(mapSearchTimer);
-    mapSearchTimer = setTimeout(doMapSearch, 400);
-}
-function doMapSearch(){
-    var q = document.getElementById('map-search-input').value.trim();
-    if(q.length > 0) window.location.href = '/buyer/search?q=' + encodeURIComponent(q);
+  map.closePopup();
 }
 
 // ===== LOCATE (real GPS) =====
-function locateUser(){
+function locateUser(silent){
   const btn = document.getElementById('locate-btn');
-  btn.classList.add('active');
-  showToast('Dang xac dinh vi tri...');
+  if (btn && !silent) btn.classList.add('active');
+  if (!silent) showToast('Đang xác định vị trí...');
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(pos){
-      var lat = pos.coords.latitude;
-      var lng = pos.coords.longitude;
-      map.flyTo([lat, lng], 16, {animate:true, duration:1.2});
-      userMarker.setLatLng([lat, lng]);
-      // Recalculate distances
-      renderDeals(DEALS);
-      btn.classList.remove('active');
-      showToast('Da tim thay vi tri cua ban');
-    }, function(){
-      // Fallback
+      USER_LAT = pos.coords.latitude;
+      USER_LNG = pos.coords.longitude;
+      gpsLocated = true;
       map.flyTo([USER_LAT, USER_LNG], 15, {animate:true, duration:1.2});
-      btn.classList.remove('active');
-      showToast('Khong the lay vi tri, hien thi mac dinh');
-    }, {timeout:8000, enableHighAccuracy:true});
+      userMarker.setLatLng([USER_LAT, USER_LNG]);
+      userMarker.setIcon(userIconAccurate);
+      userMarker.setTooltipContent('Vị trí của bạn');
+
+      // Re-render with current panel filters + updated distances
+      var filtered = getFilteredDeals();
+      renderDeals(filtered);
+      addMarkers(filtered);
+
+      if (radiusOn) {
+        var rKm = parseFloat(document.querySelector('#filter-panel input[type=range]').value) || 1;
+        if (radiusCircle) map.removeLayer(radiusCircle);
+        radiusCircle = L.circle([USER_LAT, USER_LNG],{
+          radius: rKm * 1000, color:'#0d5c2e', fillColor:'rgba(13,92,46,.06)',
+          fillOpacity:1, weight:1.5, dashArray:'6 4'
+        }).addTo(map);
+      }
+
+      if (btn) btn.classList.remove('active');
+      if (!silent) showToast('Đã tìm thấy vị trí của bạn');
+
+      var nearest = filtered.length > 0 ? filtered[0] : null;
+      if (nearest) {
+          var d = calcDist(USER_LAT, USER_LNG, nearest.lat, nearest.lng);
+          if (!silent) showToast('Có ' + filtered.length + ' deal quanh bạn, gần nhất cách ' + (d >= 1000 ? (d/1000).toFixed(1) + 'km' : d + 'm'));
+      }
+
+    }, function(err){
+      if (btn) btn.classList.remove('active');
+      if (!silent) showToast('Không thể lấy vị trí, hiển thị mặc định');
+      console.log('Geolocation error:', err.message);
+    }, {timeout:10000, enableHighAccuracy:true});
   } else {
     setTimeout(function(){
-      map.flyTo([USER_LAT, USER_LNG], 15, {animate:true, duration:1.2});
-      btn.classList.remove('active');
-      showToast('Trinh duyet khong ho tro GPS');
+      if (btn) btn.classList.remove('active');
+      if (!silent) showToast('Trình duyệt không hỗ trợ GPS');
     }, 800);
   }
 }
+
+// Auto-locate on page load (silent mode)
+setTimeout(function(){ locateUser(true); }, 800);
 
 // ===== RADIUS TOGGLE =====
 function toggleRadius(){
@@ -751,9 +719,11 @@ function toggleRadius(){
   if(radiusOn){
     btn.classList.add('active');
     legend.style.display='flex';
+    var rKm = parseFloat(document.querySelector('#filter-panel input[type=range]').value) || 1;
+    if(radiusCircle) map.removeLayer(radiusCircle);
     radiusCircle = L.circle([USER_LAT,USER_LNG],{
-      radius:1000,color:'#0d5c2e',fillColor:'rgba(13,92,46,.06)',
-      fillOpacity:1,weight:1.5,dashArray:'6 4'
+      radius: rKm * 1000, color:'#0d5c2e', fillColor:'rgba(13,92,46,.06)',
+      fillOpacity:1, weight:1.5, dashArray:'6 4'
     }).addTo(map);
   } else {
     btn.classList.remove('active');
@@ -763,47 +733,192 @@ function toggleRadius(){
 }
 
 // ===== FILTER PANEL =====
+let currentSort = 'nearest'; // nearest | urgency | discount
+
 function openFilter(){
   document.getElementById('filter-overlay').classList.add('show');
   document.getElementById('filter-panel').classList.add('show');
 }
+
 function closeFilter(){
   document.getElementById('filter-overlay').classList.remove('show');
   document.getElementById('filter-panel').classList.remove('show');
 }
+
 function selectSort(el){
-  document.querySelectorAll('.sort-opt').forEach(o=>o.classList.remove('active'));
+  document.querySelectorAll('.sort-opt').forEach(function(o){o.classList.remove('active');});
   el.classList.add('active');
-}
-function resetFilter(){
-  document.querySelectorAll('.check-chip').forEach(c=>c.classList.remove('active'));
-  document.querySelector('.check-chip').classList.add('active');
-  showToast('Đã đặt lại bộ lọc');
-}
-function applyFilter(){
-  closeFilter();
-  showToast('✅ Đã áp dụng bộ lọc');
+  var txt = el.querySelector('.sort-opt-text').textContent.trim();
+  if (txt.indexOf('Gần nhất') === 0) currentSort = 'nearest';
+  else if (txt.indexOf('Sắp hết hạn') === 0) currentSort = 'urgency';
+  else if (txt.indexOf('Giảm giá') === 0) currentSort = 'discount';
+  else currentSort = 'nearest';
 }
 
+// "Tất cả" chip helpers
+function resetChipGroup(groupSelector) {
+  document.querySelectorAll(groupSelector).forEach(function(c, i) {
+    c.classList.toggle('active', i === 0);
+  });
+}
+function selectAllChip(chip) {
+  var group = chip.parentElement.querySelectorAll('.check-chip');
+  group.forEach(function(c){c.classList.remove('active');});
+  chip.classList.add('active');
+}
+function getActiveChipValues(groupSelector) {
+  var values = [];
+  document.querySelectorAll(groupSelector).forEach(function(c) {
+    if (c.classList.contains('active') && c.textContent.indexOf('Tất cả') < 0) {
+      values.push(c.textContent.trim());
+    }
+  });
+  return values;
+}
+
+// Wire up chip click behavior
+document.querySelectorAll('.check-chip').forEach(function(chip){
+  chip.addEventListener('click', function() {
+    var txt = chip.textContent.trim();
+    if (txt.indexOf('Tất cả') === 0) {
+      selectAllChip(chip);
+    } else {
+      // Uncheck "Tất cả" chip
+      var group = chip.parentElement.querySelectorAll('.check-chip');
+      group[0].classList.remove('active');
+      chip.classList.toggle('active');
+      // If nothing selected, re-check "Tất cả"
+      var anyActive = false;
+      group.forEach(function(c, i) { if (i > 0 && c.classList.contains('active')) anyActive = true; });
+      if (!anyActive) group[0].classList.add('active');
+    }
+  });
+});
+
+function getFilteredDeals() {
+  var deals = activeFilter === 'all' ? DEALS.slice() : DEALS.filter(function(d){return d.dealType === activeFilter;});
+
+  // --- Radius filter ---
+  var radiusKm = parseFloat(document.querySelector('#filter-panel input[type=range]').value);
+  deals = deals.filter(function(d){
+    return calcDist(USER_LAT, USER_LNG, d.lat, d.lng) <= radiusKm * 1000;
+  });
+
+  // --- Time remaining filter ---
+  var timeChips = getActiveChipValues('#filter-panel .filter-section:nth-child(3) .check-chip');
+  if (timeChips.length > 0) {
+    deals = deals.filter(function(d){
+      return timeChips.some(function(tc) {
+        if (tc.indexOf('30 phút') >= 0) return d.urgency === 'danger' && d.timeLeft.indexOf('h') < 0;
+        if (tc.indexOf('1 giờ') >= 0 && tc.indexOf('3 giờ') < 0) return d.urgency === 'danger';
+        if (tc.indexOf('3 giờ') >= 0) return d.urgency === 'danger' || d.urgency === 'warning';
+        if (tc.indexOf('> 3 giờ') >= 0) return d.urgency === 'safe';
+        return false;
+      });
+    });
+  }
+
+  // --- Price range filter ---
+  var priceInputs = document.querySelectorAll('#filter-panel .price-input');
+  var minPrice = parseFloat(priceInputs[0].value) || 0;
+  var maxPrice = parseFloat(priceInputs[1].value) || 999999999;
+  deals = deals.filter(function(d){
+    return d.price >= minPrice && d.price <= maxPrice;
+  });
+
+  // --- Discount filter ---
+  var discountChips = getActiveChipValues('#filter-panel .filter-section:nth-child(6) .check-chip');
+  if (discountChips.length > 0) {
+    deals = deals.filter(function(d){
+      return discountChips.some(function(dc) {
+        if (dc.indexOf('30%') >= 0) return d.discount >= 30;
+        if (dc.indexOf('50%') >= 0) return d.discount >= 50;
+        if (dc.indexOf('70%') >= 0) return d.discount >= 70;
+        return false;
+      });
+    });
+  }
+
+  // --- Sort ---
+  if (currentSort === 'nearest') {
+    deals.sort(function(a,b){return calcDist(USER_LAT,USER_LNG,a.lat,a.lng) - calcDist(USER_LAT,USER_LNG,b.lat,b.lng);});
+  } else if (currentSort === 'urgency') {
+    var urgencyOrder = {danger:0, warning:1, safe:2};
+    deals.sort(function(a,b){return (urgencyOrder[a.urgency]||2) - (urgencyOrder[b.urgency]||2);});
+  } else if (currentSort === 'discount') {
+    deals.sort(function(a,b){return b.discount - a.discount;});
+  }
+
+  return deals;
+}
+
+function applyFilter(){
+  var filtered = getFilteredDeals();
+  renderDeals(filtered);
+  addMarkers(filtered);
+  // Update radius circle if on
+  if (radiusOn) {
+    var rKm = parseFloat(document.querySelector('#filter-panel input[type=range]').value);
+    if (radiusCircle) map.removeLayer(radiusCircle);
+    radiusCircle = L.circle([USER_LAT, USER_LNG],{
+      radius: rKm * 1000, color:'#0d5c2e', fillColor:'rgba(13,92,46,.06)',
+      fillOpacity:1, weight:1.5, dashArray:'6 4'
+    }).addTo(map);
+    document.getElementById('radius-btn').classList.add('active');
+    document.getElementById('radius-legend').style.display = 'flex';
+    radiusOn = true;
+  }
+  closeFilter();
+  showToast(filtered.length + ' deal được tìm thấy');
+}
+
+function resetFilter(){
+  // Sort
+  document.querySelectorAll('.sort-opt').forEach(function(o,i){o.classList.toggle('active', i===0);});
+  currentSort = 'nearest';
+  // Radius
+  var slider = document.querySelector('#filter-panel input[type=range]');
+  if (slider) { slider.value = 1; document.getElementById('radius-val').textContent = '1 km'; }
+  // Time chips
+  resetChipGroup('#filter-panel .filter-section:nth-child(3) .check-chip');
+  // Price
+  var priceInputs = document.querySelectorAll('#filter-panel .price-input');
+  if (priceInputs[0]) priceInputs[0].value = 0;
+  if (priceInputs[1]) priceInputs[1].value = 100000;
+  // Discount chips
+  resetChipGroup('#filter-panel .filter-section:nth-child(6) .check-chip');
+
+  // Apply reset
+  var filtered = activeFilter === 'all' ? DEALS.slice() : DEALS.filter(function(d){return d.dealType === activeFilter;});
+  // Sort by nearest default
+  filtered.sort(function(a,b){return calcDist(USER_LAT,USER_LNG,a.lat,a.lng) - calcDist(USER_LAT,USER_LNG,b.lat,b.lng);});
+  renderDeals(filtered);
+  addMarkers(filtered);
+  showToast('Đã đặt lại bộ lọc');
+}
+
+// Update apply button count when opening filter
+var origOpenFilter = openFilter;
+openFilter = function() {
+  origOpenFilter();
+  var filtered = getFilteredDeals();
+  var btn = document.querySelector('.btn-apply');
+  if (btn) btn.textContent = 'Áp dụng (' + filtered.length + ' deal)';
+};
+
 // ===== TOAST =====
-function showToast(msg,dur=2200){
-  document.querySelector('.map-toast')?.remove();
-  const t=document.createElement('div');
-  t.className='map-toast';t.textContent=msg;
+function showToast(msg,dur){
+  dur = dur || 2200;
+  var existing = document.querySelector('.map-toast');
+  if (existing) existing.remove();
+  var t = document.createElement('div');
+  t.className = 'map-toast'; t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},dur);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){t.remove();},300);},dur);
 }
 
 // Map click closes popup & collapses sheet
-map.on('click',()=>{map.closePopup();collapseSheet();});
-
-// Chip toggle
-document.querySelectorAll('.check-chip').forEach(chip=>{
-  chip.addEventListener('click',()=>{
-    if(chip.textContent.trim()==='⏰ Tất cả'||chip.textContent.trim()==='Tất cả') return;
-    chip.classList.toggle('active');
-  });
-});
+map.on('click',function(){map.closePopup();collapseSheet();});
 </script>
 <div th:replace="~{common/buyer/footer :: footer}"></div>
 <div th:replace="~{common/buyer/js :: js}"></div>

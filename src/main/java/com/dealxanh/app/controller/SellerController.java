@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,6 +49,12 @@ public class SellerController {
 
     @Autowired
     private com.dealxanh.app.service.ProductService productService;
+
+    @Autowired
+    private com.dealxanh.app.service.PayOSService payOSService;
+
+    @Autowired
+    private com.dealxanh.app.service.NotificationService notificationService;
 
     @Autowired
     private com.dealxanh.app.repository.CategoryRepository categoryRepository;
@@ -1055,12 +1062,16 @@ public class SellerController {
 
         // Platform deals on this product's category
         java.util.List<java.util.Map<String, Object>> platformDeals = new java.util.ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
         if (product.getCategory() != null) {
             java.util.List<DealCategory> dealCategories = dealCategoryRepository.findActiveByCategory(product.getCategory());
             if (dealCategories != null) {
                 for (DealCategory dc : dealCategories) {
                     Deal d = dc.getDeal();
                     if (d == null || !"ACTIVE".equals(d.getStatus())) continue;
+                    // Also check time window
+                    if (d.getStartTime() != null && d.getStartTime().isAfter(now)) continue;
+                    if (d.getEndTime() != null && d.getEndTime().isBefore(now)) continue;
                     java.util.Map<String, Object> di = new java.util.HashMap<>();
                     di.put("dealName", d.getDealName());
                     di.put("dealType", d.getDealType());
@@ -1124,6 +1135,7 @@ public class SellerController {
     }
 
     @PostMapping("/products/{productId}/edit")
+    @Transactional
     public String editProduct(
             @PathVariable Long productId,
             @RequestParam String name,
@@ -1160,18 +1172,21 @@ public class SellerController {
                 imgPath = saveUploadedFile(imageFile);
             }
 
-            product.setName(name);
-            product.setDescription(description);
-            product.setOriginalPrice(originalPrice);
-            product.setStockQuantity(stockQuantity != null ? stockQuantity : 0);
-            if (productType != null) product.setProductType(productType);
-            if (imgPath != null) product.setImageUrl(imgPath);
-            if (categoryId != null) categoryRepository.findById(categoryId).ifPresent(product::setCategory);
+            java.time.LocalDateTime expiry = null;
             if (expiryDateStr != null && !expiryDateStr.isEmpty()) {
-                product.setExpiryDate(java.time.LocalDateTime.parse(expiryDateStr + "T23:59:59"));
+                expiry = java.time.LocalDateTime.parse(expiryDateStr + "T23:59:59");
+            } else {
+                expiry = product.getExpiryDate();
             }
-            product.setApprovalStatus("PENDING"); // re-submit for approval
-            productService.updateProduct(productId, product);
+            Long catId = categoryId != null ? categoryId : (product.getCategory() != null ? product.getCategory().getCategoryId() : null);
+
+            // Use direct update query to avoid JPA cascade TransactionSystemException
+            productRepository.updateProductFields(productId, name, description, originalPrice,
+                stockQuantity != null ? stockQuantity : 0, imgPath, expiry, catId);
+
+            // Cancel active orders containing this product (since it's now PENDING/unavailable)
+            cancelOrdersWithProduct(productId, "Sản phẩm '" + name + "' đã bị gỡ bán để chỉnh sửa. Xin lỗi vì sự bất tiện!");
+
             redirectAttributes.addFlashAttribute("success", "Cập nhật sản phẩm thành công! Sản phẩm sẽ được duyệt lại.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
@@ -1268,18 +1283,18 @@ public class SellerController {
 
     @PostMapping("/orders/{orderId}/status")
     @ResponseBody
+    @Transactional
     public java.util.Map<String, Object> updateOrderStatus(
             @PathVariable Long orderId, @RequestParam String newStatus, Principal principal) {
         User user = getCurrentUser(principal);
         if (user == null || user.getWorkStore() == null)
             return java.util.Map.of("success", false, "message", "Không tìm thấy cửa hàng");
 
-        // FIFO lock: serialize concurrent status updates on same order
+        // FIFO lock
         ReentrantLock lock = lockManager.acquireLock("ORDER", orderId);
         try {
-            // Re-read order to get latest state
             com.dealxanh.app.entity.Order order = orderRepository.findById(orderId).orElse(null);
-            if (order == null || !order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
+            if (order == null || order.getStore() == null || !order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
                 return java.util.Map.of("success", false, "message", "Đơn hàng không tồn tại");
 
             String current = order.getStatus();
@@ -1291,14 +1306,18 @@ public class SellerController {
             if (!valid) return java.util.Map.of("success", false, "message",
                 "Không thể chuyển từ " + current + " sang " + newStatus);
 
-            order.setStatus(newStatus);
-            order.setUpdatedAt(java.time.LocalDateTime.now());
-            if ("READY_FOR_PICKUP".equals(newStatus) && order.getPickupQrCode() == null) {
-                String qrCode = "DX-" + orderId + "-" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-                order.setPickupQrCode(qrCode);
+            // Use direct update query to avoid JPA cascade issues
+            orderRepository.updateOrderStatus(orderId, newStatus);
+            if ("CANCELLED".equals(newStatus)) {
+                payOSService.cancelPaymentLink(orderId);
             }
-            if ("COMPLETED".equals(newStatus)) order.setActualPickupTime(java.time.LocalDateTime.now());
-            orderRepository.save(order);
+            if ("READY_FOR_PICKUP".equals(newStatus)) {
+                String qrCode = "DX-" + orderId + "-" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+                orderRepository.updateOrderQrCode(orderId, qrCode);
+            }
+            if ("COMPLETED".equals(newStatus)) {
+                orderRepository.updateOrderPickupTime(orderId, java.time.LocalDateTime.now());
+            }
             return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
         } finally {
             lock.unlock();
@@ -1313,7 +1332,7 @@ public class SellerController {
             return Map.of("success", false, "message", "Không tìm thấy cửa hàng");
 
         com.dealxanh.app.entity.Order order = orderRepository.findByIdWithItems(orderId).orElse(null);
-        if (order == null || !order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
+        if (order == null || order.getStore() == null || !order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
             return Map.of("success", false, "message", "Đơn hàng không tồn tại");
 
         Map<String, Object> data = new HashMap<>();
@@ -2119,6 +2138,48 @@ public class SellerController {
     }
 
     // ============ HELPER METHODS ============
+
+    private void cancelOrdersWithProduct(Long productId, String reason) {
+        // Use JPQL to find orders containing this product (avoid lazy loading issues)
+        List<com.dealxanh.app.entity.Order> allOrders = orderRepository.findAll();
+        for (com.dealxanh.app.entity.Order o : allOrders) {
+            if ("CANCELLED".equals(o.getStatus()) || "COMPLETED".equals(o.getStatus())) continue;
+
+            // Load order with items to ensure collection is available
+            com.dealxanh.app.entity.Order fullOrder = orderRepository.findByIdWithItems(o.getOrderId()).orElse(null);
+            if (fullOrder == null || fullOrder.getOrderItems() == null) continue;
+
+            boolean hasProduct = false;
+            int qty = 0;
+            for (com.dealxanh.app.entity.OrderItem oi : fullOrder.getOrderItems()) {
+                if (oi.getProduct() != null && oi.getProduct().getProductId().equals(productId)) {
+                    hasProduct = true;
+                    qty = oi.getQuantity();
+                    break;
+                }
+            }
+            if (hasProduct) {
+                orderRepository.cancelOrder(o.getOrderId(), reason);
+                // Restore stock
+                Product p = productRepository.findById(productId).orElse(null);
+                if (p != null) {
+                    p.setStockQuantity(p.getStockQuantity() + qty);
+                    if (!p.getActive() && p.getStockQuantity() > 0) p.setActive(true);
+                    productRepository.save(p);
+                }
+                // Notify buyer
+                if (fullOrder.getUser() != null) {
+                    try {
+                        notificationService.createNotification(fullOrder.getUser(),
+                            "Đơn hàng #" + fullOrder.getOrderId() + " đã bị hủy",
+                            reason,
+                            "ORDER_CANCELLED",
+                            "/buyer/orders");
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+    }
 
     private User getCurrentUser(Principal principal) {
         if (principal == null) return null;

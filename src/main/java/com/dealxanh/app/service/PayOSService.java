@@ -68,8 +68,21 @@ public class PayOSService {
         int amount = (int) Math.round(order.getFinalAmount() != null ? order.getFinalAmount() : 0);
         if (amount <= 0) return Map.of("success", false, "message", "Số tiền không hợp lệ");
 
+        // Check if already paid
+        String existingQr = order.getPickupQrCode();
+        if (existingQr != null && !existingQr.isEmpty() && !existingQr.startsWith("DX-")) {
+            try {
+                long existingCode = Long.parseLong(existingQr);
+                Map<String, Object> fetchResult = fetchPaymentInfo(existingCode);
+                if (fetchResult != null && "PAID".equals(fetchResult.get("status"))) {
+                    return Map.of("success", false, "message", "Đơn hàng đã được thanh toán");
+                }
+                // Already paid check passed, continue to create new payment link
+                // (old one will auto-expire on PayOS after 30 min)
+            } catch (NumberFormatException e) { /* not a PayOS code */ }
+        }
+
         String description = "Thanh toan don hang DX-" + orderId;
-        // PayOS yêu cầu orderCode unique, dùng orderId + timestamp đuôi
         long orderCode = orderId * 1000 + (System.currentTimeMillis() / 1000) % 1000;
         String cancelUrl = "http://localhost:8084/buyer/orders/" + orderId;
         String returnUrl = "http://localhost:8084/buyer/orders/" + orderId;
@@ -116,8 +129,6 @@ public class PayOSService {
                 Map<String, Object> respData = (Map<String, Object>) data.get("data");
                 if (respData != null) {
                     log.info("PayOS response data keys: {}", respData.keySet());
-                    log.info("PayOS qrCode value: {}", respData.get("qrCode"));
-                    log.info("PayOS checkoutUrl value: {}", respData.get("checkoutUrl"));
 
                     order.setPickupQrCode(String.valueOf(orderCode));
                     orderRepository.save(order);
@@ -139,6 +150,60 @@ public class PayOSService {
         } catch (Exception e) {
             log.error("PayOS createPaymentLink error: {}", e.getMessage());
             return Map.of("success", false, "message", "Lỗi kết nối PayOS: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Fetch existing PayOS payment info without triggering payment confirmation.
+     */
+    private Map<String, Object> fetchPaymentInfo(long orderCode) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("x-client-id", clientId);
+            headers.set("x-api-key", apiKey);
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                apiUrl + "/v2/payment-requests/" + orderCode,
+                HttpMethod.GET, request,
+                (Class<Map<String, Object>>) (Class<?>) Map.class);
+            Map<String, Object> data = response.getBody();
+            if (data != null && "00".equals(String.valueOf(data.get("code")))) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> respData = (Map<String, Object>) data.get("data");
+                return respData;
+            }
+        } catch (Exception e) {
+            log.warn("fetchPaymentInfo error for orderCode {}: {}", orderCode, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Cancel a PayOS payment link when order is cancelled.
+     */
+    public void cancelPaymentLink(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null || order.getPickupQrCode() == null) return;
+
+        // Only cancel if the QR code is a PayOS orderCode (numeric, no "DX-" prefix)
+        String qrCode = order.getPickupQrCode();
+        if (qrCode.startsWith("DX-")) return;
+
+        try {
+            long orderCode = Long.parseLong(qrCode);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("x-client-id", clientId);
+            headers.set("x-api-key", apiKey);
+
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+            restTemplate.exchange(
+                apiUrl + "/v2/payment-requests/" + orderCode + "/cancel",
+                HttpMethod.POST, request, Map.class);
+            log.info("PayOS payment link cancelled for order #{}: orderCode={}", orderId, orderCode);
+        } catch (NumberFormatException e) {
+            // Not a PayOS orderCode, skip
+        } catch (Exception e) {
+            log.warn("Failed to cancel PayOS payment for order #{}: {}", orderId, e.getMessage());
         }
     }
 

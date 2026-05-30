@@ -135,10 +135,10 @@
             Chờ xác nhận
           </span>
         </div>
-        <div class="qi-buyer" th:text="${order.user?.fullName != null ? order.user.fullName : order.user?.username}">Khách</div>
+        <div class="qi-buyer" th:text="${order.user != null and order.user.fullName != null and !order.user.fullName.isEmpty()} ? ${order.user.fullName} : (${order.user != null ? order.user.username : 'Khách'})">Khách</div>
         <div class="qi-items">
           <th:block th:each="item, iterStat : ${order.orderItems}">
-            <span th:text="${item.quantity} + '× ' + (item.product?.name ?: 'SP')">1× SP</span><span th:unless="${iterStat.last}"> · </span>
+            <span th:text="${item.quantity} + '× ' + (${item.product != null and item.product.name != null} ? ${item.product.name} : 'SP')">1× SP</span><span th:unless="${iterStat.last}"> · </span>
           </th:block>
         </div>
       </div>
@@ -155,10 +155,10 @@
             Đã xác nhận
           </span>
         </div>
-        <div class="qi-buyer" th:text="${order.user?.fullName != null ? order.user.fullName : order.user?.username}">Khách</div>
+        <div class="qi-buyer" th:text="${order.user != null and order.user.fullName != null and !order.user.fullName.isEmpty()} ? ${order.user.fullName} : (${order.user != null ? order.user.username : 'Khách'})">Khách</div>
         <div class="qi-items">
           <th:block th:each="item, iterStat : ${order.orderItems}">
-            <span th:text="${item.quantity} + '× ' + (item.product?.name ?: 'SP')">1× SP</span><span th:unless="${iterStat.last}"> · </span>
+            <span th:text="${item.quantity} + '× ' + (${item.product != null and item.product.name != null} ? ${item.product.name} : 'SP')">1× SP</span><span th:unless="${iterStat.last}"> · </span>
           </th:block>
         </div>
       </div>
@@ -175,10 +175,10 @@
             Sẵn sàng pickup
           </span>
         </div>
-        <div class="qi-buyer" th:text="${order.user?.fullName != null ? order.user.fullName : order.user?.username}">Khách</div>
+        <div class="qi-buyer" th:text="${order.user != null and order.user.fullName != null and !order.user.fullName.isEmpty()} ? ${order.user.fullName} : (${order.user != null ? order.user.username : 'Khách'})">Khách</div>
         <div class="qi-items">
           <th:block th:each="item, iterStat : ${order.orderItems}">
-            <span th:text="${item.quantity} + '× ' + (item.product?.name ?: 'SP')">1× SP</span><span th:unless="${iterStat.last}"> · </span>
+            <span th:text="${item.quantity} + '× ' + (${item.product != null and item.product.name != null} ? ${item.product.name} : 'SP')">1× SP</span><span th:unless="${iterStat.last}"> · </span>
           </th:block>
         </div>
       </div>

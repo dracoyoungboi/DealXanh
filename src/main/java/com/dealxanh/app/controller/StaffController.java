@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +43,9 @@ public class StaffController {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private com.dealxanh.app.service.PayOSService payOSService;
 
     @Autowired
     private ResourceLockManager lockManager;
@@ -80,10 +84,9 @@ public class StaffController {
                 LocalTime slotStart = LocalTime.parse(parts[0].trim());
                 LocalTime slotEnd = LocalTime.parse(parts[1].trim());
                 Predicate<Order> slotFilter = o -> {
-                    if (o.getScheduledPickupTime() == null && o.getCreatedAt() == null) return true;
-                    java.time.LocalTime orderTime = o.getScheduledPickupTime() != null
-                        ? o.getScheduledPickupTime().toLocalTime()
-                        : o.getCreatedAt().toLocalTime();
+                    // If no scheduled pickup time, show in all slots (not assigned yet)
+                    if (o.getScheduledPickupTime() == null) return true;
+                    LocalTime orderTime = o.getScheduledPickupTime().toLocalTime();
                     return !orderTime.isBefore(slotStart) && !orderTime.isAfter(slotEnd);
                 };
                 pendingOrders = pendingOrders.stream().filter(slotFilter).toList();
@@ -582,6 +585,7 @@ public class StaffController {
 
     @PostMapping("/orders/{orderId}/status")
     @ResponseBody
+    @Transactional
     public java.util.Map<String, Object> updateOrderStatus(
             @PathVariable Long orderId,
             @RequestParam String newStatus,
@@ -590,14 +594,11 @@ public class StaffController {
         if (user == null || user.getWorkStore() == null)
             return java.util.Map.of("success", false, "message", "Không tìm thấy cửa hàng");
 
-        // FIFO lock: serialize concurrent status updates on same order
         ReentrantLock lock = lockManager.acquireLock("ORDER", orderId);
         try {
-            // Re-read order to get latest state
             Order order = orderRepository.findById(orderId).orElse(null);
-            if (order == null) return java.util.Map.of("success", false, "message", "Không tìm thấy đơn hàng");
-            if (!order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
-                return java.util.Map.of("success", false, "message", "Đơn hàng không thuộc cửa hàng của bạn");
+            if (order == null || order.getStore() == null || !order.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
+                return java.util.Map.of("success", false, "message", "Đơn hàng không tồn tại");
 
             String current = order.getStatus();
             boolean valid = false;
@@ -608,15 +609,17 @@ public class StaffController {
             if (!valid) return java.util.Map.of("success", false, "message",
                 "Không thể chuyển từ " + current + " sang " + newStatus);
 
-            order.setStatus(newStatus);
-            if ("READY_FOR_PICKUP".equals(newStatus) && order.getPickupQrCode() == null) {
-                String qrCode = "DX-" + orderId + "-" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-                order.setPickupQrCode(qrCode);
+            orderRepository.updateOrderStatus(orderId, newStatus);
+            if ("CANCELLED".equals(newStatus)) {
+                payOSService.cancelPaymentLink(orderId);
+            }
+            if ("READY_FOR_PICKUP".equals(newStatus)) {
+                orderRepository.updateOrderQrCode(orderId,
+                    "DX-" + orderId + "-" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase());
             }
             if ("COMPLETED".equals(newStatus)) {
-                order.setActualPickupTime(java.time.LocalDateTime.now());
+                orderRepository.updateOrderPickupTime(orderId, java.time.LocalDateTime.now());
             }
-            orderRepository.save(order);
             return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
         } finally {
             lock.unlock();

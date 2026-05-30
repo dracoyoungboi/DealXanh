@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -96,4 +97,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Product p WHERE p.productId = :id")
     Optional<Product> findByIdWithLock(@Param("id") Long id);
+
+    // Direct update for product edit (avoid JPA cascade issues)
+    @Modifying
+    @Query("UPDATE Product p SET p.name = :name, p.description = :description, p.originalPrice = :price, p.stockQuantity = :stock, p.imageUrl = :imageUrl, p.expiryDate = :expiryDate, p.category.categoryId = :categoryId, p.approvalStatus = 'PENDING', p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
+    void updateProductFields(@Param("id") Long id, @Param("name") String name, @Param("description") String description, @Param("price") Double price, @Param("stock") Integer stock, @Param("imageUrl") String imageUrl, @Param("expiryDate") java.time.LocalDateTime expiryDate, @Param("categoryId") Long categoryId);
 }
