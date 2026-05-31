@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -176,6 +176,12 @@ body{padding-bottom:120px;background:var(--background)}
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                             <span th:text="${store.address}">Address</span>
                         </span>
+                        <!-- Distance warning if store > 10km -->
+                        <div class="distance-warning" th:if="${store != null and store.distanceKm != null and store.distanceKm > 10}"
+                             style="margin-top:6px;padding:8px 10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:6px;font-size:11px;color:#92400e;display:flex;align-items:center;gap:6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span>Luu y: Cua hang cach ban khoang <strong th:text="|${store.distanceKm} km|">10 km</strong>. Quang duong xa co the anh huong den chat luong san pham trong qua trinh van chuyen. Vui long can nhac truoc khi dat hang.</span>
+                        </div>
                     </div>
 
                     <!-- Items -->
@@ -197,7 +203,6 @@ body{padding-bottom:120px;background:var(--background)}
                             </div>
                             <div class="os-item__price">
                                 <span class="os-item__sale" th:text="|${#numbers.formatDecimal(item.salePrice != null ? item.salePrice : 0, 0, 0)}đ|">50,000đ</span>
-                                <span class="os-item__original" th:if="${item.originalPrice != null and item.originalPrice > item.salePrice}" th:text="|${#numbers.formatDecimal(item.originalPrice, 0, 0)}đ|">100,000đ</span>
                             </div>
                         </div>
                     </th:block>

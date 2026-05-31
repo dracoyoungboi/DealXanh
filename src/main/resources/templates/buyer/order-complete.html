@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -225,6 +225,34 @@ body{padding-bottom:120px;background:var(--background);font-family:var(--font-fa
                 </div>
                 <div style="font-size:11px;color:var(--text-tertiary);text-align:right">Đưa cho<br><strong>nhân viên</strong><br>sau khi thanh toán</div>
             </div>
+
+            <!-- Prepay section: show for UNPAID non-CASH orders -->
+            <div class="prepay-section" th:if="${order.paymentStatus != 'PAID' and order.paymentMethod != 'CASH'}"
+                 th:attr="data-oid=${order.orderId}" style="margin-top:12px;padding:14px 16px;background:var(--bg);border-radius:10px;border:1px dashed var(--border);text-align:center;">
+                <div class="prepay-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-size:14px;font-weight:700;color:var(--primary);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        Thanh toán trước qua PayOS
+                    </span>
+                    <span class="prepay-amount" style="font-size:14px;font-weight:700;color:var(--text-primary);"
+                          th:text="|${#numbers.formatDecimal(order.finalAmount, 0, 0)}d|">0d</span>
+                </div>
+                <button class="btn-prepay" th:attr="onclick=|createPrepayQR(${order.orderId})|"
+                        style="width:100%;padding:10px;font-size:14px;font-weight:600;color:#fff;background:var(--primary);border:none;border-radius:8px;cursor:pointer;">
+                    Tạo mã QR thanh toán ngay
+                </button>
+                <div class="prepay-qr-box" th:id="'qrBox_' + ${order.orderId}" style="display:none;margin-top:12px;text-align:center;padding:16px;background:var(--surface);border-radius:10px;border:2px solid var(--primary);">
+                    <img th:id="'qrImg_' + ${order.orderId}" src="" style="max-width:200px;border-radius:8px;" alt="PayOS QR">
+                    <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">
+                        <div th:id="'qrBank_' + ${order.orderId}" style="font-weight:600;"></div>
+                        <div th:id="'qrAccount_' + ${order.orderId}"></div>
+                    </div>
+                    <div class="prepay-countdown" th:id="'qrCountdown_' + ${order.orderId}" style="margin-top:6px;font-size:13px;font-weight:600;color:var(--warning);">Còn 30:00</div>
+                    <div th:id="'qrStatus_' + ${order.orderId}" style="display:none;margin-top:8px;padding:8px;background:#d4edda;border-radius:6px;color:#155724;font-weight:600;font-size:14px;">
+                        Đã thanh toán thành công!
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -379,6 +407,84 @@ body{padding-bottom:120px;background:var(--background);font-family:var(--font-fa
 
     draw();
 })();
+
+// ===== PREPAY PAYOS QR =====
+var prepayTimers = {};
+var prepayPollers = {};
+
+function createPrepayQR(orderId) {
+    var btn = document.querySelector('[onclick="createPrepayQR(' + orderId + ')"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang tạo mã QR...'; }
+
+    fetch('/api/payment/buyer-create/' + orderId, { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) {
+                if (btn) { btn.disabled = false; btn.textContent = 'Tạo mã QR thanh toán ngay'; }
+                alert(data.message || 'Không thể tạo mã QR');
+                return;
+            }
+            // Hide button, show QR
+            if (btn) btn.style.display = 'none';
+            var qrBox = document.getElementById('qrBox_' + orderId);
+            if (qrBox) qrBox.style.display = 'block';
+            var qrImg = document.getElementById('qrImg_' + orderId);
+            if (qrImg && data.qrCode) {
+                qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.qrCode);
+            }
+            var bankEl = document.getElementById('qrBank_' + orderId);
+            if (bankEl && data.bin) bankEl.textContent = 'Ngan hang: ' + (data.bin || '');
+            var accEl = document.getElementById('qrAccount_' + orderId);
+            if (accEl && data.accountNumber) accEl.textContent = 'STK: ' + data.accountNumber + (data.accountName ? ' - ' + data.accountName : '');
+            // Start countdown
+            startPrepayCountdown(orderId, 1800);
+            // Start polling
+            prepayPollers[orderId] = setInterval(function() { checkPrepayStatus(orderId); }, 5000);
+        })
+        .catch(function(err) {
+            if (btn) { btn.disabled = false; btn.style.display = ''; btn.textContent = 'Tạo mã QR thanh toán ngay'; }
+            console.error('Prepay QR error:', err);
+        });
+}
+
+function startPrepayCountdown(orderId, seconds) {
+    var el = document.getElementById('qrCountdown_' + orderId);
+    if (!el) return;
+    prepayTimers[orderId] = setInterval(function() {
+        seconds--;
+        var m = Math.floor(seconds / 60);
+        var s = seconds % 60;
+        el.textContent = 'Con ' + m + ':' + (s < 10 ? '0' : '') + s;
+        if (seconds <= 0) {
+            clearInterval(prepayTimers[orderId]);
+            clearInterval(prepayPollers[orderId]);
+            el.textContent = 'Ma QR da het han';
+            el.style.color = 'var(--danger)';
+        }
+    }, 1000);
+}
+
+function checkPrepayStatus(orderId) {
+    fetch('/api/payment/status/' + orderId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.paidFromPayOS) {
+                clearInterval(prepayPollers[orderId]);
+                clearInterval(prepayTimers[orderId]);
+                var qrBox = document.getElementById('qrBox_' + orderId);
+                if (qrBox) {
+                    var img = qrBox.querySelector('img');
+                    var countdown = document.getElementById('qrCountdown_' + orderId);
+                    var status = document.getElementById('qrStatus_' + orderId);
+                    if (img) img.style.display = 'none';
+                    if (countdown) countdown.style.display = 'none';
+                    if (status) status.style.display = 'block';
+                }
+            }
+        })
+        .catch(function() {});
+}
+
 </script>
 </body>
 </html>

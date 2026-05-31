@@ -134,7 +134,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("UPDATE Order o SET o.actualPickupTime = :time, o.updatedAt = CURRENT_TIMESTAMP WHERE o.orderId = :orderId")
     void updateOrderPickupTime(@Param("orderId") Long orderId, @Param("time") LocalDateTime time);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying
     @Query("UPDATE Order o SET o.status = 'CANCELLED', o.cancellationReason = :reason, o.updatedAt = CURRENT_TIMESTAMP WHERE o.orderId = :orderId")
     void cancelOrder(@Param("orderId") Long orderId, @Param("reason") String reason);
 }

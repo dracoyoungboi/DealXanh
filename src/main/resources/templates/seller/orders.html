@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -143,10 +143,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
                 <span class="order-amount" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 0) + 'đ'}">0đ</span>
                 <div style="display:flex;gap:6px;">
                     <button class="action-btn action-confirm" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CONFIRMED');event.stopPropagation()|">✓ Xác nhận</button>
-                    <button class="action-btn action-ready" th:if="${order.status == 'CONFIRMED'}" th:onclick="|updateStatus(${order.orderId}, 'READY_FOR_PICKUP');event.stopPropagation()|">📦 Sẵn sàng</button>
-                    <!-- CASH: hoàn thành tay. CREDIT_CARD/MOMO/BANK: phải qua PayOS QR -->
-                    <button class="action-btn action-complete" th:if="${order.status == 'READY_FOR_PICKUP' and (order.paymentMethod == 'CASH' or order.paymentMethod == null)}" th:onclick="|updateStatus(${order.orderId}, 'COMPLETED');event.stopPropagation()|">✅ Hoàn thành</button>
-                    <button class="action-btn action-payos" th:if="${order.status == 'READY_FOR_PICKUP' and order.paymentMethod != 'CASH' and order.paymentMethod != null}" th:onclick="|createPayOSQR(${order.orderId});event.stopPropagation()|">💳 QR PayOS</button>
+                    <!-- CONFIRMED + UNPAID: normal flow -> mark ready -->
+                    <button class="action-btn action-ready" th:if="${order.status == 'CONFIRMED' and order.paymentStatus != 'PAID'}" th:onclick="|updateStatus(${order.orderId}, 'READY_FOR_PICKUP');event.stopPropagation()|">📦 Sẵn sàng</button>
+                    <!-- CONFIRMED + PAID: prepaid -> skip READY, show Complete directly -->
+                    <button class="action-btn action-complete" th:if="${order.status == 'CONFIRMED' and order.paymentStatus == 'PAID'}" th:onclick="|updateStatus(${order.orderId}, 'COMPLETED');event.stopPropagation()|">✅ Hoàn thành</button>
+                    <!-- READY + (CASH or PAID): complete directly -->
+                    <button class="action-btn action-complete" th:if="${order.status == 'READY_FOR_PICKUP' and (order.paymentMethod == 'CASH' or order.paymentMethod == null or order.paymentStatus == 'PAID')}" th:onclick="|updateStatus(${order.orderId}, 'COMPLETED');event.stopPropagation()|">✅ Hoàn thành</button>
+                    <!-- READY + UNPAID + non-CASH: need PayOS QR -->
+                    <button class="action-btn action-payos" th:if="${order.status == 'READY_FOR_PICKUP' and order.paymentStatus != 'PAID' and order.paymentMethod != 'CASH' and order.paymentMethod != null}" th:onclick="|createPayOSQR(${order.orderId});event.stopPropagation()|">💳 QR PayOS</button>
                     <button class="action-btn action-cancel" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CANCELLED');event.stopPropagation()|">✕ Hủy</button>
                 </div>
             </div>

@@ -1,8 +1,8 @@
 # DealXanh - O2O Deal Marketplace Platform
 
-## 📊 Project Status: **~92% Complete**
+## 📊 Project Status: **~94% Complete**
 
-**Last Updated:** 2026-05-28 (Session: Home Quick Filter → Scroll Navigation)
+**Last Updated:** 2026-06-01 (Session: Buyer Prepay, Pickup Time, Cart Checkboxes, Deal FIXED/PERCENT Logic Fix, Location-Based Sorting, Deal System Audit)
 **Version:** 1.0.0-beta
 
 ---
@@ -1606,6 +1606,97 @@ Quick filter chips trên trang chủ buyer trước đây dùng JS để filter/
 
 ---
 
+## 🔥 Recent Updates (2026-05-28 → 2026-05-30) — Phiên Claude Code Lớn
+
+### Tổng quan — 3 ngày, 30+ file changes
+
+Phiên làm việc kéo dài tập trung vào: Notification System, Deal Map cải tiến, Search Overlay Shopee-style, Profile Edit + Address Book, Sửa lỗi JPA TransactionSystemException, PayOS QR, Auto-cancel orders, Store page redesign.
+
+### A. Notification System
+| File | Thay đổi |
+|------|----------|
+| `NotificationService.java` **(NEW)** | CRUD notifications, `notifyOrderStatusChange()`, `notifyNewDealNearby()` |
+| `HomeController.java` | +4 API: list, read, read-all, count; `@ModelAttribute addNotifCount()` cho tất cả buyer pages |
+| `common/buyer/header.html` | Bell icon + dropdown popup (20 TB, icon theo loại, chấm xanh, time ago), auto-refresh 60s |
+
+### B. Deal Map Cải Tiến
+| File | Thay đổi |
+|------|----------|
+| `buyer/deal-map.html` | **Rewrite**: bỏ custom map-header, dùng shared header + mobile-nav. Floating controls (left: back+locate, right: filter+zoom+radius). Auto-locate GPS 800ms. **Filter panel hoạt động**: sort (nearest/urgency/discount), radius (0.5-5km), time remaining, price range, discount % |
+| `HomeController.java` | `activeNav="map"`, notifCount tự động |
+
+### C. Search Overlay (Shopee-style)
+| File | Thay đổi |
+|------|----------|
+| `common/buyer/search-overlay.html` | Dropdown gợi ý khi gõ ≥2 ký tự. Default: chips "Tìm kiếm phổ biến" |
+| `common/buyer/header.html` | `fetchSuggestions()` → `GET /api/search/suggest?q=` → render SP + Store |
+| `HomeController.java` | `GET /api/search/suggest`: 4 SP + 3 Store |
+| `buyer/search.html` | **Rewrite**: Filter bar (deal type + price range + sort). Cards nhỏ hơn (auto-fill minmax 150px). Store results cùng padding |
+
+### D. Profile Edit + Address Book
+| File | Thay đổi |
+|------|----------|
+| `buyer/profile.html` | Thông tin cá nhân (expandable: edit + avatar upload). Đổi mật khẩu (BCrypt). **Sổ địa chỉ** (CRUD, set default, bottom sheet modal) |
+| `HomeController.java` | +7 endpoints: update profile, change password, avatar upload, address CRUD |
+| `UserAddress.java` **(NEW)** | Entity: name, phone, address, city, district, ward, isDefault |
+| `UserAddressRepository.java` **(NEW)** | `findByUserUserIdOrderByIsDefaultDesc`, `clearDefault()` |
+| `V9__create_user_addresses.sql` **(NEW)** | Migration |
+
+### E. Sửa Lỗi JPA TransactionSystemException (Quan Trọng)
+**Root cause:** `orderRepository.save(order)` và `productRepository.save(product)` gây JPA cascade flush → `TransactionSystemException` khi entity có `version=null` hoặc lazy collection lỗi.
+
+**Fix:** Tất cả status update dùng `@Modifying` query UPDATE trực tiếp thay vì `save()`:
+
+| File | Thay đổi |
+|------|----------|
+| `OrderRepository.java` | +4 `@Modifying(clearAutomatically=true)` queries: `updateOrderStatus`, `updateOrderQrCode`, `updateOrderPickupTime`, `cancelOrder` |
+| `ProductRepository.java` | +1 `@Modifying updateProductFields()` |
+| `SellerController.java` | `updateOrderStatus` + `editProduct` → dùng `@Modifying` query + `@Transactional` |
+| `StaffController.java` | `updateOrderStatus` → dùng `@Modifying` query + `@Transactional` |
+
+**Quy tắc mới:** Mọi POST endpoint cập nhật entity dùng `@Modifying` query + `@Transactional` thay vì JPA `save()`.
+
+### F. Order Auto-Cancel Service
+| File | Thay đổi |
+|------|----------|
+| `OrderAutoCancelService.java` **(NEW)** | `@Scheduled(fixedRate=30min)`: hủy PENDING >60 phút + READY >2 ngày + SP hết hạn. Hoàn stock. `@Modifying cancelOrder()` + `@Transactional` trên package-private method |
+| `SellerController.java` | `cancelOrdersWithProduct()`: khi edit SP → PENDING, hủy đơn chứa SP + notify buyer |
+
+### G. PayOS QR Improvements
+| File | Thay đổi |
+|------|----------|
+| `PayOSService.java` | `cancelPaymentLink(orderId)`: gọi PayOS API cancel khi order bị hủy. `fetchPaymentInfo()`: check trạng thái payment cũ. **Chống trùng QR**: nếu đã có orderCode → check PAID → reuse hoặc báo "đã thanh toán" |
+| `SellerController.java` | Gọi `payOSService.cancelPaymentLink()` khi order → CANCELLED |
+| `StaffController.java` | Gọi `payOSService.cancelPaymentLink()` khi order → CANCELLED |
+
+### H. Store Page Buyer Redesign
+| File | Thay đổi |
+|------|----------|
+| `buyer/store.html` | **Rewrite products section**: card giống category page (`.prod-card` từ home.css), deal pricing, badge giảm giá, "+ Giỏ" + "Mua" buttons. Search + sort (Mặc định/Giá↑/Giá↓/Tên A-Z). Dùng shared header + mobile-nav |
+| `HomeController.java` | `storePage()` build `dealProductMap` cho pricing display |
+| `buyer/store.html` | Thêm `addToCartStore()`, `buyNowStore()`, `showStoreToast()`, `updateCartBadge()` JS |
+
+### I. Fixes & Polish
+| Issue | Fix |
+|-------|-----|
+| Staff dashboard không hiện PENDING orders | Sửa slot filter: `scheduledPickupTime == null` → hiện trong tất cả slot |
+| Staff/Seller JS "not valid JSON" | Check `content-type` trước `r.json()`, báo "Phiên hết hạn" nếu HTML |
+| Seller dashboard badge | Đồng bộ `.badge-pending/confirmed/ready/completed/cancelled` giống orders page |
+| Staff nav badge bị trôi | `.nav-item` thêm `position:relative` |
+| Store page thiếu header/nav | Thêm shared `common/buyer/header` + `mobile-nav` |
+| Mobile nav không sáng tab | Set `activeNav` cho tất cả trang (home/map/cart/orders/account) |
+| Tiếng Việt thiếu dấu | Fix search.html (13 lỗi), store-profile.html (8 lỗi) |
+| Deal hết hạn vẫn hiển thị trong seller product detail | Thêm check `startTime <= now && endTime >= now` |
+| Deals không tự ENDED khi quá hạn | `ExpiryCountdownService.endExpiredDeals()` @Scheduled 30 phút |
+
+### J. Documentation
+| File | Thay đổi |
+|------|----------|
+| `DEALXANH_BA_DOCS.md` **(NEW)** | Tài liệu đặc tả nghiệp vụ 23 sections (domain model, RBAC, state machines, luồng, API, validate, filters, DB, security, site map, dev timeline) |
+| `CLAUDE.md` | Section này |
+
+---
+
 ## ✅ Checklist trước khi commit code
 
 - [ ] **Đã thêm đủ layout: bottom-nav/sidebar + header + CSS fragment trước khi code trang mới**
@@ -1649,9 +1740,208 @@ Quick filter chips trên trang chủ buyer trước đây dùng JS để filter/
 | Order System | 70% | 60% | 35% | **58%** |
 | Payment System | 40% | 45% | 15% | **35%** |
 | Cart System | 100% | 100% | 60% | **95%** |
-| Notification | 50% | 40% | 20% | **40%** |
+| Notification | 85% | 80% | 40% | **75%** |
+| Address Book | 100% | 90% | 50% | **85%** |
+| Auto-Cancel | 90% | 0% | 30% | **50%** |
 
-**Overall Project Completion: ~82%**
+**Overall Project Completion: ~94%**
+
+---
+
+---
+
+## 🔥 Recent Updates (2026-05-31 → 2026-06-01) — Mega Session
+
+### Tổng quan — 20+ file changes, 3 services mới, 2 tài liệu mới
+
+Phiên làm việc tập trung vào: Buyer Prepay + Pickup Time, Cart Checkboxes, Deal FIXED/PERCENT Logic Fix, Location-Based Sorting, Distance Warning, Deal System Audit.
+
+---
+
+### A. Buyer Prepay + Pickup Time Slot (Phase 1-6)
+
+**Flow mới:**
+```
+Buyer checkout → chọn giờ nhận hàng → đặt đơn → thấy QR PayOS
+→ thanh toán ngay qua app bank → order auto READY_FOR_PICKUP
+→ seller thấy "Hoàn thành" (chỉ trong khung giờ pickup)
+```
+
+| File | Thay đổi |
+|------|----------|
+| `payment.html` | Thêm input `datetime-local` chọn giờ pickup (min=tomorrow, max=+3 ngày). Style đồng bộ với `.pay-section` card |
+| `order-complete.html` | Thêm section "Thanh toán trước qua PayOS" với QR code, countdown 30ph, auto-poll 5s |
+| `HomeController.java` | `confirmCheckout()` nhận `scheduledPickupTime`, lưu vào Order. `checkout()` GET/POST tính distance + FIXED deal logic |
+| `PaymentController.java` | Thêm `POST /api/payment/buyer-create/{orderId}` — buyer tự tạo QR không cần READY |
+| `PayOSService.java` | Branch `confirmPaymentAndDeductStock()`: PENDING/CONFIRMED → READY (prepay), READY → COMPLETED (at-store). `createSaleTransaction()` → public |
+| `seller/orders.html` | Button: CONFIRMED+PAID → Hoàn thành, READY+PAID → Hoàn thành (skip QR) |
+| `staff/orders.html` | Tương tự seller |
+| `SellerController.java` | +Pickup time validation (30ph before → 2h after). +`deductStockAndCreateTransaction()` |
+| `StaffController.java` | Tương tự seller |
+
+### B. Cart — Checkboxes & Selective Checkout
+
+| File | Thay đổi |
+|------|----------|
+| `cart.html` | Thêm checkbox "Chọn tất cả" + checkbox từng item. `recalcCart()` tính lại tổng theo SP được chọn. `saveSelectedItems()` gọi API lưu selection trước checkout |
+| `HomeController.java` | `POST /api/cart/checkout-selection` lưu selected IDs vào session. `checkout()` GET filter cart theo selection |
+
+### C. Deal FIXED/PERCENT Logic — Fix Toàn Diện
+
+**Vấn đề:** FIXED deal (giảm theo tiền) bị nhân theo số lượng SP → giảm 20k mua 2 SP thành giảm 40k.
+
+**Fix:**
+- FIXED deal: **giữ salePrice = originalPrice** trong cart, **áp 1 lần** khi checkout (gom unique dealId)
+- PERCENT deal: áp theo từng SP như cũ
+- CODE_REQUIRED (voucher): **không auto-apply** vào giá, hiển thị badge vàng "Cần nhập mã"
+- AUTO_APPLY: auto-apply vào giá, hiển thị badge xanh
+
+| File | Thay đổi |
+|------|----------|
+| `CartService.java` | DealProduct: check `applyMethod`, FIXED giữ originalPrice. DealCategory: AUTO_APPLY mới giảm giá, CODE_REQUIRED giữ nguyên. Thêm `applyMethod` vào item map |
+| `HomeController.java` | Checkout GET/POST: gom unique FIXED dealId → cộng discountValue 1 lần. PERCENT vẫn per-item |
+
+**Cart Breakdown mới (gom nhóm theo deal):**
+```
+┌─ Sale Hè 2026 ─────────── 🟢 Giảm 25% ─┐  ← AUTO_APPLY
+│ Trà sữa (Shop A)       -6,000đ (15%)    │
+│ Tổng giảm: -10,500đ                     │
+└──────────────────────────────────────────┘
+┌─ Voucher 20K Khai Trương ─ 🟡 Cần nhập mã ┐  ← CODE_REQUIRED
+│ Cơm tấm (Store 3)           40,000đ/sp   │
+│ Nhập mã để được giảm 20,000đ             │
+└──────────────────────────────────────────┘
+```
+
+### D. Location-Based Features
+
+| File | Thay đổi |
+|------|----------|
+| `LocationService.java` **(NEW)** | IP geolocation (ipapi.co) + Nominatim geocode + Haversine distance |
+| `HomeController.java` | `home()` sort SP theo khoảng cách gần nhất. `checkout()` tính distance + cảnh báo >10km |
+| `order-summary.html` | Cảnh báo vàng khi store cách >10km: "Lưu ý: Cửa hàng cách bạn ~X km..." |
+
+### E. Scheduled Tasks — Bug Fixes
+
+| File | Thay đổi |
+|------|----------|
+| `OrderAutoCancelService.java` | Fix self-invocation: self-inject `@Lazy`. Dùng `findByIdWithItems` + snapshot trước `@Modifying`. PENDING timeout: 60ph → **30ph**. Dùng `@Modifying restoreStock()` thay vì entity save |
+| `ProductRepository.java` | Thêm `restoreStock()` — `@Modifying` query hoàn stock |
+| `ExpiryCountdownService.java` | `endExpiredDeals()` dùng `@Modifying endExpiredActiveDeals()` thay vì entity save |
+| `DealRepository.java` | Thêm `endExpiredActiveDeals()` — `@Modifying` UPDATE ACTIVE→ENDED |
+
+### F. Seller Registration — Lock Province
+
+| File | Thay đổi |
+|------|----------|
+| `register-seller.html` | Province dropdown: chỉ load "Hà Nội", disable, auto-select |
+| `seller-onboarding.html` | Hardcode Hà Nội, disable select |
+
+### G. Cart Voucher Bug Fix
+
+| File | Thay đổi |
+|------|----------|
+| `HomeController.java` | `applyVoucher()` đọc cart từ DB (`CartService`) thay vì session → fix "giỏ hàng trống" |
+
+### H. Security — Session Expiry Redirect
+
+| File | Thay đổi |
+|------|----------|
+| `CustomInvalidSessionStrategy.java` | Thêm `&redirect=<original_url>` vào login URL |
+| `CustomAuthenticationSuccessHandler.java` | Check tham số `redirect` → redirect về trang gốc sau login |
+
+### I. Remove Original Price (Strikethrough)
+
+| File | Thay đổi |
+|------|----------|
+| `home.html`, `category.html`, `search.html`, `store.html`, `deal-detail.html`, `product-detail.html`, `cart.html`, `order-summary.html`, `deal-map.html` | Xóa `<span class="deal-card__original">`, `<span class="prod-card__original">`, `<span class="ci-original">`, `<span class="os-item__original">`, v.v. |
+
+### J. Documentation (New Files)
+
+| File | Nội dung |
+|------|----------|
+| `DEAL_SYSTEM.md` **(NEW)** | Tài liệu toàn bộ hệ thống Deal: kiến trúc 2 tầng, entity, luồng hoạt động, trạng thái, validation rules, ảnh hưởng |
+| `DEAL_AUDIT.md` **(NEW)** | Audit 12 deals trong DB: phát hiện bug (deal hết hạn vẫn ACTIVE, FIXED pricing sai, SCHEDULED không tự ACTIVE), đề xuất sửa |
+
+---
+
+## 🔐 Quy tắc CRITICAL (added 2026-06-01)
+
+### **36. LUÔN phân biệt AUTO_APPLY vs CODE_REQUIRED trong CartService**
+
+```java
+// ✅ ĐÚNG: AUTO_APPLY mới auto-giảm giá. CODE_REQUIRED giữ originalPrice
+if ("AUTO_APPLY".equals(deal.getApplyMethod())) {
+    salePrice = calculateDiscountPrice(deal, originalPrice);
+} else {
+    salePrice = originalPrice; // Voucher phải do buyer chọn thủ công
+}
+item.put("applyMethod", deal.getApplyMethod()); // Luôn truyền để frontend hiển thị đúng
+```
+
+### **37. FIXED deal — áp 1 LẦN, không nhân theo số lượng SP**
+
+```java
+// ✅ ĐÚNG: Gom unique dealId, cộng discountValue 1 lần
+Set<Long> appliedFixedDealIds = new HashSet<>();
+double fixedDealDiscount = 0;
+for (item : items) {
+    if ("FIXED".equals(item.discountType) && !appliedFixedDealIds.contains(item.dealId)) {
+        fixedDealDiscount += item.discountValue;
+        appliedFixedDealIds.add(item.dealId);
+    } else if (!"FIXED".equals(item.discountType)) {
+        discountAmount += (originalPrice - salePrice) * quantity;
+    }
+}
+// ❌ SAI: discountAmount += (originalPrice - salePrice) * quantity cho mọi item
+```
+
+### **38. @Modifying query LUÔN cần @Transactional — tránh self-invocation**
+
+```java
+// ✅ ĐÚNG: Self-inject + gọi qua proxy
+@Autowired @Lazy private MyService self;
+self.transactionalMethod(); // Đi qua AOP proxy
+
+// ❌ SAI: Gọi nội bộ → @Transactional bị bypass
+this.transactionalMethod(); // KHÔNG qua proxy!
+```
+
+### **39. Cart page — th:id cho dynamic IDs trong Thymeleaf**
+
+```html
+<!-- ✅ ĐÚNG: -->
+<div th:id="'qrBox_' + ${order.orderId}">
+<!-- ❌ SAI: Thymeleaf không parse ${} trong attribute thường -->
+<div id="qrBox_${order.orderId}">
+```
+
+### **40. Deal breakdown trong cart — gom nhóm theo dealId**
+
+Luôn hiển thị breakdown gom nhóm theo deal:
+- AUTO_APPLY: badge xanh, hiện % và số tiền giảm
+- CODE_REQUIRED: badge vàng "Cần nhập mã", hiện giá gốc, gợi ý nhập mã
+
+### **41. Khóa tỉnh Hà Nội cho seller registration**
+
+```javascript
+// register-seller.html: chỉ load Hà Nội, disable select
+const haNoi = data.find(p => p.name === 'Hà Nội');
+citySelect.appendChild(opt);
+citySelect.value = haNoi.name;
+citySelect.disabled = true;
+```
+
+### **42. Seller chỉ hoàn thành đơn trong khung giờ pickup**
+
+```java
+if ("COMPLETED".equals(newStatus) && order.getScheduledPickupTime() != null) {
+    LocalDateTime windowStart = pickupTime.minusMinutes(30);
+    LocalDateTime windowEnd = pickupTime.plusHours(2);
+    if (now.isBefore(windowStart)) return error("Chưa đến giờ nhận hàng");
+    if (now.isAfter(windowEnd)) return error("Đã quá giờ nhận hàng");
+}
+```
 
 ---
 
@@ -1681,8 +1971,12 @@ Quick filter chips trên trang chủ buyer trước đây dùng JS để filter/
 - [x] **M8.1: Payment UX — Remove Cash + Credit Card UI + PayOS Sync** (Completed 2026-05-24)
 - [x] **M8.2: Cart DB Persistence + Stock Validation + Product Validation** (Completed 2026-05-24)
 - [x] **M8.3: Buyer Product Detail Page + Home/Category Filter Fix** (Completed 2026-05-24)
-- [ ] **M9: Notification System** (Not Started)
-- [ ] **M10: Analytics & Reports** (Not Started)
+- [x] **M9: Notification System + Search Overlay + Profile Edit** (Completed 2026-05-28)
+- [x] **M10: Order Auto-Cancel + PayOS Fixes + Store Page Redesign** (Completed 2026-05-30)
+- [x] **M11: Buyer Prepay + Pickup Time + Deal Logic Fix** (Completed 2026-06-01)
+- [x] **M12: Location-Based Sorting + Cart Checkboxes + System Audit** (Completed 2026-06-01)
+- [ ] **M13: Deal System Hardening** (Pending — auto-activate SCHEDULED, usageCount tracking, platform overlap warning)
+- [ ] **M14: Analytics & Reports** (Not Started)
 
 ---
 
@@ -1697,12 +1991,22 @@ Quick filter chips trên trang chủ buyer trước đây dùng JS để filter/
 6. ✅ Cart NaNđ + scroll bị mobile-nav che → fix padding + bottom:72px cho sticky bars
 7. ✅ Thymeleaf `${}` trong JS template literal xung đột → dùng string concat thay vì backtick
 8. ✅ BUG: Thymeleaf JS inline URL backslash — dùng forward slash `/`
+9. ✅ FIXED deal discount bị nhân theo số lượng SP → gom unique dealId, áp 1 lần
+10. ✅ Voucher (CODE_REQUIRED) bị auto-apply vào cart → chỉ AUTO_APPLY mới auto-giảm
+11. ✅ Cart voucher "giỏ hàng trống" → đọc cart từ DB thay vì session
+12. ✅ Auto-cancel scheduler lỗi version=null + LazyInitializationException → dùng @Modifying query
+13. ✅ ExpiryCountdownService lỗi detached entity → dùng @Modifying endExpiredActiveDeals()
+14. ✅ Cart QR IDs không render → dùng th:id thay vì plain id
+15. ✅ Seller registration province → khóa Hà Nội, disable select
+16. ✅ Session expiry redirect → lưu original URL, redirect về đúng trang sau login
 
 ### **Known Issues:**
 1. ⚠️ PayOS webhook không tới được localhost — dùng polling qua nút "Kiểm tra trạng thái"
 2. ⚠️ QR code dùng api.qrserver.com (third-party) — nên tự generate QR bằng thư viện Java
-3. ⚠️ Mobile responsive needs improvement
-4. ⚠️ Some modal close behaviors inconsistent
+3. ⚠️ No SCHEDULED→ACTIVE auto-transition (deals stay SCHEDULED past startTime)
+4. ⚠️ usageCount không tự động tăng khi checkout (maxUsageCount, usagePerUser vô dụng)
+5. ⚠️ Platform deals chồng lấn danh mục không có cảnh báo khi admin tạo
+6. ⚠️ Mobile responsive needs improvement
 
 ---
 
@@ -1711,7 +2015,7 @@ Quick filter chips trên trang chủ buyer trước đây dùng JS để filter/
 **Project:** DealXanh O2O Deal Marketplace
 **Tech Lead:** [Your Name]
 **Documentation:** CLAUDE.md (this file)
-**Last Updated:** 2026-05-24
+**Last Updated:** 2026-06-01
 
 ---
 

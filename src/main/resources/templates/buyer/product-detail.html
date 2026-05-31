@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -133,7 +133,6 @@ body{padding-bottom:100px;background:var(--background);font-family:var(--font-fa
             <span class="prod-price__sale" th:if="${dealInfo == null}"
                   th:text="|${#numbers.formatDecimal(product.getDisplayPrice(), 0, 0)}đ|">0đ</span>
             <th:block th:if="${dealInfo != null}">
-                <span class="prod-price__original" th:text="|${#numbers.formatDecimal(dealInfo.originalPrice, 0, 0)}đ|">0đ</span>
                 <span class="prod-price__discount" th:text="|-${dealInfo.discountPercent}%|">-0%</span>
             </th:block>
         </div>

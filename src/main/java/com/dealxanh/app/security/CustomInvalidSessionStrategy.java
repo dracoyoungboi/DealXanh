@@ -21,12 +21,17 @@ public class CustomInvalidSessionStrategy implements InvalidSessionStrategy {
         }
 
         String loginUrl;
+        String originalUrl = requestUrl;
+        // Preserve query string for GET requests
+        if (request.getQueryString() != null && !request.getQueryString().isEmpty()) {
+            originalUrl = requestUrl + "?" + request.getQueryString();
+        }
         if (requestUrl.startsWith("/admin")) {
-            loginUrl = "/admin/login?expired=true";
+            loginUrl = "/admin/login?expired=true&redirect=" + java.net.URLEncoder.encode(originalUrl, "UTF-8");
         } else if (requestUrl.startsWith("/staff") || requestUrl.startsWith("/seller") || requestUrl.startsWith("/store")) {
-            loginUrl = "/seller/login?expired=true";
+            loginUrl = "/seller/login?expired=true&redirect=" + java.net.URLEncoder.encode(originalUrl, "UTF-8");
         } else {
-            loginUrl = "/login?expired=true";
+            loginUrl = "/login?expired=true&redirect=" + java.net.URLEncoder.encode(originalUrl, "UTF-8");
         }
 
         // For AJAX requests, return 401

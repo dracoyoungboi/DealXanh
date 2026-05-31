@@ -102,4 +102,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Modifying
     @Query("UPDATE Product p SET p.name = :name, p.description = :description, p.originalPrice = :price, p.stockQuantity = :stock, p.imageUrl = :imageUrl, p.expiryDate = :expiryDate, p.category.categoryId = :categoryId, p.approvalStatus = 'PENDING', p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
     void updateProductFields(@Param("id") Long id, @Param("name") String name, @Param("description") String description, @Param("price") Double price, @Param("stock") Integer stock, @Param("imageUrl") String imageUrl, @Param("expiryDate") java.time.LocalDateTime expiryDate, @Param("categoryId") Long categoryId);
+
+    /** Hoàn stock khi hủy đơn (auto-cancel) — tránh load/save entity gây version=null */
+    @Modifying
+    @Query("UPDATE Product p SET p.stockQuantity = p.stockQuantity + :qty, p.active = true, p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
+    void restoreStock(@Param("id") Long id, @Param("qty") int qty);
 }

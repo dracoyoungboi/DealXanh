@@ -151,6 +151,8 @@ body{padding-bottom:80px;background:var(--background)}
         </div>
         <div class="cart-voucher-msg" id="voucherMsg"></div>
     </div>
+    <!-- Deal breakdown -->
+    <div class="deal-breakdown" id="dealBreakdown" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(13,92,46,.04);border-radius:8px;border:1px solid rgba(13,92,46,.12);font-size:12px;"></div>
     <div class="cs-row" style="margin-top:8px;">
         <span class="cs-label">Tạm tính (<span id="csCount">0</span> sản phẩm)</span>
         <div style="text-align:right;">
@@ -159,7 +161,7 @@ body{padding-bottom:80px;background:var(--background)}
             <div class="cs-total" id="csTotal">0đ</div>
         </div>
     </div>
-    <a href="/buyer/checkout" class="btn-checkout">Thanh toán</a>
+    <a href="/buyer/checkout" class="btn-checkout" id="btnCheckout" onclick="saveSelectedItems(event)">Thanh toán</a>
 </div>
 
 <!-- Voucher Modal -->
@@ -235,6 +237,12 @@ function renderCart() {
     var totalOriginal = 0;
 
     var html = '';
+    // Select-all header
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0 10px;border-bottom:1px solid var(--border-light);margin-bottom:8px;font-size:13px;font-weight:600;color:var(--text-primary);">'
+        + '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">'
+        + '<input type="checkbox" id="selectAll" checked onchange="toggleSelectAll(this.checked)" style="width:16px;height:16px;accent-color:var(--primary);">'
+        + 'Chọn tất cả (<span id="selectedCount">0</span>)'
+        + '</label></div>';
     cartItems.forEach(function(item){
         var qty = item.quantity || 1;
         var maxStock = item.maxStock || 0;
@@ -261,13 +269,13 @@ function renderCart() {
             totalOriginal += (item.originalPrice || item.salePrice || 0) * qty;
 
             html += '<div class="cart-item">'
+                + '<input type="checkbox" class="cart-item-cb" checked onchange="recalcCart()" data-pid="' + item.productId + '" style="width:16px;height:16px;accent-color:var(--primary);margin-right:4px;flex-shrink:0;">'
                 + '<img src="' + (item.productImage || '/img/default-banner.svg') + '" alt="" onerror="this.src=\'/img/default-banner.svg\'">'
                 + '<div class="ci-info">'
                 + '<div class="ci-name">' + esc(item.productName) + '</div>'
                 + '<div class="ci-store">' + esc(item.storeName) + (item.dealType ? '<span class="deal-badge deal-badge--' + esc(item.dealType) + '">' + esc(item.dealName || item.dealType) + '</span>' : '') + '</div>'
                 + '<div class="ci-price">'
                 + '<span class="ci-sale">' + fmt(item.salePrice) + '</span>'
-                + ('<span class="ci-original">' + (item.originalPrice && item.originalPrice > item.salePrice ? fmt(item.originalPrice) : '') + '</span>')
                 + '</div>'
                 + (maxStock > 0 ? '<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">Kho: ' + maxStock + ' sản phẩm</div>' : '')
                 + '</div>'
@@ -282,36 +290,143 @@ function renderCart() {
     });
 
     list.innerHTML = html;
-    document.getElementById('csCount').textContent = totalItems;
+    recalcCart();
     document.getElementById('cartCountTop').textContent = totalItems;
-
-    // Calculate totals with optional voucher
-    var dealDiscount = totalOriginal - totalPrice;
-    var voucherDiscount = 0;
-    if (appliedVoucher) {
-        voucherDiscount = appliedVoucher.voucherDiscount || 0;
-    }
-    var finalTotal = totalPrice - voucherDiscount;
-    if (finalTotal < 0) finalTotal = 0;
-    document.getElementById('csTotal').textContent = fmt(finalTotal);
-
-    var origEl = document.getElementById('csOriginal');
-    var discEl = document.getElementById('csDiscount');
-    if (dealDiscount > 0 || voucherDiscount > 0) {
-        origEl.style.display = '';
-        origEl.textContent = 'Giá gốc ' + fmt(totalOriginal);
-        var parts = [];
-        if (dealDiscount > 0) parts.push('Deal -' + fmt(dealDiscount));
-        if (voucherDiscount > 0) parts.push('Voucher -' + fmt(voucherDiscount));
-        discEl.style.display = '';
-        discEl.textContent = parts.join(' · ');
-    } else {
-        origEl.style.display = 'none';
-        discEl.style.display = 'none';
-    }
 }
 
 var availableVouchers = [];
+var selectedProductIds = [];
+
+function recalcCart() {
+    var cbs = document.querySelectorAll('.cart-item-cb');
+    var cnt = 0;
+    selectedProductIds = [];
+    cbs.forEach(function(cb) {
+        if (cb.checked) { cnt++; selectedProductIds.push(parseInt(cb.dataset.pid)); }
+    });
+    document.getElementById('selectedCount').textContent = cnt;
+    document.getElementById('selectAll').checked = (cbs.length > 0 && cnt === cbs.length);
+
+    // Recalculate from checked items only
+    var ti = 0, tp = 0, to = 0;
+    cartItems.forEach(function(item) {
+        if (item.unavailable) return;
+        if (selectedProductIds.indexOf(item.productId) < 0) return;
+        var q = item.quantity || 1;
+        ti += q; tp += (item.salePrice || 0) * q; to += (item.originalPrice || item.salePrice || 0) * q;
+    });
+    document.getElementById('csCount').textContent = ti;
+    var vd = appliedVoucher ? (appliedVoucher.voucherDiscount || 0) : 0;
+    var ft = tp - vd; if (ft < 0) ft = 0;
+    document.getElementById('csTotal').textContent = fmt(ft);
+    var dd = to - tp;
+    var oe = document.getElementById('csOriginal');
+    var de = document.getElementById('csDiscount');
+    if (dd > 0 || vd > 0) {
+        oe.style.display = ''; oe.textContent = 'Giá gốc ' + fmt(to);
+        var parts = []; if (dd > 0) parts.push('Deal -' + fmt(dd)); if (vd > 0) parts.push('Voucher -' + fmt(vd));
+        de.style.display = ''; de.textContent = parts.join(' · ');
+    } else { oe.style.display = 'none'; de.style.display = 'none'; }
+
+    // Build deal breakdown — group items by dealId
+    var db = document.getElementById('dealBreakdown');
+    var dealGroups = {};
+    cartItems.forEach(function(item) {
+        if (item.unavailable) return;
+        if (selectedProductIds.indexOf(item.productId) < 0) return;
+        var did = item.dealId || 0;
+        if (did <= 0) return;
+        if (!dealGroups[did]) {
+            dealGroups[did] = { dealName: item.dealName, dealType: item.dealType, discountType: item.discountType, discountValue: item.discountValue || 0, applyMethod: item.applyMethod || '', items: [], totalOrig: 0, totalSale: 0 };
+        }
+        var q = item.quantity || 1;
+        var sp = item.salePrice || 0;
+        var op = item.originalPrice || sp;
+        dealGroups[did].items.push({ name: item.productName, qty: q, orig: op, sale: sp, storeName: item.storeName });
+        dealGroups[did].totalOrig += op * q;
+        dealGroups[did].totalSale += sp * q;
+    });
+
+    var breakdownHtml = '';
+    var keys = Object.keys(dealGroups);
+    if (keys.length > 0) {
+        breakdownHtml = '<div style="font-weight:700;color:var(--primary);margin-bottom:6px;">Chi tiết giảm giá</div>';
+        keys.forEach(function(did) {
+            var dg = dealGroups[did];
+            var isAuto = dg.applyMethod === 'AUTO_APPLY';
+            var totalDiff = dg.totalOrig - dg.totalSale;
+            var pct = dg.totalOrig > 0 ? Math.round((totalDiff / dg.totalOrig) * 100) : 0;
+            // Badge
+            var badge, badgeStyle;
+            if (isAuto) {
+                badge = dg.discountType === 'FIXED' ? 'Giảm ' + fmt(dg.discountValue) + ' (cố định)' : 'Giảm ' + pct + '%';
+                badgeStyle = 'background:rgba(16,185,129,.1);color:var(--success);';
+            } else {
+                badge = 'Cần nhập mã';
+                badgeStyle = 'background:rgba(245,158,11,.15);color:#92400e;';
+            }
+            // Build item list
+            var itemHtml = '';
+            dg.items.forEach(function(it) {
+                var diff = it.orig - it.sale;
+                if (diff > 0 && isAuto) {
+                    itemHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);padding:2px 0;">'
+                        + '<span>' + (it.qty > 1 ? 'x' + it.qty + ' ' : '') + esc(it.name) + ' <span style="color:var(--text-tertiary);font-size:10px;">(' + esc(it.storeName) + ')</span></span>'
+                        + '<span style="color:var(--danger);font-weight:500;">-' + fmt(diff) + ' (' + Math.round((diff/it.orig)*100) + '%)</span>'
+                        + '</div>';
+                } else {
+                    itemHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);padding:2px 0;">'
+                        + '<span>' + (it.qty > 1 ? 'x' + it.qty + ' ' : '') + esc(it.name) + ' <span style="color:var(--text-tertiary);font-size:10px;">(' + esc(it.storeName) + ')</span></span>'
+                        + '<span style="color:var(--text-tertiary);font-size:10px;">' + fmt(it.orig) + '/sp</span>'
+                        + '</div>';
+                }
+            });
+            var footerHtml = isAuto && totalDiff > 0
+                ? '<div style="text-align:right;font-size:11px;font-weight:700;color:var(--danger);border-top:1px dashed rgba(0,0,0,.06);padding-top:3px;margin-top:2px;">Tổng giảm: -' + fmt(totalDiff) + (pct > 0 ? ' (' + pct + '%)' : '') + '</div>'
+                : '<div style="text-align:right;font-size:10px;color:var(--text-tertiary);border-top:1px dashed rgba(0,0,0,.06);padding-top:3px;margin-top:2px;">Nhập mã <strong>' + esc(dg.dealName) + '</strong> để được giảm ' + (dg.discountType === 'FIXED' ? fmt(dg.discountValue) : dg.discountValue + '%') + '</div>';
+
+            breakdownHtml += '<div style="margin-bottom:8px;padding:8px 10px;background:rgba(255,255,255,.7);border-radius:6px;border:1px solid ' + (isAuto ? 'rgba(16,185,129,.2)' : 'rgba(245,158,11,.2)') + ';">'
+                + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
+                + '<span style="font-weight:700;font-size:12px;color:var(--text-primary);">' + esc(dg.dealName) + '</span>'
+                + '<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;' + badgeStyle + '">' + badge + '</span>'
+                + '</div>'
+                + itemHtml
+                + footerHtml
+                + '</div>';
+        });
+        db.innerHTML = breakdownHtml;
+        db.style.display = '';
+    } else {
+        db.style.display = 'none';
+    }
+}
+
+function toggleSelectAll(checked) {
+    document.querySelectorAll('.cart-item-cb').forEach(function(cb) { cb.checked = checked; });
+    recalcCart();
+}
+
+function saveSelectedItems(e) {
+    if (selectedProductIds.length === 0) {
+        e.preventDefault();
+        alert('Vui lòng chọn ít nhất 1 sản phẩm để thanh toán');
+        return;
+    }
+    e.preventDefault();
+    var btn = document.getElementById('btnCheckout');
+    if (btn) { btn.textContent = 'Đang xử lý...'; btn.style.pointerEvents = 'none'; }
+    fetch('/api/cart/checkout-selection', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ids: selectedProductIds})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) { window.location.href = '/buyer/checkout'; }
+        else { if (btn) { btn.textContent = 'Thanh toán'; btn.style.pointerEvents = ''; } alert(data.message || 'Lỗi'); }
+    })
+    .catch(function() { if (btn) { btn.textContent = 'Thanh toán'; btn.style.pointerEvents = ''; } });
+}
 
 function openVoucherModal() {
     var modal = document.getElementById('voucherModal');

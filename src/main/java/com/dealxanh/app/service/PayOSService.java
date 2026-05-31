@@ -268,6 +268,19 @@ public class PayOSService {
         }
 
         if (amountPaid >= expectedAmount) {
+            // BRANCH: prepay (PENDING/CONFIRMED) vs at-store (READY_FOR_PICKUP)
+            if ("PENDING".equals(lockedOrder.getStatus()) || "CONFIRMED".equals(lockedOrder.getStatus())) {
+                // PREPAY: buyer paid upfront -> auto-transition to READY_FOR_PICKUP
+                lockedOrder.setStatus("READY_FOR_PICKUP");
+                lockedOrder.setPaymentStatus("PAID");
+                lockedOrder.setUpdatedAt(LocalDateTime.now());
+                // NO stock deduction, NO transaction, NO actualPickupTime yet
+                orderRepository.save(lockedOrder);
+                return Map.of("paid", true, "message",
+                    "Thanh toan thanh cong! Don hang dang cho cua hang xac nhan.");
+            }
+
+            // AT-STORE payment: order already READY_FOR_PICKUP -> complete
             lockedOrder.setStatus("COMPLETED");
             lockedOrder.setPaymentStatus("PAID");
             lockedOrder.setActualPickupTime(LocalDateTime.now());
@@ -358,7 +371,7 @@ public class PayOSService {
         }
     }
 
-    private void createSaleTransaction(Order order, String paymentMethod) {
+    public void createSaleTransaction(Order order, String paymentMethod) {
         double amount = order.getFinalAmount() != null ? order.getFinalAmount() : 0;
         Store store = order.getStore();
         double platformFee = calculatePlatformFee(amount, store);

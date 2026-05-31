@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -191,6 +191,20 @@ body{padding-bottom:120px;background:var(--background)}
         Giao dịch được bảo mật bởi SSL 256-bit. Chúng tôi không lưu thông tin thanh toán của bạn.
     </div>
 
+    <!-- Pickup time slot -->
+    <div class="pickup-time-section" style="margin:16px 16px 0;padding:16px 20px;background:var(--surface);border-radius:var(--radius-md);border:1px solid var(--border);">
+        <div class="pay-section__title" style="margin-bottom:10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="width:18px;height:18px;margin-right:8px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Giờ nhận hàng dự kiến
+        </div>
+        <input type="datetime-local" name="scheduledPickupTime" id="pickupTimeInput"
+            style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;color:var(--text-primary);background:var(--bg);"
+            required>
+        <div class="pickup-hint" style="font-size:12px;color:var(--text-secondary);margin-top:6px;">
+            Chọn giờ bạn dự định đến nhận hàng. Cửa hàng sẽ chuẩn bị đơn hàng trước giờ này.
+        </div>
+    </div>
+
 </div>
 
 <!-- Sticky bottom bar -->
@@ -262,8 +276,24 @@ function loadCartTotal() {
 }
 
 function fmt(n) {
-    return (n || 0).toLocaleString('vi-VN') + 'đ';
+    return (n || 0).toLocaleString('vi-VN') + 'd';
 }
+
+// Set min/max for pickup time: tomorrow to 3 days from now
+(function() {
+    var now = new Date();
+    now.setDate(now.getDate() + 1);
+    var minStr = now.toISOString().slice(0, 16);
+    var max = new Date();
+    max.setDate(max.getDate() + 3);
+    var maxStr = max.toISOString().slice(0, 16);
+    var input = document.getElementById('pickupTimeInput');
+    if (input) {
+        input.min = minStr;
+        input.max = maxStr;
+        input.value = minStr;
+    }
+})();
 
 loadCartTotal();
 </script>

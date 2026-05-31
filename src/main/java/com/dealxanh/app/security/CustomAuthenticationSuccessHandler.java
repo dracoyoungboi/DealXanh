@@ -31,10 +31,16 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         // Explicitly set authentication in security context
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String redirectUrl = "/home"; // Default for buyers
+        // Check for saved redirect from session expiry first
+        String redirectUrl = request.getParameter("redirect");
+        boolean hasSavedRedirect = (redirectUrl != null && !redirectUrl.isEmpty());
+        if (!hasSavedRedirect) {
+            redirectUrl = "/home"; // Default for buyers
+        }
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
         System.out.println("DEBUG: Authorities: " + authorities);
+        System.out.println("DEBUG: Saved redirect URL: " + (hasSavedRedirect ? redirectUrl : "none"));
         System.out.println("DEBUG: Session ID before redirect: " + request.getSession(false) != null ? request.getSession().getId() : "null");
 
         // Check which login page was used
@@ -42,6 +48,14 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         String referer = request.getHeader("referer");
         System.out.println("DEBUG: Request URI: " + requestURI);
         System.out.println("DEBUG: Referer: " + referer);
+
+        // If we have a saved redirect from session expiry, use it (skip role-based default)
+        if (hasSavedRedirect) {
+            System.out.println("DEBUG: Using saved redirect: " + redirectUrl);
+            response.sendRedirect(redirectUrl);
+            System.out.println("=== AUTH SUCCESS END ===");
+            return;
+        }
 
         boolean roleFound = false;
         boolean isAdmin = false;

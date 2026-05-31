@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -175,11 +175,10 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                             <div class="prod-card__price-row">
                                 <span class="prod-card__price" th:if="${dealInfo != null}" th:text="|${#numbers.formatDecimal(dealInfo.salePrice, 0, 0)}đ|">50,000đ</span>
                                 <span class="prod-card__price" th:unless="${dealInfo != null}" th:text="|${#numbers.formatDecimal(p.currentPrice != null ? p.currentPrice : p.originalPrice, 0, 0)}đ|">50,000đ</span>
-                                <span class="prod-card__original" th:if="${dealInfo != null}" th:text="|${#numbers.formatDecimal(dealInfo.originalPrice, 0, 0)}đ|">100,000đ</span>
                                 <span class="prod-card__nodeal" th:unless="${dealInfo != null}">Giá gốc</span>
                             </div>
                             <div class="prod-card__store-row">
-                                <span class="prod-card__store-name" th:text="${p.store != null ? p.store.storeName : '—'}">Store</span>
+                                <span class="prod-card__store-name" th:text="${p.store != null ? p.store.storeName : '—'}">Store</span><span class="prod-card__store-addr" style="font-size:9px;color:#999;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" th:if="${p.store != null and p.store.address != null}" th:text="${p.store.address}">Address</span>
                             </div>
                         </div>
                     </a>

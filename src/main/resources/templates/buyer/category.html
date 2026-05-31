@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -208,7 +208,7 @@ body{font-family:var(--font-family);background:#f5f5f5;color:var(--text-primary)
                             <div class="prod-card__store-avatar--fallback" style="display:none">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v2H3z"/><path d="M5 3h14l2 4H3l2-4z"/><path d="M3 9v12h18V9"/><path d="M10 21v-6h4v6"/></svg>
                             </div>
-                            <span class="prod-card__store-name" th:text="${p.store != null ? p.store.storeName : '—'}">Store</span>
+                            <span class="prod-card__store-name" th:text="${p.store != null ? p.store.storeName : '—'}">Store</span><span class="prod-card__store-addr" style="font-size:9px;color:#999;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" th:if="${p.store != null and p.store.address != null}" th:text="${p.store.address}">Address</span>
                         </div>
                     </div>
                     </a>

@@ -604,10 +604,30 @@ public class StaffController {
             boolean valid = false;
             if ("PENDING".equals(current) && ("CONFIRMED".equals(newStatus) || "CANCELLED".equals(newStatus))) valid = true;
             if ("CONFIRMED".equals(current) && "READY_FOR_PICKUP".equals(newStatus)) valid = true;
+            // Allow CONFIRMED->COMPLETED for prepaid orders (buyer paid upfront, skip READY)
+            if ("CONFIRMED".equals(current) && "COMPLETED".equals(newStatus) && "PAID".equals(order.getPaymentStatus())) valid = true;
             if ("READY_FOR_PICKUP".equals(current) && "COMPLETED".equals(newStatus)) valid = true;
 
             if (!valid) return java.util.Map.of("success", false, "message",
                 "Không thể chuyển từ " + current + " sang " + newStatus);
+
+            // Pickup time validation for COMPLETED transition
+            if ("COMPLETED".equals(newStatus)) {
+                java.time.LocalDateTime pickupTime = order.getScheduledPickupTime();
+                if (pickupTime != null) {
+                    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                    java.time.LocalDateTime windowStart = pickupTime.minusMinutes(30);
+                    java.time.LocalDateTime windowEnd = pickupTime.plusHours(2);
+                    if (now.isBefore(windowStart)) {
+                        return java.util.Map.of("success", false, "message",
+                            "Chưa đến giờ nhận hàng. Vui lòng đợi đến " + windowStart.toLocalTime());
+                    }
+                    if (now.isAfter(windowEnd)) {
+                        return java.util.Map.of("success", false, "message",
+                            "Đã quá giờ nhận hàng. Không thể hoàn thành đơn này.");
+                    }
+                }
+            }
 
             orderRepository.updateOrderStatus(orderId, newStatus);
             if ("CANCELLED".equals(newStatus)) {
@@ -619,11 +639,30 @@ public class StaffController {
             }
             if ("COMPLETED".equals(newStatus)) {
                 orderRepository.updateOrderPickupTime(orderId, java.time.LocalDateTime.now());
+                // For prepaid/BankTransfer orders: deduct stock + create transaction on completion
+                if ("PAID".equals(order.getPaymentStatus()) || "BANK_TRANSFER".equals(order.getPaymentMethod())) {
+                    deductStockAndCreateTransaction(order);
+                }
             }
             return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
         } finally {
             lock.unlock();
         }
+    }
+
+    /** Deduct stock and create sale transaction when staff completes an order */
+    private void deductStockAndCreateTransaction(Order order) {
+        if (order.getOrderItems() == null) return;
+        for (com.dealxanh.app.entity.OrderItem item : order.getOrderItems()) {
+            com.dealxanh.app.entity.Product p = item.getProduct();
+            if (p != null && p.getStockQuantity() != null) {
+                int newStock = p.getStockQuantity() - (item.getQuantity() != null ? item.getQuantity() : 0);
+                p.setStockQuantity(Math.max(0, newStock));
+                if (newStock <= 0) p.setActive(false);
+                productRepository.save(p);
+            }
+        }
+        payOSService.createSaleTransaction(order, order.getPaymentMethod() != null ? order.getPaymentMethod() : "BANK_TRANSFER");
     }
 
     private User getCurrentUser(Principal principal) {

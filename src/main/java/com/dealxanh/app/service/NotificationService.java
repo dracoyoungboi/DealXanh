@@ -95,4 +95,21 @@ public class NotificationService {
             "DEAL_NEARBY",
             "/products/" + dealId);
     }
+
+    /** Thông báo cho buyer khi deal bị admin/seller tạm dừng — SP trong giỏ không còn giá deal */
+    public void notifyDealPaused(User user, String dealName, List<String> affectedProductNames) {
+        String productList;
+        if (affectedProductNames.size() <= 2) {
+            productList = String.join(" và ", affectedProductNames);
+        } else {
+            productList = affectedProductNames.get(0) + ", " + affectedProductNames.get(1)
+                + " và " + (affectedProductNames.size() - 2) + " sản phẩm khác";
+        }
+        createNotification(user,
+            "Deal \"" + dealName + "\" đã tạm dừng",
+            "Deal \"" + dealName + "\" đã bị tạm dừng. Sản phẩm trong giỏ hàng của bạn không còn áp dụng giá deal: "
+                + productList + ". Giá đã được cập nhật về giá thường.",
+            "DEAL_PAUSED",
+            "/buyer/cart");
+    }
 }

@@ -1,13 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DealXanh - Săn deal đồ ăn cận date giá rẻ</title>
-    <meta name="description" content="DealXanh - Săn deal đồ ăn cận date. Tiết kiệm đến 70% cho các món ăn ngon từ nhà hàng, quán ăn uy tín.">
-    <div th:replace="~{common/buyer/css :: css}"></div>
-    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
-    <style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DealXanh - Săn deal đồ ăn cận date giá rẻ</title>
+  <meta name="description" content="DealXanh - Săn deal đồ ăn cận date. Tiết kiệm đến 70% cho các món ăn ngon từ nhà hàng, quán ăn uy tín.">
+  <div th:replace="~{common/buyer/css :: css}"></div>
+  <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+  <style>
 html{height:auto;min-height:100%}
 body{padding-bottom:80px}
 
@@ -23,7 +23,7 @@ body{padding-bottom:80px}
 /* Quick filters */
 .quick-filters{margin-top:-30px;position:relative;z-index:10}
 .quick-filters>div{background:var(--surface);padding:12px 16px;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
-    </style>
+  </style>
 </head>
 <body>
 
@@ -31,308 +31,308 @@ body{padding-bottom:80px}
 
 <!-- ===== HERO ===== -->
 <section class="hero">
-    <div class="hero__background">
-        <video autoplay muted loop playsinline class="hero__video">
-            <source src="https://assets.grab.com/wp-content/uploads/media/videos/IWD_hero_banner_desktop_2025.webm" type="video/webm">
-        </video>
-        <div class="hero__overlay"></div>
+  <div class="hero__background">
+    <video autoplay muted loop playsinline class="hero__video">
+      <source src="https://assets.grab.com/wp-content/uploads/media/videos/IWD_hero_banner_desktop_2025.webm" type="video/webm">
+    </video>
+    <div class="hero__overlay"></div>
+  </div>
+  <div class="container">
+    <div class="hero__content">
+      <div class="hero__badge">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.97 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span th:text="|Được tin dùng bởi ${#numbers.formatDecimal(totalUsers, 0, 0)}+ người|">Được tin dùng</span>
+      </div>
+      <h1 class="hero__title">Săn deal đồ ăn ngon<br><span class="hero__title--accent">Giảm đến 70%</span></h1>
+      <p class="hero__subtitle">Tiết kiệm chi phí ăn uống hàng ngày với các deal đồ ăn cận date chất lượng cao từ nhà hàng, quán ăn uy tín.</p>
+      <div class="hero__stats">
+        <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalStores, 0, 0)}+'+'">1,000+</div><div class="hero-stat__label">Cửa hàng</div></div>
+        <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalUsers, 0, 0)}+'+'">50K+</div><div class="hero-stat__label">Người dùng</div></div>
+        <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalDeals, 0, 0)}+'+'">100K+</div><div class="hero-stat__label">Deal đã bán</div></div>
+      </div>
     </div>
-    <div class="container">
-        <div class="hero__content">
-            <div class="hero__badge">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.97 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                <span th:text="|Được tin dùng bởi ${#numbers.formatDecimal(totalUsers, 0, 0)}+ người|">Được tin dùng</span>
-            </div>
-            <h1 class="hero__title">Săn deal đồ ăn ngon<br><span class="hero__title--accent">Giảm đến 70%</span></h1>
-            <p class="hero__subtitle">Tiết kiệm chi phí ăn uống hàng ngày với các deal đồ ăn cận date chất lượng cao từ nhà hàng, quán ăn uy tín.</p>
-            <div class="hero__stats">
-                <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalStores, 0, 0)}+'+'">1,000+</div><div class="hero-stat__label">Cửa hàng</div></div>
-                <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalUsers, 0, 0)}+'+'">50K+</div><div class="hero-stat__label">Người dùng</div></div>
-                <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalDeals, 0, 0)}+'+'">100K+</div><div class="hero-stat__label">Deal đã bán</div></div>
-            </div>
-        </div>
-    </div>
+  </div>
 </section>
 
 <!-- ===== QUICK FILTERS ===== -->
 <section class="container" style="margin-top:-30px;position:relative;z-index:10;margin-bottom:16px;">
-    <div class="quick-filters" style="background:var(--surface);padding:12px 16px;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);">
-        <button class="filter-chip filter-chip--active" onclick="scrollToSection('all',this)">Tất cả</button>
-        <button class="filter-chip" onclick="scrollToSection('flash',this)">⚡ Flash Sale</button>
-        <button class="filter-chip" onclick="scrollToSection('combo',this)">📦 Combo</button>
-    </div>
+  <div class="quick-filters" style="background:var(--surface);padding:12px 16px;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);">
+    <button class="filter-chip filter-chip--active" onclick="scrollToSection('all',this)">Tất cả</button>
+    <button class="filter-chip" onclick="scrollToSection('flash',this)">⚡ Flash Sale</button>
+    <button class="filter-chip" onclick="scrollToSection('combo',this)">📦 Combo</button>
+  </div>
 </section>
 
 <!-- ===== FLASH SALE COUNTDOWN ===== -->
 <section class="section" th:if="${hasFlashSale}" style="padding:0 0 0 0;">
-    <div class="container">
-        <div class="flash-sale">
-            <div class="flash-sale__background">
-                <img th:src="${flashSaleProducts[0].productImage != null ? flashSaleProducts[0].productImage : '/img/default-banner.svg'}" alt="" onerror="this.src='/img/default-banner.svg'">
-            </div>
-            <div class="flash-sale__overlay"></div>
-            <div class="flash-sale__content">
-                <div class="flash-sale__header">
-                    <div class="flash-sale__tag">⚡ ĐANG DIỄN RA</div>
-                </div>
-                <div class="flash-sale__title">Flash Sale</div>
-                <div class="flash-sale__description" th:text="|${flashSaleCount} sản phẩm giảm sâu — Kết thúc trong:|">Kết thúc trong:</div>
-                <div class="flash-sale__timer" id="flashTimer" th:if="${flashSaleEndTime != null}" th:attr="data-end=${flashSaleEndTime}">
-                    <div class="timer-item"><div class="timer-item__value" id="fsH">00</div><div class="timer-item__label">Giờ</div></div>
-                    <div class="timer-separator">:</div>
-                    <div class="timer-item"><div class="timer-item__value" id="fsM">00</div><div class="timer-item__label">Phút</div></div>
-                    <div class="timer-separator">:</div>
-                    <div class="timer-item"><div class="timer-item__value" id="fsS">00</div><div class="timer-item__label">Giây</div></div>
-                </div>
-                <a class="flash-sale__button" href="#flashGrid" onclick="document.getElementById('flashGrid')?.scrollIntoView({behavior:'smooth'});return true;">
-                    Săn ngay
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </a>
-            </div>
+  <div class="container">
+    <div class="flash-sale">
+      <div class="flash-sale__background">
+        <img th:src="${flashSaleProducts[0].productImage != null ? flashSaleProducts[0].productImage : '/img/default-banner.svg'}" alt="" onerror="this.src='/img/default-banner.svg'">
+      </div>
+      <div class="flash-sale__overlay"></div>
+      <div class="flash-sale__content">
+        <div class="flash-sale__header">
+          <div class="flash-sale__tag">⚡ ĐANG DIỄN RA</div>
         </div>
-
-        <!-- Flash Sale products -->
-        <div class="section-header" style="margin-top:20px;">
-            <div class="section-header__left">
-                <h2 class="section-header__title">Sản phẩm Flash Sale</h2>
-                <p class="section-header__subtitle">⚡ Nhanh tay kẻo lỡ — Số lượng có hạn</p>
-            </div>
+        <div class="flash-sale__title">Flash Sale</div>
+        <div class="flash-sale__description" th:text="|${flashSaleCount} sản phẩm giảm sâu — Kết thúc trong:|">Kết thúc trong:</div>
+        <div class="flash-sale__timer" id="flashTimer" th:if="${flashSaleEndTime != null}" th:attr="data-end=${flashSaleEndTime}">
+          <div class="timer-item"><div class="timer-item__value" id="fsH">00</div><div class="timer-item__label">Giờ</div></div>
+          <div class="timer-separator">:</div>
+          <div class="timer-item"><div class="timer-item__value" id="fsM">00</div><div class="timer-item__label">Phút</div></div>
+          <div class="timer-separator">:</div>
+          <div class="timer-item"><div class="timer-item__value" id="fsS">00</div><div class="timer-item__label">Giây</div></div>
         </div>
-        <div class="deal-grid" id="flashGrid">
-            <div class="deal-card" th:each="p : ${flashSaleProducts}" th:attr="data-type=${p.dealType}">
-                <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
-                    <div class="deal-card__image">
-                        <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
-                        <div class="deal-card__badges">
-                            <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
-                        </div>
-                        <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
-                            <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
-                        </div>
-                    </div>
-                    <div class="deal-card__content">
-                        <div class="deal-card__store">
-                            <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
-                            <span class="deal-card__store-name" th:text="${p.storeName}">Store</span>
-                        </div>
-                        <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
-                        <div class="deal-card__price">
-                            <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
-                            <span class="deal-card__original" th:text="|${#numbers.formatDecimal(p.originalPrice, 0, 0)}đ|">100,000đ</span>
-                        </div>
-                    </div>
-                </a>
-                <div class="deal-card__actions">
-                    <button class="deal-card__btn deal-card__btn--cart"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
-                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Thêm vào giỏ</button>
-                    <button class="deal-card__btn deal-card__btn--buy"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
-                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
-                </div>
-            </div>
-        </div>
+        <a class="flash-sale__button" href="#flashGrid" onclick="document.getElementById('flashGrid')?.scrollIntoView({behavior:'smooth'});return true;">
+          Săn ngay
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
     </div>
+
+    <!-- Flash Sale products -->
+    <div class="section-header" style="margin-top:20px;">
+      <div class="section-header__left">
+        <h2 class="section-header__title">Sản phẩm Flash Sale</h2>
+        <p class="section-header__subtitle">⚡ Nhanh tay kẻo lỡ — Số lượng có hạn</p>
+      </div>
+    </div>
+    <div class="deal-grid" id="flashGrid">
+      <div class="deal-card" th:each="p : ${flashSaleProducts}" th:attr="data-type=${p.dealType}">
+        <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
+          <div class="deal-card__image">
+            <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
+            <div class="deal-card__badges">
+              <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
+            </div>
+            <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
+              <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
+            </div>
+          </div>
+          <div class="deal-card__content">
+            <div class="deal-card__store">
+              <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
+              <span class="deal-card__store-name" th:text="${p.storeName}">Store</span><span class="deal-card__store-addr" style="font-size:10px;color:var(--text-tertiary);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;" th:if="${p.storeAddress != null and !p.storeAddress.isEmpty()}" th:text="${p.storeAddress}">Address</span>
+            </div>
+            <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
+            <div class="deal-card__price">
+              <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+              
+            </div>
+          </div>
+        </a>
+        <div class="deal-card__actions">
+          <button class="deal-card__btn deal-card__btn--cart"
+            th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+            onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Thêm vào giỏ</button>
+          <button class="deal-card__btn deal-card__btn--buy"
+            th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+            onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ===== DEAL NỔI BẬT ===== -->
 <section class="section" th:if="${allProducts != null and !allProducts.isEmpty()}" style="padding:24px 0 0 0;">
-    <div class="container">
-        <div class="flash-sale" style="min-height:160px;">
-            <div class="flash-sale__background">
-                <img th:src="${allProducts[0].productImage != null ? allProducts[0].productImage : '/img/default-banner.svg'}" alt="" onerror="this.src='/img/default-banner.svg'">
-            </div>
-            <div class="flash-sale__overlay" style="background:linear-gradient(90deg,rgba(13,92,46,.9) 0%,rgba(8,66,31,.6) 100%);"></div>
-            <div class="flash-sale__content">
-                <div class="flash-sale__header">
-                    <div class="flash-sale__tag" style="background:var(--accent);">🔥 DEAL NỔI BẬT</div>
-                </div>
-                <div class="flash-sale__title">Deal nổi bật hôm nay</div>
-                <div class="flash-sale__description" th:text="|Sản phẩm ngon — Giá tốt nhất hôm nay · ${#lists.size(allProducts)} sản phẩm đang có deal|">Sản phẩm ngon — Giá tốt nhất hôm nay</div>
-            </div>
+  <div class="container">
+    <div class="flash-sale" style="min-height:160px;">
+      <div class="flash-sale__background">
+        <img th:src="${allProducts[0].productImage != null ? allProducts[0].productImage : '/img/default-banner.svg'}" alt="" onerror="this.src='/img/default-banner.svg'">
+      </div>
+      <div class="flash-sale__overlay" style="background:linear-gradient(90deg,rgba(13,92,46,.9) 0%,rgba(8,66,31,.6) 100%);"></div>
+      <div class="flash-sale__content">
+        <div class="flash-sale__header">
+          <div class="flash-sale__tag" style="background:var(--accent);">🔥 DEAL NỔI BẬT</div>
         </div>
-
-        <div class="deal-grid" id="productGrid" style="margin-top:16px;">
-            <div class="deal-card" th:each="p : ${allProducts}" th:attr="data-type=${p.dealType}">
-                <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
-                    <div class="deal-card__image">
-                        <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
-                        <div class="deal-card__badges">
-                            <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
-                        </div>
-                        <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
-                            <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
-                        </div>
-                    </div>
-                    <div class="deal-card__content">
-                        <div class="deal-card__store">
-                            <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
-                            <span class="deal-card__store-name" th:text="${p.storeName}">Store</span>
-                        </div>
-                        <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
-                        <div class="deal-card__price">
-                            <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
-                            <span class="deal-card__original" th:text="|${#numbers.formatDecimal(p.originalPrice, 0, 0)}đ|">100,000đ</span>
-                        </div>
-                    </div>
-                </a>
-                <div class="deal-card__actions">
-                    <button class="deal-card__btn deal-card__btn--cart"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
-                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Thêm vào giỏ</button>
-                    <button class="deal-card__btn deal-card__btn--buy"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
-                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="empty-state" id="emptyDeals" style="display:none;">
-            <div class="empty-state__icon">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            </div>
-            <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Không có sản phẩm nào</h3>
-            <p style="font-size:14px;color:var(--text-secondary);">Không tìm thấy sản phẩm cho bộ lọc này</p>
-        </div>
+        <div class="flash-sale__title">Deal nổi bật hôm nay</div>
+        <div class="flash-sale__description" th:text="|Sản phẩm ngon — Giá tốt nhất hôm nay · ${#lists.size(allProducts)} sản phẩm đang có deal|">Sản phẩm ngon — Giá tốt nhất hôm nay</div>
+      </div>
     </div>
+
+    <div class="deal-grid" id="productGrid" style="margin-top:16px;">
+      <div class="deal-card" th:each="p : ${allProducts}" th:attr="data-type=${p.dealType}">
+        <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
+          <div class="deal-card__image">
+            <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
+            <div class="deal-card__badges">
+              <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
+            </div>
+            <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
+              <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
+            </div>
+          </div>
+          <div class="deal-card__content">
+            <div class="deal-card__store">
+              <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
+              <span class="deal-card__store-name" th:text="${p.storeName}">Store</span><span class="deal-card__store-addr" style="font-size:10px;color:var(--text-tertiary);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;" th:if="${p.storeAddress != null and !p.storeAddress.isEmpty()}" th:text="${p.storeAddress}">Address</span>
+            </div>
+            <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
+            <div class="deal-card__price">
+              <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+              
+            </div>
+          </div>
+        </a>
+        <div class="deal-card__actions">
+          <button class="deal-card__btn deal-card__btn--cart"
+            th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+            onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Thêm vào giỏ</button>
+          <button class="deal-card__btn deal-card__btn--buy"
+            th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+            onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" id="emptyDeals" style="display:none;">
+      <div class="empty-state__icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </div>
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Không có sản phẩm nào</h3>
+      <p style="font-size:14px;color:var(--text-secondary);">Không tìm thấy sản phẩm cho bộ lọc này</p>
+    </div>
+  </div>
 </section>
 
 <!-- ===== COMBO GIẢM GIÁ ===== -->
 <section class="section" th:if="${hasCombo}">
-    <div class="container">
-        <div class="blind-box-section">
-            <div class="blind-box-section__background">
-                <img src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=1200&fit=crop" alt="Combo Deal">
-            </div>
-            <div class="blind-box-section__overlay"></div>
-            <div class="blind-box-section__content">
-                <div class="blind-box-section__tag">📦 COMBO DEALS</div>
-                <div class="blind-box-section__title">Săn Combo — Tiết kiệm hơn nữa</div>
-                <div class="blind-box-section__description">Ghép nhiều sản phẩm thành combo giá tốt. Combo cận date giúp bạn tiết kiệm đến 65% so với giá gốc.</div>
-                <div class="blind-box-section__features">
-                    <div class="blind-box-feature">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                        <span>Tiết kiệm đến 65%</span>
-                    </div>
-                    <div class="blind-box-feature">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                        <span th:text="|${#lists.size(comboProducts)} combo đang có|">5 combo</span>
-                    </div>
-                </div>
-                <a class="blind-box-section__cta" href="#comboGrid" onclick="document.getElementById('comboGrid')?.scrollIntoView({behavior:'smooth'});return true;">
-                    Xem Combo ngay
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </a>
-            </div>
+  <div class="container">
+    <div class="blind-box-section">
+      <div class="blind-box-section__background">
+        <img src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=1200&fit=crop" alt="Combo Deal">
+      </div>
+      <div class="blind-box-section__overlay"></div>
+      <div class="blind-box-section__content">
+        <div class="blind-box-section__tag">📦 COMBO DEALS</div>
+        <div class="blind-box-section__title">Săn Combo — Tiết kiệm hơn nữa</div>
+        <div class="blind-box-section__description">Ghép nhiều sản phẩm thành combo giá tốt. Combo cận date giúp bạn tiết kiệm đến 65% so với giá gốc.</div>
+        <div class="blind-box-section__features">
+          <div class="blind-box-feature">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Tiết kiệm đến 65%</span>
+          </div>
+          <div class="blind-box-feature">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span th:text="|${#lists.size(comboProducts)} combo đang có|">5 combo</span>
+          </div>
         </div>
-
-        <div class="section-header" style="margin-top:20px;">
-            <div class="section-header__left">
-                <h2 class="section-header__title">Sản phẩm Combo</h2>
-                <p class="section-header__subtitle">📦 Ghép nhiều món — Giá tốt hơn</p>
-            </div>
-        </div>
-        <div class="deal-grid" id="comboGrid">
-            <div class="deal-card" th:each="p : ${comboProducts}" th:attr="data-type=${p.dealType}">
-                <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
-                    <div class="deal-card__image">
-                        <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
-                        <div class="deal-card__badges">
-                            <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
-                        </div>
-                        <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
-                            <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
-                        </div>
-                    </div>
-                    <div class="deal-card__content">
-                        <div class="deal-card__store">
-                            <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
-                            <span class="deal-card__store-name" th:text="${p.storeName}">Store</span>
-                        </div>
-                        <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
-                        <div class="deal-card__price">
-                            <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
-                            <span class="deal-card__original" th:text="|${#numbers.formatDecimal(p.originalPrice, 0, 0)}đ|">100,000đ</span>
-                        </div>
-                    </div>
-                </a>
-                <div class="deal-card__actions">
-                    <button class="deal-card__btn deal-card__btn--cart"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
-                        onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Thêm vào giỏ</button>
-                    <button class="deal-card__btn deal-card__btn--buy"
-                        th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
-                        onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
-                </div>
-            </div>
-        </div>
+        <a class="blind-box-section__cta" href="#comboGrid" onclick="document.getElementById('comboGrid')?.scrollIntoView({behavior:'smooth'});return true;">
+          Xem Combo ngay
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
     </div>
+
+    <div class="section-header" style="margin-top:20px;">
+      <div class="section-header__left">
+        <h2 class="section-header__title">Sản phẩm Combo</h2>
+        <p class="section-header__subtitle">📦 Ghép nhiều món — Giá tốt hơn</p>
+      </div>
+    </div>
+    <div class="deal-grid" id="comboGrid">
+      <div class="deal-card" th:each="p : ${comboProducts}" th:attr="data-type=${p.dealType}">
+        <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
+          <div class="deal-card__image">
+            <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
+            <div class="deal-card__badges">
+              <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
+            </div>
+            <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
+              <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
+            </div>
+          </div>
+          <div class="deal-card__content">
+            <div class="deal-card__store">
+              <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
+              <span class="deal-card__store-name" th:text="${p.storeName}">Store</span><span class="deal-card__store-addr" style="font-size:10px;color:var(--text-tertiary);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;" th:if="${p.storeAddress != null and !p.storeAddress.isEmpty()}" th:text="${p.storeAddress}">Address</span>
+            </div>
+            <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
+            <div class="deal-card__price">
+              <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+              
+            </div>
+          </div>
+        </a>
+        <div class="deal-card__actions">
+          <button class="deal-card__btn deal-card__btn--cart"
+            th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+            onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Thêm vào giỏ</button>
+          <button class="deal-card__btn deal-card__btn--buy"
+            th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
+            onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ===== CATEGORIES ===== -->
 <section class="section categories-section" th:if="${categories != null and !categories.isEmpty()}">
-    <div class="container">
-        <div class="section-header">
-            <div class="section-header__left">
-                <h2 class="section-header__title">Danh mục sản phẩm</h2>
-                <p class="section-header__subtitle">Khám phá deal theo danh mục yêu thích</p>
-            </div>
-        </div>
-        <div class="category-grid">
-            <a th:each="cat : ${categories}" th:href="@{/category/{id}(id=${cat.categoryId})}" class="category-card" style="text-decoration:none;">
-                <div class="category-card__image">
-                    <img th:src="${cat.iconUrl != null ? cat.iconUrl : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&fit=crop'}" th:alt="${cat.name}" onerror="this.src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&fit=crop'">
-                </div>
-                <div class="category-card__overlay">
-                    <div class="category-card__icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                    </div>
-                    <span class="category-card__name" th:text="${cat.name}">Danh mục</span>
-                </div>
-            </a>
-        </div>
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header__left">
+        <h2 class="section-header__title">Danh mục sản phẩm</h2>
+        <p class="section-header__subtitle">Khám phá deal theo danh mục yêu thích</p>
+      </div>
     </div>
+    <div class="category-grid">
+      <a th:each="cat : ${categories}" th:href="@{/category/{id}(id=${cat.categoryId})}" class="category-card" style="text-decoration:none;">
+        <div class="category-card__image">
+          <img th:src="${cat.iconUrl != null ? cat.iconUrl : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&fit=crop'}" th:alt="${cat.name}" onerror="this.src='https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&fit=crop'">
+        </div>
+        <div class="category-card__overlay">
+          <div class="category-card__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </div>
+          <span class="category-card__name" th:text="${cat.name}">Danh mục</span>
+        </div>
+      </a>
+    </div>
+  </div>
 </section>
 
 <!-- ===== TRUST SECTION ===== -->
 <section class="section trust-section">
-    <div class="container">
-        <div class="section-header">
-            <div class="section-header__left">
-                <h2 class="section-header__title">Tại sao chọn DealXanh?</h2>
-                <p class="section-header__subtitle">Nền tảng săn deal đồ ăn cận date hàng đầu Việt Nam</p>
-            </div>
-        </div>
-        <div class="trust-grid">
-            <div class="trust-card">
-                <div class="trust-card__icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                </div>
-                <div class="trust-card__title">An toàn & Bảo mật</div>
-                <div class="trust-card__description">Thanh toán an toàn qua VNPay. Thông tin cá nhân được bảo mật tuyệt đối.</div>
-            </div>
-            <div class="trust-card">
-                <div class="trust-card__icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.97 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                </div>
-                <div class="trust-card__title">Chất lượng đảm bảo</div>
-                <div class="trust-card__description">Mọi sản phẩm đều được kiểm duyệt bởi Admin. Hoàn tiền nếu không đúng mô tả.</div>
-            </div>
-            <div class="trust-card">
-                <div class="trust-card__icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                </div>
-                <div class="trust-card__title">Hỗ trợ 24/7</div>
-                <div class="trust-card__description">Đội ngũ hỗ trợ sẵn sàng giải đáp mọi thắc mắc của bạn bất cứ lúc nào.</div>
-            </div>
-        </div>
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header__left">
+        <h2 class="section-header__title">Tại sao chọn DealXanh?</h2>
+        <p class="section-header__subtitle">Nền tảng săn deal đồ ăn cận date hàng đầu Việt Nam</p>
+      </div>
     </div>
+    <div class="trust-grid">
+      <div class="trust-card">
+        <div class="trust-card__icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="trust-card__title">An toàn & Bảo mật</div>
+        <div class="trust-card__description">Thanh toán an toàn qua VNPay. Thông tin cá nhân được bảo mật tuyệt đối.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-card__icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.97 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <div class="trust-card__title">Chất lượng đảm bảo</div>
+        <div class="trust-card__description">Mọi sản phẩm đều được kiểm duyệt bởi Admin. Hoàn tiền nếu không đúng mô tả.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-card__icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="trust-card__title">Hỗ trợ 24/7</div>
+        <div class="trust-card__description">Đội ngũ hỗ trợ sẵn sàng giải đáp mọi thắc mắc của bạn bất cứ lúc nào.</div>
+      </div>
+    </div>
+  </div>
 </section>
 
 <div th:replace="~{common/buyer/footer :: footer}"></div>
@@ -342,93 +342,93 @@ body{padding-bottom:80px}
 <script>
 // ===== QUICK FILTERS — cuộn đến section tương ứng =====
 function scrollToSection(type, btn) {
-    document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('filter-chip--active')});
-    if(btn) btn.classList.add('filter-chip--active');
+  document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('filter-chip--active')});
+  if(btn) btn.classList.add('filter-chip--active');
 
-    if (type === 'flash') {
-        var el = document.getElementById('flashGrid');
-        if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
-    } else if (type === 'combo') {
-        var el = document.getElementById('comboGrid');
-        if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
-    } else {
-        window.scrollTo({top:0, behavior:'smooth'});
-    }
+  if (type === 'flash') {
+    var el = document.getElementById('flashGrid');
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  } else if (type === 'combo') {
+    var el = document.getElementById('comboGrid');
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  } else {
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
 }
 
 // ===== FLASH SALE COUNTDOWN =====
 // Dựa trên endTime của Flash Deal sớm nhất
 (function(){
-    var t = document.getElementById('flashTimer');
-    if(!t) return;
-    var end = t.getAttribute('data-end');
-    if(!end) return;
-    var d = new Date(end + (end.indexOf('T')>=0 ? '' : 'T00:00:00'));
-    if(isNaN(d.getTime())) return;
-    function tick(){
-        var s = Math.max(0, Math.floor((d - Date.now())/1000));
-        var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-        document.getElementById('fsH').textContent = String(h).padStart(2,'0');
-        document.getElementById('fsM').textContent = String(m).padStart(2,'0');
-        document.getElementById('fsS').textContent = String(sec).padStart(2,'0');
-    }
-    tick(); setInterval(tick, 1000);
+  var t = document.getElementById('flashTimer');
+  if(!t) return;
+  var end = t.getAttribute('data-end');
+  if(!end) return;
+  var d = new Date(end + (end.indexOf('T')>=0 ? '' : 'T00:00:00'));
+  if(isNaN(d.getTime())) return;
+  function tick(){
+    var s = Math.max(0, Math.floor((d - Date.now())/1000));
+    var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    document.getElementById('fsH').textContent = String(h).padStart(2,'0');
+    document.getElementById('fsM').textContent = String(m).padStart(2,'0');
+    document.getElementById('fsS').textContent = String(sec).padStart(2,'0');
+  }
+  tick(); setInterval(tick, 1000);
 })();
 
 // ===== CART BUTTONS =====
 function addToCartHome(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId, dealType, dealName) {
-    var fd = new URLSearchParams();
-    fd.append('dealId', dealId);
-    fd.append('productId', productId);
-    fd.append('productName', productName);
-    fd.append('salePrice', salePrice);
-    fd.append('originalPrice', originalPrice);
-    fd.append('storeName', storeName);
-    fd.append('productImage', productImage || '');
-    if (storeId) fd.append('storeId', storeId);
-    if (dealType) fd.append('dealType', dealType);
-    if (dealName) fd.append('dealName', dealName);
-    fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
-        .then(function(r){return r.json()})
-        .then(function(d){
-            showToast(d.message || 'Đã thêm vào giỏ hàng', !d.success);
-            if (d.success) updateCartBadge(d.count);
-        })
-        .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
+  var fd = new URLSearchParams();
+  fd.append('dealId', dealId);
+  fd.append('productId', productId);
+  fd.append('productName', productName);
+  fd.append('salePrice', salePrice);
+  fd.append('originalPrice', originalPrice);
+  fd.append('storeName', storeName);
+  fd.append('productImage', productImage || '');
+  if (storeId) fd.append('storeId', storeId);
+  if (dealType) fd.append('dealType', dealType);
+  if (dealName) fd.append('dealName', dealName);
+  fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      showToast(d.message || 'Đã thêm vào giỏ hàng', !d.success);
+      if (d.success) updateCartBadge(d.count);
+    })
+    .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
 }
 
 function buyNowHome(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId, dealType, dealName) {
-    var fd = new URLSearchParams();
-    fd.append('dealId', dealId);
-    fd.append('productId', productId);
-    fd.append('productName', productName);
-    fd.append('salePrice', salePrice);
-    fd.append('originalPrice', originalPrice);
-    fd.append('storeName', storeName);
-    fd.append('productImage', productImage || '');
-    if (storeId) fd.append('storeId', storeId);
-    if (dealType) fd.append('dealType', dealType);
-    if (dealName) fd.append('dealName', dealName);
-    fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
-        .then(function(r){return r.json()})
-        .then(function(d){
-            if (d.success) { window.location.href='/buyer/checkout'; }
-            else { showToast(d.message || 'Không thể mua ngay', true); }
-        })
-        .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
+  var fd = new URLSearchParams();
+  fd.append('dealId', dealId);
+  fd.append('productId', productId);
+  fd.append('productName', productName);
+  fd.append('salePrice', salePrice);
+  fd.append('originalPrice', originalPrice);
+  fd.append('storeName', storeName);
+  fd.append('productImage', productImage || '');
+  if (storeId) fd.append('storeId', storeId);
+  if (dealType) fd.append('dealType', dealType);
+  if (dealName) fd.append('dealName', dealName);
+  fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if (d.success) { window.location.href='/buyer/checkout'; }
+      else { showToast(d.message || 'Không thể mua ngay', true); }
+    })
+    .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
 }
 
 function showToast(msg, isError) {
-    var t = document.createElement('div');
-    t.textContent = msg;
-    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:' + (isError ? '#dc2626' : '#1a1a1a') + ';color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;pointer-events:none;';
-    document.body.appendChild(t);
-    setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(function(){t.remove();},400);},2000);
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:' + (isError ? '#dc2626' : '#1a1a1a') + ';color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;pointer-events:none;';
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(function(){t.remove();},400);},2000);
 }
 
 function updateCartBadge(count) {
-    var b = document.querySelector('.mobile-nav__cart__badge');
-    if (b) { b.textContent = count || ''; b.style.display = (count > 0) ? 'flex' : 'none'; }
+  var b = document.querySelector('.mobile-nav__cart__badge');
+  if (b) { b.textContent = count || ''; b.style.display = (count > 0) ? 'flex' : 'none'; }
 }
 </script>
 </body>

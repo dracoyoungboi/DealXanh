@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -128,7 +128,6 @@ body{padding-bottom:80px;background:var(--background)}
                 <div class="pi-desc" th:text="${p.description}">Description</div>
                 <div class="pi-price">
                     <span class="pi-sale" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
-                    <span class="pi-original" th:text="|${#numbers.formatDecimal(p.originalPrice, 0, 0)}đ|">100,000đ</span>
                     <span class="pi-discount" th:text="|${p.discountPercent}%|">50%</span>
                 </div>
                 <div class="pi-actions">

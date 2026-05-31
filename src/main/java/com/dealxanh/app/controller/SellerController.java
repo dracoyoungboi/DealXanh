@@ -16,9 +16,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Controller
@@ -70,6 +74,9 @@ public class SellerController {
 
     @Autowired
     private ResourceLockManager lockManager;
+
+    @Autowired
+    private com.dealxanh.app.repository.CartItemRepository cartItemRepository;
 
     // ============ DASHBOARD ============
 
@@ -623,14 +630,62 @@ public class SellerController {
             Deal deal = dealRepository.findById(dealId).orElse(null);
             if (deal == null || !user.getWorkStore().getStoreId().equals(deal.getStore().getStoreId()))
                 return Map.of("success", false, "message", "Deal không tồn tại");
+            if (!"ACTIVE".equals(deal.getStatus()))
+                return Map.of("success", false, "message", "Chỉ có thể tạm dừng deal đang ACTIVE");
             deal.setStatus("PAUSED");
             deal.setUpdatedAt(LocalDateTime.now());
             dealRepository.save(deal);
+
+            // Notify buyers who have products from this deal in their cart
+            try {
+                notifyBuyersAboutPausedDeal(deal);
+            } catch (Exception e) {
+                System.err.println("Lỗi khi gửi thông báo pause deal: " + e.getMessage());
+            }
+
             return Map.of("success", true, "message", "Đã tạm dừng deal");
         } catch (Exception ex) {
             return Map.of("success", false, "message", "Lỗi: " + ex.getMessage());
         } finally {
             lock.unlock();
+        }
+    }
+
+    /** Gửi thông báo cho tất cả buyer có SP từ deal bị pause trong giỏ hàng */
+    private void notifyBuyersAboutPausedDeal(Deal deal) {
+        List<DealProduct> dealProducts = dealProductRepository.findByDealDealIdOrderByPriorityAsc(deal.getDealId());
+        if (dealProducts == null || dealProducts.isEmpty()) return;
+
+        List<Long> productIds = new ArrayList<>();
+        Map<Long, String> productNameMap = new HashMap<>();
+        for (DealProduct dp : dealProducts) {
+            if (dp.getProduct() != null) {
+                productIds.add(dp.getProduct().getProductId());
+                productNameMap.put(dp.getProduct().getProductId(), dp.getProduct().getName());
+            }
+        }
+        if (productIds.isEmpty()) return;
+
+        List<CartItem> cartItems = cartItemRepository.findByProductIdsWithCartAndUser(productIds);
+        if (cartItems == null || cartItems.isEmpty()) return;
+
+        Map<User, Set<String>> userAffectedProducts = new LinkedHashMap<>();
+        for (CartItem ci : cartItems) {
+            User buyer = ci.getCart().getUser();
+            String productName = productNameMap.get(ci.getProduct().getProductId());
+            if (buyer != null && productName != null) {
+                userAffectedProducts
+                    .computeIfAbsent(buyer, k -> new LinkedHashSet<>())
+                    .add(productName);
+            }
+        }
+
+        for (Map.Entry<User, Set<String>> entry : userAffectedProducts.entrySet()) {
+            notificationService.notifyDealPaused(
+                entry.getKey(),
+                deal.getDealName(),
+                new ArrayList<>(entry.getValue())
+            );
         }
     }
 
@@ -1301,10 +1356,30 @@ public class SellerController {
             boolean valid = false;
             if ("PENDING".equals(current) && ("CONFIRMED".equals(newStatus) || "CANCELLED".equals(newStatus))) valid = true;
             if ("CONFIRMED".equals(current) && "READY_FOR_PICKUP".equals(newStatus)) valid = true;
+            // Allow CONFIRMED->COMPLETED for prepaid orders (buyer paid upfront, skip READY)
+            if ("CONFIRMED".equals(current) && "COMPLETED".equals(newStatus) && "PAID".equals(order.getPaymentStatus())) valid = true;
             if ("READY_FOR_PICKUP".equals(current) && "COMPLETED".equals(newStatus)) valid = true;
 
             if (!valid) return java.util.Map.of("success", false, "message",
                 "Không thể chuyển từ " + current + " sang " + newStatus);
+
+            // Pickup time validation for COMPLETED transition
+            if ("COMPLETED".equals(newStatus)) {
+                java.time.LocalDateTime pickupTime = order.getScheduledPickupTime();
+                if (pickupTime != null) {
+                    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                    java.time.LocalDateTime windowStart = pickupTime.minusMinutes(30);
+                    java.time.LocalDateTime windowEnd = pickupTime.plusHours(2);
+                    if (now.isBefore(windowStart)) {
+                        return java.util.Map.of("success", false, "message",
+                            "Chưa đến giờ nhận hàng. Vui lòng đợi đến " + windowStart.toLocalTime());
+                    }
+                    if (now.isAfter(windowEnd)) {
+                        return java.util.Map.of("success", false, "message",
+                            "Đã quá giờ nhận hàng. Không thể hoàn thành đơn này.");
+                    }
+                }
+            }
 
             // Use direct update query to avoid JPA cascade issues
             orderRepository.updateOrderStatus(orderId, newStatus);
@@ -1317,11 +1392,30 @@ public class SellerController {
             }
             if ("COMPLETED".equals(newStatus)) {
                 orderRepository.updateOrderPickupTime(orderId, java.time.LocalDateTime.now());
+                // For prepaid/BankTransfer orders: deduct stock + create transaction on completion
+                if ("PAID".equals(order.getPaymentStatus()) || "BANK_TRANSFER".equals(order.getPaymentMethod())) {
+                    deductStockAndCreateTransaction(order);
+                }
             }
             return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
         } finally {
             lock.unlock();
         }
+    }
+
+    /** Deduct stock and create sale transaction when seller completes an order */
+    private void deductStockAndCreateTransaction(com.dealxanh.app.entity.Order order) {
+        if (order.getOrderItems() == null) return;
+        for (com.dealxanh.app.entity.OrderItem item : order.getOrderItems()) {
+            com.dealxanh.app.entity.Product p = item.getProduct();
+            if (p != null && p.getStockQuantity() != null) {
+                int newStock = p.getStockQuantity() - (item.getQuantity() != null ? item.getQuantity() : 0);
+                p.setStockQuantity(Math.max(0, newStock));
+                if (newStock <= 0) p.setActive(false);
+                productRepository.save(p);
+            }
+        }
+        payOSService.createSaleTransaction(order, order.getPaymentMethod() != null ? order.getPaymentMethod() : "BANK_TRANSFER");
     }
 
     @GetMapping("/api/orders/{orderId}/detail")

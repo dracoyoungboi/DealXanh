@@ -18,6 +18,7 @@ public class CartService {
     @Autowired private CartRepository cartRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private DealProductRepository dealProductRepository;
+    @Autowired private com.dealxanh.app.repository.DealCategoryRepository dealCategoryRepository;
     @Autowired private ResourceLockManager lockManager;
 
     public Cart getOrCreateCart(User user) {
@@ -219,7 +220,9 @@ public class CartService {
                     item.put("maxStock", maxStock);
                     item.put("unavailable", false);
 
-                    // Find active deal for this product
+                    // Find active deal for this product (both AUTO_APPLY and CODE_REQUIRED)
+                    // Pricing: only AUTO_APPLY deals affect salePrice; CODE_REQUIRED keep original
+                    // Display: all deals are attached to item for breakdown visibility
                     List<DealProduct> dealProducts = dealProductRepository.findByProduct(product);
                     DealProduct activeDp = null;
                     if (dealProducts != null) {
@@ -234,16 +237,71 @@ public class CartService {
                         }
                     }
 
+                    // Also check category-level (platform) deals
+                    Deal activeCategoryDeal = null;
+                    double categorySalePrice = 0;
+                    if (activeDp == null && product.getCategory() != null) {
+                        var catDeals = dealCategoryRepository.findActiveByCategory(product.getCategory());
+                        if (catDeals != null) {
+                            for (var dc : catDeals) {
+                                Deal d = dc.getDeal();
+                                if (d != null && "ACTIVE".equals(d.getStatus())
+                                        && d.getStartTime() != null && d.getStartTime().isBefore(now)
+                                        && d.getEndTime() != null && d.getEndTime().isAfter(now)) {
+                                    double orig = product.getOriginalPrice() != null ? product.getOriginalPrice() : 0;
+                                    if ("AUTO_APPLY".equals(d.getApplyMethod())) {
+                                        if ("PERCENT".equals(d.getDiscountType())) {
+                                            categorySalePrice = orig * (1 - d.getDiscountValue() / 100.0);
+                                            if (d.getMaxDiscountAmount() != null) {
+                                                double maxDisc = d.getMaxDiscountAmount();
+                                                if (orig - categorySalePrice > maxDisc) categorySalePrice = orig - maxDisc;
+                                            }
+                                            categorySalePrice = Math.round(categorySalePrice * 1.0) / 1.0;
+                                        } else {
+                                            categorySalePrice = orig; // FIXED: keep original, apply once at checkout
+                                        }
+                                    } else {
+                                        categorySalePrice = orig; // CODE_REQUIRED: no auto discount
+                                    }
+                                    if (categorySalePrice < 0) categorySalePrice = 0;
+                                    activeCategoryDeal = d;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     if (activeDp != null) {
-                        item.put("salePrice", activeDp.getSalePrice() != null ? activeDp.getSalePrice() : product.getOriginalPrice());
-                        item.put("dealId", activeDp.getDeal().getDealId());
-                        item.put("dealType", activeDp.getDeal().getDealType());
-                        item.put("dealName", activeDp.getDeal().getDealName());
+                        Deal dpDeal = activeDp.getDeal();
+                        double sp = activeDp.getSalePrice() != null ? activeDp.getSalePrice() : product.getOriginalPrice();
+                        // Only AUTO_APPLY deals get discounted price; CODE_REQUIRED keep original
+                        // FIXED deals: always keep original (discount applied once at checkout)
+                        if (!"AUTO_APPLY".equals(dpDeal.getApplyMethod()) || "FIXED".equals(dpDeal.getDiscountType())) {
+                            sp = product.getOriginalPrice() != null ? product.getOriginalPrice() : sp;
+                        }
+                        item.put("salePrice", sp);
+                        item.put("dealId", dpDeal.getDealId());
+                        item.put("dealType", dpDeal.getDealType());
+                        item.put("dealName", dpDeal.getDealName());
+                        item.put("discountType", dpDeal.getDiscountType());
+                        item.put("discountValue", dpDeal.getDiscountValue());
+                        item.put("applyMethod", dpDeal.getApplyMethod());
+                    } else if (activeCategoryDeal != null) {
+                        item.put("salePrice", categorySalePrice);
+                        item.put("dealId", activeCategoryDeal.getDealId());
+                        item.put("dealType", activeCategoryDeal.getDealType());
+                        item.put("dealName", activeCategoryDeal.getDealName());
+                        item.put("discountType", activeCategoryDeal.getDiscountType());
+                        item.put("discountValue", activeCategoryDeal.getDiscountValue());
+                        item.put("applyMethod", activeCategoryDeal.getApplyMethod());
                     } else {
                         item.put("salePrice", product.getCurrentPrice() != null ? product.getCurrentPrice() : product.getOriginalPrice());
                         item.put("dealId", 0);
                         item.put("dealType", "");
                         item.put("dealName", "");
+                        item.put("discountType", "");
+                        item.put("discountValue", 0);
+                        item.put("applyMethod", "");
                     }
                 }
 

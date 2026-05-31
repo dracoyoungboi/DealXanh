@@ -1,12 +1,15 @@
 package com.dealxanh.app.service;
 
 import com.dealxanh.app.concurrency.ResourceLockManager;
+import com.dealxanh.app.entity.Deal;
 import com.dealxanh.app.entity.Product;
+import com.dealxanh.app.repository.DealRepository;
 import com.dealxanh.app.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -19,6 +22,9 @@ public class ExpiryCountdownService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private DealRepository dealRepository;
 
     @Autowired
     private ResourceLockManager lockManager;
@@ -83,5 +89,16 @@ public class ExpiryCountdownService {
         }
 
         System.out.println("=== EXPIRY COUNTDOWN END: " + updatedCount + " updated, " + expiredCount + " expired ===");
+    }
+
+    /**
+     * Chạy mỗi 30 phút. Tự động chuyển ACTIVE deals đã quá endTime sang ENDED.
+     * Dùng @Modifying query để tránh lỗi detached entity + version=null.
+     */
+    @Scheduled(fixedRate = 1_800_000) // 30 minutes
+    @Transactional
+    public void endExpiredDeals() {
+        int count = dealRepository.endExpiredActiveDeals();
+        if (count > 0) System.out.println("AUTO-ENDED " + count + " expired deals");
     }
 }

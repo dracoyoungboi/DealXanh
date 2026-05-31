@@ -20,6 +20,7 @@ import com.dealxanh.app.repository.StoreRepository;
 import com.dealxanh.app.repository.UserAddressRepository;
 import com.dealxanh.app.repository.UserRepository;
 import com.dealxanh.app.service.CartService;
+import com.dealxanh.app.service.LocationService;
 import com.dealxanh.app.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -73,6 +75,9 @@ public class HomeController {
 
     @Autowired
     private ResourceLockManager lockManager;
+
+    @Autowired
+    private LocationService locationService;
 
     /**
      * Global model attribute — adds notification count for all buyer pages.
@@ -140,6 +145,7 @@ public class HomeController {
                 card.put("storeName", storeName);
                 card.put("storeLogo", storeLogo);
                 card.put("storeId", store != null ? store.getStoreId() : null);
+                card.put("storeAddress", store != null ? store.getAddress() : "");
                 card.put("dealType", dealType);
                 card.put("originalPrice", Math.round(dp.getOriginalPrice()));
                 card.put("salePrice", Math.round(dp.getSalePrice()));
@@ -175,6 +181,41 @@ public class HomeController {
                     comboProducts.add(card);
                 }
             }
+        }
+
+        // Sort products by distance from user (nearest first)
+        User homeUser = getCurrentUser(request.getUserPrincipal());
+        double[] userLoc = locationService.getUserLocation(request, homeUser);
+        if (userLoc != null && !allProducts.isEmpty()) {
+            // Add distance to each card
+            for (Map<String, Object> card : allProducts) {
+                Long sid = card.get("storeId") != null ? ((Number) card.get("storeId")).longValue() : null;
+                if (sid != null) {
+                    var store = storeRepository.findById(sid).orElse(null);
+                    if (store != null) {
+                        double dist = locationService.distanceToStore(userLoc, store);
+                        card.put("distanceKm", dist >= 0 ? Math.round(dist * 10.0) / 10.0 : -1);
+                    }
+                }
+            }
+            // Sort by distance (nearest first, unknown distance last)
+            allProducts.sort((a, b) -> {
+                double da = ((Number) a.getOrDefault("distanceKm", -1)).doubleValue();
+                double db = ((Number) b.getOrDefault("distanceKm", -1)).doubleValue();
+                if (da < 0 && db < 0) return 0;
+                if (da < 0) return 1;
+                if (db < 0) return -1;
+                return Double.compare(da, db);
+            });
+            // Re-filter flash/combo from sorted list
+            flashSaleProducts.clear();
+            comboProducts.clear();
+            for (Map<String, Object> card : allProducts) {
+                String dt = (String) card.get("dealType");
+                if ("FLASH_SALE".equals(dt)) flashSaleProducts.add(card);
+                if ("COMBO".equals(dt)) comboProducts.add(card);
+            }
+            model.addAttribute("userLocation", userLoc);
         }
 
         model.addAttribute("allProducts", allProducts);
@@ -511,9 +552,25 @@ public class HomeController {
     @PostMapping("/api/cart/apply-voucher")
     @ResponseBody
     public java.util.Map<String, Object> applyVoucher(@RequestParam String code,
-            jakarta.servlet.http.HttpSession session) {
-        @SuppressWarnings("unchecked")
-        java.util.List<java.util.Map<String, Object>> cart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
+            jakarta.servlet.http.HttpSession session, java.security.Principal principal) {
+        // Get cart data from DB (logged-in) or session (guest)
+        java.util.List<java.util.Map<String, Object>> cart = null;
+        User user = getCurrentUser(principal);
+        if (user != null) {
+            cartService.migrateSessionCart(session, user);
+            java.util.Map<String, Object> cartData = cartService.getCartData(user);
+            @SuppressWarnings("unchecked")
+            java.util.List<java.util.Map<String, Object>> items = (java.util.List<java.util.Map<String, Object>>) cartData.get("items");
+            if (items != null) {
+                cart = items.stream()
+                    .filter(i -> !Boolean.TRUE.equals(i.get("unavailable")))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+        } else {
+            @SuppressWarnings("unchecked")
+            java.util.List<java.util.Map<String, Object>> sessionCart = (java.util.List<java.util.Map<String, Object>>) session.getAttribute("cart");
+            cart = sessionCart;
+        }
         if (cart == null || cart.isEmpty())
             return java.util.Map.of("success", false, "message", "Giỏ hàng trống");
 
@@ -580,6 +637,23 @@ public class HomeController {
     public java.util.Map<String, Object> removeVoucher(jakarta.servlet.http.HttpSession session) {
         session.removeAttribute("appliedVoucher");
         return java.util.Map.of("success", true, "message", "Đã xoá mã giảm giá");
+    }
+
+    /** Lưu danh sách product IDs được chọn để checkout */
+    @PostMapping("/api/cart/checkout-selection")
+    @ResponseBody
+    public java.util.Map<String, Object> saveCheckoutSelection(
+            @RequestBody java.util.Map<String, Object> body,
+            jakarta.servlet.http.HttpSession session) {
+        @SuppressWarnings("unchecked")
+        java.util.List<Integer> ids = (java.util.List<Integer>) body.get("ids");
+        if (ids == null || ids.isEmpty()) {
+            return java.util.Map.of("success", false, "message", "Vui lòng chọn ít nhất 1 sản phẩm");
+        }
+        // Convert to Long list for consistency
+        java.util.List<Long> longIds = ids.stream().map(Integer::longValue).toList();
+        session.setAttribute("checkoutItemIds", longIds);
+        return java.util.Map.of("success", true, "message", "Đã lưu lựa chọn");
     }
 
     // ============ PRODUCT DETAIL ============
@@ -789,7 +863,8 @@ public class HomeController {
 
     @GetMapping("/buyer/checkout")
     public String checkout(java.security.Principal principal, Model model,
-            jakarta.servlet.http.HttpSession session) {
+            jakarta.servlet.http.HttpSession session,
+            jakarta.servlet.http.HttpServletRequest request) {
         User user = getCurrentUser(principal);
         if (user == null) return "redirect:/login";
 
@@ -797,6 +872,20 @@ public class HomeController {
         cartService.migrateSessionCart(session, user);
         List<Map<String, Object>> cart = cartService.getCartItemsForCheckout(user);
         if (cart == null || cart.isEmpty()) return "redirect:/buyer/cart";
+
+        // Filter by selected product IDs (from cart page checkboxes)
+        @SuppressWarnings("unchecked")
+        java.util.List<Long> selectedIds = (java.util.List<Long>) session.getAttribute("checkoutItemIds");
+        if (selectedIds != null && !selectedIds.isEmpty()) {
+            cart = cart.stream()
+                .filter(item -> {
+                    Object pid = item.get("productId");
+                    return pid != null && selectedIds.contains(((Number) pid).longValue());
+                })
+                .toList();
+            session.removeAttribute("checkoutItemIds");
+        }
+        if (cart.isEmpty()) return "redirect:/buyer/cart";
 
         // Group cart items by store
         Map<Long, List<Map<String, Object>>> storeGroups = new java.util.LinkedHashMap<>();
@@ -820,20 +909,32 @@ public class HomeController {
                 si.put("storeName", s.getStoreName());
                 si.put("logoUrl", s.getLogoUrl());
                 si.put("address", s.getAddress());
+                // Calculate distance from user to store
+                double[] userLoc = locationService.getUserLocation(request, user);
+                double dist = userLoc != null ? locationService.distanceToStore(userLoc, s) : -1;
+                si.put("distanceKm", dist >= 0 ? Math.round(dist * 10.0) / 10.0 : -1);
                 storeInfo.put(storeId, si);
             }
         }
 
-        // Calculate totals
+        // Calculate totals (FIXED deals: once per unique deal; PERCENT deals: per-item)
+        java.util.Set<Long> fixedDealIds = new java.util.HashSet<>();
+        long fixedDealDiscount = 0;
         for (Map<String, Object> item : cart) {
             int qty = ((Number) item.getOrDefault("quantity", 1)).intValue();
             long salePrice = ((Number) item.getOrDefault("salePrice", item.getOrDefault("price", 0))).longValue();
             long originalPrice = ((Number) item.getOrDefault("originalPrice", salePrice)).longValue();
+            String discountType = (String) item.getOrDefault("discountType", "");
+            Long dealId = item.get("dealId") != null ? ((Number) item.get("dealId")).longValue() : 0;
             subtotal += salePrice * qty;
-            if (originalPrice > salePrice) {
+            if ("FIXED".equals(discountType) && dealId > 0 && !fixedDealIds.contains(dealId)) {
+                fixedDealDiscount += ((Number) item.getOrDefault("discountValue", 0)).longValue();
+                fixedDealIds.add(dealId);
+            } else if (!"FIXED".equals(discountType) && originalPrice > salePrice) {
                 totalDiscount += (originalPrice - salePrice) * qty;
             }
         }
+        totalDiscount += fixedDealDiscount;
         long total = subtotal;
 
         // Get applied voucher from session
@@ -862,6 +963,7 @@ public class HomeController {
     @PostMapping("/buyer/checkout/confirm")
     public String confirmCheckout(java.security.Principal principal,
             @RequestParam(required = false, defaultValue = "BANK_TRANSFER") String paymentMethod,
+            @RequestParam(required = false) String scheduledPickupTime,
             jakarta.servlet.http.HttpSession session) {
         User user = getCurrentUser(principal);
         if (user == null) return "redirect:/login";
@@ -907,10 +1009,21 @@ public class HomeController {
                 order.setPaymentStatus("UNPAID");
                 order.setPaymentMethod(paymentMethod);
                 order.setCreatedAt(LocalDateTime.now());
+                if (scheduledPickupTime != null && !scheduledPickupTime.isEmpty()) {
+                    try {
+                        order.setScheduledPickupTime(LocalDateTime.parse(scheduledPickupTime));
+                    } catch (Exception e) {
+                        // Ignore invalid format, leave null
+                    }
+                }
 
                 double totalAmount = 0;
                 double discountAmount = 0;
                 List<OrderItem> orderItems = new ArrayList<>();
+
+                // Collect unique FIXED deals in this store group to apply once
+                java.util.Set<Long> appliedFixedDealIds = new java.util.HashSet<>();
+                double fixedDealDiscount = 0;
 
                 for (Map<String, Object> item : items) {
                     int qty = ((Number) item.getOrDefault("quantity", 1)).intValue();
@@ -919,7 +1032,14 @@ public class HomeController {
                     Long productId = item.get("productId") != null ? ((Number) item.get("productId")).longValue() : null;
 
                     totalAmount += originalPrice * qty;
-                    if (originalPrice > salePrice) {
+                    // PERCENT deals already applied per-item; FIXED deals applied once below
+                    String discountType = (String) item.getOrDefault("discountType", "");
+                    Long dealId = item.get("dealId") != null ? ((Number) item.get("dealId")).longValue() : 0;
+                    if ("FIXED".equals(discountType) && dealId > 0 && !appliedFixedDealIds.contains(dealId)) {
+                        double dv = ((Number) item.getOrDefault("discountValue", 0)).doubleValue();
+                        fixedDealDiscount += dv;
+                        appliedFixedDealIds.add(dealId);
+                    } else if (!"FIXED".equals(discountType) && originalPrice > salePrice) {
                         discountAmount += (originalPrice - salePrice) * qty;
                     }
 
@@ -930,12 +1050,18 @@ public class HomeController {
                             oi.setOrder(order);
                             oi.setProduct(product);
                             oi.setQuantity(qty);
-                            oi.setUnitPrice(salePrice);
+                            // For FIXED deals: unitPrice = originalPrice (discount applied at order level)
+                            if ("FIXED".equals(discountType) && dealId > 0) {
+                                oi.setUnitPrice(originalPrice);
+                            } else {
+                                oi.setUnitPrice(salePrice);
+                            }
                             orderItems.add(oi);
                         }
                     }
                 }
 
+                discountAmount += fixedDealDiscount;
                 double finalAmount = totalAmount - discountAmount;
                 if (voucherCode != null && voucherDiscountTotal > 0 && orderIds.isEmpty()) {
                     double vd = Math.min(voucherDiscountTotal, finalAmount);

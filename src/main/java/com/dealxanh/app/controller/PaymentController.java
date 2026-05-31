@@ -53,6 +53,34 @@ public class PaymentController {
     }
 
     /**
+     * Buyer tạo mã QR PayOS để thanh toán trước.
+     * Cho phép PENDING/CONFIRMED/READY_FOR_PICKUP - buyer phải là chủ đơn.
+     */
+    @PostMapping("/buyer-create/{orderId}")
+    public Map<String, Object> buyerCreatePayment(@PathVariable Long orderId, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return Map.of("success", false, "message", "Chưa đăng nhập");
+
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) return Map.of("success", false, "message", "Không tìm thấy đơn hàng");
+
+        // Kiểm tra quyền: buyer phải là chủ đơn
+        if (order.getUser() == null || !user.getUserId().equals(order.getUser().getUserId())) {
+            return Map.of("success", false, "message", "Bạn không có quyền tạo mã thanh toán cho đơn này");
+        }
+
+        // Không cho tạo QR nếu đã thanh toán hoặc đã hủy/hoàn thành
+        if ("PAID".equals(order.getPaymentStatus())) {
+            return Map.of("success", false, "message", "Đơn hàng đã được thanh toán");
+        }
+        if ("CANCELLED".equals(order.getStatus()) || "COMPLETED".equals(order.getStatus())) {
+            return Map.of("success", false, "message", "Đơn hàng không thể thanh toán (đã " + order.getStatus() + ")");
+        }
+
+        return payOSService.createPaymentLink(orderId);
+    }
+
+    /**
      * Webhook nhận IPN từ PayOS. Public endpoint - không cần auth.
      */
     @PostMapping("/webhook")

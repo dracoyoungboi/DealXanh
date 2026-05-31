@@ -9,6 +9,7 @@ import com.dealxanh.app.repository.ProductRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +32,16 @@ public class OrderAutoCancelService {
     @Autowired
     private ResourceLockManager lockManager;
 
+    /** Self-injection để gọi @Transactional qua AOP proxy, tránh self-invocation bug */
+    @Autowired
+    @Lazy
+    private OrderAutoCancelService self;
+
     /**
      * Runs every 30 minutes to auto-cancel stale orders.
      */
     @Scheduled(fixedRate = 1_800_000) // 30 minutes
+    @Transactional
     public void autoCancelOrders() {
         log.info("OrderAutoCancelService: checking for stale orders...");
         LocalDateTime now = LocalDateTime.now();
@@ -49,12 +56,12 @@ public class OrderAutoCancelService {
     }
 
     private void cancelStalePendingOrders(LocalDateTime now) {
-        LocalDateTime deadline = now.minusMinutes(60);
+        LocalDateTime deadline = now.minusMinutes(30);
         List<Order> allOrders = orderRepository.findAll();
         for (Order order : allOrders) {
             if (!"PENDING".equals(order.getStatus())) continue;
             if (order.getCreatedAt() != null && order.getCreatedAt().isBefore(deadline)) {
-                cancelOrder(order, "Tự động hủy: quá 60 phút không được xác nhận");
+                self.cancelOrder(order, "Tự động hủy: quá 30 phút không được xác nhận hoặc thanh toán");
             }
         }
     }
@@ -87,7 +94,7 @@ public class OrderAutoCancelService {
             }
 
             if (shouldCancel) {
-                cancelOrder(order, reason);
+                self.cancelOrder(order, reason);
             }
         }
     }
@@ -96,23 +103,28 @@ public class OrderAutoCancelService {
     void cancelOrder(Order order, String reason) {
         ReentrantLock lock = lockManager.acquireLock("ORDER", order.getOrderId());
         try {
-            Order fresh = orderRepository.findById(order.getOrderId()).orElse(null);
+            // Load with items eagerly to snapshot before @Modifying query
+            Order fresh = orderRepository.findByIdWithItems(order.getOrderId()).orElse(null);
             if (fresh == null) return;
             if ("CANCELLED".equals(fresh.getStatus()) || "COMPLETED".equals(fresh.getStatus())) return;
 
-            // Use @Modifying query to avoid JPA version/flush issues
-            orderRepository.cancelOrder(fresh.getOrderId(), reason);
-
-            // Restore stock
+            // Snapshot item info BEFORE @Modifying query runs (clearAutomatically detaches everything)
+            List<long[]> itemSnapshots = new java.util.ArrayList<>();
             if (fresh.getOrderItems() != null) {
                 for (OrderItem item : fresh.getOrderItems()) {
                     Product p = item.getProduct();
-                    if (p != null) {
-                        p.setStockQuantity(p.getStockQuantity() + item.getQuantity());
-                        if (!p.getActive() && p.getStockQuantity() > 0) p.setActive(true);
-                        productRepository.save(p);
+                    if (p != null && item.getQuantity() != null && item.getQuantity() > 0) {
+                        itemSnapshots.add(new long[]{p.getProductId(), item.getQuantity()});
                     }
                 }
+            }
+
+            // @Modifying(clearAutomatically=true) — UPDATE trực tiếp, clear EntityManager
+            orderRepository.cancelOrder(fresh.getOrderId(), reason);
+
+            // Restore stock dùng @Modifying query — không load/save entity, tránh version=null
+            for (long[] snap : itemSnapshots) {
+                productRepository.restoreStock(snap[0], (int) snap[1]);
             }
 
             log.info("Order #{} auto-cancelled: {}", fresh.getOrderId(), reason);

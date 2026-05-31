@@ -4,6 +4,7 @@ import com.dealxanh.app.entity.Deal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -89,4 +90,9 @@ public interface DealRepository extends JpaRepository<Deal, Long> {
     // Count approved products for store
     @Query("SELECT COUNT(p) FROM Product p WHERE p.store.storeId = :storeId AND p.approvalStatus = 'APPROVED' AND p.deleted = false")
     Long countApprovedProductsByStore(@Param("storeId") Long storeId);
+
+    /** Chuyển ACTIVE deals đã quá endTime sang ENDED */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Deal d SET d.status = 'ENDED', d.updatedAt = CURRENT_TIMESTAMP WHERE d.status = 'ACTIVE' AND d.endTime IS NOT NULL AND d.endTime < CURRENT_TIMESTAMP")
+    int endExpiredActiveDeals();
 }

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -199,7 +199,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
                         <div class="prod-card__price-row">
                             <span class="prod-card__price" th:if="${dealInfo != null}" th:text="|${#numbers.formatDecimal(dealInfo.salePrice, 0, 0)}đ|">50,000đ</span>
                             <span class="prod-card__price" th:unless="${dealInfo != null}" th:text="|${#numbers.formatDecimal(p.currentPrice != null ? p.currentPrice : p.originalPrice, 0, 0)}đ|">50,000đ</span>
-                            <span class="prod-card__original" th:if="${dealInfo != null}" th:text="|${#numbers.formatDecimal(dealInfo.originalPrice, 0, 0)}đ|">100,000đ</span>
                             <span class="prod-card__nodeal" th:unless="${dealInfo != null}">Giá gốc</span>
                         </div>
                     </div>

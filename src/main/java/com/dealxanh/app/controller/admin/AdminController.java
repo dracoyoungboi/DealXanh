@@ -5,6 +5,7 @@ import com.dealxanh.app.entity.Store;
 import com.dealxanh.app.entity.User;
 import com.dealxanh.app.entity.Order;
 import com.dealxanh.app.entity.Deal;
+import com.dealxanh.app.entity.CartItem;
 import com.dealxanh.app.entity.DealCategory;
 import com.dealxanh.app.entity.DealProduct;
 import com.dealxanh.app.entity.Product;
@@ -36,9 +37,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -86,6 +91,12 @@ public class AdminController {
 
     @Autowired
     private com.dealxanh.app.service.EmailService emailService;
+
+    @Autowired
+    private com.dealxanh.app.service.NotificationService notificationService;
+
+    @Autowired
+    private com.dealxanh.app.repository.CartItemRepository cartItemRepository;
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
@@ -2110,7 +2121,58 @@ public class AdminController {
         deal.setStatus("PAUSED");
         deal.setUpdatedAt(LocalDateTime.now());
         dealRepository.save(deal);
+
+        // Notify buyers who have products from this deal in their cart
+        try {
+            notifyBuyersAboutPausedDeal(deal);
+        } catch (Exception e) {
+            // Log lỗi nhưng không block flow chính
+            System.err.println("Lỗi khi gửi thông báo pause deal: " + e.getMessage());
+        }
+
         return java.util.Map.of("success", true, "message", "Đã tạm dừng deal");
+    }
+
+    /** Gửi thông báo cho tất cả buyer có SP từ deal bị pause trong giỏ hàng */
+    private void notifyBuyersAboutPausedDeal(Deal deal) {
+        // Lấy danh sách product IDs thuộc deal này
+        List<DealProduct> dealProducts = dealProductRepository.findByDealDealIdOrderByPriorityAsc(deal.getDealId());
+        if (dealProducts == null || dealProducts.isEmpty()) return;
+
+        List<Long> productIds = new ArrayList<>();
+        Map<Long, String> productNameMap = new HashMap<>();
+        for (DealProduct dp : dealProducts) {
+            if (dp.getProduct() != null) {
+                productIds.add(dp.getProduct().getProductId());
+                productNameMap.put(dp.getProduct().getProductId(), dp.getProduct().getName());
+            }
+        }
+        if (productIds.isEmpty()) return;
+
+        // Tìm tất cả CartItem có product nằm trong danh sách
+        List<CartItem> cartItems = cartItemRepository.findByProductIdsWithCartAndUser(productIds);
+        if (cartItems == null || cartItems.isEmpty()) return;
+
+        // Gom nhóm theo User → danh sách tên sản phẩm bị ảnh hưởng
+        Map<User, Set<String>> userAffectedProducts = new LinkedHashMap<>();
+        for (CartItem ci : cartItems) {
+            User buyer = ci.getCart().getUser();
+            String productName = productNameMap.get(ci.getProduct().getProductId());
+            if (buyer != null && productName != null) {
+                userAffectedProducts
+                    .computeIfAbsent(buyer, k -> new LinkedHashSet<>())
+                    .add(productName);
+            }
+        }
+
+        // Gửi thông báo cho từng buyer
+        for (Map.Entry<User, Set<String>> entry : userAffectedProducts.entrySet()) {
+            notificationService.notifyDealPaused(
+                entry.getKey(),
+                deal.getDealName(),
+                new ArrayList<>(entry.getValue())
+            );
+        }
     }
 
     @PostMapping("/deals/{dealId}/resume")
