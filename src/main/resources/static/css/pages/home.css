@@ -69,6 +69,210 @@
     border: 2px solid var(--surface);
 }
 
+/* ==================== DESKTOP TOP NAVBAR ==================== */
+.desktop-top-nav {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .desktop-top-nav {
+        display: block;
+        position: sticky;
+        top: 0;
+        z-index: var(--z-fixed);
+        height: 60px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .desktop-top-nav__inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    /* ===== LEFT GROUP: Logo + Divider + Nav Links ===== */
+    .desktop-top-nav__left {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        flex-shrink: 0;
+    }
+
+    .desktop-top-nav__logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        flex-shrink: 0;
+        padding-right: 16px;
+    }
+
+    .desktop-top-nav__brand {
+        font-size: 20px;
+        font-weight: var(--font-weight-bold);
+        color: var(--primary);
+        white-space: nowrap;
+    }
+
+    /* Vertical divider between logo and nav links */
+    .desktop-top-nav__divider {
+        width: 1px;
+        height: 28px;
+        background: var(--border);
+        flex-shrink: 0;
+        margin: 0 12px;
+    }
+
+    /* Nav links — left-aligned next to divider */
+    .desktop-top-nav__links {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .desktop-top-nav__link {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: var(--font-weight-medium);
+        transition: all var(--transition-fast);
+        white-space: nowrap;
+    }
+
+    .desktop-top-nav__link:hover {
+        background: var(--background);
+        color: var(--text-primary);
+    }
+
+    .desktop-top-nav__link--active {
+        color: #2e7d32;
+        background: rgba(46, 125, 50, 0.08);
+        font-weight: var(--font-weight-semibold);
+    }
+
+    .desktop-top-nav__link--active:hover {
+        background: rgba(46, 125, 50, 0.12);
+        color: #2e7d32;
+    }
+
+    /* ===== RIGHT: Action icons + Avatar pill ===== */
+    .desktop-top-nav__actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .desktop-top-nav__icon-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-full);
+        border: none;
+        background: none;
+        cursor: pointer;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all var(--transition-fast);
+        position: relative;
+    }
+
+    .desktop-top-nav__icon-btn:hover {
+        background: var(--background);
+        color: var(--text-primary);
+    }
+
+    .desktop-top-nav__icon-btn--active {
+        color: #2e7d32;
+        background: rgba(46, 125, 50, 0.08);
+    }
+
+    /* Avatar pill button */
+    .desktop-top-nav__avatar-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 14px 5px 5px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-primary);
+        font-size: 14px;
+        font-weight: var(--font-weight-medium);
+        cursor: pointer;
+        text-decoration: none;
+        transition: all var(--transition-fast);
+        white-space: nowrap;
+        margin-left: 8px;
+    }
+
+    .desktop-top-nav__avatar-pill:hover {
+        background: var(--background);
+        border-color: #bdbdbd;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .desktop-top-nav__avatar-pill--active {
+        color: #2e7d32;
+        border-color: rgba(46, 125, 50, 0.3);
+        background: rgba(46, 125, 50, 0.05);
+    }
+
+    .desktop-top-nav__avatar-circle {
+        width: 30px;
+        height: 30px;
+        border-radius: var(--radius-full);
+        background: var(--background);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        flex-shrink: 0;
+    }
+
+    .desktop-top-nav__avatar-name {
+        font-size: 13px;
+        font-weight: var(--font-weight-medium);
+    }
+
+    .desktop-top-nav__chevron {
+        flex-shrink: 0;
+        color: var(--text-tertiary);
+    }
+
+    /* Badge on icon buttons */
+    .desktop-top-nav__badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        min-width: 18px;
+        height: 18px;
+        background: var(--status-danger);
+        color: #fff;
+        border-radius: var(--radius-full);
+        font-size: 10px;
+        font-weight: var(--font-weight-bold);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border: 2px solid var(--surface);
+        line-height: 1;
+    }
+}
+
 /* ==================== SEARCH OVERLAY ==================== */
 .search-overlay {
     position: fixed;
@@ -948,23 +1152,61 @@
 
 /* ==================== FOOTER ==================== */
 .footer {
-    background: var(--surface);
+    background: #f9fafb;
     border-top: 1px solid var(--border);
-    padding: 48px 0 24px;
 }
 
-.footer__main {
+/* ===== Phần trên: 5 cột ===== */
+.footer__top {
+    padding: 60px 0;
+}
+
+.footer__inner {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: 0 var(--container-padding);
     display: grid;
-    grid-template-columns: 1.5fr 2fr;
-    gap: 40px;
-    margin-bottom: 40px;
+    grid-template-columns: 1fr;
+    gap: 0;
+}
+
+/* Wrapper cho 4 cột links — desktop: contents (tham gia grid cha), mobile: 2×2 grid */
+.footer__links-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 16px;
+    margin-top: 32px;
+}
+
+@media (min-width: 768px) {
+    .footer__inner {
+        grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr;
+        gap: 32px;
+    }
+
+    .footer__links-grid {
+        display: contents;
+        margin-top: 0;
+    }
+}
+
+@media (min-width: 1024px) {
+    .footer__inner {
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    }
+}
+
+/* Cột brand — rộng hơn */
+.footer__col--brand {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .footer__logo {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 10px;
 }
 
 .footer__brand-name {
@@ -973,103 +1215,144 @@
     color: var(--primary);
 }
 
-.footer__description {
+.footer__tagline {
     font-size: 14px;
-    color: var(--text-secondary);
+    color: #6b7280;
     line-height: var(--line-height-relaxed);
-    margin-bottom: 20px;
+    max-width: 340px;
+    margin: 0;
 }
 
+/* Contact info */
+.footer__contact {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footer__contact li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    color: #6b7280;
+    line-height: var(--line-height-relaxed);
+}
+
+.footer__contact li svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #9ca3af;
+}
+
+/* Social buttons */
 .footer__socials {
     display: flex;
-    gap: 12px;
+    gap: 10px;
+    margin-top: 4px;
 }
 
 .footer__social {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--background);
-    border-radius: var(--radius-full);
-    color: var(--text-secondary);
-    transition: all var(--transition-base);
+    background: #e5e7eb;
+    border-radius: var(--radius-md);
+    color: #6b7280;
+    text-decoration: none;
+    transition: all var(--transition-fast);
 }
 
 .footer__social:hover {
-    background: var(--primary);
-    color: white;
+    background: #1a5c1e;
+    color: #fff;
 }
 
-.footer__links {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 32px;
-}
-
-.footer__links-title {
-    font-size: 16px;
+/* Column headings */
+.footer__heading {
+    font-size: 11px;
     font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    margin: 0 0 20px;
 }
 
-.footer__links-list {
+/* Column links */
+.footer__links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.footer__links-list li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.footer__links-list a {
+.footer__links a {
     font-size: 14px;
-    color: var(--text-secondary);
+    color: #6b7280;
     text-decoration: none;
     transition: color var(--transition-fast);
 }
 
-.footer__links-list a:hover {
-    color: var(--primary);
+.footer__links a:hover {
+    color: #1a5c1e;
 }
 
-.footer__links-list svg {
-    color: var(--text-tertiary);
-}
-
+/* ===== Phần dưới: Copyright + Location ===== */
 .footer__bottom {
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 16px 0;
+}
+
+.footer__inner--bottom {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 12px;
 }
 
 .footer__copyright {
     font-size: 14px;
-    color: var(--text-tertiary);
+    color: #9ca3af;
 }
 
-.footer__legal {
+.footer__location {
     display: flex;
-    gap: 24px;
-}
-
-.footer__legal a {
+    align-items: center;
+    gap: 6px;
     font-size: 14px;
-    color: var(--text-tertiary);
-    text-decoration: none;
+    color: #9ca3af;
 }
 
-.footer__legal a:hover {
-    color: var(--primary);
+.footer__location svg {
+    flex-shrink: 0;
+}
+
+/* ===== Responsive cho mobile (max-width: 767px) ===== */
+@media (max-width: 767px) {
+    .footer__top {
+        padding: 40px 16px;
+    }
+
+    .footer__col--brand {
+        grid-column: 1 / -1;
+    }
+
+    .footer__bottom {
+        text-align: center;
+    }
+
+    .footer__inner--bottom {
+        flex-direction: column;
+        text-align: center;
+    }
 }
 
 /* ==================== MOBILE NAVIGATION ==================== */
@@ -1078,11 +1361,10 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--glass);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid var(--border);
+    background: #fff;
+    box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.06);
     z-index: var(--z-fixed);
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
 }
 
 .mobile-nav__list {
@@ -1103,15 +1385,25 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 12px 8px 8px;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
+    height: 64px;
     background: none;
     border: none;
     text-decoration: none;
-    color: var(--text-tertiary);
+    color: #9ca3af;
     font-size: 12px;
+    font-weight: 500;
     transition: color var(--transition-fast);
     position: relative;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav__link:focus,
+.mobile-nav__link:focus-visible {
+    outline: none;
 }
 
 .mobile-nav__link:hover {
@@ -1119,28 +1411,35 @@
 }
 
 .mobile-nav__link--active {
-    color: var(--primary);
+    color: #0f6b3f;
 }
 
-.mobile-nav__link--active .mobile-nav__icon {
-    background: var(--status-success-bg);
+.mobile-nav__link--active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 3px;
+    background: #0f6b3f;
+    border-radius: 0 0 3px 3px;
 }
 
 .mobile-nav__icon {
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-lg);
-    transition: all var(--transition-base);
+    flex-shrink: 0;
 }
 
 .mobile-nav__cart__badge {
     position: absolute;
-    top: 4px;
-    right: calc(50% - 16px);
-    width: 16px;
+    top: 2px;
+    right: calc(50% - 20px);
+    min-width: 16px;
     height: 16px;
     background: var(--status-danger);
     color: white;
@@ -1150,6 +1449,7 @@
     display: none;
     align-items: center;
     justify-content: center;
+    padding: 0 4px;
 }
 
 /* ==================== RESPONSIVE DESIGN ==================== */
@@ -1165,6 +1465,39 @@
 
     .flash-sale__title {
         font-size: 36px;
+    }
+
+    /* Hide mobile elements on desktop */
+    .mobile-header {
+        display: none !important;
+    }
+
+    .mobile-nav {
+        display: none !important;
+    }
+
+    /* Remove mobile bottom padding */
+    body {
+        padding-bottom: 0 !important;
+    }
+
+    /* Notification dropdown — right-aligned dropdown on desktop */
+    .notif-dropdown {
+        left: auto !important;
+        right: 20px !important;
+        width: 420px !important;
+        border-radius: 16px !important;
+        margin: 0 !important;
+        transform: translateY(-8px);
+    }
+
+    .notif-dropdown.show {
+        transform: translateY(0);
+    }
+
+    /* Back-bar sits below top-nav on desktop */
+    .back-bar {
+        top: 60px !important;
     }
 }
 
@@ -1230,20 +1563,6 @@
         grid-template-columns: 1fr;
     }
 
-    .footer__main {
-        grid-template-columns: 1fr;
-        gap: 32px;
-    }
-
-    .footer__links {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .footer__bottom {
-        flex-direction: column;
-        text-align: center;
-    }
-
     .blind-box-section__content {
         padding: 32px 24px;
     }
@@ -1285,10 +1604,6 @@
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .footer__links {
-        grid-template-columns: 1fr;
-        gap: 24px;
-    }
 }
 
 /* ==================== ANIMATIONS ==================== */
@@ -1321,4 +1636,479 @@
 
 .deal-card:nth-child(4) {
     animation-delay: 0.15s;
+}
+
+/* ================================================================
+   DESKTOP ORDERS PAGE REDESIGN — @media (min-width: 1024px) only
+   KHÔNG ảnh hưởng đến mobile/tablet (max-width: 1023px)
+   ================================================================ */
+@media (min-width: 1024px) {
+    /* ===== SECTION 1: Page background ===== */
+    .orders-page {
+        background: #F5F5F3;
+        min-height: 100vh;
+        padding: 36px 40px;
+    }
+    .orders-container {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    /* ===== HIDE MOBILE ELEMENTS ===== */
+    .back-bar {
+        display: none !important;
+    }
+    .tabs-wrapper {
+        display: none !important;
+    }
+
+    /* ===== SHOW DESKTOP HEADER ===== */
+    .desktop-orders-header {
+        display: block !important;
+    }
+
+    /* ===== SECTION 2: Title + Subtitle ===== */
+    .orders-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: -0.3px;
+        margin-bottom: 4px;
+    }
+    .orders-sub {
+        font-size: 14px;
+        color: #888;
+        margin-bottom: 24px;
+    }
+
+    /* ===== SECTION 3: Stats Summary Bar ===== */
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+    .stats-card {
+        background: #fff;
+        border: 0.5px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .stats-card__label {
+        font-size: 12px;
+        color: #888;
+        font-weight: 500;
+    }
+    .stats-card__value {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+    .stats-card__value--brand {
+        color: #2E7D45;
+    }
+
+    /* ===== SECTION 4: Orders Card Wrapper ===== */
+    .orders-card {
+        background: #fff;
+        border: 0.5px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .orders-card__header {
+        padding: 16px 24px 0;
+    }
+    .orders-card__header .tabs-group {
+        margin-bottom: 0;
+    }
+
+    /* ===== SECTION 5: Tabs + Search Bar ===== */
+    .tabs-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        border-bottom: 0.5px solid #f0f0f0;
+    }
+
+    /* Tabs group — border-bottom active indicator style */
+    .tabs-group {
+        display: flex;
+        gap: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        margin-bottom: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .tabs-group::-webkit-scrollbar { display: none; }
+    .tab-item {
+        padding: 14px 20px;
+        border-radius: 0;
+        font-size: 14px;
+        font-weight: 500;
+        color: #888;
+        cursor: pointer;
+        white-space: nowrap;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    .tab-item:hover {
+        color: #2E7D45;
+        background: transparent;
+    }
+    .tab-item.active {
+        color: #2E7D45;
+        font-weight: 600;
+        border-bottom-color: #2E7D45;
+        background: transparent;
+    }
+
+    /* Tab badge */
+    .tab-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #f0f0f0;
+        color: #888;
+        transition: all 0.15s ease;
+    }
+    .tab-item.active .tab-badge {
+        background: rgba(46, 125, 45, 0.1);
+        color: #2E7D45;
+    }
+
+    /* Search input */
+    .tabs-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: #f5f5f5;
+        border: 0.5px solid #e5e7eb;
+        border-radius: 8px;
+        min-width: 240px;
+        flex-shrink: 0;
+    }
+    .tabs-search:focus-within {
+        background: #fff;
+        border-color: #2E7D45;
+        box-shadow: 0 0 0 3px rgba(46, 125, 45, 0.06);
+    }
+    .tabs-search svg {
+        flex-shrink: 0;
+        color: #999;
+    }
+    .tabs-search input {
+        border: none;
+        background: transparent;
+        font-size: 13px;
+        color: #1a1a1a;
+        outline: none;
+        width: 100%;
+        font-family: inherit;
+    }
+    .tabs-search input::placeholder {
+        color: #bbb;
+    }
+
+    /* ===== SECTION 6: Order List (inside card) ===== */
+    .orders-list-wrap {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        overflow: visible;
+        padding: 0;
+        gap: 0;
+    }
+
+    /* Strip mobile card styles */
+    .orders-list-wrap .order-card {
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        overflow: visible;
+    }
+
+    /* ===== SECTION 7: Order Row — 5-column Grid ===== */
+    .order-row {
+        display: grid;
+        grid-template-columns: 52px 1fr auto auto 36px;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 24px;
+        border-bottom: 0.5px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+    .order-row:last-child {
+        border-bottom: none;
+    }
+    .order-row:hover {
+        background: #f9fafb;
+    }
+
+    /* Use display:contents so grandchildren participate in grid */
+    .order-row .order-card__header,
+    .order-row .order-card__body,
+    .order-row .order-card__footer {
+        display: contents;
+    }
+
+    /* Hide mobile status badge in header row */
+    .order-card__header .order-card__status {
+        display: none !important;
+    }
+
+    /* ---- Column 1: Store Avatar ---- */
+    .order-icon {
+        width: 44px;
+        height: 44px;
+        background: #EEF6F0;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        overflow: hidden;
+        grid-column: 1;
+        grid-row: 1;
+    }
+    .order-icon .order-card__store-logo,
+    .order-icon .order-card__store-logo--fallback {
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        border: none;
+        object-fit: cover;
+    }
+
+    /* ---- Column 2: Store Info (name + order ID badge + meta) ---- */
+    /* .order-store auto-places in col 2 via display:contents */
+    .order-store {
+        font-size: 15px;
+        font-weight: 500;
+        color: #1a1a1a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        grid-column: 2;
+        grid-row: 1;
+        align-self: end;
+        margin-bottom: 2px;
+    }
+
+    /* Order ID badge */
+    .order-card__id {
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 8px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        font-size: 11px;
+        color: #888;
+        font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+        font-weight: 500;
+        white-space: nowrap;
+        grid-column: 2;
+        grid-row: 1;
+        align-self: end;
+        margin-bottom: 2px;
+        /* placed inline next to store name via flow, but we need explicit placement for the meta-below layout */
+    }
+
+    /* Meta row — date + item count on a second line in column 2 */
+    .order-meta {
+        grid-column: 2;
+        grid-row: 2;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        color: #999;
+        align-self: start;
+        margin-top: 2px;
+    }
+    .order-meta .order-card__date {
+        font-size: 13px;
+        color: #999;
+    }
+    .order-meta .order-card__item-count {
+        font-size: 13px;
+        color: #999;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+    .order-meta .order-card__item-count svg {
+        display: none;
+    }
+
+    /* Meta dots separator */
+    .order-meta > * + *::before {
+        content: ' · ';
+        color: #d1d5db;
+    }
+
+    /* ---- Column 3: Status Badge ---- */
+    .order-badge {
+        grid-column: 3;
+        grid-row: 1 / 3;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        text-align: center;
+        border: none;
+        flex-shrink: 0;
+        min-width: 110px;
+        align-self: center;
+    }
+
+    /* ---- Column 4: Price ---- */
+    .order-price {
+        grid-column: 4;
+        grid-row: 1 / 3;
+        text-align: right;
+        flex-shrink: 0;
+        align-self: center;
+    }
+    .price-label {
+        font-size: 11px;
+        color: #999;
+        display: block;
+        margin-bottom: 2px;
+    }
+    .price-val {
+        font-size: 17px;
+        font-weight: 500;
+        color: #2E7D45;
+    }
+
+    /* ---- Column 5: Arrow ---- */
+    .order-chev {
+        grid-column: 5;
+        grid-row: 1 / 3;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ccc;
+        flex-shrink: 0;
+        align-self: center;
+    }
+
+    /* ===== SECTION 8: Status badge colors (Pill style) ===== */
+    .badge-wait {
+        background: #E8F0FB;
+        color: #185FA5;
+    }
+    .badge-process {
+        background: #FFF8E6;
+        color: #B07A00;
+    }
+    .badge-ready {
+        background: #F0F9F0;
+        color: #3B6D11;
+    }
+    .badge-done {
+        background: #EEF6F0;
+        color: #2E7D45;
+    }
+    .badge-cancel {
+        background: #F5F5F3;
+        color: #888;
+    }
+
+    /* ===== SECTION 9: Pagination ===== */
+    .orders-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 24px;
+        border-top: 0.5px solid #f0f0f0;
+    }
+    .orders-pagination__info {
+        font-size: 13px;
+        color: #888;
+    }
+    .orders-pagination__pages {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .page-btn {
+        min-width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: #666;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: inherit;
+        padding: 0 8px;
+    }
+    .page-btn:hover {
+        background: #f0f0f0;
+    }
+    .page-btn.active {
+        background: #2E7D45;
+        color: #fff;
+    }
+    .page-btn:disabled {
+        opacity: 0.3;
+        cursor: default;
+        pointer-events: none;
+    }
+    .page-btn--arrow {
+        font-size: 16px;
+    }
+
+    /* ===== SECTION 10: Empty state ===== */
+    .orders-page .empty-state {
+        text-align: center;
+        padding: 60px 0;
+        color: #d1d5db;
+    }
+    .orders-page .empty-state i {
+        font-size: 40px;
+    }
+    .empty-title {
+        font-size: 14px;
+        color: #6b7280;
+        margin-top: 12px;
+    }
+    .empty-sub {
+        font-size: 13px;
+        color: #9ca3af;
+        margin-top: 4px;
+    }
 }

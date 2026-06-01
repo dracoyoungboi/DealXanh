@@ -19,7 +19,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
 .back-bar__title{flex:1;font-size:17px;font-weight:700;color:var(--text-primary);text-align:center}
 .back-bar__spacer{width:44px}
 
-/* ===== STATUS TABS ===== */
+/* ===== STATUS TABS (mobile) ===== */
 .tabs-wrapper{background:var(--surface);padding:10px 8px;border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:9}
 .tabs-scroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .tabs-scroll::-webkit-scrollbar{display:none}
@@ -27,15 +27,16 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
 .status-tab:hover{border-color:var(--primary);color:var(--primary)}
 .status-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 
-/* ===== ORDER LIST ===== */
+/* ===== ORDER LIST (mobile card layout) ===== */
 .order-list{padding:12px 16px;display:flex;flex-direction:column;gap:12px}
 
-/* Order card */
+/* Order card — mobile */
 .order-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden;transition:box-shadow .15s}
 
+/* Mobile: card header row — logo + store + mobile status */
 .order-card__header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border-light)}
 .order-card__store-logo{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--background)}
-.order-card__store-logo--fallback{width:32px;height:32px;border-radius:50%;background:var(--background);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-tertiary)}
+.order-card__store-logo--fallback{width:32px;height:32px;border-radius:50%;background:#EEF6F0;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#2E7D45;font-size:13px;font-weight:600;text-transform:uppercase}
 .order-card__store-name{font-size:13px;font-weight:600;color:var(--text-primary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .order-card__status{padding:4px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:700;flex-shrink:0;text-transform:uppercase;letter-spacing:.3px}
 
@@ -44,13 +45,17 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
 .status-ready{background:#e8f5e9;color:#2e7d32}
 .status-completed{background:#f5f5f5;color:#757575}
 .status-cancelled{background:#ffebee;color:#c62828}
+/* [UI] Neutral fallback for unknown mobile status */
+.status-neutral{background:#f3f4f6;color:#6b7280}
 
+/* Mobile: card body — ID, date, item count */
 .order-card__body{padding:12px 14px}
 .order-card__meta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:8px}
 .order-card__id{font-size:11px;color:var(--text-tertiary);font-family:monospace}
 .order-card__date{font-size:11px;color:var(--text-secondary)}
 .order-card__item-count{font-size:11px;color:var(--text-secondary);display:flex;align-items:center;gap:3px}
 
+/* Mobile: card footer — price + chevron */
 .order-card__footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border-light)}
 .order-card__total{font-size:16px;font-weight:700;color:var(--primary)}
 .order-card__total-label{font-size:10px;color:var(--text-tertiary);margin-bottom:1px}
@@ -65,13 +70,445 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
 
 /* Filter count badge */
 .filter-count{font-size:11px;color:var(--text-secondary);padding:4px 0}
+
+/* === Desktop-only elements — hidden by default (mobile) === */
+.desktop-orders-header{display:none}
+.stats-summary{display:none}
+.tabs-bar{display:none}
+.orders-card{display:flex;flex-direction:column}
+.order-badge{display:none}
+
+/* [UI] Mobile: chevron visible, styled as small arrow */
+.order-chev{flex-shrink:0;color:#ccc;display:flex;align-items:center}
+
+/* [UI] Mobile: price label + value styling */
+.price-label{font-size:10px;color:var(--text-tertiary);margin-bottom:1px}
+.price-val{font-size:16px;font-weight:700;color:var(--primary)}
+
+/* [UI] Mobile: order ID pill in header */
+.order-id-pill{font-size:11px;color:var(--text-tertiary);font-family:monospace}
+
+/* [UI] Mobile: info-col fills header space */
+.order-info-col{flex:1;min-width:0}
+
+/* ===== PAGINATION (shared mobile + desktop) ===== */
+.orders-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    border-top: 0.5px solid var(--border, #e0e0e0);
+}
+.orders-pagination__info {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+.orders-pagination__pages {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.page-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    border: 0.5px solid var(--border, #e0e0e0);
+    background: var(--surface, #fff);
+    color: #666;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    padding: 0;
+    flex-shrink: 0;
+}
+.page-btn:hover:not(:disabled):not(.active) {
+    background: var(--background, #f5f5f5);
+    border-color: #d0d0d0;
+}
+.page-btn.active {
+    background: #2E7D45;
+    color: #fff;
+    border-color: #2E7D45;
+}
+.page-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+}
+.page-btn--arrow {
+    font-size: 14px;
+    font-weight: 600;
+}
+/* [UI] Ellipsis placeholder — looks like text, not clickable */
+.page-btn--ellipsis {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #999;
+    cursor: default;
+    pointer-events: none;
+    border: none;
+    background: transparent;
+    flex-shrink: 0;
+}
+
+/* ================================================================
+   DESKTOP REDESIGN — min-width: 1024px only
+   KHÔNG ảnh hưởng đến mobile/tablet (max-width: 1023px)
+   ================================================================ */
+@media (min-width: 1024px) {
+    /* ===== HIDE MOBILE ELEMENTS ===== */
+    .back-bar {
+        display: none !important;
+    }
+    .tabs-wrapper {
+        display: none !important;
+    }
+
+    /* ===== SHOW DESKTOP ELEMENTS ===== */
+    .desktop-orders-header {
+        display: block !important;
+    }
+    .stats-summary {
+        display: grid !important;
+    }
+    .tabs-bar {
+        display: flex !important;
+    }
+
+    /* ===== ORDER CARD — unwrap mobile card styling ===== */
+    .order-card {
+        border: none;
+        border-radius: 0;
+        overflow: visible;
+        background: transparent;
+    }
+
+    /* ===== ORDER ROW — 5-column grid ===== */
+    .order-row {
+        display: grid;
+        grid-template-columns: 44px 1fr auto auto 36px;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 24px;
+        border-bottom: 0.5px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        background: transparent;
+    }
+    .order-row:last-child {
+        border-bottom: none;
+    }
+    .order-row:hover {
+        background: #f9fafb;
+    }
+
+    /* ===== GRID PLACEMENT ===== */
+    /* Header spans cols 1-2: avatar (44px) + info-col (1fr) as flex children */
+    .order-row .order-card__header {
+        grid-column: 1 / 3;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0;
+        border-bottom: none;
+    }
+    /* Body hidden on desktop */
+    .order-row .order-card__body {
+        display: none;
+    }
+    /* Footer uses display:contents so children become grid items */
+    .order-row .order-card__footer {
+        display: contents;
+    }
+    /* Place footer children in columns 3, 4, 5 */
+    .order-row .order-card__footer .order-badge {
+        grid-column: 3;
+    }
+    .order-row .order-card__footer .order-price {
+        grid-column: 4;
+    }
+    .order-row .order-card__footer .order-chev {
+        grid-column: 5;
+    }
+
+    /* Hide mobile status badge */
+    .order-card__header .order-card__status {
+        display: none !important;
+    }
+
+    /* ---- Column 1: Store Avatar ---- */
+    .order-icon {
+        width: 44px;
+        height: 44px;
+        background: #EEF6F0;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    .order-icon .order-card__store-logo,
+    .order-icon .order-card__store-logo--fallback {
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        border: none;
+        object-fit: cover;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    /* ---- Column 2: Store Info (name + ID + meta stacked) ---- */
+    .order-info-col {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+    }
+    .order-info-col__top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .order-store {
+        font-size: 15px;
+        font-weight: 500;
+        color: #1a1a1a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .order-id-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 8px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        font-size: 11px;
+        color: #888;
+        font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+        font-weight: 500;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .order-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        color: #999;
+        flex-wrap: nowrap;
+    }
+    .order-meta .order-card__date {
+        font-size: 13px;
+        color: #999;
+    }
+    .order-meta .order-card__item-count {
+        font-size: 13px;
+        color: #999;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+    .order-meta .order-card__item-count svg {
+        display: none;
+    }
+    /* Meta dots separator */
+    .order-meta > * + *::before {
+        content: ' · ';
+        color: #d1d5db;
+    }
+
+    /* ---- Column 3: Status Badge (pill) ---- */
+    .order-badge {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        text-align: center;
+        border: none;
+        flex-shrink: 0;
+        min-width: 110px;
+    }
+
+    /* ---- Column 4: Price ---- */
+    .order-price {
+        text-align: right;
+        flex-shrink: 0;
+    }
+    .price-label {
+        font-size: 11px;
+        color: #999;
+        display: block;
+        margin-bottom: 2px;
+    }
+    .price-val {
+        font-size: 17px;
+        font-weight: 500;
+        color: #2E7D45;
+    }
+
+    /* ---- Column 5: Chevron Arrow ---- */
+    .order-chev {
+        display: flex !important;
+        width: 28px;
+        height: 28px;
+        align-items: center;
+        justify-content: center;
+        color: #ccc;
+        flex-shrink: 0;
+    }
+
+    /* ===== STATUS BADGE COLORS (Pill style) ===== */
+    .badge-wait {
+        background: #E8F0FB;
+        color: #185FA5;
+    }
+    .badge-process {
+        background: #FFF8E6;
+        color: #B07A00;
+    }
+    .badge-ready {
+        background: #F0F9F0;
+        color: #3B6D11;
+    }
+    .badge-done {
+        background: #EEF6F0;
+        color: #2E7D45;
+    }
+    .badge-cancel {
+        background: #F5F5F3;
+        color: #888;
+    }
+    /* [UI] Neutral fallback for unknown status values */
+    .badge-neutral {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    /* ===== PAGINATION — desktop sizing ===== */
+    .orders-pagination {
+        padding: 13px 24px;
+    }
+    .orders-pagination__info {
+        font-size: 13px;
+    }
+    .orders-pagination__pages {
+        gap: 6px;
+    }
+    .page-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+    .page-btn--arrow {
+        font-size: 16px;
+    }
+    .page-btn--ellipsis {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+
+    /* ===== META DOTS ON DESKTOP ===== */
+    .order-card__meta > * + *::before {
+        content: ' · ';
+        color: #d1d5db;
+    }
+
+    /* ===== ITEM COUNT SVG HIDDEN ON DESKTOP ===== */
+    .order-card__item-count svg {
+        display: none;
+    }
+}
     </style>
 </head>
 <body>
 
 <div th:replace="~{common/buyer/header :: header}"></div>
 
-<!-- Back bar -->
+<!-- ===== ORDERS PAGE WRAPPER ===== -->
+<div class="orders-page">
+<div class="orders-container">
+
+<!-- ===== DESKTOP TITLE (hidden on mobile) ===== -->
+<div class="desktop-orders-header">
+    <h1 class="orders-title">Đơn hàng của tôi</h1>
+    <p class="orders-sub">Lịch sử giao dịch của bạn</p>
+</div>
+
+<!-- ===== STATS SUMMARY BAR (desktop only) ===== -->
+<div class="stats-summary" id="statsSummary">
+    <div class="stats-card">
+        <div class="stats-card__label">Tổng đơn</div>
+        <div class="stats-card__value" id="statTotalOrders">0</div>
+    </div>
+    <div class="stats-card">
+        <div class="stats-card__label">Tổng chi tiêu</div>
+        <div class="stats-card__value stats-card__value--brand" id="statTotalSpent">0đ</div>
+    </div>
+    <div class="stats-card">
+        <div class="stats-card__label">Đang xử lý</div>
+        <div class="stats-card__value" id="statProcessing">0</div>
+    </div>
+    <div class="stats-card">
+        <div class="stats-card__label">Hoàn thành</div>
+        <div class="stats-card__value" id="statCompleted">0</div>
+    </div>
+</div>
+
+<!-- ===== ORDERS CARD WRAPPER (desktop: white card) ===== -->
+<div class="orders-card" id="ordersCard">
+
+<!-- ===== DESKTOP TABS + SEARCH BAR (hidden on mobile) ===== -->
+<div class="tabs-bar" id="tabsBar">
+    <div class="tabs-group" id="desktopTabsGroup">
+        <div class="tab-item active" data-status="all" onclick="filterOrders('all', this)">
+            Tất cả<span class="tab-badge" id="badgeAll">0</span>
+        </div>
+        <div class="tab-item" data-status="PENDING" onclick="filterOrders('PENDING', this)">
+            Chờ xác nhận<span class="tab-badge" id="badgePENDING">0</span>
+        </div>
+        <div class="tab-item" data-status="CONFIRMED" onclick="filterOrders('CONFIRMED', this)">
+            Đang xử lý<span class="tab-badge" id="badgeCONFIRMED">0</span>
+        </div>
+        <div class="tab-item" data-status="READY_FOR_PICKUP" onclick="filterOrders('READY_FOR_PICKUP', this)">
+            Sẵn sàng nhận<span class="tab-badge" id="badgeREADY_FOR_PICKUP">0</span>
+        </div>
+        <div class="tab-item" data-status="COMPLETED" onclick="filterOrders('COMPLETED', this)">
+            Hoàn thành<span class="tab-badge" id="badgeCOMPLETED">0</span>
+        </div>
+        <div class="tab-item" data-status="CANCELLED" onclick="filterOrders('CANCELLED', this)">
+            Đã hủy<span class="tab-badge" id="badgeCANCELLED">0</span>
+        </div>
+    </div>
+    <div class="tabs-search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" id="orderSearchInput" placeholder="Tìm theo cửa hàng hoặc mã đơn..."
+               oninput="handleSearchInput()">
+    </div>
+</div>
+
+<!-- Back bar (mobile) -->
 <div class="back-bar">
     <a href="javascript:history.back()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
@@ -80,7 +517,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
     <div class="back-bar__spacer"></div>
 </div>
 
-<!-- Status tabs -->
+<!-- Status tabs (mobile) -->
 <div class="tabs-wrapper">
     <div class="tabs-scroll" id="statusTabs">
         <button class="status-tab active" data-status="all" onclick="filterOrders('all', this)">Tất cả</button>
@@ -93,164 +530,463 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
 </div>
 
 <!-- Order list -->
-<div class="order-list" id="orderList" th:if="${orders != null and !orders.isEmpty()}">
+<div class="order-list orders-list-wrap" id="orderList" th:if="${orders != null and !orders.isEmpty()}">
     <th:block th:each="order : ${orders}">
-        <div class="order-card" th:attr="data-status=${order.status},data-oid=${order.orderId}"
+        <div class="order-card order-row" th:attr="data-status=${order.status},data-oid=${order.orderId}"
              onclick="window.location.href='/buyer/orders/' + this.dataset.oid"
              style="cursor:pointer">
-            <!-- Header: store info + status -->
+            <!-- Col 1: Store Avatar -->
             <div class="order-card__header">
+                <div class="order-icon">
+                <!-- [UI] Real store image if available -->
                 <img class="order-card__store-logo"
                      th:if="${order.store != null and order.store.logoUrl != null}"
                      th:src="${order.store.logoUrl}"
                      alt=""
                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <!-- [UI] Initials fallback: first letter of store name -->
                 <div class="order-card__store-logo--fallback"
                      th:if="${order.store == null or order.store.logoUrl == null}"
-                     style="display:flex">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 7h18v2H3z"/><path d="M5 3h14l2 4H3l2-4z"/><path d="M3 9v12h18V9"/><path d="M10 21v-6h4v6"/>
-                    </svg>
+                     style="display:flex"
+                     th:text="${order.store != null and order.store.storeName != null and !order.store.storeName.isEmpty() ? #strings.substring(order.store.storeName, 0, 1) : '?'}">S</div>
+                <!-- [UI] Hidden spare for onerror swap (same initials logic) -->
+                <div class="order-card__store-logo--fallback" style="display:none"
+                     th:text="${order.store != null and order.store.storeName != null and !order.store.storeName.isEmpty() ? #strings.substring(order.store.storeName, 0, 1) : '?'}">S</div>
                 </div>
-                <div class="order-card__store-logo--fallback" style="display:none">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 7h18v2H3z"/><path d="M5 3h14l2 4H3l2-4z"/><path d="M3 9v12h18V9"/><path d="M10 21v-6h4v6"/>
-                    </svg>
+                <!-- [UI] Info column: store name + order ID on top row, meta on second row -->
+                <div class="order-info-col">
+                    <div class="order-info-col__top">
+                        <span class="order-card__store-name order-store" th:text="${order.store != null ? order.store.storeName : 'Cửa hàng'}">Store Name</span>
+                        <span class="order-id-pill" th:text="|#${order.orderId}|">#32</span>
+                    </div>
+                    <div class="order-card__meta order-meta">
+                        <span class="order-card__date" th:if="${order.createdAt != null}" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 12:00</span>
+                        <span class="order-card__item-count">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                                <line x1="3" y1="6" x2="21" y2="6"/>
+                                <path d="M16 10a4 4 0 0 1-8 0"/>
+                            </svg>
+                            <span th:text="${order.orderItems != null ? #lists.size(order.orderItems) : 0}">0</span>
+                            <span th:text="${(order.orderItems != null ? #lists.size(order.orderItems) : 0) > 1 ? 'sản phẩm' : 'sản phẩm'}"></span>
+                        </span>
+                    </div>
                 </div>
-                <span class="order-card__store-name" th:text="${order.store != null ? order.store.storeName : 'Cửa hàng'}">Store Name</span>
+                <!-- Mobile status badge (hidden on desktop) -->
+                <!-- [UI] Robust mapping: PENDING/PROCESSING+CONFIRMED/READY+READY_FOR_PICKUP/COMPLETED/CANCELLED + neutral fallback -->
                 <span class="order-card__status"
-                      th:classappend="${order.status == 'PENDING' ? 'status-pending' : (order.status == 'CONFIRMED' ? 'status-confirmed' : (order.status == 'READY_FOR_PICKUP' ? 'status-ready' : (order.status == 'COMPLETED' ? 'status-completed' : 'status-cancelled')))}"
+                      th:classappend="${order.status == 'PENDING' ? 'status-pending' : ((order.status == 'CONFIRMED' or order.status == 'PROCESSING') ? 'status-confirmed' : ((order.status == 'READY_FOR_PICKUP' or order.status == 'READY') ? 'status-ready' : (order.status == 'COMPLETED' ? 'status-completed' : (order.status == 'CANCELLED' ? 'status-cancelled' : 'status-neutral'))))}"
                       th:switch="${order.status}">
                     <span th:case="'PENDING'">Chờ xác nhận</span>
                     <span th:case="'CONFIRMED'">Đã xác nhận</span>
+                    <span th:case="'PROCESSING'">Đang xử lý</span>
                     <span th:case="'READY_FOR_PICKUP'">Sẵn sàng</span>
+                    <span th:case="'READY'">Sẵn sàng nhận</span>
                     <span th:case="'COMPLETED'">Hoàn thành</span>
                     <span th:case="'CANCELLED'">Đã hủy</span>
                     <span th:case="*" th:text="${order.status}">Unknown</span>
                 </span>
             </div>
 
-            <!-- Body: meta info -->
-            <div class="order-card__body">
-                <div class="order-card__meta">
-                    <span class="order-card__id" th:text="|#${order.orderId}|">#12345</span>
-                    <span class="order-card__date" th:if="${order.createdAt != null}" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 12:00</span>
-                    <span class="order-card__item-count">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                            <line x1="3" y1="6" x2="21" y2="6"/>
-                            <path d="M16 10a4 4 0 0 1-8 0"/>
-                        </svg>
-                        <span th:text="${order.orderItems != null ? #lists.size(order.orderItems) : 0}">0</span>
-                        <span th:text="${(order.orderItems != null ? #lists.size(order.orderItems) : 0) > 1 ? 'sản phẩm' : 'sản phẩm'}"></span>
-                    </span>
-                </div>
-            </div>
-
-            <!-- Footer: total -->
+            <!-- Desktop: Status badge + Price + Arrow as footer group -->
+            <div class="order-card__body" style="display:none;"></div>
             <div class="order-card__footer">
-                <div>
-                    <div class="order-card__total-label">Tổng tiền</div>
-                    <div class="order-card__total" th:text="|${#numbers.formatDecimal(order.finalAmount != null ? order.finalAmount : (order.totalAmount != null ? order.totalAmount : 0), 0, 0)}đ|">0đ</div>
+                <!-- Desktop status badge (pill) -->
+                <!-- [UI] Robust mapping: PENDING/PROCESSING+CONFIRMED/READY+READY_FOR_PICKUP/COMPLETED/CANCELLED + neutral fallback -->
+                <span class="order-badge"
+                      th:classappend="${order.status == 'PENDING' ? 'badge-wait' : ((order.status == 'CONFIRMED' or order.status == 'PROCESSING') ? 'badge-process' : ((order.status == 'READY_FOR_PICKUP' or order.status == 'READY') ? 'badge-ready' : (order.status == 'COMPLETED' ? 'badge-done' : (order.status == 'CANCELLED' ? 'badge-cancel' : 'badge-neutral'))))}"
+                      th:switch="${order.status}">
+                    <span th:case="'PENDING'">Chờ xác nhận</span>
+                    <span th:case="'CONFIRMED'">Đang xử lý</span>
+                    <span th:case="'PROCESSING'">Đang xử lý</span>
+                    <span th:case="'READY_FOR_PICKUP'">Sẵn sàng nhận</span>
+                    <span th:case="'READY'">Sẵn sàng nhận</span>
+                    <span th:case="'COMPLETED'">Hoàn thành</span>
+                    <span th:case="'CANCELLED'">Đã hủy</span>
+                    <span th:case="*" th:text="${order.status}">Unknown</span>
+                </span>
+                <!-- Price -->
+                <div class="order-price">
+                    <div class="price-label">Tổng tiền</div>
+                    <div class="price-val" th:text="|${#numbers.formatDecimal(order.finalAmount != null ? order.finalAmount : (order.totalAmount != null ? order.totalAmount : 0), 0, 0)}đ|">0đ</div>
                 </div>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-tertiary)"><polyline points="9 18 15 12 9 6"/></svg>
+                <!-- Chevron Arrow -->
+                <svg class="order-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
         </div>
     </th:block>
 </div>
 
-<!-- Empty state -->
+<!-- ===== PAGINATION (desktop) ===== -->
+<div class="orders-pagination" id="ordersPagination" style="display:none;">
+    <div class="orders-pagination__info" id="paginationInfo">Hiển thị 0–0 trong 0 đơn hàng</div>
+    <div class="orders-pagination__pages" id="paginationPages"></div>
+</div>
+
+<!-- Empty state (client-side filter) -->
 <div class="empty-state" id="emptyState" style="display:none;">
-    <div class="empty-state__icon">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-        </svg>
-    </div>
-    <div class="empty-state__title" id="emptyTitle">Chưa có đơn hàng nào</div>
-    <div class="empty-state__desc" id="emptyDesc">Hãy khám phá các deal hấp dẫn và đặt hàng ngày!</div>
-    <a href="/" class="empty-state__btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Khám phá deal
-    </a>
+    <i class="ti ti-receipt-off"></i>
+    <p class="empty-title" id="emptyTitle">Không có đơn hàng nào</p>
+    <p class="empty-sub" id="emptyDesc">Hãy khám phá các deal ngon!</p>
 </div>
 
 <!-- Empty: no orders at all (server-side) -->
 <div class="empty-state" th:unless="${orders != null and !orders.isEmpty()}" id="emptyAll">
-    <div class="empty-state__icon">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-        </svg>
-    </div>
-    <div class="empty-state__title">Chưa có đơn hàng nào</div>
-    <div class="empty-state__desc">Hãy khám phá các deal hấp dẫn và đặt hàng ngày!</div>
-    <a href="/" class="empty-state__btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Khám phá deal
-    </a>
+    <i class="ti ti-receipt-off"></i>
+    <p class="empty-title">Không có đơn hàng nào</p>
+    <p class="empty-sub">Hãy khám phá các deal ngon!</p>
 </div>
+
+</div><!-- /orders-card -->
+
+</div><!-- /orders-container -->
+</div><!-- /orders-page -->
 
 <div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
 <div th:replace="~{common/buyer/js :: js}"></div>
 
 <script>
-// ===== FILTER JS =====
-function filterOrders(status, btn){
-    // Update active tab
-    document.querySelectorAll('.status-tab').forEach(function(t){t.classList.remove('active')});
-    if(btn) btn.classList.add('active');
+// ===== UTILITY: Format price with thousand separators =====
+function formatPrice(amount) {
+    return Number(amount).toLocaleString('vi-VN') + 'đ';
+}
 
-    var orderCards = document.querySelectorAll('#orderList .order-card');
+// ===== BADGE CLASS MAPPING — [UI] robust: handles all known status values + neutral fallback =====
+var badgeClass = {
+    'PENDING': 'badge-wait',
+    'PROCESSING': 'badge-process',
+    'CONFIRMED': 'badge-process',
+    'READY': 'badge-ready',
+    'READY_FOR_PICKUP': 'badge-ready',
+    'COMPLETED': 'badge-done',
+    'CANCELLED': 'badge-cancel'
+};
+function getBadgeClass(status) {
+    return badgeClass[status] || 'badge-neutral';
+}
+
+// ===== STATUS LABELS — [UI] robust: handles all known status values + raw fallback =====
+var statusLabels = {
+    'PENDING': 'Chờ xác nhận',
+    'PROCESSING': 'Đang xử lý',
+    'CONFIRMED': 'Đang xử lý',
+    'READY': 'Sẵn sàng nhận',
+    'READY_FOR_PICKUP': 'Sẵn sàng nhận',
+    'COMPLETED': 'Hoàn thành',
+    'CANCELLED': 'Đã hủy'
+};
+function getStatusLabel(status) {
+    return statusLabels[status] || status;
+}
+
+// ===== GLOBAL STATE =====
+var currentFilter = 'all';
+var currentSearch = '';
+var currentPage = 1;
+var pageSize = 10;
+var allOrderRows = [];
+var visibleOrderRows = [];
+
+// ===== INIT: On page load, collect all rows and compute stats =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Collect all order rows
+    allOrderRows = Array.from(document.querySelectorAll('#orderList .order-row'));
+
+    // Reformat prices
+    document.querySelectorAll('.price-val').forEach(function(el) {
+        var raw = el.textContent.replace(/[^0-9]/g, '');
+        if (raw) {
+            el.textContent = formatPrice(parseInt(raw));
+        }
+    });
+
+    // [UI] Compute stats from existing rendered data
+    computeStatsSummary();
+    // [UI] Compute tab badges from existing rendered data
+    updateTabBadges();
+    // [UI] Initialize pagination
+    applyFilterAndPaginate();
+});
+
+// ===== [UI] STATS SUMMARY — compute from DOM data, no API calls =====
+function computeStatsSummary() {
+    var totalOrders = allOrderRows.length;
+    var totalSpent = 0;
+    var processing = 0;
+    var completed = 0;
+
+    allOrderRows.forEach(function(row) {
+        var status = row.getAttribute('data-status');
+        // Extract price value
+        var priceEl = row.querySelector('.price-val');
+        if (priceEl) {
+            var raw = priceEl.textContent.replace(/[^0-9]/g, '');
+            if (raw) totalSpent += parseInt(raw);
+        }
+        // Count processing (PENDING + CONFIRMED + READY_FOR_PICKUP)
+        if (status === 'PENDING' || status === 'CONFIRMED' || status === 'READY_FOR_PICKUP') {
+            processing++;
+        }
+        // Count completed
+        if (status === 'COMPLETED') {
+            completed++;
+        }
+    });
+
+    // Update DOM
+    var elTotalOrders = document.getElementById('statTotalOrders');
+    var elTotalSpent = document.getElementById('statTotalSpent');
+    var elProcessing = document.getElementById('statProcessing');
+    var elCompleted = document.getElementById('statCompleted');
+
+    if (elTotalOrders) elTotalOrders.textContent = totalOrders;
+    if (elTotalSpent) elTotalSpent.textContent = formatPrice(totalSpent);
+    if (elProcessing) elProcessing.textContent = processing;
+    if (elCompleted) elCompleted.textContent = completed;
+}
+
+// ===== [UI] TAB BADGES — count from DOM data, no API calls =====
+function updateTabBadges() {
+    var counts = { all: allOrderRows.length };
+    allOrderRows.forEach(function(row) {
+        var status = row.getAttribute('data-status');
+        counts[status] = (counts[status] || 0) + 1;
+    });
+
+    // Update desktop tab badges
+    ['all','PENDING','CONFIRMED','READY_FOR_PICKUP','COMPLETED','CANCELLED'].forEach(function(status) {
+        var badge = document.getElementById('badge' + (status === 'all' ? 'All' : status));
+        if (badge) {
+            badge.textContent = counts[status] || 0;
+        }
+    });
+}
+
+// ===== [UI] SEARCH INPUT — client-side filter, no API calls =====
+var searchTimer;
+function handleSearchInput() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function() {
+        currentSearch = document.getElementById('orderSearchInput').value.toLowerCase().trim();
+        currentPage = 1;
+        applyFilterAndPaginate();
+    }, 200); // 200ms debounce for responsive feel
+}
+
+// ===== FILTER ORDERS =====
+function filterOrders(status, btn) {
+    currentFilter = status;
+    currentSearch = document.getElementById('orderSearchInput') ?
+        document.getElementById('orderSearchInput').value.toLowerCase().trim() : '';
+    currentPage = 1;
+
+    // Update mobile tabs
+    document.querySelectorAll('.status-tab').forEach(function(t) { t.classList.remove('active'); });
+    if (btn && btn.classList.contains('status-tab')) {
+        btn.classList.add('active');
+    } else if (btn) {
+        // Also activate the corresponding mobile tab
+        var mobileTabs = document.querySelectorAll('.status-tab');
+        var btnText = (btn.textContent || '').replace(/[0-9]/g, '').trim();
+        mobileTabs.forEach(function(mt) {
+            var mtText = (mt.textContent || '').replace(/[0-9]/g, '').trim();
+            if (mtText === btnText || (status === 'all' && mt.getAttribute('data-status') === 'all')) {
+                mt.classList.add('active');
+            }
+        });
+    }
+
+    // Update desktop tabs
+    document.querySelectorAll('.tabs-group .tab-item').forEach(function(t) { t.classList.remove('active'); });
+    if (btn && btn.classList.contains('tab-item')) {
+        btn.classList.add('active');
+    } else if (btn && btn.classList.contains('status-tab')) {
+        // Find matching desktop tab
+        var dtStatus = btn.getAttribute('data-status');
+        var desktopTabs = document.querySelectorAll('.tabs-group .tab-item');
+        desktopTabs.forEach(function(dt) {
+            if (dt.getAttribute('data-status') === dtStatus) dt.classList.add('active');
+        });
+    } else if (btn) {
+        // Find matching desktop tab by text
+        var btnText2 = (btn.textContent || '').replace(/[0-9]/g, '').trim();
+        document.querySelectorAll('.tabs-group .tab-item').forEach(function(dt) {
+            var dtText = (dt.textContent || '').replace(/[0-9]/g, '').trim();
+            if (dtText === btnText2) dt.classList.add('active');
+        });
+    }
+
+    applyFilterAndPaginate();
+}
+
+// ===== [UI] APPLY FILTER + SEARCH + PAGINATION — all client-side =====
+function applyFilterAndPaginate() {
     var emptyState = document.getElementById('emptyState');
     var emptyAll = document.getElementById('emptyAll');
     var list = document.getElementById('orderList');
+    var pagination = document.getElementById('ordersPagination');
 
-    if(!orderCards.length){
-        // No orders at all (server-rendered empty already showing)
+    if (!allOrderRows.length) {
+        // No orders at all (server-rendered empty)
+        if (list) list.style.display = 'none';
+        if (pagination) pagination.style.display = 'none';
         return;
     }
 
-    // Hide server empty if it exists
-    if(emptyAll) emptyAll.style.display = 'none';
+    // Hide server empty if exists
+    if (emptyAll) emptyAll.style.display = 'none';
 
-    var visibleCount = 0;
-    orderCards.forEach(function(card){
-        var cardStatus = card.getAttribute('data-status');
-        var match = (status === 'all' || cardStatus === status);
-        card.style.display = match ? '' : 'none';
-        if(match) visibleCount++;
+    // [UI] Filter by status + search query (client-side only)
+    visibleOrderRows = allOrderRows.filter(function(row) {
+        var cardStatus = row.getAttribute('data-status');
+        var statusMatch = (currentFilter === 'all' || cardStatus === currentFilter);
+        if (!statusMatch) return false;
+
+        // [UI] Search filter: match store name or order ID
+        if (currentSearch) {
+            var storeEl = row.querySelector('.order-store');
+            var orderIdEl = row.querySelector('.order-id-pill');
+            var storeText = storeEl ? storeEl.textContent.toLowerCase() : '';
+            var orderIdText = orderIdEl ? orderIdEl.textContent.toLowerCase() : '';
+            var searchMatch = storeText.indexOf(currentSearch) !== -1 || orderIdText.indexOf(currentSearch) !== -1;
+            if (!searchMatch) return false;
+        }
+        return true;
     });
 
-    if(visibleCount === 0){
-        list.style.display = 'none';
-        emptyState.style.display = '';
-        if(status === 'PENDING'){
-            document.getElementById('emptyTitle').textContent = 'Không có đơn chờ xác nhận';
-            document.getElementById('emptyDesc').textContent = 'Các đơn hàng đang chờ cửa hàng xác nhận sẽ xuất hiện ở đây';
-        } else if(status === 'CONFIRMED'){
-            document.getElementById('emptyTitle').textContent = 'Không có đơn đang xử lý';
-            document.getElementById('emptyDesc').textContent = 'Các đơn hàng đã được xác nhận sẽ xuất hiện ở đây';
-        } else if(status === 'READY_FOR_PICKUP'){
-            document.getElementById('emptyTitle').textContent = 'Không có đơn sẵn sàng nhận';
-            document.getElementById('emptyDesc').textContent = 'Khi cửa hàng chuẩn bị xong, đơn hàng sẽ xuất hiện ở đây';
-        } else if(status === 'COMPLETED'){
-            document.getElementById('emptyTitle').textContent = 'Chưa có đơn hoàn thành';
-            document.getElementById('emptyDesc').textContent = 'Các đơn hàng đã nhận thành công sẽ xuất hiện ở đây';
-        } else if(status === 'CANCELLED'){
-            document.getElementById('emptyTitle').textContent = 'Không có đơn đã hủy';
-            document.getElementById('emptyDesc').textContent = 'Rất tiếc! Các đơn hàng bị hủy sẽ xuất hiện ở đây';
+    // [UI] Paginate
+    var totalVisible = visibleOrderRows.length;
+    var totalPages = Math.ceil(totalVisible / pageSize) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    var start = (currentPage - 1) * pageSize;
+    var end = Math.min(start + pageSize, totalVisible);
+    var pageRows = visibleOrderRows.slice(start, end);
+
+    // Show/hide rows
+    allOrderRows.forEach(function(row) { row.style.display = 'none'; });
+    pageRows.forEach(function(row) { row.style.display = ''; });
+
+    // Update empty state
+    if (totalVisible === 0) {
+        if (list) list.style.display = 'none';
+        if (emptyState) emptyState.style.display = '';
+        if (pagination) pagination.style.display = 'none';
+        // Set appropriate empty message
+        var emptyTitle = document.getElementById('emptyTitle');
+        var emptyDesc = document.getElementById('emptyDesc');
+        if (currentSearch) {
+            if (emptyTitle) emptyTitle.textContent = 'Không tìm thấy đơn hàng';
+            if (emptyDesc) emptyDesc.textContent = 'Thử tìm kiếm với từ khóa khác';
+        } else if (currentFilter !== 'all') {
+            var label = getStatusLabel(currentFilter);
+            if (emptyTitle) emptyTitle.textContent = 'Không có đơn ' + label.toLowerCase();
+            if (emptyDesc) emptyDesc.textContent = 'Các đơn hàng ' + label.toLowerCase() + ' sẽ xuất hiện ở đây';
         } else {
-            document.getElementById('emptyTitle').textContent = 'Chưa có đơn hàng nào';
-            document.getElementById('emptyDesc').textContent = 'Hãy khám phá các deal hấp dẫn và đặt hàng ngày!';
+            if (emptyTitle) emptyTitle.textContent = 'Không có đơn hàng nào';
+            if (emptyDesc) emptyDesc.textContent = 'Hãy khám phá các deal ngon!';
         }
     } else {
-        list.style.display = '';
-        emptyState.style.display = 'none';
+        if (list) list.style.display = '';
+        if (emptyState) emptyState.style.display = 'none';
+        // [UI] Show pagination only if > 1 page
+        if (pagination) {
+            if (totalPages > 1) {
+                pagination.style.display = 'flex';
+                renderPagination(currentPage, totalPages, totalVisible, start, end);
+            } else {
+                pagination.style.display = 'none';
+            }
+        }
     }
 }
 
-// Init: hide server-side empty if we're filtering (handled by Thymeleaf conditional above)
+// ===== [UI] RENDER PAGINATION CONTROLS (ellipsis logic) =====
+function renderPagination(page, totalPages, totalVisible, start, end) {
+    var infoEl = document.getElementById('paginationInfo');
+    var pagesEl = document.getElementById('paginationPages');
+
+    if (infoEl) {
+        infoEl.textContent = 'Hiển thị ' + (start + 1) + '–' + end + ' trong ' + totalVisible + ' đơn hàng';
+    }
+
+    if (!pagesEl) return;
+
+    // [UI] Build page number list with ellipsis
+    var pageNumbers = buildPageNumbers(page, totalPages);
+
+    var html = '';
+    // Prev button
+    html += '<button class="page-btn page-btn--arrow" onclick="goToPage(' + (page - 1) + ')"' + (page <= 1 ? ' disabled' : '') + '>';
+    html += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>';
+    html += '</button>';
+
+    // Page numbers / ellipsis
+    for (var i = 0; i < pageNumbers.length; i++) {
+        var p = pageNumbers[i];
+        if (p === '…') {
+            html += '<span class="page-btn--ellipsis">…</span>';
+        } else {
+            html += '<button class="page-btn' + (p === page ? ' active' : '') + '" onclick="goToPage(' + p + ')">' + p + '</button>';
+        }
+    }
+
+    // Next button
+    html += '<button class="page-btn page-btn--arrow" onclick="goToPage(' + (page + 1) + ')"' + (page >= totalPages ? ' disabled' : '') + '>';
+    html += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+    html += '</button>';
+
+    pagesEl.innerHTML = html;
+}
+
+// ===== [UI] BUILD PAGE NUMBERS WITH ELLIPSIS =====
+function buildPageNumbers(current, total) {
+    // If 7 or fewer pages → show all
+    if (total <= 7) {
+        var all = [];
+        for (var i = 1; i <= total; i++) {
+            all.push(i);
+        }
+        return all;
+    }
+
+    // Always show: first page, last page, current page, adjacent pages (±1)
+    var pages = [];
+    pages.push(1);
+
+    // Left ellipsis if gap between page 1 and (current-1)
+    if (current > 3) {
+        pages.push('…');
+    }
+
+    // Pages around current
+    var rangeStart = Math.max(2, current - 1);
+    var rangeEnd = Math.min(total - 1, current + 1);
+    for (var i = rangeStart; i <= rangeEnd; i++) {
+        pages.push(i);
+    }
+
+    // Right ellipsis if gap between (current+1) and last page
+    if (current < total - 2) {
+        pages.push('…');
+    }
+
+    pages.push(total);
+    return pages;
+}
+
+// ===== [UI] GO TO PAGE =====
+function goToPage(page) {
+    var totalPages = Math.ceil(visibleOrderRows.length / pageSize) || 1;
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    applyFilterAndPaginate();
+    // Scroll to top of order list
+    var ordersCard = document.getElementById('ordersCard');
+    if (ordersCard) {
+        ordersCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
 </script>
 </body>
 </html>
