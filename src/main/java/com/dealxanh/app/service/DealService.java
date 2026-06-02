@@ -93,7 +93,7 @@ public class DealService {
             validateDeal(deal, null); // null = new deal (no existing dealId)
             deal.setCreatedAt(LocalDateTime.now());
             deal.setUpdatedAt(LocalDateTime.now());
-            deal.setStatus("SCHEDULED");
+            deal.setStatus("ACTIVE");
             deal.setUsageCount(0L);
             return dealRepository.save(deal);
         } finally {
@@ -361,6 +361,14 @@ public class DealService {
         ReentrantLock lock = lockManager.acquireLock("PRODUCT", productId);
         try {
             validateProductPrices(originalPrice, salePrice);
+
+            // Auto-cap sale price if deal has maxDiscountAmount
+            if (deal.getMaxDiscountAmount() != null && deal.getMaxDiscountAmount() > 0) {
+                double minAllowedSale = originalPrice - deal.getMaxDiscountAmount();
+                if (salePrice < minAllowedSale) {
+                    salePrice = minAllowedSale;
+                }
+            }
 
             if (maxQuantity != null && maxQuantity <= 0) {
                 throw new IllegalArgumentException("Số lượng tối đa phải lớn hơn 0");
@@ -775,6 +783,8 @@ public class DealService {
             if (platformDeal == null) continue;
             if (platformDeal.getDealId().equals(currentDeal.getDealId())) continue;
             if (!"ACTIVE".equals(platformDeal.getStatus()) && !"SCHEDULED".equals(platformDeal.getStatus())) continue;
+            // Skip CODE_REQUIRED platform deals — only AUTO_APPLY affects cumulative cap
+            if (!"AUTO_APPLY".equals(platformDeal.getApplyMethod())) continue;
 
             if (currentDeal.getStartTime() != null && currentDeal.getEndTime() != null
                 && platformDeal.getStartTime() != null && platformDeal.getEndTime() != null) {

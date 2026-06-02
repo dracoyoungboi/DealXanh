@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
+import org.springframework.transaction.annotation.Transactional;
 
 @Controller
 public class HomeController {
@@ -68,6 +69,12 @@ public class HomeController {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private com.dealxanh.app.repository.DisputeRepository disputeRepository;
+
+    @Autowired
+    private com.dealxanh.app.repository.ReviewRepository reviewRepository;
+
+    @Autowired
     private CartService cartService;
 
     @Autowired
@@ -81,7 +88,6 @@ public class HomeController {
 
     /**
      * Global model attribute — adds notification count for all buyer pages.
-     * The header fragment reads ${notifCount} to show/hide the badge.
      */
     @ModelAttribute
     public void addNotifCount(Model model, java.security.Principal principal) {
@@ -598,6 +604,17 @@ public class HomeController {
         if (voucher.getEndTime() != null && voucher.getEndTime().isBefore(now))
             return java.util.Map.of("success", false, "message", "Mã giảm giá đã hết hạn");
 
+        // Check max usage count (total across all users)
+        if (voucher.getMaxUsageCount() != null) {
+            long used = orderRepository.countByCouponCode(code.trim().toUpperCase());
+            if (used >= voucher.getMaxUsageCount())
+                return java.util.Map.of("success", false, "message", "Mã giảm giá đã hết lượt sử dụng");
+        }
+
+        // Check per-user usage (each account can only use this voucher once)
+        if (user != null && orderRepository.existsByUserUserIdAndCouponCode(user.getUserId(), code.trim().toUpperCase()))
+            return java.util.Map.of("success", false, "message", "Bạn đã sử dụng mã giảm giá này rồi");
+
         // Check minimum order amount
         double minOrder = voucher.getMinOrderAmount() != null ? voucher.getMinOrderAmount() : 0;
         if (cartTotal < minOrder)
@@ -920,6 +937,8 @@ public class HomeController {
         // Calculate totals (FIXED deals: once per unique deal; PERCENT deals: per-item)
         java.util.Set<Long> fixedDealIds = new java.util.HashSet<>();
         long fixedDealDiscount = 0;
+        long originalTotal = 0; // true original price sum (before any discount)
+        long percentDiscount = 0; // savings from PERCENT deals only
         for (Map<String, Object> item : cart) {
             int qty = ((Number) item.getOrDefault("quantity", 1)).intValue();
             long salePrice = ((Number) item.getOrDefault("salePrice", item.getOrDefault("price", 0))).longValue();
@@ -927,15 +946,18 @@ public class HomeController {
             String discountType = (String) item.getOrDefault("discountType", "");
             Long dealId = item.get("dealId") != null ? ((Number) item.get("dealId")).longValue() : 0;
             subtotal += salePrice * qty;
+            originalTotal += originalPrice * qty;
             if ("FIXED".equals(discountType) && dealId > 0 && !fixedDealIds.contains(dealId)) {
                 fixedDealDiscount += ((Number) item.getOrDefault("discountValue", 0)).longValue();
                 fixedDealIds.add(dealId);
             } else if (!"FIXED".equals(discountType) && originalPrice > salePrice) {
-                totalDiscount += (originalPrice - salePrice) * qty;
+                percentDiscount += (originalPrice - salePrice) * qty;
             }
         }
-        totalDiscount += fixedDealDiscount;
-        long total = subtotal;
+        totalDiscount = percentDiscount + fixedDealDiscount;
+        // Final amount: subtotal already has PERCENT discount applied,
+        // but FIXED items are at originalPrice, so subtract FIXED discount
+        long total = subtotal - fixedDealDiscount;
 
         // Get applied voucher from session
         @SuppressWarnings("unchecked")
@@ -955,11 +977,13 @@ public class HomeController {
         model.addAttribute("voucherDiscount", voucherDiscount);
         model.addAttribute("appliedVoucher", appliedVoucher);
         model.addAttribute("total", total);
+        model.addAttribute("originalTotal", originalTotal);
         model.addAttribute("cart", cart);
 
         return "buyer/order-summary";
     }
 
+    @Transactional
     @PostMapping("/buyer/checkout/confirm")
     public String confirmCheckout(java.security.Principal principal,
             @RequestParam(required = false, defaultValue = "BANK_TRANSFER") String paymentMethod,
@@ -1080,6 +1104,13 @@ public class HomeController {
                 order.setPickupQrCode("DX-" + order.getOrderId() + "-" + generateRandomCode(6));
                 orderRepository.save(order);
 
+                // Deduct stock immediately using @Modifying query (avoids version conflict)
+                for (OrderItem oi : orderItems) {
+                    if (oi.getProduct() != null && oi.getQuantity() != null && oi.getQuantity() > 0) {
+                        productRepository.deductStock(oi.getProduct().getProductId(), oi.getQuantity());
+                    }
+                }
+
                 orderIds.add(order.getOrderId());
             }
 
@@ -1100,6 +1131,35 @@ public class HomeController {
             sb.append(chars.charAt((int) (Math.random() * chars.length())));
         }
         return sb.toString();
+    }
+
+    // ============ BUYER CANCEL ORDER ============
+
+    @PostMapping("/api/orders/{orderId}/cancel")
+    @ResponseBody
+    public java.util.Map<String, Object> buyerCancelOrder(@PathVariable Long orderId,
+            java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return java.util.Map.of("success", false, "message", "Vui lòng đăng nhập");
+
+        Order order = orderRepository.findByIdWithItems(orderId).orElse(null);
+        if (order == null) return java.util.Map.of("success", false, "message", "Đơn hàng không tồn tại");
+        if (!order.getUser().getUserId().equals(user.getUserId()))
+            return java.util.Map.of("success", false, "message", "Bạn không sở hữu đơn hàng này");
+        if (!"PENDING".equals(order.getStatus()))
+            return java.util.Map.of("success", false, "message", "Chỉ được hủy đơn đang chờ xác nhận");
+
+        // Restore stock for each item
+        if (order.getOrderItems() != null) {
+            for (var item : order.getOrderItems()) {
+                if (item.getProduct() != null && item.getQuantity() != null) {
+                    productRepository.restoreStock(item.getProduct().getProductId(), item.getQuantity());
+                }
+            }
+        }
+
+        orderRepository.cancelOrder(orderId, "Người mua tự hủy");
+        return java.util.Map.of("success", true, "message", "Đã hủy đơn hàng, hàng đã được trả về kho");
     }
 
     // ============ PAYMENT ============
@@ -1153,6 +1213,106 @@ public class HomeController {
             model.addAttribute("orders", List.of());
         }
         return "buyer/order-tracking";
+    }
+
+    // ============ DISPUTE (BUYER) ============
+
+    @PostMapping("/api/dispute/create")
+    @ResponseBody
+    public java.util.Map<String, Object> createDispute(
+            @RequestParam Long orderId,
+            @RequestParam String reason,
+            @RequestParam(required = false) String description,
+            java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return java.util.Map.of("success", false, "message", "Vui lòng đăng nhập");
+
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) return java.util.Map.of("success", false, "message", "Đơn hàng không tồn tại");
+        if (!order.getUser().getUserId().equals(user.getUserId()))
+            return java.util.Map.of("success", false, "message", "Bạn không sở hữu đơn hàng này");
+        if (!"COMPLETED".equals(order.getStatus()))
+            return java.util.Map.of("success", false, "message", "Chỉ có thể khiếu nại đơn hàng đã hoàn thành");
+
+        // Check if already disputed
+        List<com.dealxanh.app.entity.Dispute> existing = disputeRepository.findAll();
+        boolean alreadyDisputed = existing.stream()
+            .anyMatch(d -> d.getOrder() != null && d.getOrder().getOrderId().equals(orderId)
+                && !"RESOLVED_REJECTED".equals(d.getStatus()));
+        if (alreadyDisputed)
+            return java.util.Map.of("success", false, "message", "Đơn hàng này đã được khiếu nại");
+
+        com.dealxanh.app.entity.Dispute dispute = new com.dealxanh.app.entity.Dispute();
+        dispute.setOrder(order);
+        dispute.setComplainant(user);
+        dispute.setReason(reason);
+        dispute.setDescription(description != null ? description : "");
+        dispute.setStatus("PENDING");
+        dispute.setCreatedAt(LocalDateTime.now());
+        dispute.setUpdatedAt(LocalDateTime.now());
+        disputeRepository.save(dispute);
+
+        return java.util.Map.of("success", true, "message", "Đã gửi khiếu nại. Chúng tôi sẽ xử lý trong 36-42 giờ.");
+    }
+
+    // ============ REVIEW (BUYER) ============
+
+    @PostMapping("/api/review/create")
+    @ResponseBody
+    public java.util.Map<String, Object> createReview(
+            @RequestParam Long storeId,
+            @RequestParam(required = false) Long orderId,
+            @RequestParam int rating,
+            @RequestParam(required = false) String comment,
+            java.security.Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return java.util.Map.of("success", false, "message", "Vui lòng đăng nhập");
+
+        if (rating < 1 || rating > 5)
+            return java.util.Map.of("success", false, "message", "Đánh giá từ 1-5 sao");
+
+        Store store = storeRepository.findById(storeId).orElse(null);
+        if (store == null) return java.util.Map.of("success", false, "message", "Cửa hàng không tồn tại");
+
+        // Check if already reviewed for this order
+        if (orderId != null && reviewRepository.existsByUserUserIdAndOrderOrderId(user.getUserId(), orderId))
+            return java.util.Map.of("success", false, "message", "Bạn đã đánh giá đơn hàng này rồi");
+
+        com.dealxanh.app.entity.Review review = new com.dealxanh.app.entity.Review();
+        review.setUser(user);
+        review.setStore(store);
+        review.setRating(rating);
+        review.setComment(comment != null ? comment : "");
+        review.setVerified(orderId != null); // Verified if from an order
+        review.setCreatedAt(LocalDateTime.now());
+        if (orderId != null) {
+            orderRepository.findById(orderId).ifPresent(review::setOrder);
+        }
+        reviewRepository.save(review);
+
+        return java.util.Map.of("success", true, "message", "Cảm ơn bạn đã đánh giá!");
+    }
+
+    @GetMapping("/api/reviews/store/{storeId}")
+    @ResponseBody
+    public java.util.Map<String, Object> getStoreReviews(@PathVariable Long storeId) {
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        var page = reviewRepository.findByStoreStoreId(storeId, pageable);
+        Double avg = reviewRepository.findAverageRatingByStore(storeId);
+        long total = reviewRepository.countByStoreStoreId(storeId);
+
+        var list = new java.util.ArrayList<java.util.Map<String, Object>>();
+        for (var r : page.getContent()) {
+            var m = new java.util.HashMap<String, Object>();
+            m.put("reviewId", r.getReviewId());
+            m.put("rating", r.getRating());
+            m.put("comment", r.getComment());
+            m.put("verified", r.getVerified());
+            m.put("createdAt", r.getCreatedAt() != null ? r.getCreatedAt().toString() : null);
+            m.put("userName", r.getUser() != null ? (r.getUser().getFullName() != null ? r.getUser().getFullName() : r.getUser().getUsername()) : "Người dùng");
+            list.add(m);
+        }
+        return java.util.Map.of("success", true, "reviews", list, "avgRating", avg != null ? avg : 0, "totalReviews", total);
     }
 
     @GetMapping("/buyer/orders/{orderId}")
@@ -1306,10 +1466,17 @@ public class HomeController {
     public String dealMap(Model model) {
         model.addAttribute("activeNav", "map");
         LocalDateTime now = LocalDateTime.now();
-        List<Deal> activeDeals = dealRepository.findByStatusAndStartTimeBeforeAndEndTimeAfterOrderByPriorityDesc(
-            "ACTIVE", now, now);
+        // Get all ACTIVE deals, filter by time in Java (handles NULL gracefully)
+        List<Deal> allActive = dealRepository.findByStatus("ACTIVE");
+        List<Deal> activeDeals = new ArrayList<>();
+        for (Deal d : allActive) {
+            boolean startOk = d.getStartTime() == null || !d.getStartTime().isAfter(now);
+            boolean endOk = d.getEndTime() == null || !d.getEndTime().isBefore(now);
+            if (startOk && endOk) activeDeals.add(d);
+        }
 
-        List<Map<String, Object>> dealMarkers = new ArrayList<>();
+        // Group by store: one pin per store with all its deals
+        java.util.Map<Long, Map<String, Object>> storeGroups = new java.util.LinkedHashMap<>();
         for (Deal deal : activeDeals) {
             Store store = deal.getStore();
             if (store == null || store.getLatitude() == null || store.getLongitude() == null) continue;
@@ -1317,38 +1484,53 @@ public class HomeController {
             List<DealProduct> dealProducts = dealProductRepository.findByDeal(deal);
             if (dealProducts == null || dealProducts.isEmpty()) continue;
 
+            Long sid = store.getStoreId();
+            Map<String, Object> sg = storeGroups.get(sid);
+            if (sg == null) {
+                sg = new HashMap<>();
+                sg.put("storeId", sid);
+                sg.put("storeName", store.getStoreName());
+                sg.put("storeLogo", store.getLogoUrl());
+                sg.put("lat", store.getLatitude());
+                sg.put("lng", store.getLongitude());
+                sg.put("maxDiscount", 0.0);
+                sg.put("products", new ArrayList<Map<String, Object>>());
+                storeGroups.put(sid, sg);
+            }
+
+            double sgMaxDiscount = ((Number) sg.get("maxDiscount")).doubleValue();
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> sgProducts = (List<Map<String, Object>>) sg.get("products");
+
             for (DealProduct dp : dealProducts) {
                 Product p = dp.getProduct();
                 if (p == null || !p.isAvailable()) continue;
 
-                Map<String, Object> marker = new HashMap<>();
-                marker.put("id", p.getProductId());
-                marker.put("name", p.getName());
-                marker.put("store", store.getStoreName());
-                marker.put("storeId", store.getStoreId());
-                marker.put("lat", store.getLatitude());
-                marker.put("lng", store.getLongitude());
-                marker.put("price", Math.round(dp.getSalePrice()));
-                marker.put("original", Math.round(dp.getOriginalPrice()));
                 double discount = "PERCENT".equals(deal.getDiscountType())
                     ? deal.getDiscountValue()
                     : dp.getOriginalPrice() > 0 ? ((dp.getOriginalPrice() - dp.getSalePrice()) / dp.getOriginalPrice()) * 100 : 0;
-                marker.put("discount", Math.round(discount));
-                marker.put("img", p.getImageUrl() != null ? p.getImageUrl() : "/img/default-banner.svg");
-                marker.put("slots", p.getStockQuantity());
-                marker.put("dealType", deal.getDealType());
-                marker.put("dealName", deal.getDealName());
+                if (discount > sgMaxDiscount) sgMaxDiscount = discount;
 
-                // Urgency based on time remaining
+                Map<String, Object> item = new HashMap<>();
+                item.put("productId", p.getProductId());
+                item.put("name", p.getName());
+                item.put("price", Math.round(dp.getSalePrice()));
+                item.put("original", Math.round(dp.getOriginalPrice()));
+                item.put("discount", Math.round(discount));
+                item.put("img", p.getImageUrl() != null ? p.getImageUrl() : "/img/default-banner.svg");
+                item.put("slots", p.getStockQuantity());
+                item.put("dealType", deal.getDealType());
+                item.put("dealName", deal.getDealName());
                 long hoursLeft = java.time.Duration.between(now, deal.getEndTime()).toHours();
-                String urgency = hoursLeft < 1 ? "danger" : hoursLeft < 3 ? "warning" : "safe";
-                marker.put("urgency", urgency);
-                marker.put("timeLeft", hoursLeft < 1 ? "< 1h"
-                    : hoursLeft < 3 ? hoursLeft + "h" : "> 3h");
-
-                dealMarkers.add(marker);
+                item.put("urgency", hoursLeft < 1 ? "danger" : hoursLeft < 3 ? "warning" : "safe");
+                item.put("timeLeft", hoursLeft < 1 ? "< 1h" : hoursLeft < 3 ? hoursLeft + "h" : "> 3h");
+                sgProducts.add(item);
             }
+            sg.put("maxDiscount", sgMaxDiscount);
         }
+
+        List<Map<String, Object>> dealMarkers = new ArrayList<>(storeGroups.values());
+        System.out.println("=== DEAL MAP: stores=" + dealMarkers.size());
 
         // Serialize to JSON for the template
         try {
@@ -1357,7 +1539,9 @@ public class HomeController {
         } catch (Exception e) {
             model.addAttribute("dealsJson", "[]");
         }
+        model.addAttribute("dealMarkers", dealMarkers);
         model.addAttribute("dealCount", dealMarkers.size());
+        model.addAttribute("activeDealsCount", activeDeals.size());
 
         return "buyer/deal-map";
     }
@@ -1435,20 +1619,22 @@ public class HomeController {
     @ResponseBody
     public Map<String, Object> changePassword(@RequestParam String currentPassword,
             @RequestParam String newPassword,
-            java.security.Principal principal) {
+            java.security.Principal principal,
+            jakarta.servlet.http.HttpServletRequest request) {
         User user = getCurrentUser(principal);
         if (user == null) return Map.of("success", false, "message", "Vui lòng đăng nhập");
-        // Verify current password
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             return Map.of("success", false, "message", "Mật khẩu hiện tại không đúng");
         }
-        if (newPassword.length() < 6) {
-            return Map.of("success", false, "message", "Mật khẩu mới phải có ít nhất 6 ký tự");
+        if (newPassword.length() < 8) {
+            return Map.of("success", false, "message", "Mật khẩu mới phải có ít nhất 8 ký tự");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setWeakPassword(false);
         userRepository.save(user);
-        return Map.of("success", true, "message", "Đã đổi mật khẩu");
+        // Force logout after password change
+        try { request.getSession().invalidate(); } catch (Exception ignored) {}
+        return Map.of("success", true, "message", "Đã đổi mật khẩu. Vui lòng đăng nhập lại.", "logout", true);
     }
 
         // ============ ADDRESS BOOK APIs ============
@@ -1638,23 +1824,26 @@ public class HomeController {
     private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
 
     private String saveUploadedFile(org.springframework.web.multipart.MultipartFile file) throws Exception {
-        // Generate MD5-based filename for dedup
+        if (file == null || file.isEmpty()) return null;
+        // MD5 hash for dedup
         java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
         byte[] digest = md.digest(file.getBytes());
         StringBuilder sb = new StringBuilder();
         for (byte b : digest) sb.append(String.format("%02x", b));
+        String hash = sb.toString();
         String originalFilename = file.getOriginalFilename();
         String ext = ".jpg";
         if (originalFilename != null && originalFilename.contains(".")) {
             ext = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
-        String filename = sb.toString() + ext;
-        String uploadDir = System.getProperty("user.dir") + "/uploads";
-        java.io.File dir = new java.io.File(uploadDir);
-        if (!dir.exists()) dir.mkdirs();
-        java.io.File dest = new java.io.File(dir, filename);
-        if (!dest.exists()) {
-            file.transferTo(dest);
+        String filename = hash + ext;
+        java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads");
+        if (!java.nio.file.Files.exists(uploadPath)) {
+            java.nio.file.Files.createDirectories(uploadPath);
+        }
+        java.nio.file.Path targetPath = uploadPath.resolve(filename);
+        if (!java.nio.file.Files.exists(targetPath)) {
+            java.nio.file.Files.copy(file.getInputStream(), targetPath);
         }
         return "/uploads/" + filename;
     }

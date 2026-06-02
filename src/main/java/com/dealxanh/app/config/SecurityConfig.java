@@ -68,10 +68,10 @@ public class SecurityConfig {
                 .requestMatchers("/seller/onboarding-pending", "/auth/onboarding-pending").authenticated()
 
                 // Admin routes - chỉ ADMIN và MODERATOR
-                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MODERATOR")
+                .requestMatchers("/admin/**", "/moderator/**").hasAnyRole("ADMIN", "MODERATOR")
 
                 // Seller routes - chỉ STORE_OWNER và STORE_STAFF
-                .requestMatchers("/seller/**", "/store/dashboard/**").hasAnyRole("STORE_OWNER")
+                .requestMatchers("/seller/**", "/store/dashboard/**").hasAnyRole("STORE_OWNER", "STORE_STAFF")
 
                 // Staff routes - chỉ STORE_STAFF (dùng chung cổng login /seller/login)
                 .requestMatchers("/staff/**").hasRole("STORE_STAFF")
@@ -158,7 +158,12 @@ public class SecurityConfig {
             )
                 .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(new com.dealxanh.app.security.CustomAuthenticationEntryPoint())
-                .accessDeniedPage("/login?error=access_denied")
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    // Show a proper error for logged-in users trying to access wrong role pages
+                    response.setContentType("text/html;charset=UTF-8");
+                    String requestedUrl = request.getRequestURI().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+                    response.getWriter().write("<!DOCTYPE html><html lang='vi'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Truy cập bị từ chối - DealXanh</title><style>body{font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f6f8;text-align:center}.card{background:#fff;padding:40px 32px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:420px}h1{font-size:18px;color:#dc2626;margin-bottom:8px}p{font-size:14px;color:#666;line-height:1.6;margin-bottom:20px}a{display:inline-block;padding:10px 24px;background:#0d5c2e;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;cursor:pointer}</style></head><body><div class='card'><h1>🚫 Truy cập bị từ chối</h1><p>Bạn không có quyền truy cập trang này (" + requestedUrl + "). Vui lòng đăng nhập bằng tài khoản phù hợp.</p><a href='javascript:history.back()'>← Quay lại</a></div></body></html>");
+                })
             )
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")

@@ -140,6 +140,7 @@ body{padding-bottom:120px;background:var(--background)}
         <div class="order-recap__total">
             <span class="order-recap__total-label">Cần thanh toán</span>
             <span class="order-recap__total-val" id="recapTotal">0đ</span>
+            <span class="order-recap__orig" id="recapOrig" style="display:none;font-size:11px;color:var(--text-tertiary);text-decoration:line-through;"></span>
         </div>
     </div>
 
@@ -254,23 +255,50 @@ function selectPayment(method) {
     document.getElementById('methodLabel').innerHTML = labels[method] || '';
 }
 
-// Load cart total from API
+// Load cart total from API — same logic as cart page recalcCart()
 function loadCartTotal() {
     fetch('/api/cart')
         .then(function(r) { return r.json(); })
         .then(function(d) {
             var items = d.items || [];
-            var count = d.count || 0;
-            var total = 0;
-            items.forEach(function(item) {
-                var qty = item.quantity || 1;
-                var price = item.salePrice || 0;
-                total += price * qty;
-            });
+            var count = 0;
+            var tp = 0; // total price = sum of salePrice * qty (already includes PERCENT discount)
+            var to = 0; // total original
+            var fixedDealIds = {};
+            var fixedDealDiscount = 0;
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.unavailable) continue;
+                var q = item.quantity || 1;
+                tp += (item.salePrice || 0) * q;
+                to += (item.originalPrice || item.salePrice || 0) * q;
+                count += q;
+                if (item.discountType === 'FIXED' && item.dealId > 0 && !fixedDealIds[item.dealId]) {
+                    fixedDealDiscount += (item.discountValue || 0);
+                    fixedDealIds[item.dealId] = true;
+                }
+            }
+            // Apply voucher discount from session (if user selected a voucher in cart)
+            var voucher = d.voucher;
+            var vd = voucher ? (voucher.voucherDiscount || 0) : 0;
+            // Final = subtotal minus FIXED discount minus voucher discount
+            var total = tp - fixedDealDiscount - vd;
+            if (total < 0) total = 0;
 
-            document.getElementById('recapItems').textContent = count + ' món từ nhiều cửa hàng';
+            document.getElementById('recapItems').textContent = count + ' món';
             document.getElementById('recapTotal').textContent = fmt(total);
-            document.getElementById('stickyTotal').textContent = fmt(total);
+            // Show original price if discounted
+            var origEl = document.getElementById('recapOrig');
+            if (to > tp) {
+                origEl.style.display = '';
+                origEl.textContent = 'Giá gốc ' + fmt(to);
+            } else {
+                origEl.style.display = 'none';
+            }
+            var stickyEl = document.getElementById('stickyTotal');
+            if (stickyEl) stickyEl.textContent = fmt(total);
+            // Debug: log to console
+            console.log('Payment: tp=' + tp + ' to=' + to + ' fixedDiscount=' + fixedDealDiscount + ' voucherDiscount=' + vd + ' total=' + total, voucher);
         })
         .catch(function() {
             document.getElementById('recapItems').textContent = 'Không thể tải';
@@ -279,7 +307,7 @@ function loadCartTotal() {
 }
 
 function fmt(n) {
-    return (n || 0).toLocaleString('vi-VN') + 'd';
+    return (n || 0).toLocaleString('vi-VN') + 'đ';
 }
 
 // Set min/max for pickup time: tomorrow to 3 days from now
@@ -299,6 +327,19 @@ function fmt(n) {
 })();
 
 loadCartTotal();
+
+// ===== LEAVE WARNING (bank transfer orders) =====
+var _pmSelected = 'bank';
+var _orderSubmitted = false;
+var _origSelectPayment = selectPayment;
+selectPayment = function(m) { _pmSelected = m; _origSelectPayment(m); };
+window.addEventListener('beforeunload', function(e) {
+    if (_orderSubmitted || _pmSelected !== 'bank') return;
+    var msg = 'Bạn có xác nhận chuyển trang hay không? Nếu bạn chuyển trang, hệ thống sẽ tự động ghi nhận bạn muốn thanh toán ở cửa hàng.';
+    e.preventDefault(); e.returnValue = msg; return msg;
+});
+var _cf = document.querySelector('.btn-confirm');
+if (_cf) _cf.addEventListener('click', function() { _orderSubmitted = true; });
 </script>
 
 </body>

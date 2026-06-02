@@ -283,7 +283,9 @@ async function createPayOSQR(orderId) {
                 '<div style="margin-top:12px;padding:8px 12px;background:rgba(13,92,46,.08);border-radius:var(--radius-md);font-size:12px;color:var(--text-secondary);word-break:break-all;">' +
                     '<span style="font-weight:600;color:var(--primary);">Link thanh toán:</span><br><a href="' + checkoutUrl + '" target="_blank" style="color:var(--info);">' + checkoutUrl + '</a>' +
                 '</div>' +
-                '<button onclick="checkPaymentStatus(' + orderId + ')" style="margin-top:10px;padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-family);">🔄 Kiểm tra trạng thái</button>';
+                '<button onclick="checkPaymentStatus(' + orderId + ')" style="margin-top:10px;padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-family);">🔄 Kiểm tra trạng thái</button>' +
+            '<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">Tự động kiểm tra mỗi 5 giây</div>';
+            startPayosPolling(orderId);
         } else {
             document.getElementById('payosBody').innerHTML = `<div style="padding:20px;color:var(--danger);">${d.message}</div>`;
         }
@@ -292,28 +294,37 @@ async function createPayOSQR(orderId) {
     }
 }
 
+var payosPollers = {};
 async function checkPaymentStatus(orderId) {
     try {
-        var btn = event.target;
-        btn.disabled = true;
-        btn.textContent = 'Đang kiểm tra...';
+        var btn = event ? event.target : null;
+        if (btn) { btn.disabled = true; btn.textContent = 'Đang kiểm tra...'; }
         const r = await fetch('/api/payment/status/' + orderId);
         const d = await r.json();
         if (d.paidFromPayOS) {
-            alert(d.message || '✅ Thanh toán thành công! Đơn hàng đã hoàn thành.');
+            if (payosPollers[orderId]) { clearInterval(payosPollers[orderId]); delete payosPollers[orderId]; }
+            alert(d.message || '✅ Thanh toán thành công!');
+            closePayosModal();
             location.reload();
         } else {
-            alert(d.message || '⏳ Chưa nhận được thanh toán. Thử lại sau.');
-            btn.disabled = false;
-            btn.textContent = '🔄 Kiểm tra trạng thái';
+            if (btn) { btn.disabled = false; btn.textContent = '🔄 Kiểm tra trạng thái'; }
         }
     } catch(e) {
-        alert('Lỗi kiểm tra trạng thái');
+        if (btn) { btn.disabled = false; btn.textContent = '🔄 Kiểm tra trạng thái'; }
     }
+}
+
+// Start auto-polling after QR is shown
+function startPayosPolling(orderId) {
+    if (payosPollers[orderId]) clearInterval(payosPollers[orderId]);
+    payosPollers[orderId] = setInterval(function() { checkPaymentStatus(orderId); }, 5000);
 }
 
 function closePayosModal(e) {
     if (e && e.target !== e.currentTarget) return;
+    // Stop all polling
+    Object.keys(payosPollers).forEach(function(k) { clearInterval(payosPollers[k]); });
+    payosPollers = {};
     document.getElementById('payosModal').style.display = 'none';
 }
 

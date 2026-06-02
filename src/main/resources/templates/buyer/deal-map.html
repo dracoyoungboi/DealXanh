@@ -18,7 +18,7 @@
   --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
   --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
   --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
-  --header:56px; --bottom-sheet-peek:200px;
+  --header:56px; --bottom-sheet-peek:52px;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -121,7 +121,7 @@ button{cursor:pointer;border:none;font-family:inherit;background:none}
 
 /* ===== BOTTOM SHEET ===== */
 .bottom-sheet{
-  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  position:fixed;bottom:0;left:0;right:0;z-index:400; /* Above top-nav (300) on desktop */
   background:var(--surface);
   border-radius:24px 24px 0 0;
   box-shadow:0 -4px 32px rgba(0,0,0,.15);
@@ -132,12 +132,28 @@ button{cursor:pointer;border:none;font-family:inherit;background:none}
 .bottom-sheet.collapsed{transform:translateY(calc(100% - var(--bottom-sheet-peek)))}
 .bottom-sheet.expanded{transform:translateY(0)}
 
+/* Mobile: nav bar (z-index:300) covers the sheet handle.
+   Peek = nav height (68px) + tiny handle (~20px) = 88px.
+   The top ~20px of the handle peeks above the nav so user can still grab it. */
+@media (max-width: 767px) {
+  .bottom-sheet { z-index: 250; } /* Below mobile-nav (300) */
+  :root { --bottom-sheet-peek: 88px; }
+}
+
 .sheet-handle-wrap{
   padding:10px 0 4px;
-  display:flex;justify-content:center;align-items:center;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
   cursor:grab;flex-shrink:0;
+  user-select:none;-webkit-user-select:none;
 }
 .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:var(--radius-full)}
+.sheet-handle-label{
+  display:flex;align-items:center;gap:4px;
+  margin-top:6px;
+  font-size:12px;font-weight:600;color:var(--text-secondary);
+  white-space:nowrap;
+}
+.sheet-handle-label svg{width:13px;height:13px;color:var(--primary);flex-shrink:0}
 
 .sheet-peek{padding:0 16px 12px;flex-shrink:0}
 .sheet-peek-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -286,6 +302,28 @@ input[type=range]::-webkit-slider-thumb{
 .leaflet-popup-content-wrapper{border-radius:var(--radius-lg)!important;box-shadow:var(--shadow-lg)!important;border:1px solid var(--border-light);padding:0!important;overflow:hidden;min-width:260px}
 .leaflet-popup-content{margin:0!important;width:100%!important}
 .leaflet-popup-tip-container{display:none}
+/* ===== STORE POPUP ===== */
+.mp-popup{font-family:var(--font);}
+.mp-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:linear-gradient(135deg,rgba(13,92,46,.06),rgba(13,92,46,.02));border-radius:10px 10px 0 0;border-bottom:1px solid #f0f0f0;}
+.mp-header-left{display:flex;align-items:center;gap:8px;}
+.mp-header-left img{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#f0f0f0;}
+.mp-store-name{font-size:13px;font-weight:700;color:#1a1a1a;}
+.mp-store-sub{font-size:10px;color:#999;}
+.mp-badge{font-size:12px;font-weight:800;color:#0d5c2e;background:rgba(13,92,46,.1);padding:4px 10px;border-radius:12px;}
+.mp-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f8f8f8;cursor:pointer;transition:all .15s;background:#fff;}
+.mp-item:last-child{border-bottom:none;}
+.mp-item img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#f0f0f0;flex-shrink:0;}
+.mp-info{flex:1;min-width:0;}
+.mp-name{font-size:12px;font-weight:600;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px;}
+.mp-meta{display:flex;gap:5px;align-items:center;}
+.mp-meta span{font-size:10px;font-weight:500;padding:2px 6px;border-radius:4px;color:#666;}
+.mp-price{text-align:right;flex-shrink:0;}
+.mp-price-new{font-size:13px;font-weight:700;color:#ee4d2d;}
+.mp-price-old{font-size:10px;color:#bbb;text-decoration:line-through;}
+.mp-view-all{display:block;text-align:center;padding:10px;font-size:12px;font-weight:600;color:var(--primary);text-decoration:none;border-top:1px solid #f0f0f0;transition:background .15s;}
+.mp-view-all:hover{background:rgba(13,92,46,.04);}
+
+/* Old popup (keep for compatibility) */
 .deal-popup{font-family:var(--font);cursor:pointer}
 .deal-popup-img{width:100%;height:140px;object-fit:cover;display:block}
 .deal-popup-body{padding:12px 14px 14px}
@@ -387,6 +425,10 @@ input[type=range]::-webkit-slider-thumb{
 <div class="bottom-sheet collapsed" id="bottom-sheet">
   <div class="sheet-handle-wrap" id="sheet-handle">
     <div class="sheet-handle"></div>
+    <div class="sheet-handle-label" id="sheet-handle-label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span id="sheet-handle-deal-count">18</span> deal quanh đây
+    </div>
   </div>
   <div class="sheet-peek">
     <div class="sheet-peek-row">
@@ -481,24 +523,32 @@ input[type=range]::-webkit-slider-thumb{
 <!-- Mobile Nav -->
 <div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
 
+<script id="deals-data" type="application/json" th:utext="${dealsJson}">[]</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ===== REAL DATA FROM SERVER =====
-const DEALS = /*[[${dealsJson != null ? dealsJson : '[]'}]]*/ [];
-const dealCount = /*[[${dealCount != null ? dealCount : 0}]]*/ 0;
+var dealsJsonEl = document.getElementById('deals-data');
+var DEALS = JSON.parse(dealsJsonEl ? dealsJsonEl.textContent : '[]');
+var dealCount = DEALS.length;
+console.log('MAP dealsCount=' + dealCount + ' len=' + DEALS.length);
 
-const urgencyColor = {danger:'#ef4444',warning:'#f59e0b',safe:'#10b981'};
-const urgencyClass = {danger:'pin-danger',warning:'pin-warning',safe:'pin-safe'};
+var urgencyColor = {danger:'#ef4444',warning:'#f59e0b',safe:'#10b981'};
+var urgencyClass = {danger:'pin-danger',warning:'pin-warning',safe:'pin-safe'};
 
 // ===== MAP INIT =====
-const DEFAULT_LAT = 21.0270, DEFAULT_LNG = 105.8540;
+var DEFAULT_LAT = 21.0270, DEFAULT_LNG = 105.8540;
 // Dynamic user location — starts at default, updated by GPS
-let USER_LAT = DEFAULT_LAT;
-let USER_LNG = DEFAULT_LNG;
+var USER_LAT = DEFAULT_LAT;
+var USER_LNG = DEFAULT_LNG;
 // Try to center on first deal if available
 if (DEALS.length > 0) { USER_LAT = DEALS[0].lat; USER_LNG = DEALS[0].lng; }
 
-const map = L.map('map',{zoomControl:false,attributionControl:false}).setView([USER_LAT,USER_LNG],14);
+var map = null;
+if (typeof L !== 'undefined') {
+    map = L.map('map',{zoomControl:false,attributionControl:false}).setView([USER_LAT,USER_LNG],14);
+} else {
+    document.getElementById('map').innerHTML = '<div style="color:red;padding:100px;text-align:center;font-size:18px;">Leaflet library failed to load.<br>Check internet connection.</div>';
+}
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
@@ -520,27 +570,50 @@ let radiusOn = false;
 let gpsLocated = false;
 
 // Add deal pins
-const markers = [];
+var markers = [];
 let activeFilter = 'all';
 
-function buildPinHtml(d, distM){
-  const color = urgencyColor[d.urgency] || '#10b981';
-  const distKm = distM != null ? (distM >= 1000 ? (distM/1000).toFixed(1) + 'km' : distM + 'm') : '';
-  const label = d.dealType === 'COMBO' ? '🎁' : '-' + d.discount + '%';
+function getStorePinSize(maxDiscount) {
+    if (maxDiscount >= 60) return 1.4; // biggest
+    if (maxDiscount >= 40) return 1.2;
+    if (maxDiscount >= 20) return 1.0;
+    return 0.85; // smallest
+}
+
+function buildPinHtml(s, maxDiscount){
+  var size = getStorePinSize(maxDiscount);
+  var scale = 'transform:scale(' + size + ');';
+  var name = s.storeName || 'Shop';
+  var shortName = name.length > 12 ? name.substring(0,11) + '...' : name;
+  var discLabel = '-' + Math.round(maxDiscount) + '%';
+  return '<div class="custom-pin" style="' + scale + '">' +
+    '<div class="pin-bubble" style="background:#0d5c2e;border-color:rgba(255,255,255,.6);font-size:' + (10*size) + 'px;min-width:' + (50*size) + 'px;text-align:center;">' +
+      '<div style="font-size:' + (8*size) + 'px;opacity:.85;">' + discLabel + '</div>' +
+      '<div style="font-weight:700;white-space:nowrap;">' + shortName + '</div>' +
+    '</div>' +
+    '<div class="pin-tail" style="border-top:7px solid #0d5c2e;border-left:5px solid transparent;border-right:5px solid transparent"></div>' +
+    '</div>';
+}
+
+function buildPinHtmlOld(d, distM){
+  var color = urgencyColor[d.urgency] || '#10b981';
+  var distKm = distM != null ? (distM >= 1000 ? (distM/1000).toFixed(1) + 'km' : distM + 'm') : '';
+  var label = d.dealType === 'COMBO' ? '🎁' : '-' + d.discount + '%';
   return '<div class="custom-pin">' +
     '<div class="pin-bubble" style="background:' + color + ';border-color:rgba(255,255,255,.6)">' + label + '</div>' +
     '<div class="pin-tail" style="border-top:7px solid ' + color + ';border-left:5px solid transparent;border-right:5px solid transparent"></div>' +
     '</div>';
 }
 
-function addMarkers(deals){
-  markers.forEach(m=>map.removeLayer(m));
+function addMarkers(stores){
+  console.log('addMarkers called with ' + stores.length + ' stores, map=' + !!map);
+  markers.forEach(function(m){map.removeLayer(m);});
   markers.length=0;
-  deals.forEach(d=>{
-    const distM = calcDist(USER_LAT, USER_LNG, d.lat, d.lng);
-    const icon = L.divIcon({html:buildPinHtml(d, distM),className:'',iconSize:[60,36],iconAnchor:[30,36]});
-    const m = L.marker([d.lat,d.lng],{icon}).addTo(map);
-    m.on('click',()=>showDealPopup(d,m));
+  stores.forEach(function(s){
+    var maxDisc = s.maxDiscount || 0;
+    var icon = L.divIcon({html:buildPinHtml(s, maxDisc),className:'',iconSize:[80,44],iconAnchor:[40,44]});
+    var m = L.marker([s.lat,s.lng],{icon}).addTo(map);
+    m.on('click',(function(ss,mm){return function(){showStorePopup(ss,mm);}})(s,m));
     markers.push(m);
   });
 }
@@ -551,13 +624,59 @@ function calcDist(lat1,lon1,lat2,lon2){
   return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1000);
 }
 
+function showStorePopup(s, marker){
+  var prods = s.products || [];
+  var itemsHtml = '';
+  for (var i = 0; i < Math.min(prods.length, 5); i++) {
+    var p = prods[i];
+    var urgencyBg = p.urgency === 'danger' ? '#fef2f2' : p.urgency === 'warning' ? '#fffbeb' : '#f0fdf4';
+    var urgencyColor = p.urgency === 'danger' ? '#dc2626' : p.urgency === 'warning' ? '#d97706' : '#16a34a';
+    itemsHtml += '<div class="mp-item" onclick="event.stopPropagation();window.location.href=\'/products/' + p.productId + '\'"' +
+      ' onmouseenter="this.style.background=\'#e8f5e9\';this.style.transform=\'translateX(3px)\'"' +
+      ' onmouseleave="this.style.background=\'#fff\';this.style.transform=\'translateX(0)\'">' +
+      '<img src="' + (p.img || '/img/default-banner.svg') + '" onerror="this.src=\'/img/default-banner.svg\'">' +
+      '<div class="mp-info">' +
+        '<div class="mp-name">' + (p.name||'') + '</div>' +
+        '<div class="mp-meta">' +
+          '<span style="background:' + urgencyBg + ';color:' + urgencyColor + ';">' + (p.timeLeft||'') + '</span>' +
+          '<span>' + (p.dealName||'') + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mp-price">' +
+        '<div class="mp-price-new">' + (p.price||0).toLocaleString('vi-VN') + 'đ</div>' +
+        '<div class="mp-price-old">' + (p.original||0).toLocaleString('vi-VN') + 'đ</div>' +
+      '</div>' +
+    '</div>';
+  }
+  if (prods.length > 5) itemsHtml += '<div style="text-align:center;font-size:11px;color:#999;padding:6px;">+ ' + (prods.length - 5) + ' sản phẩm khác</div>';
+
+  var popup = L.popup({maxWidth:320,className:'deal-popup-container'})
+    .setLatLng([s.lat,s.lng])
+    .setContent(
+      '<div class="mp-popup">' +
+        '<div class="mp-header">' +
+          '<div class="mp-header-left">' +
+            '<img src="' + (s.storeLogo || '/img/default-banner.svg') + '" onerror="this.style.display=\'none\'">' +
+            '<div>' +
+              '<div class="mp-store-name">' + (s.storeName||'') + '</div>' +
+              '<div class="mp-store-sub">' + prods.length + ' deal đang chạy</div>' +
+            '</div>' +
+          '</div>' +
+          '<span class="mp-badge">-' + Math.round(s.maxDiscount||0) + '%</span>' +
+        '</div>' +
+        itemsHtml +
+        '<a href="/store/' + (s.storeId||'') + '" class="mp-view-all" onclick="event.stopPropagation()">Xem tất cả sản phẩm →</a>' +
+      '</div>');
+  popup.openOn(map);
+}
+
 function showDealPopup(d,marker){
   var dist = calcDist(USER_LAT,USER_LNG,d.lat,d.lng);
   var timeColor = d.urgency==='danger'?'#ef4444':d.urgency==='warning'?'#f59e0b':'#10b981';
   var popup = L.popup({maxWidth:280,className:'deal-popup-container'})
     .setLatLng([d.lat,d.lng])
     .setContent(
-      '<div class="deal-popup" onclick="window.location.href=\'/products/\'+d.id">' +
+      '<div class="deal-popup" onclick="window.location.href=\'/products/' + d.id + '\'">' +
         '<img class="deal-popup-img" src="' + d.img + '" alt="' + d.name + '" loading="lazy">' +
         '<div class="deal-popup-body">' +
           '<div class="deal-popup-store">' + d.store + '</div>' +
@@ -586,61 +705,208 @@ if (DEALS.length > 0) {
     map.setView([DEALS[0].lat, DEALS[0].lng], 14);
 } else {
     document.getElementById('deal-count').textContent = '0';
-    document.getElementById('deal-list').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-tertiary);font-size:13px">Chua co deal nao co vi tri ban do. Cac cua hang can cap nhat toa do.</div>';
+    document.getElementById('sheet-handle-deal-count').textContent = '0';
+    document.getElementById('deal-list').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-tertiary);font-size:13px">Chua co deal nao co vi tri ban do. Cac cua hang can cap nhat toa do.<br><small>Debug: dealCount=' + dealCount + ' DEALS=' + JSON.stringify(DEALS).substring(0, 200) + '</small></div>';
 }
 
-// ===== BOTTOM SHEET DRAG =====
-let sheetExpanded = false;
-const sheet = document.getElementById('bottom-sheet');
-const handle = document.getElementById('sheet-handle');
-let startY=0,startScrollTop=0;
+// ===== BOTTOM SHEET DRAG — Swipeable =====
+var sheetExpanded = false;
+var sheet = document.getElementById('bottom-sheet');
+var handle = document.getElementById('sheet-handle');
+var isDragging = false;
+var startY_drag = 0;
+var startOffset = 0;
+var dragDist = 0;
 
-handle.addEventListener('pointerdown',e=>{
-  startY=e.clientY;
-  handle.setPointerCapture(e.pointerId);
+function getPeek() {
+    var style = getComputedStyle(document.documentElement);
+    var peekStr = style.getPropertyValue('--bottom-sheet-peek').trim();
+    var peek = parseInt(peekStr, 10);
+    return isNaN(peek) ? 200 : peek;
+}
+
+function getCollapsedOffset() {
+    var h = sheet.offsetHeight;
+    return Math.max(h - getPeek(), 0);
+}
+
+function getCurrentOffset() {
+    if (sheetExpanded) return 0;
+    return getCollapsedOffset();
+}
+
+function snapToState(expanded) {
+    sheetExpanded = expanded;
+
+    // Update CSS classes
+    sheet.classList.remove('collapsed', 'expanded');
+    sheet.classList.add(expanded ? 'expanded' : 'collapsed');
+
+    // Re-enable transition for smooth snap
+    sheet.style.transition = 'transform .35s cubic-bezier(.4,0,.2,1)';
+
+    // Force reflow so browser registers the transition
+    // eslint-disable-next-line no-unused-expressions
+    sheet.offsetHeight;
+
+    // Apply target transform
+    var targetY = expanded ? 0 : getCollapsedOffset();
+    sheet.style.transform = 'translateY(' + targetY + 'px)';
+
+    // After animation, clear inline style so CSS class takes over
+    setTimeout(function() {
+        sheet.style.transition = '';
+        sheet.style.transform = '';
+    }, 400);
+}
+
+// Expose global functions for map click handler
+window.expandSheet = function() {
+    if (!sheetExpanded) snapToState(true);
+};
+window.collapseSheet = function() {
+    if (sheetExpanded) snapToState(false);
+};
+
+// ---------- Pointer Events ----------
+handle.addEventListener('pointerdown', function(e) {
+    isDragging = true;
+    dragDist = 0;
+    startY_drag = e.clientY;
+    startOffset = getCurrentOffset();
+
+    // Remove CSS transition so sheet follows finger immediately
+    sheet.style.transition = 'none';
+    // Remove CSS class transform so it doesn't fight our inline value
+    sheet.classList.remove('collapsed', 'expanded');
+    // Set initial position
+    sheet.style.transform = 'translateY(' + startOffset + 'px)';
+
+    handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
 });
-handle.addEventListener('pointermove',e=>{
-  const dy = e.clientY-startY;
-  if(dy<-30){expandSheet()}
-  else if(dy>30){collapseSheet()}
+
+document.addEventListener('pointermove', function(e) {
+    if (!isDragging) return;
+
+    var deltaY = e.clientY - startY_drag;
+    dragDist = Math.abs(deltaY);
+    var newOffset = startOffset + deltaY;
+    var maxOffset = getCollapsedOffset();
+
+    // Rubber-band resistance at extremes
+    if (newOffset < 0) {
+        // Pulling above expanded state — mild resistance
+        newOffset = Math.round(newOffset * 0.3);
+    } else if (maxOffset > 0 && newOffset > maxOffset) {
+        // Pulling below collapsed state
+        newOffset = maxOffset + Math.round((newOffset - maxOffset) * 0.3);
+    }
+
+    // Ensure offset doesn't go negative from rubber-band
+    if (newOffset < 0) newOffset = Math.max(newOffset, -40);
+
+    sheet.style.transform = 'translateY(' + newOffset + 'px)';
 });
-handle.addEventListener('pointerup',()=>{});
 
-function expandSheet(){if(!sheetExpanded){sheetExpanded=true;sheet.classList.replace('collapsed','expanded');}}
-function collapseSheet(){if(sheetExpanded){sheetExpanded=false;sheet.classList.replace('expanded','collapsed');}}
+document.addEventListener('pointerup', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
 
-// Click handle to toggle
-handle.addEventListener('click',()=>{sheetExpanded?collapseSheet():expandSheet()});
+    // Parse current transform value
+    var currentY = startOffset; // fallback
+    var match = sheet.style.transform.match(/translateY\(([^)]+)\)/);
+    if (match && match[1]) {
+        currentY = parseFloat(match[1]);
+    }
+
+    var maxOffset = getCollapsedOffset();
+
+    if (sheetExpanded) {
+        // Was expanded, user dragged DOWN — consider collapsing
+        if (maxOffset > 0) {
+            var collapseProgress = currentY / maxOffset;
+            if (collapseProgress > 0.5) {
+                snapToState(false); // Collapse
+            } else {
+                snapToState(true);  // Spring back to expanded
+            }
+        } else {
+            snapToState(true);
+        }
+    } else {
+        // Was collapsed, user dragged UP — consider expanding
+        if (maxOffset > 0) {
+            var expandProgress = (maxOffset - currentY) / maxOffset;
+            if (expandProgress > 0.5) {
+                snapToState(true);  // Expand
+            } else {
+                snapToState(false); // Spring back to collapsed
+            }
+        } else {
+            snapToState(false);
+        }
+    }
+});
+
+// Click-to-toggle (only if minimal/no drag movement)
+handle.addEventListener('click', function() {
+    if (dragDist > 8) return; // Was a drag, not a click
+    if (sheetExpanded) {
+        snapToState(false);
+    } else {
+        snapToState(true);
+    }
+});
 
 // ===== RENDER DEAL LIST =====
-function renderDeals(deals){
+function renderDeals(stores){
   var list = document.getElementById('deal-list');
-  document.getElementById('deal-count').textContent = deals.length;
-  list.innerHTML = deals.map(function(d){
-    var dist = calcDist(USER_LAT,USER_LNG,d.lat,d.lng);
-    var badgeColor = d.urgency==='danger'?'#ef4444':d.urgency==='warning'?'#f59e0b':'#10b981';
-    var discountLabel = d.dealType==='COMBO'?'🎁 Combo':'-'+d.discount+'%';
-    return '<div class="deal-row" onclick="window.location.href=\'/products/\'+d.id">' +
-      '<div class="deal-row-img">' +
-        '<img src="' + d.img + '" alt="' + d.name + '" loading="lazy" onerror="this.src=\'/img/default-banner.svg\'">' +
-        '<span class="deal-row-badge" style="background:' + badgeColor + '">' + discountLabel + '</span>' +
-      '</div>' +
-      '<div class="deal-row-body">' +
-        '<div class="deal-row-store">' + d.store + '</div>' +
-        '<div class="deal-row-name">' + d.name + '</div>' +
-        '<div class="deal-row-bottom">' +
-          '<div class="deal-row-price">' +
-            '<span class="price-new">' + d.price.toLocaleString('vi-VN') + 'đ</span>' +
-            '<span class="price-old">' + d.original.toLocaleString('vi-VN') + 'đ</span>' +
-          '</div>' +
-          '<div class="deal-row-meta">' +
-            '<span class="meta-chip chip-dist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + dist + 'm</span>' +
-            '<span class="meta-chip" style="background:rgba(' + (d.urgency==='danger'?'239,68,68':d.urgency==='warning'?'245,158,11':'16,185,129') + ',.1);color:' + badgeColor + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + d.timeLeft + '</span>' +
+  var totalProducts = 0;
+  for (var i = 0; i < stores.length; i++) {
+    totalProducts += (stores[i].products || []).length;
+  }
+  document.getElementById('deal-count').textContent = totalProducts;
+  var hdl = document.getElementById('sheet-handle-deal-count');
+  if (hdl) hdl.textContent = stores.length + ' shop';
+
+  var html = '';
+  for (var s = 0; s < stores.length; s++) {
+    var store = stores[s];
+    var prods = store.products || [];
+    var dist = calcDist(USER_LAT,USER_LNG,store.lat,store.lng);
+    var distText = dist >= 1000 ? (dist/1000).toFixed(1) + 'km' : dist + 'm';
+    var maxDisc = store.maxDiscount || 0;
+
+    html += '<div style="padding:8px 0;border-bottom:1px solid var(--border-light);">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;" onclick="map.setView([' + store.lat + ',' + store.lng + '],15)">' +
+        '<img src="' + (store.storeLogo || '/img/default-banner.svg') + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">' +
+        '<span style="font-weight:700;font-size:13px;">' + (store.storeName||'') + '</span>' +
+        '<span style="font-size:11px;color:var(--accent);font-weight:700;margin-left:auto;">-' + Math.round(maxDisc) + '%</span>' +
+        '<span style="font-size:10px;color:var(--text-tertiary);">📍' + distText + '</span>' +
+      '</div>';
+
+    for (var p = 0; p < prods.length; p++) {
+      var prod = prods[p];
+      html += '<div class="deal-row" onclick="window.location.href=\'/products/' + prod.productId + '\'">' +
+        '<div class="deal-row-img">' +
+          '<img src="' + (prod.img || '/img/default-banner.svg') + '" alt="" loading="lazy" onerror="this.src=\'/img/default-banner.svg\'">' +
+          '<span class="deal-row-badge" style="background:' + (prod.urgency==='danger'?'#ef4444':prod.urgency==='warning'?'#f59e0b':'#10b981') + '">-' + prod.discount + '%</span>' +
+        '</div>' +
+        '<div class="deal-row-body">' +
+          '<div class="deal-row-name">' + (prod.name||'') + '</div>' +
+          '<div class="deal-row-bottom">' +
+            '<div class="deal-row-price">' +
+              '<span class="price-new">' + (prod.price||0).toLocaleString('vi-VN') + 'đ</span>' +
+              '<span class="price-old">' + (prod.original||0).toLocaleString('vi-VN') + 'đ</span>' +
+            '</div>' +
           '</div>' +
         '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
+      '</div>';
+    }
+    html += '</div>';
+  }
+  list.innerHTML = html;
 }
 renderDeals(DEALS);
 
@@ -796,60 +1062,48 @@ document.querySelectorAll('.check-chip').forEach(function(chip){
 });
 
 function getFilteredDeals() {
-  var deals = activeFilter === 'all' ? DEALS.slice() : DEALS.filter(function(d){return d.dealType === activeFilter;});
+  var radiusKm = parseFloat(document.querySelector('#filter-panel input[type=range]').value) || 5;
+  var result = [];
 
-  // --- Radius filter ---
-  var radiusKm = parseFloat(document.querySelector('#filter-panel input[type=range]').value);
-  deals = deals.filter(function(d){
-    return calcDist(USER_LAT, USER_LNG, d.lat, d.lng) <= radiusKm * 1000;
-  });
+  for (var i = 0; i < DEALS.length; i++) {
+    var store = DEALS[i];
+    var dist = calcDist(USER_LAT, USER_LNG, store.lat, store.lng);
+    if (dist > radiusKm * 1000) continue;
 
-  // --- Time remaining filter ---
-  var timeChips = getActiveChipValues('#filter-panel .filter-section:nth-child(3) .check-chip');
-  if (timeChips.length > 0) {
-    deals = deals.filter(function(d){
-      return timeChips.some(function(tc) {
-        if (tc.indexOf('30 phút') >= 0) return d.urgency === 'danger' && d.timeLeft.indexOf('h') < 0;
-        if (tc.indexOf('1 giờ') >= 0 && tc.indexOf('3 giờ') < 0) return d.urgency === 'danger';
-        if (tc.indexOf('3 giờ') >= 0) return d.urgency === 'danger' || d.urgency === 'warning';
-        if (tc.indexOf('> 3 giờ') >= 0) return d.urgency === 'safe';
-        return false;
+    // Filter products by time/price/discount if active
+    var filteredProds = (store.products || []).slice();
+
+    // Discount filter
+    var discountChips = getActiveChipValues('#filter-panel .filter-section:nth-child(6) .check-chip');
+    if (discountChips.length > 0) {
+      filteredProds = filteredProds.filter(function(p) {
+        return discountChips.some(function(dc) {
+          if (dc.indexOf('30%') >= 0) return p.discount >= 30;
+          if (dc.indexOf('50%') >= 0) return p.discount >= 50;
+          if (dc.indexOf('70%') >= 0) return p.discount >= 70;
+          return false;
+        });
       });
-    });
+    }
+
+    if (filteredProds.length === 0) continue;
+
+    // Clone store with filtered products
+    var storeCopy = {};
+    for (var k in store) storeCopy[k] = store[k];
+    storeCopy.products = filteredProds;
+    storeCopy.dist = dist;
+    result.push(storeCopy);
   }
 
-  // --- Price range filter ---
-  var priceInputs = document.querySelectorAll('#filter-panel .price-input');
-  var minPrice = parseFloat(priceInputs[0].value) || 0;
-  var maxPrice = parseFloat(priceInputs[1].value) || 999999999;
-  deals = deals.filter(function(d){
-    return d.price >= minPrice && d.price <= maxPrice;
-  });
-
-  // --- Discount filter ---
-  var discountChips = getActiveChipValues('#filter-panel .filter-section:nth-child(6) .check-chip');
-  if (discountChips.length > 0) {
-    deals = deals.filter(function(d){
-      return discountChips.some(function(dc) {
-        if (dc.indexOf('30%') >= 0) return d.discount >= 30;
-        if (dc.indexOf('50%') >= 0) return d.discount >= 50;
-        if (dc.indexOf('70%') >= 0) return d.discount >= 70;
-        return false;
-      });
-    });
-  }
-
-  // --- Sort ---
+  // Sort
   if (currentSort === 'nearest') {
-    deals.sort(function(a,b){return calcDist(USER_LAT,USER_LNG,a.lat,a.lng) - calcDist(USER_LAT,USER_LNG,b.lat,b.lng);});
-  } else if (currentSort === 'urgency') {
-    var urgencyOrder = {danger:0, warning:1, safe:2};
-    deals.sort(function(a,b){return (urgencyOrder[a.urgency]||2) - (urgencyOrder[b.urgency]||2);});
+    result.sort(function(a,b){ return a.dist - b.dist; });
   } else if (currentSort === 'discount') {
-    deals.sort(function(a,b){return b.discount - a.discount;});
+    result.sort(function(a,b){ return (b.maxDiscount||0) - (a.maxDiscount||0); });
   }
 
-  return deals;
+  return result;
 }
 
 function applyFilter(){

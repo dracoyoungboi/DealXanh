@@ -49,38 +49,31 @@ public class AuthController {
         Map<String, String> result = new HashMap<>();
 
         try {
-            System.out.println("=== BUYER LOGOUT API START ===");
-
-            // Invalidate session FIRST
-            jakarta.servlet.http.HttpSession session = request.getSession(false);
-            if (session != null) {
-                System.out.println("DEBUG: Invalidating session: " + session.getId());
-                session.invalidate();
+            // Use Spring Security's proper logout handler (invalidates session,
+            // clears auth, removes remember-me, clears SecurityContextRepository)
+            org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                new org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler()
+                    .logout(request, response, auth);
             }
 
-            // Clear security context IMMEDIATELY
-            org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(null);
-            org.springframework.security.core.context.SecurityContextHolder.clearContext();
-            System.out.println("DEBUG: Security context cleared");
-
-            // Delete ALL cookies including JSESSIONID and remember-me
+            // Also delete all cookies manually as backup
             jakarta.servlet.http.Cookie[] cookies = request.getCookies();
-            for (jakarta.servlet.http.Cookie cookie : cookies) {
-                System.out.println("DEBUG: Deleting cookie: " + cookie.getName() + "=" + cookie.getValue());
-                cookie.setMaxAge(0);
-                cookie.setPath("/");
-                cookie.setValue("");
-                response.addCookie(cookie);
+            if (cookies != null) {
+                for (jakarta.servlet.http.Cookie cookie : cookies) {
+                    cookie.setMaxAge(0);
+                    cookie.setPath("/");
+                    cookie.setValue("");
+                    response.addCookie(cookie);
+                }
             }
 
             result.put("success", "true");
             result.put("message", "Logged out successfully");
-            System.out.println("=== BUYER LOGOUT API END ===");
             return org.springframework.http.ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            System.err.println("ERROR in logout: " + e.getMessage());
-            e.printStackTrace();
             result.put("success", "false");
             result.put("error", e.getMessage());
             return org.springframework.http.ResponseEntity.status(500).body(result);
@@ -124,7 +117,8 @@ public class AuthController {
 
     // Trang Quên mật khẩu chung (User)
     @GetMapping("/terms")
-    public String termsPage() {
+    public String termsPage(java.security.Principal principal, org.springframework.ui.Model model) {
+        model.addAttribute("isLoggedIn", principal != null);
         return "auth/terms";
     }
 

@@ -100,11 +100,31 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // Direct update for product edit (avoid JPA cascade issues)
     @Modifying
-    @Query("UPDATE Product p SET p.name = :name, p.description = :description, p.originalPrice = :price, p.stockQuantity = :stock, p.imageUrl = :imageUrl, p.expiryDate = :expiryDate, p.category.categoryId = :categoryId, p.approvalStatus = 'PENDING', p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
+    @Query("UPDATE Product p SET p.name = :name, p.description = :description, p.originalPrice = :price, p.stockQuantity = :stock, p.imageUrl = :imageUrl, p.expiryDate = :expiryDate, p.category.categoryId = :categoryId, p.approvalStatus = 'APPROVED', p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
     void updateProductFields(@Param("id") Long id, @Param("name") String name, @Param("description") String description, @Param("price") Double price, @Param("stock") Integer stock, @Param("imageUrl") String imageUrl, @Param("expiryDate") java.time.LocalDateTime expiryDate, @Param("categoryId") Long categoryId);
 
     /** Hoàn stock khi hủy đơn (auto-cancel) — tránh load/save entity gây version=null */
     @Modifying
     @Query("UPDATE Product p SET p.stockQuantity = p.stockQuantity + :qty, p.active = true, p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
     void restoreStock(@Param("id") Long id, @Param("qty") int qty);
+
+    /** Trừ stock khi đặt hàng — @Modifying tránh version conflict */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Product p SET p.stockQuantity = p.stockQuantity - :qty, p.active = CASE WHEN (p.stockQuantity - :qty) <= 0 THEN false ELSE p.active END, p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
+    void deductStock(@Param("id") Long id, @Param("qty") int qty);
+
+    /** Approve product — tránh entity save gây version conflict */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Product p SET p.approvalStatus = 'APPROVED', p.active = true, p.rejectionReason = null, p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
+    void approveProduct(@Param("id") Long id);
+
+    /** Reject product — tránh entity save gây version conflict */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Product p SET p.approvalStatus = 'REJECTED', p.active = false, p.rejectionReason = :reason, p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
+    void rejectProduct(@Param("id") Long id, @Param("reason") String reason);
+
+    /** Toggle active — tránh entity save gây version conflict */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Product p SET p.active = :active, p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
+    void setActive(@Param("id") Long id, @Param("active") Boolean active);
 }

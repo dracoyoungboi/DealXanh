@@ -21,7 +21,8 @@
     --font:'Inter',-apple-system,sans-serif;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-body{font-family:var(--font);background:var(--bg);color:var(--text-primary)}
+html{height:auto;min-height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padding-bottom:80px}
 button{cursor:pointer;border:none;background:none;font-family:inherit}
 a{text-decoration:none;color:inherit}
 
@@ -212,10 +213,10 @@ a{text-decoration:none;color:inherit}
         </div>
     </div>
 
-    <!-- Buttons -->
-    <div class="btn-group">
-        <button type="button" class="btn btn--outline" onclick="window.location.href='/seller/deals'">Hủy</button>
-        <button type="submit" class="btn btn--primary">Tạo Deal</button>
+    <!-- Buttons (sticky bottom) -->
+    <div style="display:flex;gap:12px;margin-top:24px;padding:0 16px 80px;">
+        <button type="button" class="btn btn--outline" onclick="window.location.href='/seller/deals'" style="flex:1;">Hủy</button>
+        <button type="submit" class="btn btn--primary" style="flex:1;background:var(--primary);color:#fff;font-weight:700;padding:14px;border:none;border-radius:var(--radius-md);font-size:15px;cursor:pointer;">Tạo Deal</button>
     </div>
 </form>
 

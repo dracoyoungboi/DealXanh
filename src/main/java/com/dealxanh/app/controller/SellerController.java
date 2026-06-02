@@ -40,6 +40,9 @@ public class SellerController {
     private DealProductRepository dealProductRepository;
 
     @Autowired
+    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
     private ProductRepository productRepository;
 
     @Autowired
@@ -53,6 +56,9 @@ public class SellerController {
 
     @Autowired
     private com.dealxanh.app.service.ProductService productService;
+
+    @Autowired
+    private com.dealxanh.app.service.LocationService locationService;
 
     @Autowired
     private com.dealxanh.app.service.PayOSService payOSService;
@@ -166,8 +172,8 @@ public class SellerController {
             // ===== Create new staff account =====
             if (username == null || username.trim().isEmpty())
                 return java.util.Map.of("success", false, "message", "Vui lòng nhập tên đăng nhập");
-            if (password == null || password.length() < 6)
-                return java.util.Map.of("success", false, "message", "Mật khẩu phải có ít nhất 6 ký tự");
+            if (password == null || password.length() < 8)
+                return java.util.Map.of("success", false, "message", "Mật khẩu phải có ít nhất 8 ký tự");
             if (fullName == null || fullName.trim().isEmpty())
                 return java.util.Map.of("success", false, "message", "Vui lòng nhập họ tên");
 
@@ -183,7 +189,7 @@ public class SellerController {
 
             User newStaff = new User();
             newStaff.setUsername(u);
-            newStaff.setPassword(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(password));
+            newStaff.setPassword(passwordEncoder.encode(password));
             newStaff.setFullName(fullName.trim());
             newStaff.setEmail(email != null ? email.trim() : null);
             newStaff.setPhone(phone != null ? phone.trim() : null);
@@ -284,6 +290,8 @@ public class SellerController {
     public String deals(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "8") int size,
             Model model,
             Principal principal) {
 
@@ -318,20 +326,32 @@ public class SellerController {
 
         // Count deals by status
         long activeCount = allDeals.stream().filter(d -> "ACTIVE".equals(d.getStatus())).count();
-        long scheduledCount = allDeals.stream().filter(d -> "SCHEDULED".equals(d.getStatus())).count();
         long endedCount = allDeals.stream().filter(d -> "ENDED".equals(d.getStatus())).count();
+
+        // Pagination
+        int totalDeals = filteredDeals.size();
+        int totalPages = (int) Math.ceil((double) totalDeals / size);
+        if (page < 0) page = 0;
+        if (page >= totalPages && totalPages > 0) page = totalPages - 1;
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, totalDeals);
+        List<Deal> pagedDeals = filteredDeals.subList(fromIndex, toIndex);
 
         model.addAttribute("user", user);
         model.addAttribute("store", store);
         model.addAttribute("activeDeals", activeCount);
         model.addAttribute("pendingOrders", orderRepository.countPendingOrdersByStore(store.getStoreId()));
 
-        model.addAttribute("deals", filteredDeals);
+        model.addAttribute("deals", pagedDeals);
         model.addAttribute("activeCount", activeCount);
-        model.addAttribute("scheduledCount", scheduledCount);
         model.addAttribute("endedCount", endedCount);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("searchQuery", search);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageSize", size);
+        model.addAttribute("hasNext", page < totalPages - 1);
+        model.addAttribute("hasPrevious", page > 0);
 
         return "seller/deals";
     }
@@ -492,6 +512,76 @@ public class SellerController {
     }
 
     // ============ DEAL PRODUCTS API ============
+
+    @GetMapping("/api/deals/{dealId}/detail")
+    @PreAuthorize("hasAnyRole('STORE_OWNER', 'STORE_STAFF')")
+    @ResponseBody
+    public Map<String, Object> getDealDetail(@PathVariable Long dealId, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null)
+            return Map.of("error", "Không tìm thấy cửa hàng");
+        Deal deal = dealRepository.findById(dealId).orElse(null);
+        if (deal == null || !deal.getStore().getStoreId().equals(user.getWorkStore().getStoreId()))
+            return Map.of("error", "Deal không tồn tại");
+        Map<String, Object> data = new HashMap<>();
+        data.put("dealId", deal.getDealId());
+        data.put("dealName", deal.getDealName());
+        data.put("dealCode", deal.getDealCode());
+        data.put("dealType", deal.getDealType());
+        data.put("discountType", deal.getDiscountType());
+        data.put("discountValue", deal.getDiscountValue());
+        data.put("maxDiscountAmount", deal.getMaxDiscountAmount());
+        data.put("minOrderAmount", deal.getMinOrderAmount());
+        data.put("maxDiscountAmount", deal.getMaxDiscountAmount());
+        data.put("maxUsageCount", deal.getMaxUsageCount());
+        data.put("applyMethod", deal.getApplyMethod());
+        data.put("description", deal.getDescription());
+        data.put("endTime", deal.getEndTime() != null ? deal.getEndTime().toString() : null);
+        data.put("startTime", deal.getStartTime() != null ? deal.getStartTime().toString() : null);
+        return data;
+    }
+
+    @PostMapping("/deals/{dealId}/edit")
+    @PreAuthorize("hasAnyRole('STORE_OWNER', 'STORE_STAFF')")
+    public String editDeal(@PathVariable Long dealId,
+            @RequestParam String dealName,
+            @RequestParam(required = false) String dealCode,
+            @RequestParam(required = false) String endTimeStr,
+            @RequestParam(required = false) Double discountValue,
+            @RequestParam(required = false) Double minOrderAmount,
+            @RequestParam(required = false) Double maxDiscountAmount,
+            @RequestParam(required = false) Integer maxUsageCount,
+            @RequestParam(required = false) String description,
+            Principal principal,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy cửa hàng");
+            return "redirect:/seller/deals";
+        }
+        Deal deal = dealRepository.findById(dealId).orElse(null);
+        if (deal == null || !deal.getStore().getStoreId().equals(user.getWorkStore().getStoreId())) {
+            redirectAttributes.addFlashAttribute("error", "Deal không tồn tại");
+            return "redirect:/seller/deals";
+        }
+        try {
+            deal.setDealName(dealName);
+            if (dealCode != null && !dealCode.trim().isEmpty()) deal.setDealCode(dealCode.trim().toUpperCase());
+            if (discountValue != null) deal.setDiscountValue(discountValue);
+            if (minOrderAmount != null) deal.setMinOrderAmount(minOrderAmount);
+            if (maxDiscountAmount != null) deal.setMaxDiscountAmount(maxDiscountAmount);
+            if (maxUsageCount != null) deal.setMaxUsageCount(maxUsageCount.longValue());
+            if (description != null) deal.setDescription(description.trim());
+            if (endTimeStr != null && !endTimeStr.isEmpty()) {
+                deal.setEndTime(LocalDateTime.parse(endTimeStr));
+            }
+            dealRepository.save(deal);
+            redirectAttributes.addFlashAttribute("success", "Đã cập nhật deal: " + dealName);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/seller/deals";
+    }
 
     @GetMapping("/deals/{dealId}/available-products")
     @PreAuthorize("hasAnyRole('STORE_OWNER', 'STORE_STAFF')")
@@ -946,7 +1036,7 @@ public class SellerController {
             combo.setProductType("COMBO");
             combo.setStore(user.getWorkStore());
             combo.setCreatedBy(user);
-            combo.setApprovalStatus("PENDING");
+            combo.setApprovalStatus("APPROVED");
             combo.setActive(true);
             combo.setDeleted(false);
             if (earliestExpiry != null) combo.setExpiryDate(earliestExpiry);
@@ -1009,6 +1099,10 @@ public class SellerController {
                     redirectAttributes.addFlashAttribute("error", "File ảnh phải là JPG, PNG hoặc WEBP");
                     return "redirect:/seller/products/create";
                 }
+                if (!isValidFileSize(imageFile, 5 * 1024 * 1024)) {
+                    redirectAttributes.addFlashAttribute("error", "File ảnh quá lớn (tối đa 5MB)");
+                    return "redirect:/seller/products/create";
+                }
                 imgPath = saveUploadedFile(imageFile);
             }
 
@@ -1022,7 +1116,7 @@ public class SellerController {
             product.setImageUrl(imgPath);
             product.setStore(user.getWorkStore());
             product.setCreatedBy(user);
-            product.setApprovalStatus("PENDING");
+            product.setApprovalStatus("APPROVED");
             product.setActive(true);
             product.setDeleted(false);
 
@@ -1056,7 +1150,16 @@ public class SellerController {
                 : "Tạo sản phẩm thành công! Sản phẩm đang chờ admin duyệt.";
             redirectAttributes.addFlashAttribute("success", msg);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            org.slf4j.LoggerFactory.getLogger(SellerController.class).error("Product create error", e);
+            String errMsg = e.getMessage();
+            if (e instanceof org.springframework.transaction.TransactionSystemException) {
+                Throwable cause = e.getCause();
+                while (cause != null && cause.getCause() != null && cause.getCause() != cause) {
+                    cause = cause.getCause();
+                }
+                errMsg = cause != null && cause.getMessage() != null ? cause.getMessage() : "Lỗi database";
+            }
+            redirectAttributes.addFlashAttribute("error", "Lỗi: " + (errMsg != null ? errMsg : "Không xác định"));
         }
         return "redirect:/seller/products";
     }
@@ -1112,6 +1215,7 @@ public class SellerController {
         data.put("rejectionReason", product.getRejectionReason());
         data.put("expiryDate", product.getExpiryDate() != null ? product.getExpiryDate().toString() : null);
         if (product.getCategory() != null) {
+            data.put("categoryId", product.getCategory().getCategoryId());
             data.put("categoryName", product.getCategory().getName());
         }
 
@@ -1127,14 +1231,19 @@ public class SellerController {
                     // Also check time window
                     if (d.getStartTime() != null && d.getStartTime().isAfter(now)) continue;
                     if (d.getEndTime() != null && d.getEndTime().isBefore(now)) continue;
+                    boolean isAuto = "AUTO_APPLY".equals(d.getApplyMethod());
                     java.util.Map<String, Object> di = new java.util.HashMap<>();
                     di.put("dealName", d.getDealName());
                     di.put("dealType", d.getDealType());
                     di.put("discountType", d.getDiscountType());
                     di.put("discountValue", d.getDiscountValue());
-                    di.put("discountDisplay", "PERCENT".equals(d.getDiscountType()) ? d.getDiscountValue() + "%" : d.getDiscountValue() + "đ");
+                    di.put("applyMethod", d.getApplyMethod());
+                    di.put("discountDisplay", isAuto
+                        ? ("PERCENT".equals(d.getDiscountType()) ? d.getDiscountValue() + "%" : d.getDiscountValue() + "đ")
+                        : "Cần nhập mã");
                     double discountAmount = 0;
-                    if (product.getOriginalPrice() != null) {
+                    // Only AUTO_APPLY deals affect the price automatically
+                    if (isAuto && product.getOriginalPrice() != null) {
                         if ("PERCENT".equals(d.getDiscountType())) {
                             discountAmount = product.getOriginalPrice() * d.getDiscountValue() / 100.0;
                             if (d.getMaxDiscountAmount() != null) discountAmount = Math.min(discountAmount, d.getMaxDiscountAmount());
@@ -1149,26 +1258,34 @@ public class SellerController {
         }
         data.put("platformDeals", platformDeals);
 
-        // Store deals this product belongs to
+        // Store deals this product belongs to (only active and within time window)
         java.util.List<java.util.Map<String, Object>> storeDeals = new java.util.ArrayList<>();
         java.util.List<DealProduct> dealProducts = dealProductRepository.findByProduct(product);
         if (dealProducts != null) {
             for (DealProduct dp : dealProducts) {
                 Deal d = dp.getDeal();
-                if (d == null) continue;
+                if (d == null || !"ACTIVE".equals(d.getStatus())) continue;
+                // Check time window
+                if (d.getStartTime() != null && d.getStartTime().isAfter(now)) continue;
+                if (d.getEndTime() != null && d.getEndTime().isBefore(now)) continue;
+                boolean isAuto = "AUTO_APPLY".equals(d.getApplyMethod());
                 java.util.Map<String, Object> di = new java.util.HashMap<>();
                 di.put("dealName", d.getDealName());
                 di.put("dealType", d.getDealType());
                 di.put("status", d.getStatus());
+                di.put("applyMethod", d.getApplyMethod());
                 di.put("salePrice", dp.getSalePrice());
                 di.put("originalPrice", dp.getOriginalPrice());
-                di.put("discountDisplay", dp.getSalePrice() != null ? dp.getSalePrice().longValue() + "đ (-" + Math.round((1 - dp.getSalePrice() / dp.getOriginalPrice()) * 100) + "%)" : "");
+                di.put("discountDisplay", isAuto
+                    ? (dp.getSalePrice() != null ? dp.getSalePrice().longValue() + "đ (-" + Math.round((1 - dp.getSalePrice() / dp.getOriginalPrice()) * 100) + "%)" : "")
+                    : "Cần nhập mã — " + dp.getOriginalPrice().longValue() + "đ");
+                di.put("isAuto", isAuto);
                 storeDeals.add(di);
             }
         }
         data.put("storeDeals", storeDeals);
 
-        // Calculate final price
+        // Calculate final price — only AUTO_APPLY deals affect the actual price
         double originalPrice = product.getOriginalPrice() != null ? product.getOriginalPrice() : 0;
         double totalPlatformDiscount = 0;
         for (java.util.Map<String, Object> pd : platformDeals) {
@@ -1176,8 +1293,11 @@ public class SellerController {
         }
         double lowestStorePrice = originalPrice;
         for (java.util.Map<String, Object> sd : storeDeals) {
-            double sp = ((Number) sd.get("salePrice")).doubleValue();
-            if (sp < lowestStorePrice) lowestStorePrice = sp;
+            // Only AUTO_APPLY store deals lower the price
+            if (Boolean.TRUE.equals(sd.get("isAuto"))) {
+                double sp = ((Number) sd.get("salePrice")).doubleValue();
+                if (sp < lowestStorePrice) lowestStorePrice = sp;
+            }
         }
         double finalPrice = lowestStorePrice - totalPlatformDiscount;
         if (finalPrice < originalPrice * 0.15) finalPrice = originalPrice * 0.15; // floor 15%
@@ -1242,7 +1362,7 @@ public class SellerController {
             // Cancel active orders containing this product (since it's now PENDING/unavailable)
             cancelOrdersWithProduct(productId, "Sản phẩm '" + name + "' đã bị gỡ bán để chỉnh sửa. Xin lỗi vì sự bất tiện!");
 
-            redirectAttributes.addFlashAttribute("success", "Cập nhật sản phẩm thành công! Sản phẩm sẽ được duyệt lại.");
+            redirectAttributes.addFlashAttribute("success", "Cập nhật sản phẩm thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
@@ -1276,9 +1396,8 @@ public class SellerController {
         Double todayRevenue = orderRepository.sumRevenueByPeriod(todayStart, todayEnd);
         Long todayOrders = orderRepository.countOrdersByPeriod(todayStart, todayEnd);
 
-        // Orders list - fetch more for client-side search filtering
-        int fetchSize = (search != null && !search.isEmpty()) ? 200 : size;
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, fetchSize, org.springframework.data.domain.Sort.by("createdAt").descending());
+        // Orders list — fetch current page from DB
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
         var ordersPage = status != null && !status.isEmpty()
                 ? orderRepository.findByStoreStoreIdAndStatusOrderByCreatedAtDesc(storeId, status, pageable)
                 : orderRepository.findByStoreStoreIdOrderByCreatedAtDesc(storeId, pageable);
@@ -1287,6 +1406,12 @@ public class SellerController {
 
         // Filter by search term (order ID, customer name, product name)
         if (search != null && !search.isEmpty()) {
+            // Fetch all (up to 200) for search filtering
+            var allPageable = org.springframework.data.domain.PageRequest.of(0, 200, org.springframework.data.domain.Sort.by("createdAt").descending());
+            var allOrders = status != null && !status.isEmpty()
+                    ? orderRepository.findByStoreStoreIdAndStatusOrderByCreatedAtDesc(storeId, status, allPageable)
+                    : orderRepository.findByStoreStoreIdOrderByCreatedAtDesc(storeId, allPageable);
+            orders = allOrders.getContent();
             String s = search.toLowerCase().trim();
             orders = orders.stream()
                 .filter(o -> {
@@ -1305,14 +1430,12 @@ public class SellerController {
                 .toList();
         }
 
-        // Paginate filtered results
-        int total = orders.size();
+        int total = (int) ordersPage.getTotalElements();
+        if (search != null && !search.isEmpty()) total = orders.size();
         int totalPages = total > 0 ? (int) Math.ceil((double) total / size) : 0;
         if (page < 0) page = 0;
         if (totalPages > 0 && page >= totalPages) page = totalPages - 1;
-        int start = page * size;
-        int end = Math.min(start + size, total);
-        java.util.List<com.dealxanh.app.entity.Order> paged = total > 0 ? orders.subList(start, end) : java.util.List.of();
+        java.util.List<com.dealxanh.app.entity.Order> paged = orders;
 
         model.addAttribute("user", user);
         model.addAttribute("store", store);
@@ -1369,14 +1492,10 @@ public class SellerController {
                 if (pickupTime != null) {
                     java.time.LocalDateTime now = java.time.LocalDateTime.now();
                     java.time.LocalDateTime windowStart = pickupTime.minusMinutes(30);
-                    java.time.LocalDateTime windowEnd = pickupTime.plusHours(2);
+                    // Only block if too early; allow completion after the pickup window
                     if (now.isBefore(windowStart)) {
                         return java.util.Map.of("success", false, "message",
                             "Chưa đến giờ nhận hàng. Vui lòng đợi đến " + windowStart.toLocalTime());
-                    }
-                    if (now.isAfter(windowEnd)) {
-                        return java.util.Map.of("success", false, "message",
-                            "Đã quá giờ nhận hàng. Không thể hoàn thành đơn này.");
                     }
                 }
             }
@@ -1392,9 +1511,10 @@ public class SellerController {
             }
             if ("COMPLETED".equals(newStatus)) {
                 orderRepository.updateOrderPickupTime(orderId, java.time.LocalDateTime.now());
-                // For prepaid/BankTransfer orders: deduct stock + create transaction on completion
-                if ("PAID".equals(order.getPaymentStatus()) || "BANK_TRANSFER".equals(order.getPaymentMethod())) {
-                    deductStockAndCreateTransaction(order);
+                // Stock already deducted at order creation (confirmCheckout)
+                // Create sale transaction for store wallet
+                if (!"PAID".equals(order.getPaymentStatus())) {
+                    payOSService.createSaleTransaction(order, order.getPaymentMethod());
                 }
             }
             return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");
@@ -2094,6 +2214,8 @@ public class SellerController {
             @RequestParam(required = false) String phone,
             @RequestParam(required = false) String businessType,
             @RequestParam(required = false) String categories,
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude,
             @RequestParam(required = false) String bankName,
             @RequestParam(required = false) String bankAccountNumber,
             @RequestParam(required = false) String bankAccountOwner,
@@ -2115,6 +2237,32 @@ public class SellerController {
             if (phone != null) store.setPhone(phone.trim());
             if (businessType != null) store.setBusinessType(businessType.trim());
             if (categories != null) store.setCategories(categories.trim());
+            // Update coordinates for deal map
+            if (latitude != null) store.setLatitude(latitude);
+            if (longitude != null) store.setLongitude(longitude);
+            // Auto-geocode or parse coordinates from address if lat/lng not explicitly provided
+            if ((store.getLatitude() == null || store.getLongitude() == null) && address != null && !address.trim().isEmpty()) {
+                String addr = address.trim();
+                // Check if user pasted coordinates in format "lat, lng" or "lat,lng"
+                String coordPattern = "[-]?\\d+[.]?\\d*\\s*[,;]\\s*[-]?\\d+[.]?\\d*";
+                if (addr.matches(coordPattern)) {
+                    try {
+                        String[] parts = addr.split("\\s*[,;]\\s*");
+                        store.setLatitude(Double.parseDouble(parts[0]));
+                        store.setLongitude(Double.parseDouble(parts[1]));
+                    } catch (Exception ignored) {}
+                } else {
+                    // Try geocode from real address
+                    try {
+                        double[] coords = locationService.geocodeAddress(addr + ", " +
+                            (district != null ? district + ", " : "") + (city != null ? city : "Hà Nội") + ", Việt Nam");
+                        if (coords != null) {
+                            store.setLatitude(coords[0]);
+                            store.setLongitude(coords[1]);
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
             if (bankName != null) store.setBankName(bankName.trim());
             if (bankAccountNumber != null) store.setBankAccountNumber(bankAccountNumber.trim());
             if (bankAccountOwner != null) store.setBankAccountOwner(bankAccountOwner.trim());
@@ -2194,7 +2342,8 @@ public class SellerController {
             @RequestParam String newPassword,
             @RequestParam String confirmPassword,
             Principal principal,
-            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            jakarta.servlet.http.HttpServletRequest request) {
         User user = getCurrentUser(principal);
         if (user == null) {
             redirectAttributes.addFlashAttribute("error", "Không tìm thấy người dùng");
@@ -2206,8 +2355,8 @@ public class SellerController {
                 redirectAttributes.addFlashAttribute("error", "Vui lòng nhập mật khẩu hiện tại");
                 return "redirect:/seller/profile";
             }
-            if (newPassword == null || newPassword.length() < 6) {
-                redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 6 ký tự");
+            if (newPassword == null || newPassword.length() < 8) {
+                redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 8 ký tự");
                 return "redirect:/seller/profile";
             }
             if (!newPassword.equals(confirmPassword)) {
@@ -2216,15 +2365,17 @@ public class SellerController {
             }
 
             // Verify current password
-            org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-            if (!encoder.matches(currentPassword, user.getPassword())) {
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
                 redirectAttributes.addFlashAttribute("error", "Mật khẩu hiện tại không đúng");
                 return "redirect:/seller/profile";
             }
 
-            user.setPassword(encoder.encode(newPassword));
+            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setWeakPassword(false);
             userRepository.save(user);
-            redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công!");
+            // Force logout after password change
+            try { request.getSession().invalidate(); } catch (Exception ignored) {}
+            return "redirect:/seller/login?logout=password_changed";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
@@ -2254,13 +2405,8 @@ public class SellerController {
             }
             if (hasProduct) {
                 orderRepository.cancelOrder(o.getOrderId(), reason);
-                // Restore stock
-                Product p = productRepository.findById(productId).orElse(null);
-                if (p != null) {
-                    p.setStockQuantity(p.getStockQuantity() + qty);
-                    if (!p.getActive() && p.getStockQuantity() > 0) p.setActive(true);
-                    productRepository.save(p);
-                }
+                // Restore stock using @Modifying query (avoids version conflict)
+                productRepository.restoreStock(productId, qty);
                 // Notify buyer
                 if (fullOrder.getUser() != null) {
                     try {

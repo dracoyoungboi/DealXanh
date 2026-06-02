@@ -162,6 +162,126 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
     </div>
 </div>
 
+<!-- ===== REVIEW SECTION ===== -->
+<div class="review-section" id="reviewSection">
+    <div class="review-section__header">
+        <h3>Đánh giá cửa hàng</h3>
+        <span class="review-section__avg" id="reviewAvg"></span>
+    </div>
+
+    <!-- Review form -->
+    <div class="review-form" id="reviewForm" style="display:none;">
+        <div class="review-form__stars" id="starRating">
+            <span data-v="1">☆</span><span data-v="2">☆</span><span data-v="3">☆</span><span data-v="4">☆</span><span data-v="5">☆</span>
+        </div>
+        <input type="hidden" id="reviewRating" value="0">
+        <input type="hidden" id="reviewStoreId" th:value="${store?.storeId}">
+        <input type="hidden" id="reviewOrderId" value="">
+        <textarea class="review-form__textarea" id="reviewComment" rows="2" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+        <button class="review-form__submit" onclick="submitReview()">Gửi đánh giá</button>
+    </div>
+
+    <!-- Reviews list -->
+    <div class="review-list" id="reviewList">
+        <div style="text-align:center;padding:16px;color:var(--text-tertiary);font-size:13px;">Đang tải đánh giá...</div>
+    </div>
+</div>
+
+<style>
+.review-section { padding: 16px 20px 100px; background: var(--surface); margin-top: 12px; }
+.review-section__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.review-section__header h3 { font-size: 16px; font-weight: 700; }
+.review-section__avg { font-size: 14px; font-weight: 600; color: var(--accent); }
+.review-form { margin-bottom: 16px; padding: 14px; background: var(--background); border-radius: 12px; }
+.review-form__stars { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
+.review-form__stars span { font-size: 28px; cursor: pointer; color: #d1d5db; transition: color .12s; }
+.review-form__stars span.active { color: #f59e0b; }
+.review-form__textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; }
+.review-form__submit { width: 100%; margin-top: 8px; padding: 10px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.review-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.review-item:last-child { border-bottom: none; }
+.review-item__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.review-item__user { font-size: 13px; font-weight: 600; }
+.review-item__stars { color: #f59e0b; font-size: 12px; }
+.review-item__comment { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.review-item__time { font-size: 10px; color: var(--text-tertiary); margin-top: 4px; }
+</style>
+
+<script>
+// Star rating
+document.querySelectorAll('#starRating span').forEach(function(s) {
+    s.addEventListener('click', function() {
+        var v = parseInt(this.dataset.v);
+        document.getElementById('reviewRating').value = v;
+        document.querySelectorAll('#starRating span').forEach(function(ss, i) {
+            ss.textContent = i < v ? '★' : '☆';
+            ss.classList.toggle('active', i < v);
+        });
+    });
+});
+
+// Load reviews
+function loadReviews() {
+    fetch('/api/reviews/store/' + (document.getElementById('reviewStoreId').value || ''))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        var list = document.getElementById('reviewList');
+        var reviews = d.reviews || [];
+        if (!reviews.length) {
+            list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-tertiary);font-size:13px;">Chưa có đánh giá nào</div>';
+        } else {
+            var html = '';
+            for (var i = 0; i < reviews.length; i++) {
+                var r = reviews[i];
+                var stars = '';
+                for (var s = 0; s < 5; s++) stars += s < (r.rating||0) ? '★' : '☆';
+                html += '<div class="review-item">' +
+                    '<div class="review-item__header">' +
+                        '<span class="review-item__user">' + escH(r.userName || 'Người dùng') + (r.verified ? ' ✅' : '') + '</span>' +
+                        '<span class="review-item__stars">' + stars + '</span>' +
+                    '</div>' +
+                    (r.comment ? '<div class="review-item__comment">' + escH(r.comment) + '</div>' : '') +
+                    '<div class="review-item__time">' + (r.createdAt || '') + '</div>' +
+                '</div>';
+            }
+            list.innerHTML = html;
+        }
+        // Avg
+        if (d.avgRating) {
+            document.getElementById('reviewAvg').textContent = '⭐ ' + d.avgRating.toFixed(1) + ' (' + (d.totalReviews||0) + ')';
+        }
+    });
+}
+function escH(t) { if (!t) return ''; var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+function submitReview() {
+    var rating = parseInt(document.getElementById('reviewRating').value) || 0;
+    if (rating < 1) { alert('Vui lòng chọn số sao'); return; }
+    var fd = new URLSearchParams();
+    fd.append('storeId', document.getElementById('reviewStoreId').value);
+    fd.append('rating', rating);
+    fd.append('comment', document.getElementById('reviewComment').value);
+    var oid = document.getElementById('reviewOrderId').value;
+    if (oid) fd.append('orderId', oid);
+    fetch('/api/review/create', { method: 'POST', body: fd })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) { alert(d.message); loadReviews(); document.getElementById('reviewComment').value = ''; }
+        else alert(d.message);
+    });
+}
+
+// Show review form if ?review=1
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('review') === '1') {
+        document.getElementById('reviewForm').style.display = 'block';
+        document.getElementById('reviewOrderId').value = params.get('orderId') || '';
+    }
+    loadReviews();
+})();
+</script>
+
 <div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
 <div th:replace="~{common/buyer/js :: js}"></div>
 </body>

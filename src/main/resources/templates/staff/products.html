@@ -76,7 +76,7 @@
 
   <!-- Product list -->
   <div class="product-list" th:if="${products != null and !products.isEmpty()}">
-    <div class="product-row" th:each="product : ${products}" style="cursor:pointer;" th:onclick="|viewProductDetail(${product.productId})|">
+<div class="product-row" th:each="product : ${products}" style="cursor:pointer;" th:onclick="|viewProductDetail(${product.productId})|">
       <img th:src="${product.imageUrl != null ? product.imageUrl : '/img/default-product.svg'}" class="product-img" onerror="this.src='/img/default-product.svg'">
       <div class="product-info">
         <div class="product-name" th:text="${product.name}">Name</div>
@@ -85,9 +85,14 @@
           <span class="stock-dot" th:class="${product.stockQuantity > 0 ? 'in' : 'out'}"></span>
           <span th:text="${product.stockQuantity > 0 ? 'Còn ' + product.stockQuantity : 'Hết hàng'}" th:style="${product.stockQuantity > 0 ? 'color:var(--success)' : 'color:var(--danger)'}">Stock</span>
           <span class="badge" th:classappend="${product.approvalStatus == 'APPROVED'} ? 'badge-success' : (${product.approvalStatus == 'PENDING'} ? 'badge-warning' : 'badge-danger')" th:text="${product.approvalStatus == 'APPROVED' ? 'Đã duyệt' : product.approvalStatus == 'PENDING' ? 'Chờ duyệt' : 'Từ chối'}">Status</span>
+          <span th:if="${dealProductMap != null and dealProductMap.containsKey(product.productId)}" style="font-size:10px;font-weight:600;color:var(--danger);background:rgba(220,38,38,.08);padding:1px 5px;border-radius:4px;" th:text="${dealProductMap[product.productId].dealName}">Deal</span>
         </div>
       </div>
-      <div class="product-price"><span th:text="${#numbers.formatDecimal(product.originalPrice, 0, 0) + 'đ'}">0đ</span></div>
+      <div class="product-price">
+        <span th:if="${dealProductMap != null and dealProductMap.containsKey(product.productId)}" style="font-weight:700;color:var(--danger);" th:text="${#numbers.formatDecimal(dealProductMap[product.productId].finalPrice, 0, 0) + 'đ'}">0đ</span>
+        <span th:if="${dealProductMap == null or !dealProductMap.containsKey(product.productId)}" th:text="${#numbers.formatDecimal(product.originalPrice, 0, 0) + 'đ'}">0đ</span>
+        <span th:if="${dealProductMap != null and dealProductMap.containsKey(product.productId)}" style="font-size:11px;color:var(--text-tertiary);text-decoration:line-through;display:block;" th:text="${#numbers.formatDecimal(product.originalPrice, 0, 0) + 'đ'}">0đ</span>
+      </div>
     </div>
   </div>
 
@@ -148,7 +153,8 @@ async function viewProductDetail(id) {
         (d.description ? '<p style="font-size:13px;color:var(--text-secondary);">' + d.description + '</p>' : '') +
       '</div>' +
       '<div style="text-align:center;margin-bottom:12px;">' +
-        '<span style="font-size:24px;font-weight:800;color:var(--primary);">' + (d.originalPrice || 0).toLocaleString('vi-VN') + 'đ</span>' +
+        '<span style="font-size:24px;font-weight:800;color:' + (d.finalPrice < d.originalPrice ? 'var(--danger)' : 'var(--primary)') + ';">' + (d.finalPrice || d.originalPrice || 0).toLocaleString('vi-VN') + 'đ</span>' +
+        (d.finalPrice < d.originalPrice ? '<span style="font-size:14px;color:var(--text-tertiary);text-decoration:line-through;margin-left:8px;">' + (d.originalPrice||0).toLocaleString('vi-VN') + 'đ</span>' : '') +
       '</div>' +
       '<div style="font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">' +
         '<div>Tồn kho: <b>' + (d.stockQuantity || 0) + '</b></div>' +
@@ -159,6 +165,26 @@ async function viewProductDetail(id) {
         '<div>Người tạo: <b>' + (d.createdByName || 'N/A') + '</b></div>' +
       '</div>' +
       (d.rejectionReason ? '<div style="font-size:12px;padding:8px 12px;background:#fef2f2;border-radius:var(--radius-sm);color:var(--danger);margin-bottom:8px;"><b>Lý do từ chối:</b> ' + d.rejectionReason + '</div>' : '') +
+      (d.storeDeals && d.storeDeals.length > 0 ?
+        '<div style="margin-top:8px;padding:10px 12px;background:rgba(13,92,46,.04);border-radius:8px;border:1px solid rgba(13,92,46,.1);">' +
+          '<div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:6px;">🏪 Deal của shop (tự động áp)</div>' +
+          d.storeDeals.map(function(sd) {
+            return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);padding:2px 0;">' +
+              '<span>' + sd.dealName + '</span>' +
+              '<span style="font-weight:600;color:var(--danger);">' + (sd.salePrice||0).toLocaleString('vi-VN') + 'đ</span>' +
+            '</div>';
+          }).join('') +
+        '</div>' : '') +
+      (d.platformDeals && d.platformDeals.length > 0 ?
+        '<div style="margin-top:6px;padding:10px 12px;background:rgba(139,92,246,.04);border-radius:8px;border:1px solid rgba(139,92,246,.1);">' +
+          '<div style="font-size:11px;font-weight:700;color:#8b5cf6;margin-bottom:6px;">🌐 Deal toàn sàn (tự động áp)</div>' +
+          d.platformDeals.map(function(pd) {
+            return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);padding:2px 0;">' +
+              '<span>' + pd.dealName + ' (' + pd.discountType + ' ' + pd.discountValue + ')</span>' +
+              '<span style="font-weight:600;color:var(--danger);">-' + (pd.discountAmount||0).toLocaleString('vi-VN') + 'đ</span>' +
+            '</div>';
+          }).join('') +
+        '</div>' : '') +
       '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;">Tạo lúc: ' + (d.createdAt ? new Date(d.createdAt).toLocaleString('vi-VN') : 'N/A') + '</div>';
   } catch(e) {
     b.innerHTML = '<div style="text-align:center;color:var(--danger);">Không thể tải</div>';

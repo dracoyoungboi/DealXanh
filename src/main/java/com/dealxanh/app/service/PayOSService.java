@@ -269,13 +269,14 @@ public class PayOSService {
 
         if (amountPaid >= expectedAmount) {
             // BRANCH: prepay (PENDING/CONFIRMED) vs at-store (READY_FOR_PICKUP)
+            // Stock already deducted at order creation (confirmCheckout)
             if ("PENDING".equals(lockedOrder.getStatus()) || "CONFIRMED".equals(lockedOrder.getStatus())) {
                 // PREPAY: buyer paid upfront -> auto-transition to READY_FOR_PICKUP
                 lockedOrder.setStatus("READY_FOR_PICKUP");
                 lockedOrder.setPaymentStatus("PAID");
                 lockedOrder.setUpdatedAt(LocalDateTime.now());
-                // NO stock deduction, NO transaction, NO actualPickupTime yet
                 orderRepository.save(lockedOrder);
+                createSaleTransaction(lockedOrder, paymentMethod);
                 return Map.of("paid", true, "message",
                     "Thanh toan thanh cong! Don hang dang cho cua hang xac nhan.");
             }
@@ -286,19 +287,6 @@ public class PayOSService {
             lockedOrder.setActualPickupTime(LocalDateTime.now());
             lockedOrder.setUpdatedAt(LocalDateTime.now());
             orderRepository.save(lockedOrder);
-
-            // Deduct stock
-            if (lockedOrder.getOrderItems() != null) {
-                for (var item : lockedOrder.getOrderItems()) {
-                    Product product = item.getProduct();
-                    if (product != null && product.getStockQuantity() != null) {
-                        int newStock = product.getStockQuantity() - (item.getQuantity() != null ? item.getQuantity() : 0);
-                        product.setStockQuantity(Math.max(0, newStock));
-                        if (newStock <= 0) product.setActive(false);
-                        productRepository.save(product);
-                    }
-                }
-            }
 
             createSaleTransaction(lockedOrder, paymentMethod);
 
@@ -380,7 +368,7 @@ public class PayOSService {
         Transaction tx = new Transaction();
         tx.setStore(store);
         tx.setOrder(order);
-        tx.setType("Sale");
+        tx.setType("SALE");
         tx.setAmount(amount);
         tx.setPlatformFee(platformFee);
         tx.setNetAmount(netAmount);

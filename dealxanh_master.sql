@@ -451,12 +451,12 @@ SET @owner4_id = 4;
 -- PHASE 5: CATEGORIES (6 danh mục)
 -- ============================================
 INSERT INTO categories (name, description, icon_url) VALUES
-('Đồ ăn mặn', 'Các món ăn chính: cơm, phở, bún, bánh mì...', '/img/categories/savory.png'),
-('Đồ ngọt / Bánh', 'Bánh ngọt, chè, dessert...', '/img/categories/sweet.png'),
-('Đồ uống / Cà phê', 'Cà phê, trà sữa, nước ép...', '/img/categories/drinks.png'),
-('Thực phẩm đóng gói', 'Thực phẩm đóng gói sẵn, đồ khô...', '/img/categories/packaged.png'),
-('Ăn vặt / Snack', 'Snack, xiên que, đồ ăn nhanh...', '/img/categories/snacks.png'),
-('Cơm văn phòng', 'Cơm hộp, cơm văn phòng, suất ăn trưa...', '/img/categories/rice.png');
+('Đồ ăn mặn', 'Các món ăn chính: cơm, phở, bún, bánh mì...', 'https://i.pinimg.com/webp/736x/d3/cd/48/d3cd48e72749f6c88ff404466ba06f55.webp'),
+('Đồ ngọt / Bánh', 'Bánh ngọt, chè, dessert...', 'https://i.pinimg.com/736x/60/f2/1e/60f21e07b69ed6cac3442de27ba4e4c2.jpg'),
+('Đồ uống / Cà phê', 'Cà phê, trà sữa, nước ép...', 'https://i.pinimg.com/736x/a3/3c/5c/a33c5c6cdaa90fe835ee68d7c789c597.jpg'),
+('Thực phẩm đóng gói', 'Thực phẩm đóng gói sẵn, đồ khô...', 'https://i.pinimg.com/736x/c0/46/68/c04668023077b07df9660cebb33e6791.jpg'),
+('Ăn vặt / Snack', 'Snack, xiên que, đồ ăn nhanh...', 'https://i.pinimg.com/1200x/b8/9b/06/b89b066f3f3da16e0516d0614721faf2.jpg'),
+('Cơm văn phòng', 'Cơm hộp, cơm văn phòng, suất ăn trưa...', 'https://i.pinimg.com/webp/1200x/0a/e8/de/0ae8de6c7f78ad1d9ffc55f87e5ae657.webp');
 
 SET @cat_savory   = (SELECT category_id FROM categories WHERE name = 'Đồ ăn mặn'       LIMIT 1);
 SET @cat_sweet    = (SELECT category_id FROM categories WHERE name = 'Đồ ngọt / Bánh'  LIMIT 1);

@@ -302,10 +302,6 @@ img{display:block;max-width:100%}
             <span class="summary-chip__label">Đang live</span>
         </div>
         <div class="summary-chip">
-            <span class="summary-chip__value" th:text="${scheduledCount}">0</span>
-            <span class="summary-chip__label">Lên lịch</span>
-        </div>
-        <div class="summary-chip">
             <span class="summary-chip__value" th:text="${#lists.size(deals)}">0</span>
             <span class="summary-chip__label">Tổng deal</span>
         </div>
@@ -317,9 +313,6 @@ img{display:block;max-width:100%}
     <button class="deal-tab" th:classappend="${selectedStatus == null or selectedStatus == ''} ? 'active' : ''" onclick="switchTab('all')">Tất cả</button>
     <button class="deal-tab" th:classappend="${selectedStatus == 'ACTIVE'} ? 'active' : ''" onclick="switchTab('ACTIVE')">
         Live <span class="deal-tab__count success" th:text="${activeCount}">0</span>
-    </button>
-    <button class="deal-tab" th:classappend="${selectedStatus == 'SCHEDULED'} ? 'active' : ''" onclick="switchTab('SCHEDULED')">
-        Lên lịch <span class="deal-tab__count warning" th:text="${scheduledCount}">0</span>
     </button>
     <button class="deal-tab" th:classappend="${selectedStatus == 'PAUSED'} ? 'active' : ''" onclick="switchTab('PAUSED')">Tạm dừng</button>
 </div>
@@ -374,7 +367,7 @@ img{display:block;max-width:100%}
                         </th:block>
                     </div>
                     <div class="deal-meta-row">
-                        <span class="deal-status" th:class="'deal-status ' + ${deal.status == 'ACTIVE' ? 'live' : deal.status == 'SCHEDULED' ? 'scheduled' : deal.status == 'PAUSED' ? 'pending' : 'expired'}" th:text="${deal.status == 'ACTIVE' ? 'Live' : deal.status == 'SCHEDULED' ? 'Lên lịch' : deal.status == 'PAUSED' ? 'Tạm dừng' : 'Đã hết'}">Live</span>
+                        <span class="deal-status" th:class="'deal-status ' + ${deal.status == 'ACTIVE' ? 'live' : deal.status == 'PAUSED' ? 'pending' : 'expired'}" th:text="${deal.status == 'ACTIVE' ? 'Live' : deal.status == 'PAUSED' ? 'Tạm dừng' : 'Đã hết'}">Live</span>
                         <span class="deal-type" th:text="${deal.dealType == 'FLASH_SALE' ? 'Flash Sale' : deal.dealType == 'VOUCHER' ? 'Voucher' : deal.dealType == 'COMBO' ? 'Combo' : 'Deal'}">Type</span>
                         <span class="deal-expiry">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -418,8 +411,30 @@ img{display:block;max-width:100%}
         <div class="modal-body" id="dealDetailContent">
             <div style="text-align:center;padding:40px;">Đang tải...</div>
         </div>
+        <div class="modal-body" id="dealEditForm" style="display:none;">
+            <form id="editDealForm" method="post" th:action="@{/seller/deals/__dealId__/edit}">
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <div><label style="font-size:11px;font-weight:600;">Tên deal</label><input type="text" name="dealName" id="editDealName" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    <div><label style="font-size:11px;font-weight:600;">Mã deal</label><input type="text" name="dealCode" id="editDealCode" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    <div style="display:flex;gap:10px;">
+                        <div style="flex:1;"><label style="font-size:11px;font-weight:600;">Giảm giá</label><input type="number" name="discountValue" id="editDiscountValue" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;font-weight:600;">Đơn tối thiểu</label><input type="number" name="minOrderAmount" id="editMinOrder" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <div style="flex:1;"><label style="font-size:11px;font-weight:600;">Giảm tối đa (nếu PERCENT)</label><input type="number" name="maxDiscountAmount" id="editMaxDisc" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;font-weight:600;">Lượt dùng tối đa</label><input type="number" name="maxUsageCount" id="editMaxUsage" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    </div>
+                    <div><label style="font-size:11px;font-weight:600;">Ngày hết hạn</label><input type="datetime-local" name="endTimeStr" id="editEndTime" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    <div><label style="font-size:11px;font-weight:600;">Mô tả</label><textarea name="description" id="editDescription" class="form-input" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></textarea></div>
+                    <div style="font-size:10px;color:var(--text-tertiary);">💡 Loại deal, kiểu giảm giá và phương thức áp dụng không thể thay đổi sau khi tạo.</div>
+                    <button type="submit" style="width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">💾 Lưu thay đổi</button>
+                    <button type="button" onclick="toggleDealEdit()" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;">Hủy</button>
+                </div>
+            </form>
+        </div>
         <div class="modal-footer">
-            <button onclick="closeDealDetailModal()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--bg);font-size:14px;font-weight:600;cursor:pointer;">Đóng</button>
+            <button id="btnEditDeal" onclick="toggleDealEdit()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;border:none;">✏️ Chỉnh sửa</button>
+            <button onclick="closeDealDetailModal()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--bg);font-size:14px;font-weight:600;cursor:pointer;border:none;">Đóng</button>
         </div>
     </div>
 </div>
@@ -515,6 +530,7 @@ const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttrib
 let selectedProducts = new Map();
 let availableProducts = [];
 let currentDealId = null;
+let currentDealDiscount = { type: 'PERCENT', value: 50, maxDisc: 0 }; // default, will be fetched
 
 function switchTab(status) {
     const url = new URL(window.location);
@@ -547,6 +563,15 @@ async function openDealProductsModal(dealId) {
     // Show loading
     document.getElementById('productsLoading').style.display = 'block';
     document.getElementById('productsList').innerHTML = '';
+
+    // Fetch deal discount info to calculate correct default prices
+    try {
+        const dealResp = await fetch('/seller/api/deals/' + dealId + '/detail');
+        const dealData = await dealResp.json();
+        if (dealData.discountType && dealData.discountValue != null) {
+            currentDealDiscount = { type: dealData.discountType, value: dealData.discountValue, maxDisc: dealData.maxDiscountAmount || 0 };
+        }
+    } catch(e) {}
 
     try {
         // Fetch available products
@@ -621,7 +646,21 @@ function renderProductsList(filter = '') {
 
 function renderPriceEditor(product, data) {
     const originalPrice = data.originalPrice || product.originalPrice || 0;
-    const salePrice = data.salePrice || Math.ceil(originalPrice * 0.5);
+    // Calculate default sale price based on the actual deal's discount config
+    let defaultSalePrice = originalPrice;
+    if (currentDealDiscount.type === 'PERCENT') {
+        defaultSalePrice = Math.ceil(originalPrice * (1 - currentDealDiscount.value / 100));
+    } else if (currentDealDiscount.type === 'FIXED') {
+        defaultSalePrice = originalPrice; // FIXED: keep original, applied at checkout
+    }
+    // Auto-cap by maxDiscountAmount
+    var maxDisc = currentDealDiscount.maxDisc || 0;
+    if (maxDisc > 0) {
+        var minAllowed = originalPrice - maxDisc;
+        if (defaultSalePrice < minAllowed) defaultSalePrice = Math.ceil(minAllowed);
+    }
+    if (defaultSalePrice < Math.ceil(originalPrice * 0.15)) defaultSalePrice = Math.ceil(originalPrice * 0.15);
+    const salePrice = data.salePrice || defaultSalePrice;
     const discount = ((originalPrice - salePrice) / originalPrice * 100).toFixed(0);
     const hasError = salePrice >= originalPrice || salePrice < originalPrice * 0.15;
 
@@ -661,11 +700,24 @@ function toggleProduct(productId, isSelected) {
     const originalPrice = product.originalPrice || 0;
 
     if (isSelected) {
-        // Default: 50% off, unlimited quantity
+        // Calculate default salePrice based on actual deal discount config
+        let defaultSale = originalPrice;
+        if (currentDealDiscount.type === 'PERCENT') {
+            defaultSale = Math.ceil(originalPrice * (1 - currentDealDiscount.value / 100));
+        } else {
+            defaultSale = originalPrice; // FIXED: keep original, discount at checkout
+        }
+        // Auto-cap by maxDiscountAmount
+        var maxDisc2 = currentDealDiscount.maxDisc || 0;
+        if (maxDisc2 > 0) {
+            var minAllowed2 = originalPrice - maxDisc2;
+            if (defaultSale < minAllowed2) defaultSale = Math.ceil(minAllowed2);
+        }
+        if (defaultSale < Math.ceil(originalPrice * 0.15)) defaultSale = Math.ceil(originalPrice * 0.15);
         selectedProducts.set(productId, {
             productId: productId,
             originalPrice: originalPrice,
-            salePrice: Math.ceil(originalPrice * 0.5),
+            salePrice: defaultSale,
             maxQuantity: null,
             priority: 0
         });
@@ -825,47 +877,109 @@ function viewDealDetail(dealId) {
     document.body.style.overflow = 'hidden';
     content.innerHTML = '<div style="text-align:center;padding:40px;">Đang tải...</div>';
 
-    // Find deal data from card
-    const card = document.getElementById('deal-' + dealId);
-    if (!card) { content.innerHTML = '<div style="text-align:center;padding:40px;">Không tìm thấy deal</div>'; return; }
+    // Fetch full deal data from API (GET, no CSRF needed)
+    fetch('/seller/api/deals/' + dealId + '/detail')
+    .then(r => r.json())
+    .then(d => {
+        if (d.error) { content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);">' + d.error + '</div>'; return; }
 
-    const name = card.querySelector('.deal-name')?.textContent || 'N/A';
-    const discount = card.querySelector('.deal-discount')?.textContent || 'N/A';
-    const status = card.querySelector('.deal-status')?.textContent || 'N/A';
-    const type = card.querySelector('.deal-type')?.textContent || 'N/A';
-    const expiry = card.querySelector('.deal-expiry span')?.textContent || 'N/A';
-    const img = card.querySelector('.deal-thumb img')?.src || '';
+        // Store for edit form
+        currentDealDetailData = {
+            dealId: d.dealId,
+            name: d.dealName,
+            code: d.dealCode,
+            discType: d.discountType,
+            discVal: d.discountValue,
+            maxDisc: d.maxDiscountAmount,
+            minOrder: d.minOrderAmount,
+            maxUsage: d.maxUsageCount,
+            applyMethod: d.applyMethod,
+            endTime: d.endTime,
+            dealType: d.dealType,
+            desc: d.description
+        };
 
-    const statusLabels = {'Live':'ACTIVE','Lên lịch':'SCHEDULED','Tạm dừng':'PAUSED','Đã hết':'ENDED'};
-    const currentStatus = Object.entries(statusLabels).find(([k,v]) => status.includes(k))?.[1] || '';
+        const img = document.getElementById('deal-' + dealId)?.querySelector('.deal-thumb img')?.src || '/img/default-banner.svg';
+        const card = document.getElementById('deal-' + dealId);
+        const status = card?.querySelector('.deal-status')?.textContent || '';
+        const type = card?.querySelector('.deal-type')?.textContent || '';
+        const statusLabels = {'Live':'ACTIVE','Tạm dừng':'PAUSED','Đã hết':'ENDED'};
+        const currentStatus = Object.entries(statusLabels).find(([k,v]) => status.includes(k))?.[1] || '';
 
-    content.innerHTML = `
-        <div style="text-align:center;margin-bottom:20px;">
-            <img src="${img}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:16px;" onerror="this.src='/img/default-banner.svg'">
-            <h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">${name}</h2>
-            <div style="display:flex;gap:8px;justify-content:center;align-items:center;">
-                <span style="font-size:12px;font-weight:600;color:var(--${currentStatus === 'ACTIVE' ? 'success' : currentStatus === 'SCHEDULED' ? 'info' : currentStatus === 'PAUSED' ? 'warning' : 'text-secondary'});">${status}</span>
-                <span style="font-size:12px;color:var(--text-tertiary);">·</span>
-                <span style="font-size:12px;color:var(--text-secondary);">${type}</span>
-                <span style="font-size:12px;color:var(--text-tertiary);">·</span>
-                <span style="font-size:12px;color:var(--text-secondary);">Hết hạn: ${expiry}</span>
-            </div>
-        </div>
-        <div class="detail-section">
-            <div class="detail-section__title">Giảm giá</div>
-            <div style="font-size:24px;font-weight:800;color:var(--danger);">${discount}</div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:16px;justify-content:center;">
-            ${currentStatus === 'ACTIVE' ? `<button onclick="closeDealDetailModal();pauseDeal(${dealId})" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--warning);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">⏸ Tạm dừng</button>` : ''}
-            ${currentStatus === 'PAUSED' ? `<button onclick="closeDealDetailModal();resumeDeal(${dealId})" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--success);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">▶ Kích hoạt</button>` : ''}
-            ${currentStatus === 'ACTIVE' || currentStatus === 'PAUSED' ? `<button onclick="closeDealDetailModal();openDealProductsModal(${dealId})" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">+ Gán sản phẩm</button>` : ''}
-        </div>
-    `;
+        var discountText = d.discountType === 'PERCENT' ? 'Giảm ' + d.discountValue + '%' : 'Giảm ' + (d.discountValue||0).toLocaleString('vi-VN') + 'đ';
+        var expiryText = d.endTime ? new Date(d.endTime).toLocaleDateString('vi-VN') + ' ' + new Date(d.endTime).toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'}) : 'N/A';
+        var codeText = d.dealCode ? 'Mã: ' + (d.dealCode||'') : '';
+        var applyText = d.applyMethod === 'AUTO_APPLY' ? 'Tự động áp' : 'Cần nhập mã';
+
+        content.innerHTML =
+        '<div style="text-align:center;margin-bottom:20px;">' +
+            '<img src="' + img + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:16px;" onerror="this.src=\'/img/default-banner.svg\'">' +
+            '<h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">' + (d.dealName||'') + '</h2>' +
+            '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px;">' + codeText + '</div>' +
+            '<div style="display:flex;gap:8px;justify-content:center;align-items:center;">' +
+                '<span style="font-size:12px;font-weight:600;color:var(--' + (currentStatus === 'ACTIVE' ? 'success' : currentStatus === 'PAUSED' ? 'warning' : 'text-secondary') + ');">' + status + '</span>' +
+                '<span style="font-size:12px;color:var(--text-tertiary);">·</span>' +
+                '<span style="font-size:12px;color:var(--text-secondary);">' + type + '</span>' +
+                '<span style="font-size:12px;color:var(--text-tertiary);">·</span>' +
+                '<span style="font-size:12px;color:var(--text-secondary);">' + applyText + '</span>' +
+            '</div>' +
+        '</div>' +
+        '<div class="detail-section">' +
+            '<div class="detail-section__title">Giảm giá</div>' +
+            '<div style="font-size:24px;font-weight:800;color:var(--danger);">' + discountText + '</div>' +
+            '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Hết hạn: ' + expiryText + '</div>' +
+            (d.minOrderAmount > 0 ? '<div style="font-size:12px;color:var(--text-secondary);">Đơn tối thiểu: ' + d.minOrderAmount.toLocaleString('vi-VN') + 'đ</div>' : '') +
+        '</div>' +
+        '<div style="display:flex;gap:8px;margin-top:16px;justify-content:center;">' +
+            (currentStatus === 'ACTIVE' ? '<button onclick="closeDealDetailModal();pauseDeal(' + dealId + ')" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--warning);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">⏸ Tạm dừng</button>' : '') +
+            (currentStatus === 'PAUSED' ? '<button onclick="closeDealDetailModal();resumeDeal(' + dealId + ')" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--success);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">▶ Kích hoạt</button>' : '') +
+            (currentStatus === 'ACTIVE' || currentStatus === 'PAUSED' ? '<button onclick="closeDealDetailModal();openDealProductsModal(' + dealId + ')" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">+ Gán sản phẩm</button>' : '') +
+        '</div>';
+    }).catch(function() {
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);">Lỗi tải dữ liệu deal</div>';
+    });
+}
+
+let currentDealDetailData = null;
+function toggleDealEdit() {
+    var detail = document.getElementById('dealDetailContent');
+    var form = document.getElementById('dealEditForm');
+    var btn = document.getElementById('btnEditDeal');
+    if (form.style.display === 'none') {
+        detail.style.display = 'none';
+        form.style.display = 'block';
+        if (btn) btn.textContent = '👁 Xem chi tiết';
+        // Fill form with current deal data
+        if (currentDealDetailData) {
+            var d = currentDealDetailData;
+            document.getElementById('editDealName').value = d.name || '';
+            document.getElementById('editDealCode').value = d.code || '';
+            document.getElementById('editDiscountValue').value = d.discVal || '';
+            document.getElementById('editMinOrder').value = d.minOrder || '';
+            document.getElementById('editMaxDisc').value = d.maxDisc || '';
+            document.getElementById('editMaxUsage').value = d.maxUsage || '';
+            document.getElementById('editEndTime').value = d.endTime ? d.endTime.substring(0, 16) : '';
+            document.getElementById('editDescription').value = d.desc || '';
+            document.getElementById('editDealForm').action = '/seller/deals/' + d.dealId + '/edit';
+        }
+    } else {
+        detail.style.display = 'block';
+        form.style.display = 'none';
+        if (btn) btn.textContent = '✏️ Chỉnh sửa';
+    }
 }
 
 function closeDealDetailModal() {
     document.getElementById('dealDetailModal').classList.remove('active');
     document.body.style.overflow = 'auto';
+    // Reset edit form
+    var form = document.getElementById('dealEditForm');
+    var detail = document.getElementById('dealDetailContent');
+    if (form) form.style.display = 'none';
+    if (detail) detail.style.display = 'block';
+    var btn = document.getElementById('btnEditDeal');
+    if (btn) btn.textContent = '✏️ Chỉnh sửa';
+    currentDealDetailData = null;
 }
 
 async function pauseDeal(dealId) {

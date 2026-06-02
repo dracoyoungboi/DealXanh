@@ -464,7 +464,7 @@ a{text-decoration:none;color:inherit}
 
                             <div class="form-group">
                                 <label class="form-label">Mật khẩu mới</label>
-                                <input type="password" name="newPassword" id="newPassword" class="form-input" placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)" required minlength="6" oninput="checkPasswordStrength()">
+                                <input type="password" name="newPassword" id="newPassword" class="form-input" placeholder="Nhập mật khẩu mới (ít nhất 8 ký tự)" required minlength="8" oninput="checkPasswordStrength()">
                                 <!-- Password strength meter -->
                                 <div style="margin-top:8px;">
                                     <div style="display:flex;gap:4px;margin-bottom:4px;">
@@ -474,12 +474,13 @@ a{text-decoration:none;color:inherit}
                                         <div id="strengthBar4" style="flex:1;height:4px;border-radius:2px;background:var(--border);transition:all .3s;"></div>
                                     </div>
                                     <span id="strengthText" style="font-size:11px;color:var(--text-tertiary);">Nhập mật khẩu để kiểm tra độ mạnh</span>
+                                    <div id="pwWarning" style="display:none;font-size:11px;color:#92400e;margin-top:4px;padding:6px 8px;background:rgba(245,158,11,.1);border-radius:6px;">⚠️ Mật khẩu của bạn quá yếu và dễ đoán. Chúng tôi sẽ không chịu trách nhiệm nếu bạn bị đánh cắp tài khoản.</div>
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Xác nhận mật khẩu mới</label>
-                                <input type="password" name="confirmPassword" id="confirmPassword" class="form-input" placeholder="Nhập lại mật khẩu mới" required minlength="6" oninput="checkConfirmMatch()">
+                                <input type="password" name="confirmPassword" id="confirmPassword" class="form-input" placeholder="Nhập lại mật khẩu mới" required minlength="8" oninput="checkConfirmMatch()">
                                 <div id="confirmMatchHint" style="font-size:11px;margin-top:4px;display:none;"></div>
                             </div>
 
@@ -536,7 +537,7 @@ function checkPasswordStrength() {
     const text = document.getElementById('strengthText');
 
     let score = 0;
-    if (pwd.length >= 6) score++;
+    if (pwd.length >= 8) score++;
     if (pwd.length >= 8) score++;
     if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++;
     if (/\d/.test(pwd)) score++;
@@ -556,6 +557,8 @@ function checkPasswordStrength() {
     });
     text.textContent = label;
     text.style.color = level >= 3 ? 'var(--success)' : (level >= 2 ? 'var(--warning)' : 'var(--danger)');
+    var warn = document.getElementById('pwWarning');
+    if (warn) warn.style.display = (score <= 2 && pwd.length > 0) ? 'block' : 'none';
 
     // Re-check confirm match
     checkConfirmMatch();
@@ -596,8 +599,8 @@ function validatePasswordForm() {
         alert('Vui lòng nhập mật khẩu hiện tại!');
         return false;
     }
-    if (newPwd.length < 6) {
-        alert('Mật khẩu mới phải có ít nhất 6 ký tự!');
+    if (newPwd.length < 8) {
+        alert('Mật khẩu mới phải có ít nhất 8 ký tự!');
         return false;
     }
     if (newPwd !== confirmPwd) {

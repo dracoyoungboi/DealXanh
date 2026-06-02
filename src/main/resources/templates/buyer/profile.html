@@ -435,6 +435,8 @@
             font-size: 12px;
             color: var(--text-secondary, #666);
         }
+    .pw-bar { flex:1; height:4px; border-radius:2px; background:#e5e7eb; transition:background .2s; }
+    .pw-bar--active { background:#22c55e; }
     </style>
 </head>
 <body>
@@ -605,7 +607,10 @@
         </div>
         <div class="edit-field">
             <label class="edit-label">Mật khẩu mới</label>
-            <input type="password" id="edit-new-pw" class="edit-input" placeholder="Ít nhất 6 ký tự">
+            <input type="password" id="edit-new-pw" class="edit-input" placeholder="Ít nhất 8 ký tự" oninput="checkPwStrength()">
+            <div class="pw-strength" id="pwStrength" style="display:flex;gap:4px;margin-top:6px;"><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div></div>
+            <div class="pw-hint" id="pwHint" style="font-size:10px;color:var(--text-tertiary);margin-top:3px;"></div>
+            <div class="pw-warning" id="pwWarning" style="display:none;font-size:11px;color:#92400e;margin-top:4px;padding:6px 8px;background:rgba(245,158,11,.1);border-radius:6px;">⚠️ Mật khẩu của bạn quá yếu và dễ đoán. Chúng tôi sẽ không chịu trách nhiệm nếu bạn bị đánh cắp tài khoản.</div>
         </div>
         <div class="edit-field">
             <label class="edit-label">Xác nhận mật khẩu</label>
@@ -755,6 +760,32 @@
         });
     }
 
+    // --- Password strength checker ---
+    function checkPwStrength() {
+        var pw = document.getElementById('edit-new-pw').value;
+        var bars = document.querySelectorAll('#pwStrength .pw-bar');
+        var hint = document.getElementById('pwHint');
+        var warn = document.getElementById('pwWarning');
+        bars.forEach(function(b) { b.className = 'pw-bar'; });
+        if (!pw) { hint.textContent = ''; warn.style.display = 'none'; return; }
+        var score = 0;
+        if (pw.length >= 8) score++;
+        if (pw.length >= 12) score++;
+        if (/[A-Z]/.test(pw)) score++;
+        if (/[a-z]/.test(pw)) score++;
+        if (/[0-9]/.test(pw)) score++;
+        if (/[^A-Za-z0-9]/.test(pw)) score++;
+        var labels = ['', 'Rất yếu', 'Yếu', 'Trung bình', 'Khá', 'Mạnh', 'Rất mạnh'];
+        var colors = ['', '#ef4444', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#16a34a'];
+        for (var i = 0; i < Math.min(score, bars.length); i++) {
+            bars[i].style.background = colors[score] || '#16a34a';
+            bars[i].className = 'pw-bar pw-bar--active';
+        }
+        hint.textContent = labels[score] || 'Rất mạnh';
+        hint.style.color = colors[score] || '#16a34a';
+        warn.style.display = score <= 2 ? 'block' : 'none';
+    }
+
     // --- Change password ---
     function changePassword() {
         var msg = document.getElementById('pw-msg');
@@ -762,7 +793,7 @@
         var np = document.getElementById('edit-new-pw').value;
         var cf = document.getElementById('edit-confirm-pw').value;
         if (!cp || !np) { msg.textContent = 'Vui lòng nhập đầy đủ thông tin'; msg.className = 'edit-msg-error'; return; }
-        if (np.length < 6) { msg.textContent = 'Mật khẩu mới phải có ít nhất 6 ký tự'; msg.className = 'edit-msg-error'; return; }
+        if (np.length < 8) { msg.textContent = 'Mật khẩu mới phải có ít nhất 8 ký tự'; msg.className = 'edit-msg-error'; return; }
         if (np !== cf) { msg.textContent = 'Xác nhận mật khẩu không khớp'; msg.className = 'edit-msg-error'; return; }
         msg.textContent = 'Đang xử lý...';
         msg.className = '';

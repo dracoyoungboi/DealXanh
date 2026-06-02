@@ -26,6 +26,7 @@ public interface DealRepository extends JpaRepository<Deal, Long> {
 
     // Find by status
     Page<Deal> findByStatus(String status, Pageable pageable);
+    List<Deal> findByStatus(String status);
 
     // Find by store
     Page<Deal> findByStoreStoreIdOrderByCreatedAtDesc(Long storeId, Pageable pageable);

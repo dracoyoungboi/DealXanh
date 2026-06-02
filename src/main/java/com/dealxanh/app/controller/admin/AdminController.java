@@ -78,6 +78,9 @@ public class AdminController {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
     private ProductRepository productRepository;
 
     @Autowired
@@ -782,6 +785,8 @@ public class AdminController {
     public String disputes(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size,
             Model model, Authentication authentication) {
 
         String username = authentication.getName();
@@ -817,7 +822,20 @@ public class AdminController {
                 .collect(java.util.stream.Collectors.toList());
         }
 
-        model.addAttribute("disputes", disputes);
+        // Pagination
+        int totalItems = disputes.size();
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+        if (page < 0) page = 0;
+        if (page >= totalPages && totalPages > 0) page = totalPages - 1;
+        int from = page * size;
+        int to = Math.min(from + size, totalItems);
+        List<com.dealxanh.app.entity.Dispute> paged = disputes.subList(from, to);
+
+        model.addAttribute("disputes", paged);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("hasNext", page < totalPages - 1);
+        model.addAttribute("hasPrevious", page > 0);
         model.addAttribute("currentStatus", status != null ? status : "");
         model.addAttribute("searchQuery", search != null ? search : "");
         model.addAttribute("activeSidebar", "dispute");
@@ -2195,16 +2213,25 @@ public class AdminController {
 
     private String saveUploadedFile(org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
         if (file == null || file.isEmpty()) return null;
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        // MD5 hash for dedup
+        java.security.MessageDigest md5;
+        try { md5 = java.security.MessageDigest.getInstance("MD5"); }
+        catch (java.security.NoSuchAlgorithmException e) { throw new java.io.IOException("MD5 not available", e); }
+        byte[] digest = md5.digest(file.getBytes());
+        StringBuilder sb = new StringBuilder();
+        for (byte b : digest) sb.append(String.format("%02x", b));
+        String hash = sb.toString();
+        String originalName = file.getOriginalFilename();
+        String ext = "";
+        if (originalName != null && originalName.contains("."))
+            ext = originalName.substring(originalName.lastIndexOf("."));
+        String fileName = hash + ext;
         java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads");
-        if (!java.nio.file.Files.exists(uploadPath)) {
+        if (!java.nio.file.Files.exists(uploadPath))
             java.nio.file.Files.createDirectories(uploadPath);
-        }
         java.nio.file.Path targetPath = uploadPath.resolve(fileName);
-        // Nếu file đã tồn tại (cùng tên), dùng lại link cũ, không ghi đè
-        if (!java.nio.file.Files.exists(targetPath)) {
+        if (!java.nio.file.Files.exists(targetPath))
             java.nio.file.Files.copy(file.getInputStream(), targetPath);
-        }
         return "/uploads/" + fileName;
     }
 
@@ -2759,7 +2786,8 @@ public class AdminController {
             @RequestParam String newPassword,
             @RequestParam String confirmPassword,
             Authentication authentication,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            jakarta.servlet.http.HttpServletRequest request) {
 
         String username = authentication.getName();
         User adminUser = userRepository.findByUsername(username)
@@ -2770,17 +2798,13 @@ public class AdminController {
             return "redirect:/admin/profile";
         }
 
-        // Validate current password using BCrypt
-        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder =
-                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-        if (!encoder.matches(currentPassword, adminUser.getPassword())) {
+        if (!passwordEncoder.matches(currentPassword, adminUser.getPassword())) {
             redirectAttributes.addFlashAttribute("error", "Mật khẩu hiện tại không đúng!");
             return "redirect:/admin/profile";
         }
 
-        // Validate new password strength
-        if (newPassword.length() < 6) {
-            redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 6 ký tự!");
+        if (newPassword.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 8 ký tự!");
             return "redirect:/admin/profile";
         }
         if (newPassword.length() > 50) {
@@ -2788,18 +2812,17 @@ public class AdminController {
             return "redirect:/admin/profile";
         }
 
-        // Validate confirm password matches
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp với mật khẩu mới!");
             return "redirect:/admin/profile";
         }
 
-        // Update password with BCrypt encoding
-        adminUser.setPassword(encoder.encode(newPassword));
+        adminUser.setPassword(passwordEncoder.encode(newPassword));
         adminUser.setUpdatedAt(LocalDateTime.now());
+        adminUser.setWeakPassword(false);
         userRepository.save(adminUser);
 
-        redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công!");
-        return "redirect:/admin/profile";
+        try { request.getSession().invalidate(); } catch (Exception ignored) {}
+        return "redirect:/admin/login?logout=password_changed";
     }
 }

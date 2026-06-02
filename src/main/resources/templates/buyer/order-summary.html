@@ -193,7 +193,7 @@ body{padding-bottom:120px;background:var(--background)}
                             <img class="os-item__img" th:src="${item.productImage != null and !item.productImage.toString().isEmpty() ? item.productImage : '/img/default-banner.svg'}" th:alt="${item.productName}" onerror="this.src='/img/default-banner.svg'">
                             <div class="os-item__info">
                                 <div class="os-item__name" th:text="${item.productName}">Product Name</div>
-                                <div class="os-item__deal" th:if="${item.dealType != null and !item.dealType.toString().isEmpty()}">
+                                <div class="os-item__deal" th:if="${item.dealType != null and !item.dealType.toString().isEmpty() and item.applyMethod == 'AUTO_APPLY'}">
                                     <span class="os-deal-badge" th:classappend="|dt-${item.dealType}|" th:text="${item.dealName != null and !item.dealName.toString().isEmpty() ? item.dealName : item.dealType}">Deal</span>
                                 </div>
                                 <div class="os-item__meta">
@@ -259,9 +259,9 @@ body{padding-bottom:120px;background:var(--background)}
     <!-- Price breakdown -->
     <div class="price-card" th:if="${storeGroups != null and !storeGroups.isEmpty()}">
         <div class="price-card__title">Chi tiết thanh toán</div>
-        <div class="price-row price-row--strike">
+        <div class="price-row price-row--strike" th:if="${originalTotal != null and originalTotal > subtotal}">
             <span>Tổng giá gốc</span>
-            <span class="price-row__val" th:text="|${#numbers.formatDecimal(subtotal + totalDiscount + voucherDiscount, 0, 0)}đ|">0đ</span>
+            <span class="price-row__val" th:text="|${#numbers.formatDecimal(originalTotal, 0, 0)}đ|">0đ</span>
         </div>
         <div class="price-row price-row--discount" th:if="${totalDiscount > 0}">
             <span>Giảm giá Deal</span>

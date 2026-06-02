@@ -42,6 +42,15 @@ public class StaffController {
     private ProductRepository productRepository;
 
     @Autowired
+    private com.dealxanh.app.repository.DealProductRepository dealProductRepository;
+
+    @Autowired
+    private com.dealxanh.app.repository.DealCategoryRepository dealCategoryRepository;
+
+    @Autowired
+    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
     private CategoryRepository categoryRepository;
 
     @Autowired
@@ -136,17 +145,21 @@ public class StaffController {
         long completedCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "COMPLETED");
         long cancelledCount = orderRepository.countByStoreStoreIdAndStatus(storeId, "CANCELLED");
 
-        // Fetch orders with search
-        int fetchSize = (search != null && !search.isEmpty()) ? 200 : size;
-        var pageable = PageRequest.of(0, fetchSize, Sort.by("createdAt").descending());
+        // Fetch orders — current page from DB
+        var pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         var ordersPage = status != null && !status.isEmpty()
                 ? orderRepository.findByStoreStoreIdAndStatusOrderByCreatedAtDesc(storeId, status, pageable)
                 : orderRepository.findByStoreStoreIdOrderByCreatedAtDesc(storeId, pageable);
 
         List<Order> orders = ordersPage.getContent();
 
-        // Filter by search
+        // Filter by search term
         if (search != null && !search.isEmpty()) {
+            var allPageable = PageRequest.of(0, 200, Sort.by("createdAt").descending());
+            var allOrders = status != null && !status.isEmpty()
+                    ? orderRepository.findByStoreStoreIdAndStatusOrderByCreatedAtDesc(storeId, status, allPageable)
+                    : orderRepository.findByStoreStoreIdOrderByCreatedAtDesc(storeId, allPageable);
+            orders = allOrders.getContent();
             String s = search.toLowerCase().trim();
             orders = orders.stream()
                 .filter(o -> {
@@ -165,14 +178,12 @@ public class StaffController {
                 .toList();
         }
 
-        // Paginate
-        int total = orders.size();
+        int total = (int) ordersPage.getTotalElements();
+        if (search != null && !search.isEmpty()) total = orders.size();
         int totalPages = total > 0 ? (int) Math.ceil((double) total / size) : 0;
         if (page < 0) page = 0;
         if (totalPages > 0 && page >= totalPages) page = totalPages - 1;
-        int start = page * size;
-        int end = Math.min(start + size, total);
-        List<Order> paged = total > 0 ? orders.subList(start, end) : List.of();
+        List<Order> paged = orders;
 
         model.addAttribute("user", user);
         model.addAttribute("store", store);
@@ -230,6 +241,54 @@ public class StaffController {
         int start = page * size;
         int end = Math.min(start + size, total);
         List<Product> paged = total > 0 ? filtered.subList(start, end) : List.of();
+
+        // Build deal price map for display
+        LocalDateTime now = LocalDateTime.now();
+        java.util.Map<Long, java.util.Map<String, Object>> dealProductMap = new java.util.HashMap<>();
+        for (Product p : paged) {
+            var dps = dealProductRepository.findByProduct(p);
+            if (dps != null) {
+                for (var dp : dps) {
+                    var d = dp.getDeal();
+                    if (d == null || !"ACTIVE".equals(d.getStatus()) || !"AUTO_APPLY".equals(d.getApplyMethod())) continue;
+                    if (d.getStartTime() != null && d.getStartTime().isAfter(now)) continue;
+                    if (d.getEndTime() != null && d.getEndTime().isBefore(now)) continue;
+                    var di = new java.util.HashMap<String, Object>();
+                    di.put("salePrice", dp.getSalePrice());
+                    di.put("originalPrice", dp.getOriginalPrice());
+                    di.put("dealName", d.getDealName());
+                    di.put("discountType", d.getDiscountType());
+                    di.put("discountValue", d.getDiscountValue());
+                    // Also check platform deals
+                    double platformDisc = 0;
+                    if (p.getCategory() != null) {
+                        var dcs = dealCategoryRepository.findActiveByCategory(p.getCategory());
+                        if (dcs != null) {
+                            for (var dc : dcs) {
+                                var pd = dc.getDeal();
+                                if (pd == null || !"ACTIVE".equals(pd.getStatus()) || !"AUTO_APPLY".equals(pd.getApplyMethod())) continue;
+                                if (pd.getStartTime() != null && pd.getStartTime().isAfter(now)) continue;
+                                if (pd.getEndTime() != null && pd.getEndTime().isBefore(now)) continue;
+                                if ("PERCENT".equals(pd.getDiscountType())) {
+                                    double amt = p.getOriginalPrice() * pd.getDiscountValue() / 100.0;
+                                    if (pd.getMaxDiscountAmount() != null) amt = Math.min(amt, pd.getMaxDiscountAmount());
+                                    platformDisc += amt;
+                                } else {
+                                    platformDisc += pd.getDiscountValue();
+                                }
+                            }
+                        }
+                    }
+                    di.put("platformDiscount", Math.round(platformDisc));
+                    double fp = ((Number)di.get("salePrice")).doubleValue() - platformDisc;
+                    if (fp < p.getOriginalPrice() * 0.15) fp = p.getOriginalPrice() * 0.15;
+                    di.put("finalPrice", Math.round(fp));
+                    dealProductMap.put(p.getProductId(), di);
+                    break; // first active deal wins
+                }
+            }
+        }
+        model.addAttribute("dealProductMap", dealProductMap);
 
         model.addAttribute("user", user);
         model.addAttribute("store", store);
@@ -314,7 +373,7 @@ public class StaffController {
             product.setImageUrl(imgPath);
             product.setStore(user.getWorkStore());
             product.setCreatedBy(user);
-            product.setApprovalStatus("PENDING");
+            product.setApprovalStatus("APPROVED");
             product.setActive(true);
             product.setDeleted(false);
 
@@ -412,6 +471,74 @@ public class StaffController {
         result.put("createdByName", product.getCreatedBy() != null
             ? (product.getCreatedBy().getFullName() != null ? product.getCreatedBy().getFullName() : product.getCreatedBy().getUsername())
             : null);
+
+        // --- Deal info (AUTO_APPLY only) ---
+        LocalDateTime now = LocalDateTime.now();
+        // Store deals
+        java.util.List<java.util.Map<String, Object>> storeDeals = new java.util.ArrayList<>();
+        java.util.List<com.dealxanh.app.entity.DealProduct> dealProducts = dealProductRepository.findByProduct(product);
+        if (dealProducts != null) {
+            for (com.dealxanh.app.entity.DealProduct dp : dealProducts) {
+                var d = dp.getDeal();
+                if (d == null || !"ACTIVE".equals(d.getStatus())) continue;
+                if (!"AUTO_APPLY".equals(d.getApplyMethod())) continue;
+                if (d.getStartTime() != null && d.getStartTime().isAfter(now)) continue;
+                if (d.getEndTime() != null && d.getEndTime().isBefore(now)) continue;
+                var di = new java.util.HashMap<String, Object>();
+                di.put("dealName", d.getDealName());
+                di.put("dealType", d.getDealType());
+                di.put("discountType", d.getDiscountType());
+                di.put("discountValue", d.getDiscountValue());
+                di.put("salePrice", dp.getSalePrice());
+                storeDeals.add(di);
+            }
+        }
+        // Platform deals
+        java.util.List<java.util.Map<String, Object>> platformDeals = new java.util.ArrayList<>();
+        if (product.getCategory() != null) {
+            var dealCategories = dealCategoryRepository.findActiveByCategory(product.getCategory());
+            if (dealCategories != null) {
+                for (var dc : dealCategories) {
+                    var d = dc.getDeal();
+                    if (d == null || !"ACTIVE".equals(d.getStatus())) continue;
+                    if (!"AUTO_APPLY".equals(d.getApplyMethod())) continue;
+                    if (d.getStartTime() != null && d.getStartTime().isAfter(now)) continue;
+                    if (d.getEndTime() != null && d.getEndTime().isBefore(now)) continue;
+                    var di = new java.util.HashMap<String, Object>();
+                    di.put("dealName", d.getDealName());
+                    di.put("dealType", d.getDealType());
+                    di.put("discountType", d.getDiscountType());
+                    di.put("discountValue", d.getDiscountValue());
+                    double discAmt = 0;
+                    if (product.getOriginalPrice() != null) {
+                        if ("PERCENT".equals(d.getDiscountType())) {
+                            discAmt = product.getOriginalPrice() * d.getDiscountValue() / 100.0;
+                            if (d.getMaxDiscountAmount() != null) discAmt = Math.min(discAmt, d.getMaxDiscountAmount());
+                        } else {
+                            discAmt = d.getDiscountValue();
+                        }
+                    }
+                    di.put("discountAmount", Math.round(discAmt));
+                    platformDeals.add(di);
+                }
+            }
+        }
+        // Calculate final price
+        double orig = product.getOriginalPrice() != null ? product.getOriginalPrice() : 0;
+        double storeLowest = orig;
+        for (var sd : storeDeals) {
+            double sp = ((Number) sd.get("salePrice")).doubleValue();
+            if (sp < storeLowest) storeLowest = sp;
+        }
+        double platformTotal = 0;
+        for (var pd : platformDeals) {
+            platformTotal += ((Number) pd.get("discountAmount")).doubleValue();
+        }
+        double finalPrice = storeLowest - platformTotal;
+        if (finalPrice < orig * 0.15) finalPrice = orig * 0.15;
+        result.put("finalPrice", Math.round(finalPrice));
+        result.put("storeDeals", storeDeals);
+        result.put("platformDeals", platformDeals);
         return result;
     }
 
@@ -480,7 +607,8 @@ public class StaffController {
             @RequestParam String newPassword,
             @RequestParam String confirmPassword,
             Principal principal,
-            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes,
+            jakarta.servlet.http.HttpServletRequest request) {
         User user = getCurrentUser(principal);
         if (user == null) {
             redirectAttributes.addFlashAttribute("error", "Không tìm thấy người dùng");
@@ -491,23 +619,23 @@ public class StaffController {
                 redirectAttributes.addFlashAttribute("error", "Vui lòng nhập mật khẩu hiện tại");
                 return "redirect:/staff/profile";
             }
-            if (newPassword == null || newPassword.length() < 6) {
-                redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 6 ký tự");
+            if (newPassword == null || newPassword.length() < 8) {
+                redirectAttributes.addFlashAttribute("error", "Mật khẩu mới phải có ít nhất 8 ký tự");
                 return "redirect:/staff/profile";
             }
             if (!newPassword.equals(confirmPassword)) {
                 redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp");
                 return "redirect:/staff/profile";
             }
-            var encoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-            if (!encoder.matches(currentPassword, user.getPassword())) {
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
                 redirectAttributes.addFlashAttribute("error", "Mật khẩu hiện tại không đúng");
                 return "redirect:/staff/profile";
             }
-            user.setPassword(encoder.encode(newPassword));
+            user.setPassword(passwordEncoder.encode(newPassword));
             user.setWeakPassword(false);
             userRepository.save(user);
-            redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công!");
+            try { request.getSession().invalidate(); } catch (Exception ignored) {}
+            return "redirect:/staff/login?logout=password_changed";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
@@ -617,14 +745,10 @@ public class StaffController {
                 if (pickupTime != null) {
                     java.time.LocalDateTime now = java.time.LocalDateTime.now();
                     java.time.LocalDateTime windowStart = pickupTime.minusMinutes(30);
-                    java.time.LocalDateTime windowEnd = pickupTime.plusHours(2);
+                    // Only block if too early; allow completion after the pickup window
                     if (now.isBefore(windowStart)) {
                         return java.util.Map.of("success", false, "message",
                             "Chưa đến giờ nhận hàng. Vui lòng đợi đến " + windowStart.toLocalTime());
-                    }
-                    if (now.isAfter(windowEnd)) {
-                        return java.util.Map.of("success", false, "message",
-                            "Đã quá giờ nhận hàng. Không thể hoàn thành đơn này.");
                     }
                 }
             }
@@ -639,9 +763,9 @@ public class StaffController {
             }
             if ("COMPLETED".equals(newStatus)) {
                 orderRepository.updateOrderPickupTime(orderId, java.time.LocalDateTime.now());
-                // For prepaid/BankTransfer orders: deduct stock + create transaction on completion
-                if ("PAID".equals(order.getPaymentStatus()) || "BANK_TRANSFER".equals(order.getPaymentMethod())) {
-                    deductStockAndCreateTransaction(order);
+                // Stock already deducted at order creation (confirmCheckout)
+                if (!"PAID".equals(order.getPaymentStatus())) {
+                    payOSService.createSaleTransaction(order, order.getPaymentMethod());
                 }
             }
             return java.util.Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng");

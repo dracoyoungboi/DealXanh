@@ -141,10 +141,11 @@
         <input type="password" class="form-input" name="currentPassword" placeholder="Nhập mật khẩu hiện tại" required>
       </div>
       <div class="form-group">
-        <label class="form-label">Mật khẩu mới (ít nhất 6 ký tự)</label>
+        <label class="form-label">Mật khẩu mới (ít nhất 8 ký tự)</label>
         <input type="password" class="form-input" name="newPassword" id="newPassword" placeholder="Mật khẩu mới" required oninput="checkStrength()">
         <div class="pw-strength" id="pwStrength"><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div></div>
         <div class="pw-hint" id="pwHint">Nhập mật khẩu mới</div>
+        <div class="pw-warning" id="pwWarning" style="display:none;font-size:11px;color:#92400e;margin-top:4px;padding:6px 8px;background:rgba(245,158,11,.1);border-radius:6px;">⚠️ Mật khẩu của bạn quá yếu và dễ đoán. Chúng tôi sẽ không chịu trách nhiệm nếu bạn bị đánh cắp tài khoản.</div>
       </div>
       <div class="form-group">
         <label class="form-label">Xác nhận mật khẩu mới</label>
@@ -226,17 +227,21 @@ function checkStrength() {
   bars.forEach(b => b.className = 'pw-bar');
   if (!pw) { hint.textContent = 'Nhập mật khẩu mới'; return; }
   let score = 0;
-  if (pw.length >= 6) score++; if (pw.length >= 10) score++;
+  if (pw.length >= 8) score++; if (pw.length >= 12) score++;
   if (/[A-Z]/.test(pw)) score++; if (/[0-9]/.test(pw)) score++; if (/[^A-Za-z0-9]/.test(pw)) score++;
   const labels = ['','Yếu','Trung bình','Khá','Mạnh'];
   const lv = Math.min(4, score);
   for (let i=0; i<lv; i++) bars[i].className = 'pw-bar l'+(i+1);
   hint.textContent = labels[lv];
+  var warn = document.getElementById('pwWarning');
+  if (warn) warn.style.display = score <= 2 ? 'block' : 'none';
   checkMatch();
 }
 function resetBars() {
   document.querySelectorAll('#pwStrength .pw-bar').forEach(b => b.className = 'pw-bar');
   document.getElementById('pwHint').textContent = 'Nhập mật khẩu mới';
+  var warn = document.getElementById('pwWarning');
+  if (warn) warn.style.display = 'none';
 }
 function checkMatch() {
   const pw = document.getElementById('newPassword').value;

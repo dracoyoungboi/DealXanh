@@ -21,7 +21,9 @@ public class PasswordUpdateController {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    @PostMapping("/update-admin-password")
+    // DISABLED: This endpoint is a security risk — no authentication, exposes plain-text password in response.
+    // Use the admin profile change-password page instead.
+    // @PostMapping("/update-admin-password")
     public Map<String, Object> updateAdminPassword(@RequestParam String newPassword) {
         Map<String, Object> response = new HashMap<>();
 

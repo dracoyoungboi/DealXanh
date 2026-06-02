@@ -167,6 +167,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
                     <input type="text" class="form-input" name="district" th:value="${store.district}" placeholder="VD: Cầu Giấy">
                 </div>
             </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Tọa độ (Latitude)</label>
+                    <input type="text" class="form-input" id="storeLat" name="latitude" th:value="${store.latitude}" placeholder="VD: 21.0270" onchange="reverseGeocode()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tọa độ (Longitude)</label>
+                    <input type="text" class="form-input" id="storeLng" name="longitude" th:value="${store.longitude}" placeholder="VD: 105.8540" onchange="reverseGeocode()">
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:-4px;">
+                <button type="button" class="btn-gps" onclick="getCurrentLocation()" style="padding:5px 12px;font-size:11px;font-weight:600;border:1.5px solid var(--primary);border-radius:6px;background:var(--surface);color:var(--primary);cursor:pointer;display:flex;align-items:center;gap:4px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                    Lấy vị trí hiện tại
+                </button>
+                <span id="gpsStatus" style="font-size:10px;color:var(--text-tertiary);"></span>
+            </div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">📍 Nhập tọa độ GPS để hiển thị cửa hàng trên bản đồ deal. Nhấn nút để lấy tự động, hoặc paste tọa độ từ Google Maps.</div>
             <div class="form-group">
                 <label class="form-label">SĐT cửa hàng</label>
                 <input type="text" class="form-input" name="phone" th:value="${store.phone}" placeholder="VD: 0912345678">
@@ -346,11 +364,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
             </div>
             <div class="form-group">
                 <label class="form-label">Mật khẩu mới</label>
-                <input type="password" class="form-input" name="newPassword" id="newPassword" placeholder="Ít nhất 6 ký tự" required oninput="checkPasswordStrength()">
+                <input type="password" class="form-input" name="newPassword" id="newPassword" placeholder="Ít nhất 8 ký tự" required minlength="8" oninput="checkPasswordStrength()">
                 <div class="pw-strength" id="pwStrength">
                     <div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div>
                 </div>
                 <div class="pw-hint" id="pwHint">Nhập mật khẩu mới</div>
+                <div class="pw-warning" id="pwWarning" style="display:none;font-size:11px;color:#92400e;margin-top:4px;padding:6px 8px;background:rgba(245,158,11,.1);border-radius:6px;">⚠️ Mật khẩu của bạn quá yếu và dễ đoán. Chúng tôi sẽ không chịu trách nhiệm nếu bạn bị đánh cắp tài khoản.</div>
             </div>
             <div class="form-group">
                 <label class="form-label">Xác nhận mật khẩu mới</label>
@@ -461,7 +480,7 @@ function checkPasswordStrength() {
     bars.forEach(b => { b.className = 'pw-bar'; });
     if (!pw) { hint.textContent = 'Nhập mật khẩu mới'; return; }
     let score = 0;
-    if (pw.length >= 6) score++;
+    if (pw.length >= 8) score++;
     if (pw.length >= 10) score++;
     if (/[A-Z]/.test(pw)) score++;
     if (/[0-9]/.test(pw)) score++;
@@ -470,12 +489,16 @@ function checkPasswordStrength() {
     const levels = Math.min(4, score);
     for (let i = 0; i < levels; i++) bars[i].className = 'pw-bar l' + (i+1);
     hint.textContent = labels[levels] || 'Mạnh';
+    var warn = document.getElementById('pwWarning');
+    if (warn) warn.style.display = score <= 2 ? 'block' : 'none';
     checkPasswordMatch();
 }
 
 function resetStrengthBars() {
     document.querySelectorAll('#pwStrength .pw-bar').forEach(b => b.className = 'pw-bar');
     document.getElementById('pwHint').textContent = 'Nhập mật khẩu mới';
+    var warn = document.getElementById('pwWarning');
+    if (warn) warn.style.display = 'none';
 }
 
 function checkPasswordMatch() {
@@ -494,6 +517,60 @@ setTimeout(() => {
     const toast = document.querySelector('.toast');
     if (toast) toast.style.opacity = '0';
 }, 3000);
+
+// ===== GPS + Reverse Geocode =====
+function getCurrentLocation() {
+    var statusEl = document.getElementById('gpsStatus');
+    if (!navigator.geolocation) {
+        if (statusEl) statusEl.textContent = 'Trình duyệt không hỗ trợ GPS';
+        return;
+    }
+    if (statusEl) statusEl.textContent = 'Đang lấy vị trí...';
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        var lat = pos.coords.latitude.toFixed(6);
+        var lng = pos.coords.longitude.toFixed(6);
+        document.getElementById('storeLat').value = lat;
+        document.getElementById('storeLng').value = lng;
+        if (statusEl) { statusEl.textContent = 'Đã lấy vị trí!'; statusEl.style.color = 'var(--success)'; }
+        reverseGeocode();
+    }, function(err) {
+        if (statusEl) { statusEl.textContent = 'Không thể lấy vị trí: ' + err.message; statusEl.style.color = 'var(--danger)'; }
+    }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function reverseGeocode() {
+    var lat = document.getElementById('storeLat').value.trim();
+    var lng = document.getElementById('storeLng').value.trim();
+    if (!lat || !lng) return;
+    // Reverse geocode via Nominatim
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=vi')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data && data.display_name) {
+            var addr = data.display_name;
+            // Fill address fields
+            var addrParts = data.address || {};
+            if (addrParts.road) {
+                var house = addrParts.house_number || '';
+                document.querySelector('input[name="address"]').value = (house ? house + ' ' : '') + addrParts.road;
+            } else if (addrParts.street) {
+                document.querySelector('input[name="address"]').value = addrParts.street;
+            }
+            // Try to fill city and district
+            if (addrParts.city || addrParts.town || addrParts.municipality) {
+                var cityInput = document.querySelector('input[name="city"]');
+                if (cityInput) cityInput.value = addrParts.city || addrParts.town || addrParts.municipality || '';
+            }
+            if (addrParts.suburb || addrParts.district || addrParts.county) {
+                var distInput = document.querySelector('input[name="district"]');
+                if (distInput) distInput.value = addrParts.suburb || addrParts.district || addrParts.county || '';
+            }
+            document.getElementById('gpsStatus').textContent = 'Đã điền địa chỉ từ tọa độ';
+            document.getElementById('gpsStatus').style.color = 'var(--success)';
+        }
+    })
+    .catch(function() {});
+}
 </script>
 </body>
 </html>

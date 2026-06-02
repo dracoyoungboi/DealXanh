@@ -1,9 +1,11 @@
 package com.dealxanh.app.service;
 
 import com.dealxanh.app.concurrency.ResourceLockManager;
+import com.dealxanh.app.entity.Dispute;
 import com.dealxanh.app.entity.Order;
 import com.dealxanh.app.entity.OrderItem;
 import com.dealxanh.app.entity.Product;
+import com.dealxanh.app.repository.DisputeRepository;
 import com.dealxanh.app.repository.OrderRepository;
 import com.dealxanh.app.repository.ProductRepository;
 import org.slf4j.Logger;
@@ -28,6 +30,12 @@ public class OrderAutoCancelService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private DisputeRepository disputeRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     private ResourceLockManager lockManager;
@@ -127,9 +135,43 @@ public class OrderAutoCancelService {
                 productRepository.restoreStock(snap[0], (int) snap[1]);
             }
 
+            // Notify buyer about cancellation
+            if (fresh.getUser() != null) {
+                try {
+                    notificationService.createNotification(fresh.getUser(),
+                        "Đơn hàng #" + fresh.getOrderId() + " đã bị hủy",
+                        reason,
+                        "ORDER_CANCELLED",
+                        "/buyer/orders");
+                } catch (Exception ignored) { log.warn("Failed to notify buyer for order #{}", fresh.getOrderId()); }
+            }
             log.info("Order #{} auto-cancelled: {}", fresh.getOrderId(), reason);
         } finally {
             lock.unlock();
+        }
+    }
+
+    /**
+     * Auto-reject disputes older than 42 hours that are still PENDING or REVIEWING.
+     * Runs every 6 hours.
+     */
+    @Scheduled(fixedRate = 21_600_000) // 6 hours
+    public void autoRejectStaleDisputes() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(42);
+        List<Dispute> stale = disputeRepository.findAll().stream()
+            .filter(d -> (d.getCreatedAt() != null && d.getCreatedAt().isBefore(cutoff)))
+            .filter(d -> "PENDING".equals(d.getStatus()) || "REVIEWING".equals(d.getStatus()))
+            .toList();
+
+        for (Dispute d : stale) {
+            d.setStatus("RESOLVED_REJECTED");
+            d.setAdminNote("Tự động từ chối sau 42 giờ không được xử lý.");
+            d.setUpdatedAt(LocalDateTime.now());
+            disputeRepository.save(d);
+            log.info("Dispute #{} auto-rejected after 42h inactivity", d.getDisputeId());
+        }
+        if (!stale.isEmpty()) {
+            log.info("Auto-rejected {} stale disputes", stale.size());
         }
     }
 }

@@ -38,15 +38,23 @@ body{padding-bottom:80px;background:var(--background)}
 .cart-item .ci-remove{width:28px;height:28px;border-radius:50%;background:none;border:none;color:var(--text-tertiary);cursor:pointer;font-size:16px;flex-shrink:0;font-family:var(--font-family)}
 
 /* Summary */
-.cart-summary{position:fixed;bottom:72px;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:14px 16px 20px;z-index:50;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
-.cart-summary .cs-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.cart-summary{position:fixed;bottom:72px;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:0 0 20px;z-index:50;box-shadow:0 -4px 16px rgba(0,0,0,.08);border-radius:16px 16px 0 0}
+.cart-summary .cs-row{display:flex;justify-content:space-between;align-items:center;margin:0 16px 4px;}
 .cart-summary .cs-label{font-size:13px;color:var(--text-secondary)}
 .cart-summary .cs-total{font-size:20px;font-weight:800;color:var(--primary)}
 .cart-summary .cs-original{font-size:12px;color:var(--text-tertiary);text-decoration:line-through;text-align:right}
 .cart-summary .cs-discount{font-size:11px;color:var(--danger);text-align:right;margin-bottom:2px}
 .cart-summary .cs-count{font-size:11px;color:var(--text-tertiary)}
-.cart-summary .btn-checkout{display:block;width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-family);transition:all 0.15s;text-align:center;text-decoration:none}
+.cart-summary .btn-checkout{display:block;width:calc(100% - 32px);margin:0 16px;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font-family);transition:all 0.15s;text-align:center;text-decoration:none}
 .cart-summary .btn-checkout:hover{background:var(--primary-dark)}
+
+/* Collapsible handle */
+.cs-handle-wrap{padding:8px 16px 6px;cursor:pointer;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column;align-items:center}
+.cs-handle{width:32px;height:4px;background:var(--border);border-radius:2px}
+.cs-handle-label{display:flex;align-items:center;gap:4px;margin-top:5px;font-size:11px;font-weight:600;color:var(--text-secondary)}
+.cs-handle-chevron{color:var(--text-tertiary);transition:transform .25s}
+.cs-extras{padding:4px 16px 8px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.cs-extras .cart-voucher{padding:0}
 
 /* Voucher in cart */
 .cart-voucher{padding:8px 16px 0}
@@ -137,26 +145,36 @@ body{padding-bottom:80px;background:var(--background)}
 
 <!-- Summary (hidden when empty) -->
 <div class="cart-summary" id="cartSummary" style="display:none;">
-    <div class="cart-voucher">
-        <!-- Applied voucher -->
-        <div class="cart-voucher-applied" id="voucherApplied" style="display:none;">
-            <div class="cart-voucher-applied__info">
-                <span>🎫</span>
-                <span class="cart-voucher-applied__code" id="voucherAppliedCode"></span>
-            </div>
-            <button class="cart-voucher-applied__remove" onclick="removeVoucher()">Xoá</button>
+    <!-- Collapsible handle -->
+    <div class="cs-handle-wrap" id="csHandle" onclick="toggleCartExtras()">
+        <div class="cs-handle"></div>
+        <div class="cs-handle-label" id="csHandleLabel">
+            <span>🎫</span> Mã giảm giá & Giảm giá
+            <svg class="cs-handle-chevron" id="csHandleChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
-        <!-- Select voucher button -->
-        <div class="cart-voucher-inner" id="voucherSelect">
-            <button class="cart-voucher-btn" onclick="openVoucherModal()">
-                🎫 Chọn mã giảm giá
-            </button>
-        </div>
-        <div class="cart-voucher-msg" id="voucherMsg"></div>
     </div>
-    <!-- Deal breakdown -->
-    <div class="deal-breakdown" id="dealBreakdown" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(13,92,46,.04);border-radius:8px;border:1px solid rgba(13,92,46,.12);font-size:12px;"></div>
-    <div class="cs-row" style="margin-top:8px;">
+
+    <!-- Expandable content: voucher + deal breakdown -->
+    <div class="cs-extras" id="csExtras" style="display:none;">
+        <div class="cart-voucher">
+            <div class="cart-voucher-applied" id="voucherApplied" style="display:none;">
+                <div class="cart-voucher-applied__info">
+                    <span>🎫</span>
+                    <span class="cart-voucher-applied__code" id="voucherAppliedCode"></span>
+                </div>
+                <button class="cart-voucher-applied__remove" onclick="removeVoucher()">Xoá</button>
+            </div>
+            <div class="cart-voucher-inner" id="voucherSelect">
+                <button class="cart-voucher-btn" onclick="openVoucherModal()">
+                    🎫 Chọn mã giảm giá
+                </button>
+            </div>
+            <div class="cart-voucher-msg" id="voucherMsg"></div>
+        </div>
+        <div class="deal-breakdown" id="dealBreakdown" style="display:none;margin-top:6px;padding:10px 12px;background:rgba(13,92,46,.04);border-radius:8px;border:1px solid rgba(13,92,46,.12);font-size:12px;"></div>
+    </div>
+
+    <div class="cs-row" style="margin-top:6px;">
         <span class="cs-label">Tạm tính (<span id="csCount">0</span> sản phẩm)</span>
         <div style="text-align:right;">
             <div class="cs-original" id="csOriginal" style="display:none;"></div>
@@ -211,6 +229,7 @@ function loadCart() {
                 var app = document.getElementById('voucherApplied');
                 app.style.display = 'flex';
                 document.getElementById('voucherAppliedCode').textContent = appliedVoucher.code + ' - ' + (appliedVoucher.dealName || '');
+                expandCartExtras(); // auto-expand to show applied voucher
             } else {
                 document.getElementById('voucherApplied').style.display = 'none';
                 document.getElementById('voucherSelect').style.display = '';
@@ -276,7 +295,7 @@ function renderCart() {
                 + '<img src="' + (item.productImage || '/img/default-banner.svg') + '" alt="" onerror="this.src=\'/img/default-banner.svg\'">'
                 + '<div class="ci-info">'
                 + '<div class="ci-name">' + esc(item.productName) + '</div>'
-                + '<div class="ci-store">' + esc(item.storeName) + (item.dealType ? '<span class="deal-badge deal-badge--' + esc(item.dealType) + '">' + esc(item.dealName || item.dealType) + '</span>' : '') + '</div>'
+                + '<div class="ci-store">' + esc(item.storeName) + '</div>'
                 + '<div class="ci-price">'
                 + '<span class="ci-sale">' + fmt(item.salePrice) + '</span>'
                 + '</div>'
@@ -352,37 +371,42 @@ function recalcCart() {
 
     var breakdownHtml = '';
     var keys = Object.keys(dealGroups);
-    if (keys.length > 0) {
+    // Only show breakdown when a voucher is applied OR there are active AUTO_APPLY deals
+    var hasVoucher = appliedVoucher && appliedVoucher.code;
+    if (keys.length > 0 && hasVoucher) {
         breakdownHtml = '<div style="font-weight:700;color:var(--primary);margin-bottom:6px;">Chi tiết giảm giá</div>';
         keys.forEach(function(did) {
             var dg = dealGroups[did];
             var isAuto = dg.applyMethod === 'AUTO_APPLY';
             var totalDiff = dg.totalOrig - dg.totalSale;
             var pct = dg.totalOrig > 0 ? Math.round((totalDiff / dg.totalOrig) * 100) : 0;
-            // Badge
-            var badge, badgeStyle;
+            // Badge — only for AUTO_APPLY deals
+            var badge = '', badgeStyle = '';
             if (isAuto) {
                 badge = dg.discountType === 'FIXED' ? 'Giảm ' + fmt(dg.discountValue) + ' (cố định)' : 'Giảm ' + pct + '%';
                 badgeStyle = 'background:rgba(16,185,129,.1);color:var(--success);';
-            } else {
-                badge = 'Cần nhập mã';
-                badgeStyle = 'background:rgba(245,158,11,.15);color:#92400e;';
             }
-            // Build item list
-            var itemHtml = '';
+            // Group items by store for shop-level discount display
+            var storeGroups = {};
             dg.items.forEach(function(it) {
-                var diff = it.orig - it.sale;
-                if (diff > 0 && isAuto) {
-                    itemHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);padding:2px 0;">'
-                        + '<span>' + (it.qty > 1 ? 'x' + it.qty + ' ' : '') + esc(it.name) + ' <span style="color:var(--text-tertiary);font-size:10px;">(' + esc(it.storeName) + ')</span></span>'
-                        + '<span style="color:var(--danger);font-weight:500;">-' + fmt(diff) + ' (' + Math.round((diff/it.orig)*100) + '%)</span>'
-                        + '</div>';
-                } else {
-                    itemHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);padding:2px 0;">'
-                        + '<span>' + (it.qty > 1 ? 'x' + it.qty + ' ' : '') + esc(it.name) + ' <span style="color:var(--text-tertiary);font-size:10px;">(' + esc(it.storeName) + ')</span></span>'
-                        + '<span style="color:var(--text-tertiary);font-size:10px;">' + fmt(it.orig) + '/sp</span>'
-                        + '</div>';
-                }
+                var sn = it.storeName || 'Cửa hàng';
+                if (!storeGroups[sn]) storeGroups[sn] = { totalOrig: 0, totalSale: 0, count: 0 };
+                storeGroups[sn].totalOrig += it.orig * it.qty;
+                storeGroups[sn].totalSale += it.sale * it.qty;
+                storeGroups[sn].count += it.qty;
+            });
+            var itemHtml = '';
+            var storeKeys = Object.keys(storeGroups);
+            storeKeys.forEach(function(sn) {
+                var sg = storeGroups[sn];
+                var sDiff = sg.totalOrig - sg.totalSale;
+                var sPct = sg.totalOrig > 0 ? Math.round((sDiff / sg.totalOrig) * 100) : 0;
+                itemHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);padding:2px 0;">'
+                    + '<span>' + esc(sn) + ' <span style="color:var(--text-tertiary);font-size:10px;">(' + sg.count + ' SP)</span></span>'
+                    + (isAuto && sDiff > 0
+                        ? '<span style="color:var(--danger);font-weight:500;">-' + fmt(sDiff) + ' (' + sPct + '%)</span>'
+                        : '<span style="color:var(--text-tertiary);font-size:10px;">' + fmt(sg.totalOrig) + '</span>')
+                    + '</div>';
             });
             var footerHtml = isAuto && totalDiff > 0
                 ? '<div style="text-align:right;font-size:11px;font-weight:700;color:var(--danger);border-top:1px dashed rgba(0,0,0,.06);padding-top:3px;margin-top:2px;">Tổng giảm: -' + fmt(totalDiff) + (pct > 0 ? ' (' + pct + '%)' : '') + '</div>'
@@ -391,7 +415,7 @@ function recalcCart() {
             breakdownHtml += '<div style="margin-bottom:8px;padding:8px 10px;background:rgba(255,255,255,.7);border-radius:6px;border:1px solid ' + (isAuto ? 'rgba(16,185,129,.2)' : 'rgba(245,158,11,.2)') + ';">'
                 + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
                 + '<span style="font-weight:700;font-size:12px;color:var(--text-primary);">' + esc(dg.dealName) + '</span>'
-                + '<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;' + badgeStyle + '">' + badge + '</span>'
+                + (badge ? '<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;' + badgeStyle + '">' + badge + '</span>' : '')
                 + '</div>'
                 + itemHtml
                 + footerHtml
@@ -480,6 +504,24 @@ function renderVoucherList() {
             + '</div></div></div>';
     });
     list.innerHTML = html;
+}
+
+// ===== COLLAPSIBLE EXTRAS (Voucher + Breakdown) =====
+var cartExtrasExpanded = false;
+function toggleCartExtras() {
+    cartExtrasExpanded = !cartExtrasExpanded;
+    var extras = document.getElementById('csExtras');
+    var chevron = document.getElementById('csHandleChevron');
+    if (cartExtrasExpanded) {
+        if (extras) extras.style.display = 'block';
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+    } else {
+        if (extras) extras.style.display = 'none';
+        if (chevron) chevron.style.transform = 'rotate(0deg)';
+    }
+}
+function expandCartExtras() {
+    if (!cartExtrasExpanded) toggleCartExtras();
 }
 
 function selectVoucher(code) {

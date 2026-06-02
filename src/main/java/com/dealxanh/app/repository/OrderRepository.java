@@ -137,4 +137,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Modifying
     @Query("UPDATE Order o SET o.status = 'CANCELLED', o.cancellationReason = :reason, o.updatedAt = CURRENT_TIMESTAMP WHERE o.orderId = :orderId")
     void cancelOrder(@Param("orderId") Long orderId, @Param("reason") String reason);
+
+    // Check if user has already used this voucher code
+    boolean existsByUserUserIdAndCouponCode(Long userId, String couponCode);
+
+    // Count orders using this coupon code (for total usage)
+    long countByCouponCode(String couponCode);
 }

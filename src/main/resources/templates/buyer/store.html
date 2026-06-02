@@ -45,13 +45,33 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 .cat-list{display:flex;flex-wrap:wrap;gap:8px}
 .cat-tag{padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-full);font-size:12px;font-weight:500}
 
-/* Products */
-.prod-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.prod-card{background:var(--surface);border-radius:var(--radius-md);padding:12px;border:1px solid var(--border-light)}
-.prod-img{width:100%;height:120px;object-fit:cover;border-radius:var(--radius-sm);background:var(--bg);margin-bottom:8px}
-.prod-name{font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.3}
-.prod-price{font-size:14px;font-weight:800;color:var(--primary)}
-.prod-status{font-size:10px;color:var(--text-tertiary);margin-top:2px}
+/* ===== PRODUCT GRID (same as category page) ===== */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+@media(min-width:768px){.prod-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}}
+@media(min-width:1024px){.prod-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}}
+
+.prod-card{background:#fff;border-radius:var(--radius-lg);overflow:hidden;display:block;text-decoration:none;color:inherit;cursor:pointer;position:relative}
+.prod-card:active{opacity:.9}
+
+.prod-card__img-wrap{position:relative;width:100%;padding-top:75%;overflow:hidden;background:#fafafa}
+.prod-card__img-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}
+
+.prod-card__badge{position:absolute;top:6px;left:6px;padding:3px 7px;background:var(--accent);color:var(--text-primary);border-radius:4px;font-size:9px;font-weight:700;line-height:1.3;z-index:1;letter-spacing:.3px}
+.prod-card__type-tag{position:absolute;bottom:0;left:0;padding:1px 5px;background:rgba(0,0,0,.5);color:#fff;font-size:7px;font-weight:600;line-height:1.5;z-index:1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.prod-card__body{padding:5px 6px 7px}
+.prod-card__name{font-size:10px;font-weight:400;color:#222;line-height:1.3;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px}
+.prod-card__price-row{display:flex;align-items:baseline;gap:4px;flex-wrap:wrap}
+.prod-card__price{font-size:13px;font-weight:700;color:#ee4d2d;line-height:1}
+.prod-card__original{font-size:9px;color:#999;text-decoration:line-through;line-height:1}
+.prod-card__nodeal{font-size:9px;color:#999}
+
+.prod-card__actions{display:flex;gap:5px;padding:0 6px 7px}
+.prod-card__btn{flex:1;padding:5px 0;border-radius:5px;font-size:9px;font-weight:600;font-family:inherit;cursor:pointer;border:none;text-align:center;transition:all .15s}
+.prod-card__btn--cart{background:#e8f5e9;color:var(--primary);border:1px solid rgba(13,92,46,.15)}
+.prod-card__btn--cart:active{background:rgba(13,92,46,.15)}
+.prod-card__btn--buy{background:var(--primary);color:#fff}
+.prod-card__btn--buy:active{background:#0a4824}
 
 /* Deals */
 .deal-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
@@ -73,10 +93,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 .back-bar{padding:12px 20px;display:flex;align-items:center;gap:8px}
 .back-bar a{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none}
 .back-bar svg{width:18px;height:18px}
-
-/* Products - using category page card styles from home.css */
-.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
-@media(min-width:768px){.prod-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}}
 
 /* Empty */
 .empty{text-align:center;padding:30px;color:var(--text-tertiary);font-size:12px}
@@ -152,7 +168,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
             <span class="deal-type" th:classappend="${deal.dealType}" th:text="${deal.dealType == 'FLASH_SALE' ? '⚡ Flash Sale' : deal.dealType == 'VOUCHER' ? '🎫 Voucher' : deal.dealType == 'COMBO' ? '🎁 Combo' : '🌸 Seasonal'}">Type</span>
             <div class="deal-name" th:text="${deal.dealName}">Deal</div>
             <div class="deal-discount" th:text="${deal.discountType == 'PERCENT' ? deal.discountValue + '%' : #numbers.formatDecimal(deal.discountValue, 0, 0) + 'đ'}">Discount</div>
-            <div class="deal-time" th:text="'Đến ' + #temporals.format(deal.endTime, 'dd/MM')">Time</div>
+            <div class="deal-time" th:text="|Đến ${#temporals.format(deal.endTime, 'dd/MM')}|">Time</div>
         </div>
     </div>
 </div>
@@ -186,8 +202,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
     </div>
     <div class="prod-grid" th:if="${products != null and !products.isEmpty()}" id="store-prod-grid">
         <th:block th:each="p : ${products}">
-            <th:block th:with="dealInfo=${dealProductMap != null ? dealProductMap[p.productId] : null}">
-                <div class="prod-card" th:attr="data-name=${p.name},data-price=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)}">
+            <th:block th:with="dealInfo=${dealProductMap != null ? dealProductMap[p.productId] : null},salePrice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},origPrice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice}">
+                <div class="prod-card" th:attr="data-name=${p.name},data-price=${salePrice}">
                     <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;display:block;">
                     <div class="prod-card__img-wrap">
                         <img th:src="${p.imageUrl != null ? p.imageUrl : '/img/default-banner.svg'}" th:alt="${p.name}" onerror="this.src='/img/default-banner.svg'" loading="lazy">
@@ -197,19 +213,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
                     <div class="prod-card__body">
                         <div class="prod-card__name" th:text="${p.name}">Product</div>
                         <div class="prod-card__price-row">
-                            <span class="prod-card__price" th:if="${dealInfo != null}" th:text="|${#numbers.formatDecimal(dealInfo.salePrice, 0, 0)}đ|">50,000đ</span>
-                            <span class="prod-card__price" th:unless="${dealInfo != null}" th:text="|${#numbers.formatDecimal(p.currentPrice != null ? p.currentPrice : p.originalPrice, 0, 0)}đ|">50,000đ</span>
+                            <span class="prod-card__price" th:text="|${#numbers.formatDecimal(salePrice, 0, 0)}đ|">50,000đ</span>
+                            <span class="prod-card__original" th:if="${dealInfo != null}" th:text="|${#numbers.formatDecimal(origPrice, 0, 0)}đ|">70,000đ</span>
                             <span class="prod-card__nodeal" th:unless="${dealInfo != null}">Giá gốc</span>
                         </div>
                     </div>
                     </a>
                     <div class="prod-card__actions">
                         <button class="prod-card__btn prod-card__btn--cart"
-                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},data-oprice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
-                            onclick="event.stopPropagation();addToCartStore(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Giỏ</button>
+                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${salePrice},data-oprice=${origPrice},data-sname=${store != null ? store.storeName : ''},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
+                            onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Giỏ</button>
                         <button class="prod-card__btn prod-card__btn--buy"
-                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},data-oprice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
-                            onclick="event.stopPropagation();buyNowStore(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua</button>
+                            th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${salePrice},data-oprice=${origPrice},data-sname=${store != null ? store.storeName : ''},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
+                            onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua</button>
                     </div>
                 </div>
             </th:block>
@@ -249,15 +265,16 @@ function filterStoreProducts() {
     document.getElementById('store-prod-no-match').style.display = visible === 0 && q ? '' : 'none';
 }
 
-// Cart functions for store page
-function addToCartStore(pid, pname, sprice, oprice, did, sid, dtype, dname) {
+// Cart functions for store page (match home page: addToCartHome / buyNowHome)
+function addToCartHome(pid, pname, sprice, oprice, sname, img, did, sid, dtype, dname) {
     var formData = new FormData();
     formData.append('dealId', did);
     formData.append('productId', pid);
     formData.append('productName', pname);
     formData.append('salePrice', sprice);
     formData.append('originalPrice', oprice);
-    formData.append('storeName', '');
+    formData.append('storeName', sname||'');
+    formData.append('productImage', img||'');
     formData.append('storeId', sid);
     if (dtype) formData.append('dealType', dtype);
     if (dname) formData.append('dealName', dname);
@@ -267,14 +284,14 @@ function addToCartStore(pid, pname, sprice, oprice, did, sid, dtype, dname) {
         if(d.success){showStoreToast('Đã thêm vào giỏ');updateCartBadge()}else{showStoreToast(d.message||'Lỗi',true)}
     }).catch(function(){showStoreToast('Lỗi kết nối',true)});
 }
-function buyNowStore(pid, pname, sprice, oprice, img, did, sid, dtype, dname) {
+function buyNowHome(pid, pname, sprice, oprice, sname, img, did, sid, dtype, dname) {
     var formData = new FormData();
     formData.append('dealId', did);
     formData.append('productId', pid);
     formData.append('productName', pname);
     formData.append('salePrice', sprice);
     formData.append('originalPrice', oprice);
-    formData.append('storeName', '');
+    formData.append('storeName', sname||'');
     formData.append('productImage', img||'');
     formData.append('storeId', sid);
     if (dtype) formData.append('dealType', dtype);

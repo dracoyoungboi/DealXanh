@@ -56,7 +56,7 @@ public class ProductService {
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
         if (product.getApprovalStatus() == null) {
-            product.setApprovalStatus("PENDING");
+            product.setApprovalStatus("APPROVED");
         }
         if (product.getActive() == null) {
             product.setActive(true);
@@ -102,12 +102,8 @@ public class ProductService {
             Product product = getProductById(id);
             if (product == null) return null;
 
-            product.setApprovalStatus("APPROVED");
-            product.setActive(true);
-            product.setRejectionReason(null);
-            product.setUpdatedAt(LocalDateTime.now());
-
-            return productRepository.save(product);
+            productRepository.approveProduct(id);
+        return getProductById(id);
         } finally {
             lock.unlock();
         }
@@ -121,12 +117,8 @@ public class ProductService {
             Product product = getProductById(id);
             if (product == null) return null;
 
-            product.setApprovalStatus("REJECTED");
-            product.setActive(false);
-            product.setRejectionReason(reason);
-            product.setUpdatedAt(LocalDateTime.now());
-
-            return productRepository.save(product);
+            productRepository.rejectProduct(id, reason != null ? reason : "");
+            return getProductById(id);
         } finally {
             lock.unlock();
         }
@@ -141,9 +133,9 @@ public class ProductService {
             if (product == null) return null;
 
             if (product.getActive()) {
+                productRepository.setActive(id, false);
                 product.setActive(false);
-                product.setUpdatedAt(LocalDateTime.now());
-                return productRepository.save(product);
+                return product;
             }
 
             if (product.getStockQuantity() != null && product.getStockQuantity() <= 0) {
@@ -154,9 +146,9 @@ public class ProductService {
                     product.getExpiryDate().toLocalDate().toString() + ").");
             }
 
+            productRepository.setActive(id, true);
             product.setActive(true);
-            product.setUpdatedAt(LocalDateTime.now());
-            return productRepository.save(product);
+            return product;
         } finally {
             lock.unlock();
         }

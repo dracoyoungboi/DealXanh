@@ -241,8 +241,8 @@ body{padding-bottom:120px;background:var(--background);font-family:var(--font-fa
                         style="width:100%;padding:10px;font-size:14px;font-weight:600;color:#fff;background:var(--primary);border:none;border-radius:8px;cursor:pointer;">
                     Tạo mã QR thanh toán ngay
                 </button>
-                <div class="prepay-qr-box" th:id="'qrBox_' + ${order.orderId}" style="display:none;margin-top:12px;text-align:center;padding:16px;background:var(--surface);border-radius:10px;border:2px solid var(--primary);">
-                    <img th:id="'qrImg_' + ${order.orderId}" src="" style="max-width:200px;border-radius:8px;" alt="PayOS QR">
+                <div class="prepay-qr-box" th:id="'qrBox_' + ${order.orderId}" style="display:none;margin-top:12px;padding:20px 16px;background:var(--surface);border-radius:10px;border:2px solid var(--primary);flex-direction:column;align-items:center;justify-content:center;">
+                    <img th:id="'qrImg_' + ${order.orderId}" src="" style="width:200px;height:200px;border-radius:8px;display:block;margin:0 auto;" alt="PayOS QR">
                     <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">
                         <div th:id="'qrBank_' + ${order.orderId}" style="font-weight:600;"></div>
                         <div th:id="'qrAccount_' + ${order.orderId}"></div>
@@ -427,7 +427,7 @@ function createPrepayQR(orderId) {
             // Hide button, show QR
             if (btn) btn.style.display = 'none';
             var qrBox = document.getElementById('qrBox_' + orderId);
-            if (qrBox) qrBox.style.display = 'block';
+            if (qrBox) qrBox.style.display = 'flex';
             var qrImg = document.getElementById('qrImg_' + orderId);
             if (qrImg && data.qrCode) {
                 qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.qrCode);
@@ -479,6 +479,15 @@ function checkPrepayStatus(orderId) {
                     if (img) img.style.display = 'none';
                     if (countdown) countdown.style.display = 'none';
                     if (status) status.style.display = 'block';
+                }
+                // Auto-redirect to orders after 2 seconds
+                var allPaid = true;
+                var pollerKeys = Object.keys(prepayPollers);
+                for (var k = 0; k < pollerKeys.length; k++) {
+                    if (prepayPollers[pollerKeys[k]]) { allPaid = false; break; }
+                }
+                if (allPaid) {
+                    window.location.href = '/buyer/orders';
                 }
             }
         })

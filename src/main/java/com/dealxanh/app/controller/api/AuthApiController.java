@@ -613,12 +613,25 @@ public class AuthApiController {
 
     private String saveFile(org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
         if (file == null || file.isEmpty()) return null;
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        // MD5 hash for dedup
+        java.security.MessageDigest md5;
+        try { md5 = java.security.MessageDigest.getInstance("MD5"); }
+        catch (java.security.NoSuchAlgorithmException e) { throw new java.io.IOException("MD5 not available", e); }
+        byte[] digest = md5.digest(file.getBytes());
+        StringBuilder sb = new StringBuilder();
+        for (byte b : digest) sb.append(String.format("%02x", b));
+        String hash = sb.toString();
+        String originalName = file.getOriginalFilename();
+        String ext = "";
+        if (originalName != null && originalName.contains("."))
+            ext = originalName.substring(originalName.lastIndexOf("."));
+        String fileName = hash + ext;
         java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads");
-        if (!java.nio.file.Files.exists(uploadPath)) {
+        if (!java.nio.file.Files.exists(uploadPath))
             java.nio.file.Files.createDirectories(uploadPath);
-        }
-        java.nio.file.Files.copy(file.getInputStream(), uploadPath.resolve(fileName), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        java.nio.file.Path targetPath = uploadPath.resolve(fileName);
+        if (!java.nio.file.Files.exists(targetPath))
+            java.nio.file.Files.copy(file.getInputStream(), targetPath);
         return "/uploads/" + fileName;
     }
 
@@ -711,7 +724,7 @@ public class AuthApiController {
                 if (!isValidPhone(value)) return "Số điện thoại không hợp lệ (10 số, bắt đầu 03/05/07/08/09)";
                 break;
             case "password":
-                if (!isValidPassword(value)) return "Mật khẩu tối thiểu 8 ký tự, gồm chữ và số";
+                if (!isValidPassword(value)) return "Mật khẩu tối thiểu 8 ký tự";
                 break;
             case "fullName":
             case "firstName":
