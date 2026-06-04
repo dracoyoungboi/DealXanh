@@ -1,4 +1,4 @@
--- ============================================
+﻿-- ============================================
 -- DEALXANH - MASTER DATABASE FILE
 -- Schema + Base Data + Comprehensive Test Data
 -- ============================================
@@ -451,12 +451,12 @@ SET @owner4_id = 4;
 -- PHASE 5: CATEGORIES (6 danh mục)
 -- ============================================
 INSERT INTO categories (name, description, icon_url) VALUES
-('Đồ ăn mặn', 'Các món ăn chính: cơm, phở, bún, bánh mì...', '/img/categories/savory.png'),
-('Đồ ngọt / Bánh', 'Bánh ngọt, chè, dessert...', '/img/categories/sweet.png'),
-('Đồ uống / Cà phê', 'Cà phê, trà sữa, nước ép...', '/img/categories/drinks.png'),
-('Thực phẩm đóng gói', 'Thực phẩm đóng gói sẵn, đồ khô...', '/img/categories/packaged.png'),
-('Ăn vặt / Snack', 'Snack, xiên que, đồ ăn nhanh...', '/img/categories/snacks.png'),
-('Cơm văn phòng', 'Cơm hộp, cơm văn phòng, suất ăn trưa...', '/img/categories/rice.png');
+('Đồ ăn mặn', 'Các món ăn chính: cơm, phở, bún, bánh mì...', 'https://i.pinimg.com/webp/736x/d3/cd/48/d3cd48e72749f6c88ff404466ba06f55.webp'),
+('Đồ ngọt / Bánh', 'Bánh ngọt, chè, dessert...', 'https://i.pinimg.com/736x/60/f2/1e/60f21e07b69ed6cac3442de27ba4e4c2.jpg'),
+('Đồ uống / Cà phê', 'Cà phê, trà sữa, nước ép...', 'https://i.pinimg.com/736x/a3/3c/5c/a33c5c6cdaa90fe835ee68d7c789c597.jpg'),
+('Thực phẩm đóng gói', 'Thực phẩm đóng gói sẵn, đồ khô...', 'https://i.pinimg.com/736x/c0/46/68/c04668023077b07df9660cebb33e6791.jpg'),
+('Ăn vặt / Snack', 'Snack, xiên que, đồ ăn nhanh...', 'https://i.pinimg.com/1200x/b8/9b/06/b89b066f3f3da16e0516d0614721faf2.jpg'),
+('Cơm văn phòng', 'Cơm hộp, cơm văn phòng, suất ăn trưa...', 'https://i.pinimg.com/webp/1200x/0a/e8/de/0ae8de6c7f78ad1d9ffc55f87e5ae657.webp');
 
 SET @cat_savory   = (SELECT category_id FROM categories WHERE name = 'Đồ ăn mặn'       LIMIT 1);
 SET @cat_sweet    = (SELECT category_id FROM categories WHERE name = 'Đồ ngọt / Bánh'  LIMIT 1);
@@ -844,6 +844,36 @@ INSERT INTO notifications (user_id, title, message, type, is_read, link_url, cre
 (@buyer_id,  'Đơn hàng đã hoàn thành', 'Đơn O1 đã hoàn thành. Cảm ơn bạn!', 'ORDER_COMPLETED', b'1', '/buyer/orders', '2026-05-14 12:15:00'),
 (@buyer2_id, 'Đơn hàng đã sẵn sàng', 'Đơn hàng tại abcbcbcbc đã sẵn sàng để nhận!', 'ORDER_READY', b'0', '/buyer/orders', '2026-05-25 11:00:00'),
 (@buyer3_id, 'Khuyến mãi mới', 'Voucher 20K đang chờ bạn! Nhập: VOUCHER20K', 'PROMOTION', b'0', '/deals', '2026-05-25 09:00:00');
+
+-- ============================================
+-- 
+-- ============================================
+-- PHASE 17B: ADDITIONAL DATA (merged from Dump20260601)
+-- ============================================
+
+-- Additional Deals
+INSERT INTO deals (deal_name, deal_code, deal_type, description, discount_type, discount_value, max_discount_amount, min_order_amount, max_usage_count, usage_count, usage_per_user, start_time, end_time, status, scope, apply_method, image_url, banner_url, priority, created_at, updated_at, store_id, created_by) VALUES
+('Flashsale12', 'FLASHSALE1', 'SEASONAL', 'Test deal', 'PERCENT', 15, 25000, 50000, NULL, 0, NULL, '2026-05-13 16:39:00', '2026-05-20 16:39:00', 'SCHEDULED', 'ALL_STORES', 'AUTO_APPLY', NULL, NULL, 50, NOW(), NOW(), NULL, @admin_id),
+('Test Voucher', 'AAA', 'VOUCHER', 'Test voucher', 'PERCENT', 10, 10000, 100000, 100, 0, NULL, '2026-05-30 22:08:00', '2026-06-06 22:08:00', 'SCHEDULED', 'ALL_STORES', 'CODE_REQUIRED', NULL, NULL, 50, NOW(), NOW(), NULL, @admin_id),
+('Flashsale100', 'FLASHSALE100', 'FLASH_SALE', 'giam gia test', 'PERCENT', 5, 10000, 15000, 10, 0, NULL, '2026-05-30 23:18:00', '2026-05-31 02:18:00', 'SCHEDULED', 'SPECIFIC_STORES', 'AUTO_APPLY', NULL, '/uploads/608e31e6682cb0c258bf2ff1ec87c2dc.jpg', 50, NOW(), NOW(), @store3_id, @owner3_id);
+
+-- Reviews
+INSERT INTO reviews (comment, created_at, image_url, rating, verified, order_id, product_id, store_id, user_id) VALUES
+('Pho ngon, nuoc dung dam da. Se quay lai!', '2026-05-14 13:00:00', NULL, 5, 1, @o1_id, @p1_pho_bo, @store1_id, @buyer_id),
+('Bun cha ngon nhung hoi it thit', '2026-05-15 12:00:00', NULL, 4, 1, @o2_id, @p1_bun_cha, @store1_id, @buyer_id),
+('Com tam ngon dung dieu, day dan', '2026-05-14 13:00:00', NULL, 5, 1, @o7_id, @p3_com_tam, @store3_id, @buyer_id),
+('Che Thai ngon nhung hoi ngot', '2026-05-15 11:30:00', NULL, 4, 1, @o8_id, @p3_che_thai, @store3_id, @buyer_id),
+('Banh dua ngon xuat sac, nhan nhieu!', '2026-05-16 10:30:00', NULL, 5, 1, @o13_id, @p4_banh_dua, @store4_id, @buyer_id),
+('Banh bong lan mem, ngon tuyet', '2026-05-15 16:00:00', NULL, 4, 1, @o12_id, @p4_bong_lan, @store4_id, @buyer_id),
+('Lan nay banh hoi kho, khong duoc nhu lan truoc', '2026-05-15 13:00:00', NULL, 3, 1, @o13_id, @p4_bong_lan, @store4_id, @buyer_id);
+
+-- Disputes
+INSERT INTO disputes (admin_note, created_at, description, evidence_url, reason, status, updated_at, complainant_id, order_id) VALUES
+(NULL, '2026-05-16 08:00:00', 'Toi dat Pho Bo Tai Chin nhung nhan duoc Bun Cha.', '/uploads/evidence-dispute-1.png', 'San pham khong dung mo ta', 'REVIEWING', '2026-05-17 21:59:18', @buyer_id, @o2_id),
+(NULL, '2026-05-16 07:30:00', 'Che Thai bi chua, co mui la.', '/uploads/evidence-dispute-2.png', 'Thuc an bi hong/oi thiu', 'PENDING', '2026-05-16 07:30:00', @buyer_id, @o8_id),
+('Dang lien he cua hang xac minh', '2026-05-15 14:00:00', 'Toi dat Bun Cha nhung thieu nem ran.', NULL, 'Thieu topping/mon', 'REVIEWING', '2026-05-16 09:00:00', @buyer_id, @o1_id),
+('Hoan tien 60,000d. Canh cao cua hang.', '2026-05-13 15:00:00', 'Cua hang tu huy don khong bao truoc.', '/uploads/evidence-dispute-3.png', 'Don hang bi huy khong ly do', 'RESOLVED_REFUND', '2026-05-14 10:00:00', @buyer_id, @o20_id),
+('Banh hoi vo do van chuyen, khong anh huong chat luong.', '2026-05-14 16:00:00', 'Banh bi vo khi nhan, khong dep nhu hinh.', '/uploads/evidence-dispute-4.png', 'Yeu cau hoan tien', 'RESOLVED_REJECTED', '2026-05-15 11:00:00', @buyer_id, @o12_id);
 
 -- ============================================
 -- PHASE 18: VERIFICATION SUMMARY
