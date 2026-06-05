@@ -350,6 +350,34 @@
     border-top: 1px solid var(--border-light);
 }
 
+/* Seller Login Link */
+.seller-login-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: var(--surface);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-lg);
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.seller-login-link:hover {
+    background-color: var(--primary);
+    color: white;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.seller-login-link svg {
+    flex-shrink: 0;
+}
+
 .login-card__footer-text {
     font-size: 14px;
     color: var(--text-secondary);

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Quét QR nhận hàng — DealXanh Seller</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<div th:replace="~{common/admin/css :: css}"></div>
 <style>
 :root{
   --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
@@ -22,7 +23,7 @@
   --safe-bot:env(safe-area-inset-bottom,0px);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;background:#0d1a0f;color:var(--text-primary);overflow:hidden}
+html{height:auto;min-height:100%}body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:#0d1a0f;color:var(--text-primary);overflow:hidden;padding-bottom:70px}
 button{cursor:pointer;border:none;background:none;font-family:inherit}
 img,video{display:block}
 
@@ -424,6 +425,11 @@ img,video{display:block}
 .stat-pill svg{width:11px;height:11px}
 .stat-pill.green{color:#6ee7b7}
 .stat-pill.yellow{color:#fcd34d}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--border-light);padding:8px 0;z-index:20}
+.bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;text-decoration:none}
+.bottom-nav .nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
+.bottom-nav .nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
+.bottom-nav .nav-item.active svg,.bottom-nav .nav-item.active span{color:var(--primary)}
 </style>
 </head>
 <body>
@@ -982,5 +988,6 @@ window.addEventListener('beforeunload', () => {
   scanning = false;
 });
 </script>
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('fulfillment')}"></div>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package com.dealxanh.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,10 +26,13 @@ public class Product {
     // Giá deal sau khi giảm
     private Double dealPrice;
 
+    // Giá hiển thị hiện tại (bị ảnh hưởng bởi countdown HSD)
+    private Double currentPrice;
+
     // Số lượng còn lại
     private Integer stockQuantity = 0;
 
-    // Loại sản phẩm: SPECIFIC_DEAL hoặc BLIND_BOX
+    // Loại sản phẩm: SPECIFIC_DEAL, COMBO
     private String productType = "SPECIFIC_DEAL";
 
     // Hạn sử dụng / Ngày cận date
@@ -41,11 +45,21 @@ public class Product {
     // Khách phải đến lấy trước giờ này
     private LocalDateTime pickupDeadline;
 
+    @Version
+    private Long version;
+
     // Cờ kích hoạt
     private Boolean active = true;
 
     // Soft delete
     private Boolean deleted = false;
+
+    // Trạng thái duyệt: PENDING, APPROVED, REJECTED
+    private String approvalStatus = "PENDING";
+
+    // Lý do từ chối (nếu rejected)
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -58,17 +72,24 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<Review> reviews;
 
     public Product() {}
 
-    // Helper: kiểm tra deal còn hiệu lực không
+    // Helper: kiểm tra sản phẩm còn khả dụng không
     public boolean isAvailable() {
         if (Boolean.TRUE.equals(deleted) || !Boolean.TRUE.equals(active)) return false;
+        if (!"APPROVED".equals(approvalStatus)) return false;
         if (stockQuantity == null || stockQuantity <= 0) return false;
         LocalDateTime now = LocalDateTime.now();
         if (dealStartTime != null && now.isBefore(dealStartTime)) return false;
@@ -77,8 +98,9 @@ public class Product {
     }
 
     // Phần trăm giảm giá
+    @JsonIgnore
     public double getDiscountPercent() {
-        if (originalPrice == null || originalPrice == 0) return 0;
+        if (originalPrice == null || originalPrice == 0 || dealPrice == null) return 0;
         return Math.round(((originalPrice - dealPrice) / originalPrice) * 100);
     }
 
@@ -100,6 +122,17 @@ public class Product {
 
     public Double getDealPrice() { return dealPrice; }
     public void setDealPrice(Double dealPrice) { this.dealPrice = dealPrice; }
+
+    public Double getCurrentPrice() { return currentPrice != null ? currentPrice : originalPrice; }
+    public void setCurrentPrice(Double currentPrice) { this.currentPrice = currentPrice; }
+
+    // Giá hiển thị cho buyer: ưu tiên currentPrice (countdown), fallback originalPrice
+    @JsonIgnore
+    public double getDisplayPrice() {
+        if (currentPrice != null) return currentPrice;
+        if (originalPrice != null) return originalPrice;
+        return 0;
+    }
 
     public Integer getStockQuantity() { return stockQuantity != null ? stockQuantity : 0; }
     public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
@@ -137,9 +170,31 @@ public class Product {
     public Category getCategory() { return category; }
     public void setCategory(Category category) { this.category = category; }
 
+    public User getCreatedBy() { return createdBy; }
+    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
+
     public List<OrderItem> getOrderItems() { return orderItems; }
     public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }
 
     public List<Review> getReviews() { return reviews; }
     public void setReviews(List<Review> reviews) { this.reviews = reviews; }
+
+    public String getApprovalStatus() { return approvalStatus; }
+    public void setApprovalStatus(String approvalStatus) { this.approvalStatus = approvalStatus; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (approvalStatus == null) approvalStatus = "PENDING";
+        if (currentPrice == null) currentPrice = originalPrice;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

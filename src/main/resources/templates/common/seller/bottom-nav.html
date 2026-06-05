@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:fragment="bottom-nav(activePage)">
+<nav class="bottom-nav">
+    <a class="nav-item" th:href="@{/seller/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active' : ''">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/></svg>
+        <span>Dashboard</span>
+    </a>
+    <a class="nav-item" th:href="@{/seller/deals}" th:classappend="${activePage == 'deals' or activePage == 'create-deal'} ? 'active' : ''">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Deals</span>
+    </a>
+    <a class="nav-item" th:href="@{/seller/orders}" th:classappend="${activePage == 'orders'} ? 'active' : ''">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Đơn hàng</span>
+    </a>
+    <a class="nav-item" th:href="@{/seller/products}" th:classappend="${activePage == 'products'} ? 'active' : ''">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+        <span>Kho</span>
+    </a>
+    <a class="nav-item" th:href="@{/seller/finance}" th:classappend="${activePage == 'finance'} ? 'active' : ''">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Tài chính</span>
+    </a>
+    <a class="nav-item" th:href="@{/seller/analytics}" th:classappend="${activePage == 'analytics'} ? 'active' : ''">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Phân tích</span>
+    </a>
+    <a class="nav-item" th:href="@{/seller/manage-staff}" th:classappend="${activePage == 'manage-staff'} ? 'active' : ''">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Nhân viên</span>
+    </a>
+    <a class="nav-item" th:href="@{/seller/profile}" th:classappend="${activePage == 'profile' or activePage == 'store-page'} ? 'active' : ''">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Tôi</span>
+    </a>
+</nav>
+</body>
+</html>

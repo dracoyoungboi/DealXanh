@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/css/reset.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages/login.css">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
     <div class="login-container">
@@ -88,9 +89,39 @@
                     <!-- Email Login Form -->
                     <div id="tab-email">
                         <div class="login-card__body">
+                            <!-- Error Message for Wrong Login Page - Admin -->
+                            <div id="wrong-login-admin-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 2px;">Đăng nhập tại trang không đúng!</div>
+                                        <div style="font-size: 13px;">Tài khoản Admin vui lòng đăng nhập tại <a href="/admin/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Admin</a>.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error Message for Wrong Login Page - Buyer -->
+                            <div id="wrong-login-buyer-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 2px;">Đăng nhập tại trang không đúng!</div>
+                                        <div style="font-size: 13px;">Tài khoản Buyer vui lòng đăng nhập tại <a href="/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Buyer</a>.</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <form action="/perform_login" method="post" id="email-form" class="login-card__form">
                                 <div class="form-group">
-                                    <label class="form-label" for="username">Tài khoản (Email hoặc Số điện thoại)</label>
+                                    <label class="form-label" for="username">Tài khoản (Username hoặc Email)</label>
                                     <div class="input-with-icon">
                                         <span class="input-with-icon__icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -119,6 +150,8 @@
                                             </svg>
                                         </button>
                                     </div>
+                                    <!-- Error message placeholder -->
+                                    <div id="password-error" class="error-message" style="display:none; color:#ef4444; font-size:13px; margin-top:5px;"></div>
                                 </div>
 
                                 <div class="form-options">
@@ -129,7 +162,8 @@
                                     <a href="/seller/forgot-password" class="forgot-link">Quên mật khẩu?</a>
                                 </div>
 
-                                <button type="submit" class="login-submit">Đăng nhập</button>
+                                <div class="cf-turnstile" data-sitekey="0x4AAAAAADfjOpw6QvPRmL0v" data-callback="onTurnstileSuccess" data-theme="light"></div>
+                                <button type="submit" class="login-submit" disabled>Đăng nhập</button>
                             </form>
                         </div>
                         
@@ -142,6 +176,17 @@
                                     *Nhân viên (Staff) cần xin tài khoản từ Chủ cửa hàng, không tự đăng ký.
                                 </span>
                             </p>
+
+                            <!-- Buyer Login Link -->
+                            <div style="margin-top: 16px; text-align: center;">
+                                <a href="/login" class="seller-login-link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="8" r="5"></circle>
+                                        <path d="M20 21a8 8 0 1 0-16 0"></path>
+                                    </svg>
+                                    Đăng nhập kênh người mua
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -151,6 +196,72 @@
 
     <!-- JavaScript -->
     <script>
+        // Check for error parameter on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Check for session expired
+            if (urlParams.get('expired') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = '⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#f59e0b';
+            }
+
+            // Check for kicked (concurrent login from another device)
+            if (urlParams.get('kicked') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = '🔒 Tài khoản của bạn đang đăng nhập ở nơi khác. Phiên này đã bị ngắt.';
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#ef4444';
+            }
+
+            if (urlParams.get('error') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = 'Tài khoản hoặc mật khẩu không chính xác';
+                errorDiv.style.display = 'block';
+
+                // Focus on password field and clear it
+                const passwordField = document.getElementById('password');
+                passwordField.value = '';
+                passwordField.focus();
+            }
+
+            // Check for wrong_login_page error
+            if (urlParams.get('error') === 'please_use_correct_login') {
+                // Check if this is admin or buyer trying to login from wrong page
+                if (urlParams.get('from') === 'admin') {
+                    const wrongLoginAlert = document.getElementById('wrong-login-admin-alert');
+                    if (wrongLoginAlert) {
+                        wrongLoginAlert.style.display = 'block';
+                    }
+                } else if (urlParams.get('from') === 'buyer') {
+                    const wrongLoginAlert = document.getElementById('wrong-login-buyer-alert');
+                    if (wrongLoginAlert) {
+                        wrongLoginAlert.style.display = 'block';
+                    }
+                }
+            }
+
+            // Store username in sessionStorage for recovery after redirect
+            const form = document.getElementById('email-form');
+            const usernameField = document.getElementById('username');
+
+            form.addEventListener('submit', function() {
+                if (usernameField.value.trim()) {
+                    sessionStorage.setItem('login_username', usernameField.value.trim());
+                }
+            });
+
+            // Restore username if available
+            const savedUsername = sessionStorage.getItem('login_username');
+            if (savedUsername && !usernameField.value) {
+                usernameField.value = savedUsername;
+                sessionStorage.removeItem('login_username');
+            }
+        });
+
+        // Toggle password visibility
         document.getElementById('toggle-password').addEventListener('click', function() {
             var passInput = document.getElementById('password');
             if(passInput.type === 'password') {
@@ -159,6 +270,12 @@
                 passInput.type = 'password';
             }
         });
+    </script>
+    <script>
+      function onTurnstileSuccess(token) {
+        var btn = document.querySelector('[type="submit"]');
+        if (btn) btn.disabled = false;
+      }
     </script>
 </body>
 </html>

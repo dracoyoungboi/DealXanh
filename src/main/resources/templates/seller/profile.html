@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ — DealXanh Seller</title>
+    <div th:replace="~{common/admin/css :: css}"></div>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{--primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#e8f5ec;--surface:#fff;--bg:#f5f6f8;--text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--border:#e0e0e0;--border-light:#f0f0f0;--danger:#ef4444;--danger-light:#fef2f2;--warning:#f59e0b;--success:#10b981;--success-light:#f0fdf4;--info:#3b82f6;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:9999px;--font:'Inter',sans-serif}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{height:auto;min-height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padding-bottom:80px}
+
+.page-header{background:var(--primary);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.back-btn{color:#fff;display:flex;align-items:center;text-decoration:none}.back-btn svg{width:20px;height:20px}
+.header-title{font-size:18px;font-weight:700;flex:1}
+.content{padding:12px 16px}
+
+/* Toast */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:var(--radius-md);font-size:13px;font-weight:600;z-index:200;max-width:90%;text-align:center;animation:fadeIn 0.2s ease}
+.toast.success{background:#059669;color:#fff}
+.toast.error{background:#dc2626;color:#fff}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Card */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:16px;margin-bottom:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px}
+.card-title svg{width:16px;height:16px;color:var(--primary)}
+.btn-edit-card{font-size:11px;font-weight:600;color:var(--primary);background:none;border:1px solid var(--primary);padding:4px 10px;border-radius:var(--radius-full);cursor:pointer;font-family:var(--font)}
+
+/* Store header */
+.store-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.store-logo-wrap{position:relative;flex-shrink:0}
+.store-logo{width:64px;height:64px;border-radius:var(--radius-md);object-fit:cover;border:2px solid var(--border-light)}
+.store-logo-placeholder{width:64px;height:64px;border-radius:var(--radius-md);background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;font-weight:700}
+.logo-edit{position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff}
+.logo-edit svg{width:11px;height:11px;color:#fff}
+.store-name{font-size:17px;font-weight:800;margin-bottom:2px}
+.store-tier{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:700;color:#fff}
+.tier-DIAMOND{background:linear-gradient(135deg,#667eea,#764ba2)}
+.tier-GOLD{background:linear-gradient(135deg,#d4af37,#b8932a)}
+.tier-SILVER{background:linear-gradient(135deg,#a8b8c8,#7a8a9a)}
+.tier-BRONZE{background:linear-gradient(135deg,#cd7f32,#a0522d)}
+.store-status{font-size:11px;color:var(--success);margin-top:2px}
+
+/* Info rows (view mode) */
+.info-list{font-size:13px}
+.info-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-light);gap:12px}
+.info-row:last-child{border-bottom:none}
+.info-lbl{color:var(--text-secondary);flex-shrink:0}
+.info-val{font-weight:600;text-align:right;word-break:break-word}
+
+/* Form */
+.form-group{margin-bottom:10px}
+.form-label{font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;display:block}
+.form-input{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:var(--font);transition:border-color 0.15s;background:var(--surface)}
+.form-input:focus{outline:none;border-color:var(--primary)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-actions{display:flex;gap:8px;margin-top:12px}
+.btn{padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;border:none;transition:all 0.15s}
+.btn-primary{background:var(--primary);color:#fff;flex:1}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-cancel{background:var(--bg);color:var(--text-secondary);border:1px solid var(--border)}
+.btn-cancel:hover{background:var(--border-light)}
+.btn-full{width:100%;padding:11px;font-size:14px}
+.btn-danger{background:var(--danger);color:#fff}
+
+/* Password strength */
+.pw-strength{display:flex;gap:4px;margin-top:4px}
+.pw-bar{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background 0.2s}
+.pw-bar.l1{background:#ef4444}.pw-bar.l2{background:#f59e0b}.pw-bar.l3{background:#3b82f6}.pw-bar.l4{background:#10b981}
+.pw-hint{font-size:10px;color:var(--text-tertiary);margin-top:2px}
+
+/* Logout */
+.btn-logout{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;background:var(--danger);color:#fff;border-radius:var(--radius-md);font-weight:600;text-decoration:none;margin-top:4px;font-size:14px;font-family:var(--font);border:none;cursor:pointer}
+.btn-logout:hover{opacity:0.9}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--border-light);padding:8px 0;z-index:20}
+.bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;text-decoration:none}
+.bottom-nav .nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
+.bottom-nav .nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
+.bottom-nav .nav-item.active svg,.bottom-nav .nav-item.active span{color:var(--primary)}
+
+/* Modal */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:400px;max-height:85vh;overflow-y:auto;padding:20px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;text-align:center}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+    </style>
+</head>
+<body>
+
+<header class="page-header">
+    <a class="back-btn" href="/seller/dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </a>
+    <span class="header-title">Hồ sơ cửa hàng</span>
+</header>
+
+<div class="content" th:if="${store != null}">
+    <!-- Toast for flash messages -->
+    <div th:if="${success}" class="toast success" th:text="${success}" style="display:block;"></div>
+    <div th:if="${error}" class="toast error" th:text="${error}" style="display:block;"></div>
+
+    <!-- ===== STORE INFO CARD ===== -->
+    <div class="card" id="storeInfoCard">
+        <div class="card-header">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                Thông tin cửa hàng
+            </div>
+            <button class="btn-edit-card" onclick="toggleEdit('storeInfoCard', 'storeInfoView', 'storeInfoForm')">✏️ Sửa</button>
+        </div>
+        <!-- View mode -->
+        <div id="storeInfoView">
+            <div class="store-header">
+                <div class="store-logo-wrap">
+                    <img th:if="${store.logoUrl != null}" th:src="${store.logoUrl}" class="store-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="store-logo-placeholder" th:if="${store.logoUrl == null}" th:text="${#strings.isEmpty(store.storeName) ? '🏪' : store.storeName.charAt(0)}">S</div>
+                </div>
+                <div>
+                    <div class="store-name" th:text="${store.storeName}">Store Name</div>
+                    <span th:class="'store-tier tier-' + ${store.partnerTier}" th:text="${store.partnerTierLabel}">Đồng</span>
+                    <div class="store-status" th:text="${store.status == 'ACTIVE' ? '✅ Đang hoạt động' : '⏳ ' + store.status}">Active</div>
+                </div>
+            </div>
+            <div class="info-list">
+                <div class="info-row"><span class="info-lbl">Địa chỉ</span><span class="info-val" th:text="${store.address != null ? store.address : '—'}">—</span></div>
+                <div class="info-row" th:if="${store.city != null}"><span class="info-lbl">Khu vực</span><span class="info-val" th:text="${store.city + (store.district != null ? ', ' + store.district : '')}">—</span></div>
+                <div class="info-row"><span class="info-lbl">SĐT cửa hàng</span><span class="info-val" th:text="${store.phone != null ? store.phone : '—'}">—</span></div>
+                <div class="info-row"><span class="info-lbl">Loại hình</span><span class="info-val" th:text="${store.businessType != null ? store.businessType : '—'}">—</span></div>
+                <div class="info-row"><span class="info-lbl">Danh mục</span><span class="info-val" th:text="${store.categories != null ? store.categories : '—'}">—</span></div>
+                <div class="info-row"><span class="info-lbl">Đánh giá</span><span class="info-val" th:text="'⭐ ' + ${store.averageRating} + ' (' + ${store.totalReviews} + ' đánh giá)'">⭐ 4.5</span></div>
+                <div class="info-row"><span class="info-lbl">Hoa hồng</span><span class="info-val" th:text="${#numbers.formatDecimal(store.getCommissionRate() * 100, 0, 0) + '%'}" style="color:var(--primary);">10%</span></div>
+            </div>
+        </div>
+        <!-- Edit mode -->
+        <form id="storeInfoForm" style="display:none;" method="post" th:action="@{/seller/profile/update-store}" enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-group" style="text-align:center;">
+                <div class="store-logo-wrap" style="display:inline-block;">
+                    <img th:if="${store.logoUrl != null}" th:src="${store.logoUrl}" class="store-logo" style="width:72px;height:72px;" id="logoPreview">
+                    <div class="store-logo-placeholder" th:if="${store.logoUrl == null}" id="logoPlaceholder" th:text="${#strings.isEmpty(store.storeName) ? '🏪' : store.storeName.charAt(0)}" style="width:72px;height:72px;">S</div>
+                    <label class="logo-edit" style="cursor:pointer;" title="Đổi logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <input type="file" name="logoFile" accept="image/*" style="display:none;" onchange="previewLogo(this)">
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tên cửa hàng *</label>
+                <input type="text" class="form-input" name="storeName" th:value="${store.storeName}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Địa chỉ</label>
+                <input type="text" class="form-input" name="address" th:value="${store.address}" placeholder="Số nhà, đường">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Tỉnh/Thành phố</label>
+                    <input type="text" class="form-input" name="city" th:value="${store.city}" placeholder="VD: Hà Nội">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quận/Huyện</label>
+                    <input type="text" class="form-input" name="district" th:value="${store.district}" placeholder="VD: Cầu Giấy">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Tọa độ (Latitude)</label>
+                    <input type="text" class="form-input" id="storeLat" name="latitude" th:value="${store.latitude}" placeholder="VD: 21.0270" onchange="reverseGeocode()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tọa độ (Longitude)</label>
+                    <input type="text" class="form-input" id="storeLng" name="longitude" th:value="${store.longitude}" placeholder="VD: 105.8540" onchange="reverseGeocode()">
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:-4px;">
+                <button type="button" class="btn-gps" onclick="getCurrentLocation()" style="padding:5px 12px;font-size:11px;font-weight:600;border:1.5px solid var(--primary);border-radius:6px;background:var(--surface);color:var(--primary);cursor:pointer;display:flex;align-items:center;gap:4px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                    Lấy vị trí hiện tại
+                </button>
+                <span id="gpsStatus" style="font-size:10px;color:var(--text-tertiary);"></span>
+            </div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">📍 Nhập tọa độ GPS để hiển thị cửa hàng trên bản đồ deal. Nhấn nút để lấy tự động, hoặc paste tọa độ từ Google Maps.</div>
+            <div class="form-group">
+                <label class="form-label">SĐT cửa hàng</label>
+                <input type="text" class="form-input" name="phone" th:value="${store.phone}" placeholder="VD: 0912345678">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Loại hình kinh doanh</label>
+                    <input type="text" class="form-input" name="businessType" th:value="${store.businessType}" placeholder="VD: Nhà hàng, Quán cafe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Danh mục sản phẩm</label>
+                    <input type="text" class="form-input" name="categories" th:value="${store.categories}" placeholder="VD: Đồ ăn, Đồ uống">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" onclick="toggleEdit('storeInfoCard', 'storeInfoView', 'storeInfoForm')">Huỷ</button>
+                <button type="submit" class="btn btn-primary">💾 Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== BANK INFO CARD ===== -->
+    <div class="card" id="bankInfoCard">
+        <div class="card-header">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                Thông tin ngân hàng
+            </div>
+            <button class="btn-edit-card" onclick="toggleEdit('bankInfoCard', 'bankInfoView', 'bankInfoForm')">✏️ Sửa</button>
+        </div>
+        <!-- View mode -->
+        <div id="bankInfoView">
+            <div class="info-list">
+                <div class="info-row"><span class="info-lbl">Ngân hàng</span><span class="info-val" th:text="${store.bankName != null ? store.bankName : '—'}">—</span></div>
+                <div class="info-row"><span class="info-lbl">Chủ tài khoản</span><span class="info-val" th:text="${store.bankAccountOwner != null ? store.bankAccountOwner : '—'}">—</span></div>
+                <div class="info-row"><span class="info-lbl">Số tài khoản</span><span class="info-val" th:text="${store.bankAccountNumber != null ? store.bankAccountNumber : '—'}">—</span></div>
+            </div>
+        </div>
+        <!-- Edit mode -->
+        <form id="bankInfoForm" style="display:none;" method="post" th:action="@{/seller/profile/update-store}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-group">
+                <label class="form-label">Tên ngân hàng</label>
+                <input type="text" class="form-input" name="bankName" th:value="${store.bankName}" placeholder="VD: Vietcombank">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Chủ tài khoản</label>
+                <input type="text" class="form-input" name="bankAccountOwner" th:value="${store.bankAccountOwner}" placeholder="VD: NGUYEN VAN A">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Số tài khoản</label>
+                <input type="text" class="form-input" name="bankAccountNumber" th:value="${store.bankAccountNumber}" placeholder="Nhập số tài khoản">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" onclick="toggleEdit('bankInfoCard', 'bankInfoView', 'bankInfoForm')">Huỷ</button>
+                <button type="submit" class="btn btn-primary">💾 Lưu thông tin</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== DOCUMENTS CARD ===== -->
+    <div class="card" id="docsCard">
+        <div class="card-header">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Giấy tờ & Tài liệu
+            </div>
+            <button class="btn-edit-card" onclick="toggleEdit('docsCard', 'docsView', 'docsForm')">✏️ Cập nhật</button>
+        </div>
+        <!-- View mode -->
+        <div id="docsView">
+            <div class="info-list">
+                <div class="info-row">
+                    <span class="info-lbl">CCCD/CMND</span>
+                    <span class="info-val">
+                        <span th:if="${store.cccdUrl != null}">
+                            <button type="button" th:data-url="${store.cccdUrl}" onclick="previewDoc(this.dataset.url)" style="color:var(--primary);background:none;border:none;font-weight:600;cursor:pointer;font-size:13px;font-family:var(--font);">📄 Xem</button>
+                        </span>
+                        <span th:unless="${store.cccdUrl != null}" style="color:var(--text-tertiary);">Chưa cập nhật</span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-lbl">Giấy phép kinh doanh</span>
+                    <span class="info-val">
+                        <span th:if="${store.businessLicenseUrl != null}">
+                            <button type="button" th:data-url="${store.businessLicenseUrl}" onclick="previewDoc(this.dataset.url)" style="color:var(--primary);background:none;border:none;font-weight:600;cursor:pointer;font-size:13px;font-family:var(--font);">📄 Xem</button>
+                        </span>
+                        <span th:unless="${store.businessLicenseUrl != null}" style="color:var(--text-tertiary);">Chưa cập nhật</span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-lbl">VSATTP</span>
+                    <span class="info-val">
+                        <span th:if="${store.vsattpUrl != null}">
+                            <button type="button" th:data-url="${store.vsattpUrl}" onclick="previewDoc(this.dataset.url)" style="color:var(--primary);background:none;border:none;font-weight:600;cursor:pointer;font-size:13px;font-family:var(--font);">📄 Xem</button>
+                        </span>
+                        <span th:unless="${store.vsattpUrl != null}" style="color:var(--text-tertiary);">Chưa cập nhật</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- Edit mode -->
+        <form id="docsForm" style="display:none;" method="post" th:action="@{/seller/profile/update-documents}" enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-group">
+                <label class="form-label">CCCD/CMND (ảnh chụp)</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:12px;color:var(--text-secondary);flex:1;" th:text="${store.cccdUrl != null} ? 'Đã tải lên' : 'Chưa có'">—</span>
+                    <input type="file" name="cccdFile" accept="image/*,.pdf" style="font-size:11px;max-width:160px;">
+                </div>
+                <div class="pw-hint">JPG, PNG, WEBP hoặc PDF · Tối đa 5MB</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Giấy phép kinh doanh</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:12px;color:var(--text-secondary);flex:1;" th:text="${store.businessLicenseUrl != null} ? 'Đã tải lên' : 'Chưa có'">—</span>
+                    <input type="file" name="businessLicenseFile" accept="image/*,.pdf" style="font-size:11px;max-width:160px;">
+                </div>
+                <div class="pw-hint">JPG, PNG, WEBP hoặc PDF · Tối đa 5MB</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">VSATTP (An toàn thực phẩm)</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:12px;color:var(--text-secondary);flex:1;" th:text="${store.vsattpUrl != null} ? 'Đã tải lên' : 'Chưa có'">—</span>
+                    <input type="file" name="vsattpFile" accept="image/*,.pdf" style="font-size:11px;max-width:160px;">
+                </div>
+                <div class="pw-hint">JPG, PNG, WEBP hoặc PDF · Tối đa 5MB</div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" onclick="toggleEdit('docsCard', 'docsView', 'docsForm')">Huỷ</button>
+                <button type="submit" class="btn btn-primary">💾 Lưu tài liệu</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== STORE PAGE CARD ===== -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                Trang cửa hàng
+            </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">Tùy chỉnh giao diện trang cửa hàng hiển thị với khách hàng</div>
+        <a th:href="@{/seller/store-page}" class="btn btn-primary btn-full" style="display:flex;text-align:center;justify-content:center;">Chỉnh sửa trang cửa hàng</a>
+    </div>
+
+    <!-- ===== ACCOUNT INFO CARD ===== -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Tài khoản
+            </div>
+        </div>
+        <div class="info-list">
+            <div class="info-row"><span class="info-lbl">Tên đăng nhập</span><span class="info-val" th:text="${user.username}">username</span></div>
+            <div class="info-row" th:if="${user.fullName != null}"><span class="info-lbl">Họ tên</span><span class="info-val" th:text="${user.fullName}">Name</span></div>
+            <div class="info-row" th:if="${user.email != null and !user.email.isEmpty()}"><span class="info-lbl">Email</span><span class="info-val" th:text="${user.email}">Email</span></div>
+            <div class="info-row" th:if="${user.phone != null}"><span class="info-lbl">SĐT</span><span class="info-val" th:text="${user.phone}">Phone</span></div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:12px;" onclick="openPasswordModal()">Đổi mật khẩu</button>
+    </div>
+</div>
+
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('profile')}"></div>
+
+<!-- ===== PASSWORD CHANGE MODAL ===== -->
+<div id="passwordModal" class="modal-overlay" style="display:none;" onclick="closePasswordModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-title">🔒 Đổi mật khẩu</div>
+        <form method="post" th:action="@{/seller/profile/change-password}" id="passwordForm">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="form-group">
+                <label class="form-label">Mật khẩu hiện tại</label>
+                <input type="password" class="form-input" name="currentPassword" placeholder="Nhập mật khẩu hiện tại" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mật khẩu mới</label>
+                <input type="password" class="form-input" name="newPassword" id="newPassword" placeholder="Ít nhất 8 ký tự" required minlength="8" oninput="checkPasswordStrength()">
+                <div class="pw-strength" id="pwStrength">
+                    <div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div>
+                </div>
+                <div class="pw-hint" id="pwHint">Nhập mật khẩu mới</div>
+                <div class="pw-warning" id="pwWarning" style="display:none;font-size:11px;color:#92400e;margin-top:4px;padding:6px 8px;background:rgba(245,158,11,.1);border-radius:6px;">⚠️ Mật khẩu của bạn quá yếu và dễ đoán. Chúng tôi sẽ không chịu trách nhiệm nếu bạn bị đánh cắp tài khoản.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Xác nhận mật khẩu mới</label>
+                <input type="password" class="form-input" name="confirmPassword" id="confirmPassword" placeholder="Nhập lại mật khẩu mới" required oninput="checkPasswordMatch()">
+                <div class="pw-hint" id="pwMatchHint" style="color:var(--danger);display:none;">Mật khẩu xác nhận không khớp</div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closePasswordModal()" style="flex:1;">Huỷ</button>
+                <button type="submit" class="btn btn-primary" id="pwSubmitBtn" style="flex:1;">Đổi mật khẩu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== DOCUMENT PREVIEW MODAL ===== -->
+<div id="docPreviewModal" class="modal-overlay" style="display:none;" onclick="closeDocPreview(event)">
+    <div class="modal-box" style="max-width:90vw;padding:12px;text-align:center;" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span style="font-size:14px;font-weight:700;">Xem tài liệu</span>
+            <button onclick="closeDocPreview()" style="width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:16px;">✕</button>
+        </div>
+        <img id="docPreviewImg" src="" style="max-width:100%;max-height:70vh;border-radius:var(--radius-md);display:none;" onerror="this.style.display='none';document.getElementById('docPreviewPdf').style.display='block';">
+        <div id="docPreviewPdf" style="display:none;padding:40px 20px;text-align:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:64px;height:64px;color:var(--text-tertiary);margin-bottom:12px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p style="font-size:14px;font-weight:600;margin-bottom:8px;">Không thể xem trước file này</p>
+            <a id="docPreviewLink" href="#" target="_blank" class="btn btn-primary" style="display:inline-flex;">Mở trong tab mới</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== DOCUMENT PREVIEW =====
+function previewDoc(url) {
+    const ext = (url || '').split('.').pop().toLowerCase();
+    const imgExts = ['jpg','jpeg','png','gif','webp','bmp','svg'];
+    if (imgExts.includes(ext)) {
+        document.getElementById('docPreviewImg').src = url;
+        document.getElementById('docPreviewImg').style.display = 'block';
+        document.getElementById('docPreviewPdf').style.display = 'none';
+    } else {
+        document.getElementById('docPreviewImg').style.display = 'none';
+        document.getElementById('docPreviewPdf').style.display = 'block';
+        document.getElementById('docPreviewLink').href = url;
+    }
+    document.getElementById('docPreviewModal').style.display = 'flex';
+}
+function closeDocPreview(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('docPreviewModal').style.display = 'none';
+    document.getElementById('docPreviewImg').src = '';
+}
+
+// ===== TOGGLE EDIT MODE =====
+function toggleEdit(cardId, viewId, formId) {
+    const view = document.getElementById(viewId);
+    const form = document.getElementById(formId);
+    if (view.style.display === 'none') {
+        view.style.display = 'block';
+        form.style.display = 'none';
+    } else {
+        view.style.display = 'none';
+        form.style.display = 'block';
+    }
+}
+
+// ===== LOGO PREVIEW =====
+function previewLogo(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            let preview = document.getElementById('logoPreview');
+            let placeholder = document.getElementById('logoPlaceholder');
+            if (preview) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
+            } else if (placeholder) {
+                placeholder.style.display = 'none';
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'store-logo';
+                img.style.width = '72px'; img.style.height = '72px';
+                img.id = 'logoPreview';
+                placeholder.parentNode.insertBefore(img, placeholder);
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// ===== PASSWORD MODAL =====
+function openPasswordModal() {
+    document.getElementById('passwordModal').style.display = 'flex';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    resetStrengthBars();
+}
+function closePasswordModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('passwordModal').style.display = 'none';
+}
+
+// ===== PASSWORD STRENGTH =====
+function checkPasswordStrength() {
+    const pw = document.getElementById('newPassword').value;
+    const bars = document.querySelectorAll('#pwStrength .pw-bar');
+    const hint = document.getElementById('pwHint');
+    bars.forEach(b => { b.className = 'pw-bar'; });
+    if (!pw) { hint.textContent = 'Nhập mật khẩu mới'; return; }
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (pw.length >= 10) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    const labels = ['', 'Yếu', 'Trung bình', 'Khá', 'Mạnh'];
+    const levels = Math.min(4, score);
+    for (let i = 0; i < levels; i++) bars[i].className = 'pw-bar l' + (i+1);
+    hint.textContent = labels[levels] || 'Mạnh';
+    var warn = document.getElementById('pwWarning');
+    if (warn) warn.style.display = score <= 2 ? 'block' : 'none';
+    checkPasswordMatch();
+}
+
+function resetStrengthBars() {
+    document.querySelectorAll('#pwStrength .pw-bar').forEach(b => b.className = 'pw-bar');
+    document.getElementById('pwHint').textContent = 'Nhập mật khẩu mới';
+    var warn = document.getElementById('pwWarning');
+    if (warn) warn.style.display = 'none';
+}
+
+function checkPasswordMatch() {
+    const pw = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    const hint = document.getElementById('pwMatchHint');
+    if (confirm && pw !== confirm) {
+        hint.style.display = 'block';
+    } else {
+        hint.style.display = 'none';
+    }
+}
+
+// Auto-hide toast
+setTimeout(() => {
+    const toast = document.querySelector('.toast');
+    if (toast) toast.style.opacity = '0';
+}, 3000);
+
+// ===== GPS + Reverse Geocode =====
+function getCurrentLocation() {
+    var statusEl = document.getElementById('gpsStatus');
+    if (!navigator.geolocation) {
+        if (statusEl) statusEl.textContent = 'Trình duyệt không hỗ trợ GPS';
+        return;
+    }
+    if (statusEl) statusEl.textContent = 'Đang lấy vị trí...';
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        var lat = pos.coords.latitude.toFixed(6);
+        var lng = pos.coords.longitude.toFixed(6);
+        document.getElementById('storeLat').value = lat;
+        document.getElementById('storeLng').value = lng;
+        if (statusEl) { statusEl.textContent = 'Đã lấy vị trí!'; statusEl.style.color = 'var(--success)'; }
+        reverseGeocode();
+    }, function(err) {
+        if (statusEl) { statusEl.textContent = 'Không thể lấy vị trí: ' + err.message; statusEl.style.color = 'var(--danger)'; }
+    }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function reverseGeocode() {
+    var lat = document.getElementById('storeLat').value.trim();
+    var lng = document.getElementById('storeLng').value.trim();
+    if (!lat || !lng) return;
+    // Reverse geocode via Nominatim
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=vi')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data && data.display_name) {
+            var addr = data.display_name;
+            // Fill address fields
+            var addrParts = data.address || {};
+            if (addrParts.road) {
+                var house = addrParts.house_number || '';
+                document.querySelector('input[name="address"]').value = (house ? house + ' ' : '') + addrParts.road;
+            } else if (addrParts.street) {
+                document.querySelector('input[name="address"]').value = addrParts.street;
+            }
+            // Try to fill city and district
+            if (addrParts.city || addrParts.town || addrParts.municipality) {
+                var cityInput = document.querySelector('input[name="city"]');
+                if (cityInput) cityInput.value = addrParts.city || addrParts.town || addrParts.municipality || '';
+            }
+            if (addrParts.suburb || addrParts.district || addrParts.county) {
+                var distInput = document.querySelector('input[name="district"]');
+                if (distInput) distInput.value = addrParts.suburb || addrParts.district || addrParts.county || '';
+            }
+            document.getElementById('gpsStatus').textContent = 'Đã điền địa chỉ từ tọa độ';
+            document.getElementById('gpsStatus').style.color = 'var(--success)';
+        }
+    })
+    .catch(function() {});
+}
+</script>
+</body>
+</html>

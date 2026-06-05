@@ -1,32 +1,887 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- CSS Fragment -->
-    <div th:replace="common/admin/css :: css"></div>
+    <style>
+:root{
+    --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff;--bg:#f0f2f5;
+    --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
+    --border:#e0e0e0;--border-light:#f0f0f0;
+    --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.1);
+    --danger:#ef4444;--danger-bg:rgba(239,68,68,.1);
+    --warning:#f59e0b;--warning-bg:rgba(245,158,11,.1);
+    --success:#10b981;--success-bg:rgba(16,185,129,.1);
+    --info:#3b82f6;--info-bg:rgba(59,130,246,.1);
+    --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
+    --sidebar:240px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary);height:100%}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+img{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
+
+/* Layout */
+.layout{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{
+    width:var(--sidebar);flex-shrink:0;
+    background:var(--primary);
+    display:flex;flex-direction:column;
+    position:fixed;top:0;bottom:0;left:0;z-index:30;
+    overflow-y:auto;scrollbar-width:none;
+}
+.sidebar::-webkit-scrollbar{display:none}
+.sidebar-header{
+    padding:20px 16px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;gap:10px;
+    transition:background var(--tr);
+}
+.sidebar-header:hover{background:rgba(255,255,255,.05);}
+.sidebar-header__logo{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:rgba(255,255,255,.15);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sidebar-header__logo svg{width:18px;height:18px;color:#fff}
+.sidebar-header__text{overflow:hidden}
+.sidebar-header__brand{font-size:16px;font-weight:800;color:#fff}
+.sidebar-header__sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px}
+
+.nav-section{padding:16px 10px 0}
+.nav-section__label{
+    font-size:10px;font-weight:700;color:rgba(255,255,255,.4);
+    text-transform:uppercase;letter-spacing:.8px;
+    padding:0 8px;margin-bottom:6px;
+}
+.nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 10px;border-radius:var(--radius-md);
+    color:rgba(255,255,255,.65);font-size:13px;font-weight:500;
+    margin-bottom:2px;cursor:pointer;transition:all var(--tr);
+    position:relative;
+}
+.nav-item:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
+.nav-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
+.nav-item.active::before{
+    content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:3px;height:20px;border-radius:0 2px 2px 0;background:#fff;
+}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.nav-badge{
+    margin-left:auto;min-width:18px;height:18px;border-radius:9px;
+    background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+    padding:0 4px;display:flex;align-items:center;justify-content:center;
+}
+.sidebar-footer{
+    margin-top:auto;padding:14px 10px;
+    border-top:1px solid rgba(255,255,255,.1);
+}
+.sidebar-user{
+    display:flex;align-items:center;gap:10px;padding:8px;
+    border-radius:var(--radius-md);cursor:pointer;
+    transition:background var(--tr);
+}
+.sidebar-user:hover{background:rgba(255,255,255,.1)}
+.sidebar-user__avatar{
+    width:34px;height:34px;border-radius:50%;overflow:hidden;
+    border:2px solid rgba(255,255,255,.2);flex-shrink:0;
+}
+.sidebar-user__avatar img{width:100%;height:100%;object-fit:cover}
+.sidebar-user__name{font-size:13px;font-weight:600;color:#fff}
+.sidebar-user__role{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px}
+
+/* Main content */
+.main{
+    margin-left:var(--sidebar);flex:1;
+    display:flex;flex-direction:column;min-height:100vh;
+}
+
+/* Top bar */
+.topbar{
+    background:var(--surface);
+    padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--border-light);
+    position:sticky;top:0;z-index:20;
+}
+.topbar__title{font-size:18px;font-weight:800}
+.topbar__right{display:flex;align-items:center;gap:12px}
+.topbar-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    transition:background var(--tr);position:relative;
+}
+.topbar-btn:hover{background:var(--border-light)}
+.topbar-btn svg{width:18px;height:18px;color:var(--text-secondary)}
+.topbar-notif{
+    position:absolute;top:6px;right:6px;
+    width:8px;height:8px;border-radius:50%;
+    background:var(--danger);border:1.5px solid var(--surface);
+}
+
+/* Content area */
+.content{padding:24px;display:flex;flex-direction:column;gap:20px}
+
+/* Page-specific styles for dashboard */
+/* KPI grid */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.kpi-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);padding:20px;
+    transition:box-shadow var(--tr);
+}
+.kpi-card:hover{box-shadow:var(--shadow-md)}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.kpi-icon{
+    width:42px;height:42px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;
+}
+.kpi-icon svg{width:20px;height:20px}
+.kpi-delta{
+    display:flex;align-items:center;gap:4px;
+    padding:4px 9px;border-radius:var(--radius-full);
+    font-size:12px;font-weight:700;
+}
+.kpi-delta.up{background:var(--success-bg);color:var(--success)}
+.kpi-delta.down{background:var(--danger-bg);color:var(--danger)}
+.kpi-delta svg{width:12px;height:12px}
+.kpi-value{font-size:28px;font-weight:800;line-height:1;margin-bottom:4px}
+.kpi-label{font-size:13px;color:var(--text-secondary)}
+
+/* Chart + table row */
+.main-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.chart-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);padding:20px;
+}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.card-title{font-size:15px;font-weight:700}
+.card-actions{display:flex;gap:8px}
+.card-tab{
+    padding:6px 12px;border-radius:var(--radius-full);
+    font-size:12px;font-weight:600;color:var(--text-secondary);
+    background:var(--bg);border:1px solid var(--border-light);
+    cursor:pointer;transition:all var(--tr);
+}
+.card-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* Chart bars (simplified visual) */
+.chart-bars{
+    display:flex;align-items:flex-end;gap:6px;
+    height:120px;margin-bottom:12px;
+}
+.c-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.c-bar{
+    width:100%;border-radius:4px 4px 0 0;
+    background:rgba(13,92,46,.15);transition:background var(--tr);cursor:pointer;
+    min-height:4px;
+}
+.c-bar:hover{background:rgba(13,92,46,.3)}
+.c-bar.primary{background:var(--primary)}
+.c-bar-label{font-size:10px;color:var(--text-tertiary);font-weight:500}
+
+/* Sellers pending panel */
+.pending-panel{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);padding:20px;
+}
+.seller-row{
+    display:flex;align-items:center;gap:12px;padding:10px 0;
+    border-bottom:1px solid var(--border-light);cursor:pointer;transition:background var(--tr);
+}
+.seller-row:last-child{border-bottom:none}
+.seller-row:hover{background:var(--bg);margin:0 -4px;padding:10px 4px;border-radius:var(--radius-md)}
+.seller-avatar{width:38px;height:38px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0;background:var(--bg)}
+.seller-avatar img{width:100%;height:100%;object-fit:cover}
+.seller-info{flex:1;min-width:0}
+.seller-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seller-meta{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.seller-status{
+    padding:4px 10px;border-radius:var(--radius-full);
+    font-size:11px;font-weight:700;flex-shrink:0;
+}
+.seller-status.pending{background:var(--warning-bg);color:var(--warning)}
+.seller-status.approved{background:var(--success-bg);color:var(--success)}
+.seller-status.rejected{background:var(--danger-bg);color:var(--danger)}
+
+/* Bottom row grid */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* Table card */
+.table-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);padding:20px;
+}
+.data-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 0;border-bottom:1px solid var(--border-light);font-size:13px;
+}
+.data-row:last-child{border-bottom:none}
+.data-row__label{color:var(--text-secondary)}
+.data-row__value{font-weight:700}
+
+/* Alert list */
+.alert-item{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:10px;border-radius:var(--radius-md);
+    margin-bottom:8px;cursor:pointer;transition:background var(--tr);
+}
+.alert-item:hover{background:var(--bg)}
+.alert-dot{
+    width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;
+}
+.alert-item__text{font-size:13px;line-height:1.5;flex:1}
+.alert-item__time{font-size:11px;color:var(--text-tertiary);flex-shrink:0;margin-top:2px}
+
+/* Top bar period */
+.topbar-period{
+    display:flex;align-items:center;gap:6px;
+    padding:8px 14px;border-radius:var(--radius-md);
+    background:var(--bg);border:1px solid var(--border-light);
+    font-size:13px;font-weight:600;color:var(--text-secondary);
+    cursor:pointer;
+}
+.topbar-period svg{width:14px;height:14px}
+.topbar-period:hover{border-color:var(--primary);color:var(--primary)}
+
+/* Date Picker Modal */
+.date-picker-modal{
+    display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;
+}
+.date-picker-modal.active{display:flex}
+.date-picker-content{
+    background:var(--surface);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-md);width:400px;max-width:90vw;
+    overflow:hidden;
+}
+.date-picker-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;border-bottom:1px solid var(--border-light);
+}
+.date-picker-header h3{
+    font-size:16px;font-weight:700;margin:0;
+}
+.date-picker-close{
+    width:32px;height:32px;border-radius:var(--radius-sm);
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;color:var(--text-secondary);cursor:pointer;
+    transition:all var(--tr);
+}
+.date-picker-close:hover{background:var(--bg);color:var(--text-primary)}
+.date-picker-body{padding:20px}
+.date-picker-presets{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;
+}
+.preset-btn{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:12px 8px;border-radius:var(--radius-md);
+    border:1px solid var(--border-light);background:var(--surface);
+    font-size:12px;font-weight:600;color:var(--text-secondary);cursor:pointer;
+    transition:all var(--tr);
+}
+.preset-btn svg{width:20px;height:20px}
+.preset-btn:hover{border-color:var(--primary);color:var(--primary)}
+.preset-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.preset-btn.active svg{color:#fff}
+.date-picker-divider{
+    display:flex;align-items:center;margin:16px 0;
+}
+.date-picker-divider::before,.date-picker-divider::after{
+    content:'';flex:1;height:1px;background:var(--border-light);
+}
+.date-picker-divider span{
+    padding:0 12px;font-size:11px;color:var(--text-tertiary);font-weight:600;text-transform:uppercase;
+}
+.date-picker-input{display:flex;flex-direction:column;gap:8px}
+.date-picker-input label{
+    font-size:13px;font-weight:600;color:var(--text-secondary);
+}
+.custom-date-input{
+    padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);
+    font-size:14px;font-family:inherit;background:var(--surface);
+}
+.custom-date-input:focus{outline:none;border-color:var(--primary)}
+.apply-date-btn{
+    padding:10px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:13px;font-weight:600;cursor:pointer;
+    margin-top:4px;transition:all var(--tr);
+}
+.apply-date-btn:hover{background:var(--primary-dark)}
+    </style>
 </head>
 <body>
 <div class="layout">
+    <!-- Include sidebar from common fragment -->
+    <div th:replace="~{common/admin/sidebar :: sidebar('dashboard')}"></div>
 
-    <!-- Sidebar Fragment -->
-    <div th:replace="common/admin/sidebar :: sidebar"></div>
-
+    <!-- Main -->
     <div class="main">
-        <!-- Header Fragment -->
-        <div th:replace="common/admin/header :: header"></div>
+        <!-- Include header from common fragment -->
+        <div th:replace="~{common/admin/header :: header('Dashboard Tổng quan', true)}"></div>
 
+        <!-- Content -->
         <div class="content">
-            <h1>Admin Dashboard</h1>
-            <p>Welcome to Admin portal.</p>
+
+            <!-- KPI row -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <div class="kpi-icon" style="background:var(--success-bg)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                        <div class="kpi-delta" id="gmvDelta">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                            <span id="gmvDeltaValue">--%</span>
+                        </div>
+                    </div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(stats.todayGMV / 1000000, 1, 1)} + 'tr'">0tr</div>
+                    <div class="kpi-label">Tổng GMV hôm nay</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <div class="kpi-icon" style="background:var(--info-bg)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                        </div>
+                        <div class="kpi-delta" id="ordersDelta">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                            <span id="ordersDeltaValue">--%</span>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="ordersValue" th:text="${#numbers.formatDecimal(stats.todayOrders, 0, 0)}">0</div>
+                    <div class="kpi-label">Đơn hàng hôm nay</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <div class="kpi-icon" style="background:rgba(212,175,55,.1)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div class="kpi-delta" id="storesDelta">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                            <span id="storesDeltaValue">--</span>
+                        </div>
+                    </div>
+                    <div class="kpi-value" th:text="${stats.activeStores}">0</div>
+                    <div class="kpi-label">Cửa hàng hoạt động</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <div class="kpi-icon" style="background:rgba(13,92,46,.1)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <div class="kpi-delta" id="buyersDelta">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                            <span id="buyersDeltaValue">--</span>
+                        </div>
+                    </div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(stats.totalBuyers, 0, 0)}">0</div>
+                    <div class="kpi-label">Tổng Buyers đăng ký</div>
+                </div>
+            </div>
+
+            <!-- Chart + Pending -->
+            <div class="main-grid">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <span class="card-title">GMV 7 ngày qua</span>
+                        <div class="card-actions">
+                            <button class="card-tab active" onclick="updateChartPeriod('7d')">7 ngày</button>
+                            <button class="card-tab" onclick="updateChartPeriod('30d')">30 ngày</button>
+                            <button class="card-tab" onclick="updateChartPeriod('3m')">3 tháng</button>
+                        </div>
+                    </div>
+                    <div class="chart-bars" id="gmvChart">
+                        <div class="c-bar-wrap"><div class="c-bar" style="height:55%"></div><span class="c-bar-label">T2</span></div>
+                        <div class="c-bar-wrap"><div class="c-bar" style="height:70%"></div><span class="c-bar-label">T3</span></div>
+                        <div class="c-bar-wrap"><div class="c-bar" style="height:48%"></div><span class="c-bar-label">T4</span></div>
+                        <div class="c-bar-wrap"><div class="c-bar" style="height:85%"></div><span class="c-bar-label">T5</span></div>
+                        <div class="c-bar-wrap"><div class="c-bar" style="height:90%"></div><span class="c-bar-label">T6</span></div>
+                        <div class="c-bar-wrap"><div class="c-bar" style="height:78%"></div><span class="c-bar-label">T7</span></div>
+                        <div class="c-bar-wrap"><div class="c-bar primary" style="height:100%"></div><span class="c-bar-label">CN</span></div>
+                    </div>
+                    <div style="display:flex;gap:24px">
+                        <div><div style="font-size:20px;font-weight:800;color:var(--primary)" id="totalGMV7d">845.2tr</div><div style="font-size:12px;color:var(--text-secondary)">Tổng GMV 7 ngày</div></div>
+                        <div><div style="font-size:20px;font-weight:800;color:var(--success)" id="commission7d">14.2tr</div><div style="font-size:12px;color:var(--text-secondary)">Hoa hồng DealXanh</div></div>
+                        <div><div style="font-size:20px;font-weight:800;" id="totalOrders7d">26,481</div><div style="font-size:12px;color:var(--text-secondary)">Đơn hàng</div></div>
+                    </div>
+                </div>
+
+                <div class="pending-panel">
+                    <div class="card-header">
+                        <span class="card-title">Seller chờ duyệt</span>
+                        <a href="/admin/seller-verify" style="font-size:13px;font-weight:600;color:var(--primary)">Xem tất cả</a>
+                    </div>
+                    <div th:if="${recentPendingStores != null and !recentPendingStores.isEmpty()}">
+                        <div class="seller-row" th:each="store : ${recentPendingStores}" th:onclick="'window.location.href=\'/admin/seller-verify/detail/' + ${store.storeId} + '\''">
+                            <div class="seller-avatar">
+                                <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt="" onerror="this.onerror=null;this.src='/img/default-store.svg';">
+                            </div>
+                            <div class="seller-info">
+                                <div class="seller-name" th:text="${store.storeName}">Store Name</div>
+                                <div class="seller-meta" th:text="${store.city != null ? store.city : 'Unknown'} + ' · ' + ${#temporals.format(store.createdAt, 'HH:mm')}">City · Time</div>
+                            </div>
+                            <span class="seller-status pending">Pending</span>
+                        </div>
+                    </div>
+                    <div th:if="${recentPendingStores == null or recentPendingStores.isEmpty()}">
+                        <div style="text-align:center;padding:40px;color:var(--text-secondary)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;margin:0 auto 12px;opacity:0.5">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <p>Không có seller nào chờ duyệt</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom row -->
+            <div class="bottom-grid">
+                <!-- Quick stats -->
+                <div class="table-card">
+                    <div class="card-header"><span class="card-title">Chỉ số hôm nay</span></div>
+                    <div class="data-row"><span class="data-row__label">Sellers hoạt động</span><span class="data-row__value" style="color:var(--success)" th:text="${stats.activeStores}">0</span></div>
+                    <div class="data-row"><span class="data-row__label">Sellers chờ duyệt</span><span class="data-row__value" th:text="${stats.pendingStores}">0</span></div>
+                    <div class="data-row"><span class="data-row__label">Tổng Buyers</span><span class="data-row__value" th:text="${#numbers.formatDecimal(stats.totalBuyers, 0, 0)}">0</span></div>
+                    <div class="data-row"><span class="data-row__label">Tổng Sellers</span><span class="data-row__value" th:text="${#numbers.formatDecimal(stats.totalSellers, 0, 0)}">0</span></div>
+                    <div class="data-row"><span class="data-row__label">Tổng đơn hàng</span><span class="data-row__value" th:text="${#numbers.formatDecimal(stats.totalOrders, 0, 0)}">0</span></div>
+                    <div class="data-row"><span class="data-row__label">Avg order value</span><span class="data-row__value" th:text="${stats.todayOrders > 0 ? #numbers.formatDecimal(stats.todayGMV / stats.todayOrders / 1000, 1, 1) + 'kđ' : '0đ'}">0đ</span></div>
+                </div>
+
+                <!-- Top sellers -->
+                <div class="table-card">
+                    <div class="card-header"><span class="card-title">Top Sellers đánh giá</span></div>
+                    <div th:if="${topStores != null and !topStores.isEmpty()}">
+                        <div class="seller-row" style="padding:8px 0;cursor:pointer" th:each="store, iter : ${topStores}" th:onclick="'window.location.href=\'/admin/seller-verify?storeId=' + ${store.storeId} + '\''">
+                            <div style="width:22px;text-align:center;font-weight:800;" th:style="${iter.index == 0 ? 'color:var(--accent);font-size:13px' : 'color:var(--text-secondary);font-size:13px'}" th:text="${iter.index + 1}">1</div>
+                            <div class="seller-avatar">
+                                <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt="" onerror="this.onerror=null;this.src='/img/default-store.svg';">
+                            </div>
+                            <div class="seller-info">
+                                <div class="seller-name" th:text="${store.storeName}">Store Name</div>
+                                <div class="seller-meta" th:text="${#numbers.formatDecimal(store.averageRating, 1, 1)} + ' ★ · ' + ${store.totalReviews} + ' reviews'">Rating · Reviews</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${topStores == null or topStores.isEmpty()}">
+                        <div style="text-align:center;padding:20px;color:var(--text-secondary)">
+                            <p>Chưa có dữ liệu seller</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts -->
+                <div class="table-card">
+                    <div class="card-header"><span class="card-title">Cảnh báo hệ thống</span></div>
+                    <div class="alert-item" style="cursor:pointer" onclick="window.location.href='/admin/seller-verify'">
+                        <div class="alert-dot" style="background:var(--warning)" th:style="${stats.pendingStores > 0 ? 'background:var(--danger)' : ''}"></div>
+                        <div class="alert-item__text"><strong th:text="${stats.pendingStores}">0</strong> sellers chờ xét duyệt</div>
+                        <div class="alert-item__time">Xem ngay</div>
+                    </div>
+                    <div class="alert-item" style="cursor:pointer" onclick="window.location.href='/admin/finance'">
+                        <div class="alert-dot" style="background:var(--info)"></div>
+                        <div class="alert-item__text">Doanh thu hôm nay: <strong th:text="${#numbers.formatDecimal(stats.todayGMV / 1000000, 1, 1)} + 'tr'">0tr</strong></div>
+                        <div class="alert-item__time">Chi tiết</div>
+                    </div>
+                    <div class="alert-item" style="cursor:pointer" onclick="window.location.href='/admin/dispute'">
+                        <div class="alert-dot" style="background:var(--warning)"></div>
+                        <div class="alert-item__text">Khiếu nại & Tranh chấp</div>
+                        <div class="alert-item__time">Quản lý</div>
+                    </div>
+                    <div class="alert-item" style="cursor:pointer" onclick="window.location.href='/admin/users'">
+                        <div class="alert-dot" style="background:var(--success)"></div>
+                        <div class="alert-item__text">Tổng người dùng: <strong th:text="${#numbers.formatDecimal(stats.totalBuyers + stats.totalSellers, 0, 0)}">0</strong></div>
+                        <div class="alert-item__time">Quản lý</div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
 
-<!-- JS Fragment -->
-<div th:replace="common/admin/js :: js"></div>
+<script>
+// Tab switching
+document.querySelectorAll('.card-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        this.closest('.card-actions').querySelectorAll('.card-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
 
+// Seller row click handlers
+document.querySelectorAll('.seller-row').forEach(row => {
+    row.addEventListener('click', function() {
+        // Navigation is handled by onclick attribute
+    });
+});
+
+// Update chart period
+function updateChartPeriod(period) {
+    // Show loading state
+    const chartContainer = document.getElementById('gmvChart');
+    chartContainer.style.opacity = '0.5';
+
+    fetch(`/admin/api/dashboard/stats?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            updateChart(data);
+            chartContainer.style.opacity = '1';
+        })
+        .catch(error => {
+            console.error('Error fetching chart data:', error);
+            chartContainer.style.opacity = '1';
+        });
+}
+
+function updateChart(data) {
+    const chartContainer = document.getElementById('gmvChart');
+    const bars = chartContainer.querySelectorAll('.c-bar');
+
+    if (data.dailyData && data.dailyData.length > 0) {
+        const maxValue = Math.max(...data.dailyData.map(d => d.gmv));
+
+        data.dailyData.forEach((day, index) => {
+            if (bars[index]) {
+                const height = maxValue > 0 ? (day.gmv / maxValue * 100) : 0;
+                bars[index].style.height = `${Math.max(height, 5)}%`;
+            }
+        });
+
+        // Update totals
+        const totalGMV = data.dailyData.reduce((sum, day) => sum + day.gmv, 0);
+        const totalOrders = data.dailyData.reduce((sum, day) => sum + day.orders, 0);
+        const commission = totalGMV * 0.10;
+
+        document.getElementById('totalGMV7d').textContent = (totalGMV / 1000000).toFixed(1) + 'tr';
+        document.getElementById('commission7d').textContent = (commission / 1000000).toFixed(1) + 'tr';
+        document.getElementById('totalOrders7d').textContent = totalOrders.toLocaleString('vi-VN');
+    }
+}
+
+// Date picker functions
+let selectedDate = null;
+let selectedPreset = 'today';
+
+function toggleDatePicker() {
+    const modal = document.getElementById('datePickerModal');
+    modal.classList.toggle('active');
+
+    // Set max date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('customDate').max = today;
+
+    // If opening, set current preset
+    if (modal.classList.contains('active')) {
+        if (selectedDate) {
+            document.getElementById('customDate').value = selectedDate;
+            // Clear preset selection
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+        } else {
+            document.getElementById('customDate').value = today;
+        }
+    }
+}
+
+function selectPreset(preset) {
+    selectedPreset = preset;
+    selectedDate = null;
+
+    // Update active state
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-preset="${preset}"]`).classList.add('active');
+
+    // Apply preset
+    applyDatePreset(preset);
+}
+
+function applyDatePreset(preset) {
+    let date = new Date();
+    let label = '';
+
+    switch(preset) {
+        case 'today':
+            label = 'Hôm nay';
+            break;
+        case 'yesterday':
+            date.setDate(date.getDate() - 1);
+            label = 'Hôm qua';
+            break;
+        case 'week':
+            date.setDate(date.getDate() - 7);
+            label = '7 ngày qua';
+            break;
+    }
+
+    const formattedDate = formatDate(date);
+    updateCurrentDate(label, formattedDate);
+    fetchDashboardData(preset, null);
+    toggleDatePicker();
+}
+
+function applyCustomDate() {
+    const dateInput = document.getElementById('customDate').value;
+    if (!dateInput) {
+        alert('Vui lòng chọn ngày');
+        return;
+    }
+
+    selectedDate = dateInput;
+    selectedPreset = null;
+
+    // Clear preset selection
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+
+    const date = new Date(dateInput);
+    const formattedDate = formatDate(date);
+    const label = 'Ngày ' + formattedDate;
+
+    updateCurrentDate(label, formattedDate);
+    fetchDashboardData(null, dateInput);
+    toggleDatePicker();
+}
+
+function formatDate(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+function updateCurrentDate(label, date) {
+    const currentDateEl = document.getElementById('currentDate');
+    currentDateEl.innerHTML = `${label} · <span>${date}</span>`;
+}
+
+function fetchDashboardData(preset, customDate) {
+    let url = '/admin/api/dashboard/stats?';
+
+    if (preset) {
+        url += `period=${preset}`;
+    } else if (customDate) {
+        url += `date=${customDate}`;
+    } else {
+        url += 'period=today';
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            updateDashboardUI(data);
+        })
+        .catch(error => {
+            console.error('Error fetching dashboard data:', error);
+            // Fallback to today's data
+            if (preset || customDate) {
+                alert('Không thể tải dữ liệu cho ngày đã chọn. Hiển thị dữ liệu hôm nay.');
+            }
+        });
+}
+
+function updateDashboardUI(data) {
+    console.log('=== UPDATE DASHBOARD UI ===');
+    console.log('Received data:', JSON.stringify(data, null, 2));
+
+    // Update KPI cards
+    if (data.todayGMV !== undefined) {
+        document.querySelector('.kpi-card:nth-child(1) .kpi-value').textContent =
+            (data.todayGMV / 1000000).toFixed(1) + 'tr';
+    }
+    if (data.todayOrders !== undefined) {
+        document.querySelector('.kpi-card:nth-child(2) .kpi-value').textContent =
+            data.todayOrders.toLocaleString('vi-VN');
+    }
+    if (data.todayCommission !== undefined) {
+        document.querySelector('.kpi-card:nth-child(4) .kpi-value').textContent =
+            (data.todayCommission / 1000000).toFixed(1) + 'tr';
+    }
+
+    // Update KPI deltas
+    console.log('GMV Delta:', data.gmvDelta, 'Direction:', data.gmvDeltaDirection);
+    console.log('Orders Delta:', data.ordersDelta, 'Direction:', data.ordersDeltaDirection);
+
+    if (data.gmvDelta !== undefined) {
+        updateKPIDelta('gmvDelta', data.gmvDelta, data.gmvDeltaDirection);
+    } else {
+        console.log('GMV Delta not found in response');
+    }
+    if (data.ordersDelta !== undefined) {
+        updateKPIDelta('ordersDelta', data.ordersDelta, data.ordersDeltaDirection);
+    } else {
+        console.log('Orders Delta not found in response');
+    }
+    if (data.storesDelta !== undefined) {
+        updateKPIDelta('storesDelta', data.storesDelta, data.storesDeltaDirection, true);
+    }
+    if (data.buyersDelta !== undefined) {
+        updateKPIDelta('buyersDelta', data.buyersDelta, data.buyersDeltaDirection, true);
+    }
+
+    // Update chart data if available
+    if (data.weeklyGMV) {
+        updateChart(data.weeklyGMV);
+    }
+
+    // Update 7-day totals if available
+    if (data.weeklyGMV) {
+        const totalGMV = Object.values(data.weeklyGMV).reduce((a, b) => a + b, 0);
+        document.getElementById('totalGMV7d').textContent =
+            (totalGMV / 1000000).toFixed(1) + 'tr';
+        document.getElementById('commission7d').textContent =
+            (totalGMV * 0.10 / 1000000).toFixed(1) + 'tr';
+    }
+
+    console.log('=== END UPDATE DASHBOARD UI ===');
+}
+
+function updateKPIDelta(elementId, delta, direction, isAbsolute = false) {
+    console.log(`updateKPIDelta called: ${elementId}, delta=${delta}, direction=${direction}, isAbsolute=${isAbsolute}`);
+
+    const deltaElement = document.getElementById(elementId);
+    if (!deltaElement) {
+        console.log(`Element ${elementId} not found!`);
+        return;
+    }
+
+    const valueElement = document.getElementById(elementId + 'Value');
+    if (!valueElement) {
+        console.log(`Element ${elementId}Value not found!`);
+        return;
+    }
+
+    // Remove existing classes
+    deltaElement.classList.remove('up', 'down');
+
+    // Add direction class
+    deltaElement.classList.add(direction || 'up');
+
+    // Update icon based on direction
+    const icon = deltaElement.querySelector('svg');
+    if (icon) {
+        if (direction === 'up') {
+            icon.innerHTML = '<polyline points="18 15 12 9 6 15"/>';
+        } else {
+            icon.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+        }
+    }
+
+    // Update value
+    if (isAbsolute) {
+        valueElement.textContent = delta;
+    } else {
+        const sign = delta >= 0 ? '+' : '';
+        valueElement.textContent = sign + delta.toFixed(0) + '%';
+    }
+
+    console.log(`Updated ${elementId}: ${valueElement.textContent}, class: ${direction}`);
+}
+
+function updateChart(weeklyData) {
+    // Update chart bars
+    const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+    const values = Object.values(weeklyData);
+    const maxValue = Math.max(...values);
+
+    const bars = document.querySelectorAll('.c-bar');
+    bars.forEach((bar, index) => {
+        if (values[index] !== undefined) {
+            const height = (values[index] / maxValue * 100).toFixed(0);
+            bar.style.height = height + '%';
+        }
+    });
+}
+
+// Legacy function name for backward compatibility
+function showDatePicker() {
+    toggleDatePicker();
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('datePickerModal');
+    if (event.target === modal) {
+        toggleDatePicker();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('datePickerModal');
+        if (modal.classList.contains('active')) {
+            toggleDatePicker();
+        }
+    }
+});
+
+// Auto-refresh data every 30 seconds
+setInterval(() => {
+    fetch('/admin/api/dashboard/stats?period=today')
+        .then(response => response.json())
+        .then(data => {
+            // Update KPI cards
+            if (data.todayGMV !== undefined) {
+                document.querySelector('.kpi-card:nth-child(1) .kpi-value').textContent =
+                    (data.todayGMV / 1000000).toFixed(1) + 'tr';
+            }
+            if (data.todayOrders !== undefined) {
+                document.querySelector('.kpi-card:nth-child(2) .kpi-value').textContent =
+                    data.todayOrders.toLocaleString('vi-VN');
+            }
+        })
+        .catch(error => console.error('Error refreshing data:', error));
+}, 30000);
+
+// Load initial chart data and KPI deltas
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch today's dashboard data for KPI cards and deltas
+    fetch('/admin/api/dashboard/stats?period=today')
+        .then(response => response.json())
+        .then(data => {
+            updateDashboardUI(data);
+        })
+        .catch(error => console.error('Error loading initial dashboard data:', error));
+
+    // Fetch chart data (7-day period)
+    fetch('/admin/api/dashboard/stats?period=7d')
+        .then(response => response.json())
+        .then(data => {
+            if (data.weeklyGMV) {
+                updateChart(data.weeklyGMV);
+            }
+        })
+        .catch(error => console.error('Error loading initial chart data:', error));
+});
+
+// Notification button click handlers
+function showNotifications() {
+    const pendingStores = document.getElementById('sidebar-pending-count')?.textContent || '0';
+    alert(`Thông báo:\n• ${pendingStores} sellers chờ xét duyệt\n• Các tính năng khác đang được phát triển`);
+}
+
+function showProfile() {
+    alert('Thông tin admin:\n• Tên: ' + (document.querySelector('.sidebar-user__name')?.textContent || 'Admin') + '\n• Vai trò: Super Admin\n• Các tính năng đang được phát triển');
+}
+
+function showComingSoon(feature) {
+    alert(`Tính năng "${feature}" đang được phát triển!\n\nVui lòng quay lại sau hoặc liên hệ đội ngũ phát triển.`);
+}
+</script>
 </body>
 </html>

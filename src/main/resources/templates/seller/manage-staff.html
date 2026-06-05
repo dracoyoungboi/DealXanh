@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Nhân viên — DealXanh Seller</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <div th:replace="~{common/admin/css :: css}"></div>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{--primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#e8f5ec;--surface:#fff;--bg:#f5f6f8;--text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--border:#e0e0e0;--border-light:#f0f0f0;--danger:#ef4444;--danger-light:#fef2f2;--warning:#f59e0b;--success:#10b981;--success-light:#f0fdf4;--info:#3b82f6;--info-light:#eff6ff;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:9999px;--font:'Inter',sans-serif}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{height:auto;min-height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padding-bottom:80px}
+
+.page-header{background:var(--primary);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.back-btn{color:#fff;display:flex;align-items:center;text-decoration:none}.back-btn svg{width:20px;height:20px}
+.header-title{font-size:18px;font-weight:700;flex:1}
+.content{padding:16px}
+
+/* Toast */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:var(--radius-md);font-size:13px;font-weight:600;z-index:200;max-width:90%;text-align:center;animation:fadeIn 0.2s ease}
+.toast.success{background:#059669;color:#fff}
+.toast.error{background:#dc2626;color:#fff}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Add form */
+.mode-tabs{display:flex;gap:4px;margin-bottom:12px}
+.mode-tab{flex:1;padding:8px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);font-family:var(--font);transition:all 0.15s}
+.mode-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.add-form{display:none;flex-direction:column;gap:8px;margin-bottom:14px}
+.add-form.active{display:flex}
+.add-bar{display:flex;gap:8px}
+.add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.add-input{flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-family:var(--font);background:var(--surface)}
+.add-input:focus{outline:none;border-color:var(--primary)}
+.form-hint{font-size:10px;color:var(--text-tertiary)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:var(--radius-md);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;border:none;white-space:nowrap;transition:all 0.15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-sm{padding:6px 12px;font-size:11px;border-radius:var(--radius-sm)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:var(--surface);color:var(--text-secondary);border:1px solid var(--border)}
+
+/* Staff list */
+.staff-list{display:flex;flex-direction:column;gap:10px}
+.staff-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:14px;display:flex;align-items:center;gap:12px}
+.staff-avatar{width:44px;height:44px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--primary);flex-shrink:0}
+.staff-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.staff-info{flex:1;min-width:0}
+.staff-name{font-size:14px;font-weight:700;margin-bottom:2px}
+.staff-user{font-size:12px;color:var(--text-secondary)}
+.staff-actions{display:flex;gap:6px;flex-shrink:0}
+.staff-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:var(--radius-full)}
+.badge-active{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.badge-inactive{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+
+/* Empty */
+.empty-state{text-align:center;padding:60px 20px}
+.empty-state svg{width:64px;height:64px;margin-bottom:16px;opacity:0.2}
+.empty-state h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.empty-state p{font-size:13px;color:var(--text-secondary)}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--border-light);padding:8px 0;z-index:20}
+.bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;text-decoration:none}
+.bottom-nav .nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
+.bottom-nav .nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
+.bottom-nav .nav-item.active svg,.bottom-nav .nav-item.active span{color:var(--primary)}
+    </style>
+</head>
+<body>
+
+<header class="page-header">
+    <a class="back-btn" href="/seller/dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </a>
+    <span class="header-title">Quản lý Nhân viên</span>
+</header>
+
+<div class="content">
+    <!-- Mode tabs -->
+    <div class="mode-tabs">
+        <button class="mode-tab active" onclick="switchMode('existing')" id="tabExisting">Thêm người dùng có sẵn</button>
+        <button class="mode-tab" onclick="switchMode('create')" id="tabCreate">+ Tạo tài khoản mới</button>
+    </div>
+
+    <!-- Add existing user -->
+    <div class="add-form active" id="formExisting">
+        <div class="add-bar">
+            <input type="text" class="add-input" id="staffInput" placeholder="Nhập username hoặc email...">
+            <button class="btn btn-primary" onclick="addExistingStaff()">+ Thêm</button>
+        </div>
+        <div class="form-hint">Tìm người dùng đã đăng ký trên DealXanh để thêm làm nhân viên</div>
+    </div>
+
+    <!-- Create new staff account -->
+    <div class="add-form" id="formCreate">
+        <div class="add-row">
+            <input type="text" class="add-input" id="newUsername" placeholder="Tên đăng nhập *">
+            <input type="text" class="add-input" id="newFullName" placeholder="Họ tên *">
+        </div>
+        <div class="add-row">
+            <input type="password" class="add-input" id="newPassword" placeholder="Mật khẩu (ít nhất 8 ký tự) *">
+            <input type="text" class="add-input" id="newPhone" placeholder="SĐT (tuỳ chọn)">
+        </div>
+        <div class="add-bar">
+            <input type="email" class="add-input" id="newEmail" placeholder="Email (tuỳ chọn)">
+            <button class="btn btn-primary" onclick="createStaffAccount()">Tạo tài khoản</button>
+        </div>
+        <div class="form-hint">Tạo tài khoản nhân viên mới — họ có thể đăng nhập ngay bằng username và mật khẩu này</div>
+    </div>
+
+    <!-- Staff list -->
+    <div class="staff-list" th:if="${staffList != null and !staffList.isEmpty()}">
+        <div class="staff-card" th:each="s : ${staffList}">
+            <div class="staff-avatar">
+                <img th:if="${s.avatarUrl != null}" th:src="${s.avatarUrl}" alt="">
+                <span th:unless="${s.avatarUrl != null}" th:text="${s.fullName != null ? s.fullName.charAt(0) : s.username.charAt(0)}">N</span>
+            </div>
+            <div class="staff-info">
+                <div class="staff-name" th:text="${s.fullName != null ? s.fullName : s.username}">Name</div>
+                <div class="staff-user">
+                    <span th:text="'@' + ${s.username}">@user</span>
+                    <span th:if="${s.email != null and !s.email.isEmpty()}" th:text="' · ' + ${s.email}"></span>
+                </div>
+            </div>
+            <span class="staff-badge" th:classappend="${s.active} ? 'badge-active' : 'badge-inactive'" th:text="${s.active} ? 'Hoạt động' : 'Đã khoá'">Active</span>
+            <div class="staff-actions">
+                <button class="btn btn-sm btn-outline" th:onclick="|toggleStaff(${s.userId})|" th:text="${s.active} ? 'Khoá' : 'Mở khoá'">Khoá</button>
+                <button class="btn btn-sm btn-danger" th:onclick="|removeStaff(${s.userId})|">🗑 Gỡ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="empty-state" th:unless="${staffList != null and !staffList.isEmpty()}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <h3>Chưa có nhân viên nào</h3>
+        <p>Thêm người dùng có sẵn hoặc tạo tài khoản nhân viên mới</p>
+    </div>
+</div>
+
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('manage-staff')}"></div>
+
+<script>
+const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || '';
+const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || '';
+
+let currentMode = 'existing';
+
+function switchMode(mode) {
+    currentMode = mode;
+    document.getElementById('tabExisting').classList.toggle('active', mode === 'existing');
+    document.getElementById('tabCreate').classList.toggle('active', mode === 'create');
+    document.getElementById('formExisting').classList.toggle('active', mode === 'existing');
+    document.getElementById('formCreate').classList.toggle('active', mode === 'create');
+    if (mode === 'create') {
+        // Auto-generate random 6-digit password
+        const pwdField = document.getElementById('newPassword');
+        if (!pwdField.value) {
+            pwdField.value = String(Math.floor(100000 + Math.random() * 900000));
+        }
+        pwdField.type = 'text'; // Show password so seller can see/copy it
+    }
+}
+
+async function addExistingStaff() {
+    const input = document.getElementById('staffInput');
+    const val = input.value.trim();
+    if (!val) { showToast('Nhập username hoặc email', 'error'); return; }
+
+    const fd = new URLSearchParams();
+    fd.append('mode', 'existing');
+    fd.append('usernameOrEmail', val);
+    fd.append('_csrf', csrfToken);
+
+    try {
+        const r = await fetch('/seller/manage-staff/add', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'success' : 'error');
+        if (d.success) { input.value = ''; setTimeout(() => location.reload(), 600); }
+    } catch(e) { showToast('Lỗi kết nối', 'error'); }
+}
+
+async function createStaffAccount() {
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const fullName = document.getElementById('newFullName').value.trim();
+    const email = document.getElementById('newEmail').value.trim();
+    const phone = document.getElementById('newPhone').value.trim();
+
+    if (!username) { showToast('Nhập tên đăng nhập', 'error'); return; }
+    if (!fullName) { showToast('Nhập họ tên', 'error'); return; }
+    if (!password || password.length < 8) { showToast('Mật khẩu phải có ít nhất 8 ký tự', 'error'); return; }
+
+    const fd = new URLSearchParams();
+    fd.append('mode', 'create');
+    fd.append('username', username);
+    fd.append('password', password);
+    fd.append('fullName', fullName);
+    if (email) fd.append('email', email);
+    if (phone) fd.append('phone', phone);
+    fd.append('_csrf', csrfToken);
+
+    try {
+        const r = await fetch('/seller/manage-staff/add', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'success' : 'error');
+        if (d.success) setTimeout(() => location.reload(), 600);
+    } catch(e) { showToast('Lỗi kết nối', 'error'); }
+}
+
+async function removeStaff(userId) {
+    if (!confirm('Bạn có chắc muốn gỡ nhân viên này khỏi cửa hàng?')) return;
+    const fd = new URLSearchParams();
+    fd.append('_csrf', csrfToken);
+    try {
+        const r = await fetch('/seller/manage-staff/' + userId + '/remove', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'success' : 'error');
+        if (d.success) setTimeout(() => location.reload(), 600);
+    } catch(e) { showToast('Lỗi kết nối', 'error'); }
+}
+
+async function toggleStaff(userId) {
+    const fd = new URLSearchParams();
+    fd.append('_csrf', csrfToken);
+    try {
+        const r = await fetch('/seller/manage-staff/' + userId + '/toggle', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'success' : 'error');
+        if (d.success) setTimeout(() => location.reload(), 600);
+    } catch(e) { showToast('Lỗi kết nối', 'error'); }
+}
+
+function showToast(msg, type) {
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+}
+</script>
+</body>
+</html>

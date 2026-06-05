@@ -3,7 +3,7 @@
  */
 
 // Format currency (VND)
-export function formatCurrency(amount) {
+function formatCurrency(amount) {
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND',
@@ -13,12 +13,12 @@ export function formatCurrency(amount) {
 }
 
 // Format percentage
-export function formatPercentage(value) {
+function formatPercentage(value) {
     return `${Math.round(value)}%`;
 }
 
 // Format date/time
-export function formatDateTime(date, options = {}) {
+function formatDateTime(date, options = {}) {
     const defaultOptions = {
         day: '2-digit',
         month: '2-digit',
@@ -30,7 +30,7 @@ export function formatDateTime(date, options = {}) {
 }
 
 // Format time only
-export function formatTime(date) {
+function formatTime(date) {
     return new Intl.DateTimeFormat('vi-VN', {
         hour: '2-digit',
         minute: '2-digit'
@@ -38,7 +38,7 @@ export function formatTime(date) {
 }
 
 // Format relative time (e.g., "2h ago", "30min left")
-export function formatRelativeTime(date) {
+function formatRelativeTime(date) {
     const now = new Date();
     const target = new Date(date);
     const diff = target - now;
@@ -60,7 +60,7 @@ export function formatRelativeTime(date) {
 }
 
 // Format distance
-export function formatDistance(meters) {
+function formatDistance(meters) {
     if (meters < 1000) {
         return `${Math.round(meters)}m`;
     }
@@ -68,12 +68,12 @@ export function formatDistance(meters) {
 }
 
 // Calculate discount percentage
-export function calculateDiscount(originalPrice, discountedPrice) {
+function calculateDiscount(originalPrice, discountedPrice) {
     return ((originalPrice - discountedPrice) / originalPrice) * 100;
 }
 
 // Check if deal is expiring soon
-export function isExpiringSoon(expiryDate, thresholdMinutes = 60) {
+function isExpiringSoon(expiryDate, thresholdMinutes = 60) {
     const now = new Date();
     const expiry = new Date(expiryDate);
     const diff = expiry - now;
@@ -82,12 +82,12 @@ export function isExpiringSoon(expiryDate, thresholdMinutes = 60) {
 }
 
 // Check if deal is expired
-export function isExpired(expiryDate) {
+function isExpired(expiryDate) {
     return new Date(expiryDate) < new Date();
 }
 
 // Get urgency level for expiry
-export function getUrgencyLevel(expiryDate) {
+function getUrgencyLevel(expiryDate) {
     const now = new Date();
     const expiry = new Date(expiryDate);
     const diff = expiry - now;
@@ -100,7 +100,7 @@ export function getUrgencyLevel(expiryDate) {
 }
 
 // Debounce function
-export function debounce(func, wait) {
+function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
         const later = () => {
@@ -113,7 +113,7 @@ export function debounce(func, wait) {
 }
 
 // Throttle function
-export function throttle(func, limit) {
+function throttle(func, limit) {
     let inThrottle;
     return function executedFunction(...args) {
         if (!inThrottle) {
@@ -125,7 +125,7 @@ export function throttle(func, limit) {
 }
 
 // Copy to clipboard
-export async function copyToClipboard(text) {
+async function copyToClipboard(text) {
     try {
         await navigator.clipboard.writeText(text);
         return true;
@@ -136,12 +136,12 @@ export async function copyToClipboard(text) {
 }
 
 // Generate unique ID
-export function generateId() {
+function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
 // Local storage helpers
-export const storage = {
+var storage = {
     get(key, defaultValue = null) {
         try {
             const item = localStorage.getItem(key);
@@ -178,7 +178,7 @@ export const storage = {
 };
 
 // Session storage helpers
-export const sessionStorage = {
+var sessionStore = {
     get(key, defaultValue = null) {
         try {
             const item = window.sessionStorage.getItem(key);
@@ -207,7 +207,7 @@ export const sessionStorage = {
 };
 
 // URL helpers
-export const url = {
+var urlHelpers = {
     getParams() {
         const params = new URLSearchParams(window.location.search);
         const result = {};
@@ -233,7 +233,7 @@ export const url = {
 };
 
 // Validation helpers
-export const validators = {
+var validators = {
     email(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
@@ -258,7 +258,7 @@ export const validators = {
 };
 
 // Toast notification
-export function showToast(message, type = 'success', duration = 3000) {
+function showToast(message, type = 'success', duration = 3000) {
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
     toast.innerHTML = `
@@ -280,7 +280,7 @@ export function showToast(message, type = 'success', duration = 3000) {
 }
 
 // Modal helpers
-export function openModal(content) {
+function openModal(content) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = content;
@@ -317,7 +317,7 @@ function closeModal(overlay) {
 }
 
 // Loading spinner
-export function showLoading(container) {
+function showLoading(container) {
     const spinner = document.createElement('div');
     spinner.className = 'spinner';
     container.appendChild(spinner);
@@ -325,7 +325,7 @@ export function showLoading(container) {
 }
 
 // Get user location
-export async function getUserLocation() {
+async function getUserLocation() {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
             reject(new Error('Geolocation is not supported'));
@@ -352,7 +352,7 @@ export async function getUserLocation() {
 }
 
 // Calculate distance between two coordinates (in meters)
-export function calculateDistance(lat1, lon1, lat2, lon2) {
+function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000; // Earth's radius in meters
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
@@ -371,7 +371,7 @@ function toRad(degrees) {
 }
 
 // Share functionality
-export async function shareContent(title, text, url) {
+async function shareContent(title, text, url) {
     if (navigator.share) {
         try {
             await navigator.share({ title, text, url });
@@ -387,7 +387,7 @@ export async function shareContent(title, text, url) {
 }
 
 // Lazy load images
-export function lazyLoadImages() {
+function lazyLoadImages() {
     const images = document.querySelectorAll('img[data-src]');
 
     const imageObserver = new IntersectionObserver((entries, observer) => {
@@ -405,7 +405,7 @@ export function lazyLoadImages() {
 }
 
 // Countdown timer
-export function createCountdown(endDate, callback) {
+function createCountdown(endDate, callback) {
     let interval;
 
     function update() {
@@ -433,7 +433,7 @@ export function createCountdown(endDate, callback) {
 }
 
 // Format countdown time for display
-export function formatCountdown({ days, hours, minutes, seconds }) {
+function formatCountdown({ days, hours, minutes, seconds }) {
     const parts = [];
 
     if (days > 0) parts.push(`${days}d`);

@@ -1,0 +1,339 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng — DealXanh Seller</title>
+    <div th:replace="~{common/admin/css :: css}"></div>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root{--primary:#0d5c2e;--primary-dark:#08421f;--surface:#fff;--bg:#f5f6f8;--text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;--border:#e0e0e0;--border-light:#f0f0f0;--danger:#ef4444;--warning:#f59e0b;--success:#10b981;--info:#3b82f6;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-full:9999px;--font:'Inter',sans-serif}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{height:auto;min-height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padding-bottom:80px}
+.page-header{background:var(--primary);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.back-btn{color:#fff;display:flex;align-items:center}.back-btn svg{width:20px;height:20px}
+.header-title{font-size:18px;font-weight:700;flex:1}
+.content{padding:16px}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.kpi-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:14px}
+.kpi-val{font-size:24px;font-weight:800}
+.kpi-lbl{font-size:11px;color:var(--text-tertiary)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:14px;overflow-x:auto}
+.tab{padding:8px 14px;border-radius:var(--radius-full);font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface);cursor:pointer;white-space:nowrap;text-decoration:none;color:var(--text-primary)}
+.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tab-count{font-size:10px;opacity:.7;margin-left:4px}
+
+/* Orders */
+.order-list{display:flex;flex-direction:column;gap:10px}
+.order-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:14px;cursor:pointer;transition:box-shadow 0.15s}
+.order-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.order-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.order-id{font-size:13px;font-weight:700;color:var(--primary)}
+.order-time{font-size:11px;color:var(--text-tertiary)}
+.order-customer{font-size:14px;font-weight:600;margin-bottom:4px}
+.order-items{font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+.order-bottom{display:flex;align-items:center;justify-content:space-between}
+.order-amount{font-size:16px;font-weight:800}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:3px 10px;border-radius:var(--radius-full)}
+.badge-pending{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+.badge-confirmed{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}
+.badge-ready{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.badge-completed{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.badge-cancelled{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.action-btn{padding:6px 12px;border-radius:var(--radius-md);font-size:11px;font-weight:600;cursor:pointer;border:none;color:#fff}
+.action-confirm{background:var(--info)}
+.action-ready{background:var(--success)}
+.action-complete{background:var(--primary)}
+.action-cancel{background:var(--danger)}
+.action-payos{background:var(--accent);color:#000;font-weight:700}
+
+/* Search */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap input{width:100%;padding:10px 12px 10px 36px;border:1.5px solid var(--border-light);border-radius:var(--radius-md);font-size:14px;font-family:var(--font);background:var(--surface);transition:border-color 0.15s}
+.search-wrap input:focus{outline:none;border-color:var(--primary)}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-tertiary);pointer-events:none}
+.search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;background:var(--bg);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--text-tertiary);border:none;font-family:var(--font)}
+
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px}
+.page-link{padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-weight:600;text-decoration:none;color:var(--text-primary);background:var(--surface)}
+.page-info{padding:8px 14px;font-size:13px;color:var(--text-secondary)}
+
+.empty-state{text-align:center;padding:60px 20px}
+.empty-state svg{width:64px;height:64px;margin-bottom:16px;opacity:0.2}
+.empty-state h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.empty-state p{font-size:13px;color:var(--text-secondary)}
+
+/* Modal */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:420px;max-height:85vh;overflow-y:auto;padding:20px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:14px;text-align:center}
+.modal-close{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--text-secondary)}
+.detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:12px}
+.detail-lbl{color:var(--text-secondary)}.detail-val{font-weight:600;text-align:right}
+.detail-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-light)}
+.detail-item .qty{background:var(--bg);padding:2px 8px;border-radius:var(--radius-full);font-size:11px;font-weight:700;color:var(--primary)}
+.detail-item .name{flex:1;font-size:12px;font-weight:600}
+.detail-item .price{font-size:11px;color:var(--text-secondary)}
+.detail-item .sub{font-size:12px;font-weight:700;color:var(--primary)}
+.deadline-bar{padding:8px 12px;border-radius:var(--radius-sm);font-size:11px;font-weight:600;margin-top:10px;text-align:center}
+.deadline-bar.normal{background:#f0fdf4;color:#16a34a}
+.deadline-bar.urgent{background:#fffbeb;color:#d97706}
+.deadline-bar.overdue{background:#fef2f2;color:#dc2626}
+.btn-detail{font-size:10px;font-weight:600;padding:4px 8px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);font-family:var(--font)}
+.btn-detail:hover{background:var(--border-light)}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--border-light);padding:8px 0;z-index:20}
+.bottom-nav .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;text-decoration:none}
+.bottom-nav .nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
+.bottom-nav .nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
+.bottom-nav .nav-item.active svg,.bottom-nav .nav-item.active span{color:var(--primary)}
+    </style>
+</head>
+<body>
+<header class="page-header">
+    <a class="back-btn" href="/seller/dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></a>
+    <span class="header-title">Quản lý Đơn hàng</span>
+</header>
+<div class="content">
+    <!-- KPI -->
+    <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-val" style="color:var(--primary)" th:text="${#numbers.formatDecimal(todayRevenue, 0, 0) + 'đ'}">0đ</div><div class="kpi-lbl" th:text="'Doanh thu hôm nay · ' + ${todayOrders} + ' đơn'">0</div></div>
+        <div class="kpi-card"><div class="kpi-val" style="color:var(--warning)" th:text="${pendingCount}">0</div><div class="kpi-lbl">Đơn chờ xác nhận</div></div>
+    </div>
+
+    <!-- Search -->
+    <form id="searchForm" method="get" th:action="@{/seller/orders}" onsubmit="return false;">
+        <input type="hidden" name="status" th:value="${selectedStatus}">
+        <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" name="search" th:value="${searchQuery}" placeholder="Tìm mã đơn, tên khách, sản phẩm..." oninput="debounceSearch()">
+            <button type="button" class="search-clear" id="searchClear" onclick="clearSearch()" th:style="${searchQuery != null and !searchQuery.isEmpty()} ? 'display:flex' : 'display:none'">✕</button>
+        </div>
+    </form>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <a class="tab" th:classappend="${selectedStatus == null or selectedStatus == ''} ? 'active' : ''" th:href="@{/seller/orders(search=${searchQuery})}">Tất cả<span class="tab-count" th:text="${totalOrders}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'PENDING'} ? 'active' : ''" th:href="@{/seller/orders(status='PENDING', search=${searchQuery})}">Chờ XN<span class="tab-count" th:text="${pendingCount}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'CONFIRMED'} ? 'active' : ''" th:href="@{/seller/orders(status='CONFIRMED', search=${searchQuery})}">Đã XN<span class="tab-count" th:text="${confirmedCount}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'READY_FOR_PICKUP'} ? 'active' : ''" th:href="@{/seller/orders(status='READY_FOR_PICKUP', search=${searchQuery})}">Sẵn sàng<span class="tab-count" th:text="${readyCount}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'COMPLETED'} ? 'active' : ''" th:href="@{/seller/orders(status='COMPLETED', search=${searchQuery})}">Hoàn thành<span class="tab-count" th:text="${completedCount}">0</span></a>
+        <a class="tab" th:classappend="${selectedStatus == 'CANCELLED'} ? 'active' : ''" th:href="@{/seller/orders(status='CANCELLED', search=${searchQuery})}">Đã hủy<span class="tab-count" th:text="${cancelledCount}">0</span></a>
+    </div>
+
+    <!-- Orders -->
+    <div class="order-list" th:if="${orders != null and !orders.isEmpty()}">
+        <div class="order-card" th:each="order : ${orders}" th:onclick="|showOrderDetail(${order.orderId})|">
+            <div class="order-top">
+                <span class="order-id" th:text="|#${order.orderId}|">#123</span>
+                <span class="badge" th:classappend="${order.status == 'PENDING'} ? 'badge-pending' : (${order.status == 'CONFIRMED'} ? 'badge-confirmed' : (${order.status == 'READY_FOR_PICKUP'} ? 'badge-ready' : (${order.status == 'COMPLETED'} ? 'badge-completed' : 'badge-cancelled')))" th:text="${order.status == 'PENDING' ? 'Chờ XN' : order.status == 'CONFIRMED' ? 'Đã XN' : order.status == 'READY_FOR_PICKUP' ? 'Sẵn sàng' : order.status == 'COMPLETED' ? 'Hoàn thành' : 'Đã hủy'}">Status</span>
+                <span class="order-time" th:if="${order.createdAt != null}" th:text="${#temporals.format(order.createdAt, 'dd/MM HH:mm')}">Time</span>
+            </div>
+            <div class="order-customer" th:text="${order.user != null ? (order.user.fullName != null ? order.user.fullName : order.user.username) : 'N/A'}">Customer</div>
+            <div class="order-items" th:if="${order.orderItems != null and !order.orderItems.isEmpty()}">
+                <th:block th:each="item, iterStat : ${order.orderItems}">
+                    <span th:text="${item.product != null ? item.product.name : 'SP'}">Item</span><span th:text="' x' + ${item.quantity}">x1</span><span th:unless="${iterStat.last}">, </span>
+                </th:block>
+            </div>
+            <div class="order-bottom">
+                <span class="order-amount" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 0) + 'đ'}">0đ</span>
+                <div style="display:flex;gap:6px;">
+                    <button class="action-btn action-confirm" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CONFIRMED');event.stopPropagation()|">✓ Xác nhận</button>
+                    <!-- CONFIRMED + UNPAID: normal flow -> mark ready -->
+                    <button class="action-btn action-ready" th:if="${order.status == 'CONFIRMED' and order.paymentStatus != 'PAID'}" th:onclick="|updateStatus(${order.orderId}, 'READY_FOR_PICKUP');event.stopPropagation()|">📦 Sẵn sàng</button>
+                    <!-- CONFIRMED + PAID: prepaid -> skip READY, show Complete directly -->
+                    <button class="action-btn action-complete" th:if="${order.status == 'CONFIRMED' and order.paymentStatus == 'PAID'}" th:onclick="|updateStatus(${order.orderId}, 'COMPLETED');event.stopPropagation()|">✅ Hoàn thành</button>
+                    <!-- READY + (CASH or PAID): complete directly -->
+                    <button class="action-btn action-complete" th:if="${order.status == 'READY_FOR_PICKUP' and (order.paymentMethod == 'CASH' or order.paymentMethod == null or order.paymentStatus == 'PAID')}" th:onclick="|updateStatus(${order.orderId}, 'COMPLETED');event.stopPropagation()|">✅ Hoàn thành</button>
+                    <!-- READY + UNPAID + non-CASH: need PayOS QR -->
+                    <button class="action-btn action-payos" th:if="${order.status == 'READY_FOR_PICKUP' and order.paymentStatus != 'PAID' and order.paymentMethod != 'CASH' and order.paymentMethod != null}" th:onclick="|createPayOSQR(${order.orderId});event.stopPropagation()|">💳 QR PayOS</button>
+                    <button class="action-btn action-cancel" th:if="${order.status == 'PENDING'}" th:onclick="|updateStatus(${order.orderId}, 'CANCELLED');event.stopPropagation()|">✕ Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" th:if="${totalPages > 1}">
+        <a class="page-link" th:if="${hasPrevious}" th:href="@{/seller/orders(status=${selectedStatus}, search=${searchQuery}, page=${currentPage - 1})}">← Trước</a>
+        <span class="page-info" th:text="|${currentPage + 1} / ${totalPages}|">1/1</span>
+        <a class="page-link" th:if="${hasNext}" th:href="@{/seller/orders(status=${selectedStatus}, search=${searchQuery}, page=${currentPage + 1})}">Sau →</a>
+    </div>
+
+    <div class="empty-state" th:unless="${orders != null and !orders.isEmpty()}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+        <h3>Chưa có đơn hàng nào</h3>
+        <p>Đơn hàng sẽ xuất hiện khi khách đặt món</p>
+    </div>
+</div>
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('orders')}"></div>
+
+<!-- Order Detail Modal -->
+<div id="detailModal" class="modal-overlay" style="display:none;" onclick="closeDetailModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()" id="detailContent">
+        <div class="modal-title">📋 Chi tiết đơn hàng</div>
+        <div id="detailBody"><div style="text-align:center;padding:20px;color:var(--text-tertiary);">Đang tải...</div></div>
+        <button class="btn-detail" style="width:100%;margin-top:12px;padding:10px;font-size:12px;" onclick="closeDetailModal()">Đóng</button>
+    </div>
+</div>
+
+<!-- PayOS QR Payment Modal -->
+<div id="payosModal" class="modal-overlay" style="display:none;" onclick="closePayosModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()" style="text-align:center;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:16px;font-weight:700;">💳 Thanh toán PayOS</span>
+            <button onclick="closePayosModal()" style="width:28px;height:28px;border-radius:50%;border:none;background:var(--bg);cursor:pointer;font-size:16px;">✕</button>
+        </div>
+        <div id="payosBody"><div style="padding:20px;color:var(--text-tertiary);">Đang tạo mã...</div></div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:10px;">Khách quét mã này để thanh toán</div>
+    </div>
+</div>
+
+<script>
+let searchTimer;
+function debounceSearch() {
+    clearTimeout(searchTimer);
+    const input = document.querySelector('#searchForm input[name="search"]');
+    const clearBtn = document.getElementById('searchClear');
+    if (input.value.length > 0) {
+        clearBtn.style.display = 'flex';
+    } else {
+        clearBtn.style.display = 'none';
+    }
+    searchTimer = setTimeout(() => {
+        document.getElementById('searchForm').submit();
+    }, 300);
+}
+function clearSearch() {
+    document.querySelector('#searchForm input[name="search"]').value = '';
+    document.getElementById('searchClear').style.display = 'none';
+    document.getElementById('searchForm').submit();
+}
+
+async function updateStatus(orderId,newStatus){try{const r=await fetch(`/seller/orders/${orderId}/status?newStatus=${newStatus}`,{method:'POST'});if(!r.ok){alert('Lỗi server: '+r.status);return}const ct=r.headers.get('content-type')||'';if(!ct.includes('application/json')){alert('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại');return}const d=await r.json();if(d.success)location.reload();else alert(d.message)}catch(e){alert('Lỗi: '+e.message)}}
+
+async function showOrderDetail(orderId) {
+    document.getElementById('detailModal').style.display = 'flex';
+    document.getElementById('detailBody').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-tertiary);">Đang tải...</div>';
+    try {
+        const r = await fetch('/seller/api/orders/' + orderId + '/detail');
+        const d = await r.json();
+        if (!d.success) { document.getElementById('detailBody').innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);">'+d.message+'</div>'; return; }
+
+        const statusLabels = {PENDING:'⏳ Chờ xác nhận',CONFIRMED:'✅ Đã xác nhận',READY_FOR_PICKUP:'📦 Sẵn sàng pickup',COMPLETED:'🏁 Hoàn thành',CANCELLED:'❌ Đã hủy'};
+        const payLabels = {CASH:'💵 Tiền mặt',CREDIT_CARD:'💳 Thẻ tín dụng',BANK_TRANSFER:'🏦 Chuyển khoản',MOMO:'🟣 Momo',ZALOPAY:'🔵 ZaloPay'};
+
+        let itemsHtml = d.items && d.items.length > 0 ? d.items.map(i => `
+            <div class="detail-item">
+                <span class="qty">x${i.quantity}</span>
+                <span class="name">${i.productName}</span>
+                <span class="price">${fmt(i.unitPrice)} × ${i.quantity}</span>
+                <span class="sub">${fmt(i.subtotal)}</span>
+            </div>`).join('') : '<div style="font-size:11px;color:var(--text-tertiary);padding:8px 0;">Không có món nào</div>';
+
+        let deadlineHtml = d.deadlineInfo ? `<div class="deadline-bar ${d.deadlineWarning}">⏱ ${d.deadlineInfo}</div>` : '';
+
+        document.getElementById('detailBody').innerHTML = `
+            <div class="detail-row"><span class="detail-lbl">Mã đơn</span><span class="detail-val" style="color:var(--primary);">#${d.orderId}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Trạng thái</span><span class="detail-val">${statusLabels[d.status] || d.status}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Khách hàng</span><span class="detail-val">${d.customerName || '—'}</span></div>
+            <div class="detail-row" th:if="${d.customerPhone != null}"><span class="detail-lbl">SĐT</span><span class="detail-val">${d.customerPhone || '—'}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Ngày đặt</span><span class="detail-val">${d.createdAt ? new Date(d.createdAt).toLocaleString('vi-VN') : '—'}</span></div>
+            ${d.scheduledPickupTime ? `<div class="detail-row"><span class="detail-lbl">Pickup dự kiến</span><span class="detail-val">${new Date(d.scheduledPickupTime).toLocaleString('vi-VN')}</span></div>` : ''}
+            ${d.actualPickupTime ? `<div class="detail-row"><span class="detail-lbl">Pickup thực tế</span><span class="detail-val">${new Date(d.actualPickupTime).toLocaleString('vi-VN')}</span></div>` : ''}
+            <div class="detail-row"><span class="detail-lbl">Thanh toán</span><span class="detail-val">${payLabels[d.paymentMethod] || d.paymentMethod || '—'} · ${d.paymentStatus === 'PAID' ? 'Đã trả' : 'Chưa trả'}</span></div>
+            ${d.couponCode ? `<div class="detail-row"><span class="detail-lbl">Mã giảm giá</span><span class="detail-val" style="color:var(--danger);">${d.couponCode}</span></div>` : ''}
+            ${d.cancellationReason ? `<div class="detail-row"><span class="detail-lbl">Lý do hủy</span><span class="detail-val" style="color:var(--danger);">${d.cancellationReason}</span></div>` : ''}
+            <div style="font-size:13px;font-weight:700;margin-top:12px;margin-bottom:4px;">🛒 Món đã đặt</div>
+            ${itemsHtml}
+            <div class="detail-row" style="font-weight:700;font-size:14px;"><span>Tổng cộng</span><span class="detail-val" style="color:var(--primary);">${fmt(d.finalAmount)}</span></div>
+            ${d.totalAmount !== d.finalAmount ? `<div class="detail-row"><span class="detail-lbl">Giá gốc</span><span class="detail-val" style="text-decoration:line-through;color:var(--text-tertiary);">${fmt(d.totalAmount)}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Giảm giá</span><span class="detail-val" style="color:var(--danger);">-${fmt(d.discountAmount)}</span></div>` : ''}
+            ${deadlineHtml}
+            ${d.status === 'READY_FOR_PICKUP' && d.paymentStatus !== 'PAID' ? `<button onclick="closeDetailModal();createPayOSQR(${d.orderId})" style="width:100%;margin-top:10px;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-md);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-family);">💳 Tạo mã QR thanh toán — ${fmt(d.finalAmount)}</button>` : ''}
+        `;
+    } catch(e) {
+        document.getElementById('detailBody').innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);">Lỗi tải dữ liệu</div>';
+    }
+}
+
+async function createPayOSQR(orderId) {
+    document.getElementById('payosModal').style.display = 'flex';
+    document.getElementById('payosBody').innerHTML = '<div style="padding:20px;color:var(--text-tertiary);">Đang tạo mã thanh toán...</div>';
+    try {
+        const r = await fetch('/api/payment/create/' + orderId, { method: 'POST' });
+        const d = await r.json();
+        console.log('PayOS API response:', d);
+        if (d.success) {
+            // PayOS trả về VietQR string, phải generate QR ảnh từ chuỗi này
+            var qrCode = d.qrCode || '';
+            var qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrCode);
+            var checkoutUrl = d.checkoutUrl || '';
+            document.getElementById('payosBody').innerHTML =
+                '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Đơn #' + orderId + ' — ' + fmt(d.amount) + '</div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Mã QR hết hạn sau 30 phút</div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Ngân hàng: ' + (d.bin || '') + ' — ' + (d.accountNumber || '') + '</div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Chủ TK: ' + (d.accountName || '') + '</div>' +
+                '<div style="display:flex;justify-content:center;margin:8px 0;"><img src="' + qrSrc + '" alt="PayOS QR" style="width:200px;height:200px;border-radius:8px;display:block;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"></div>' +
+                '<div style="display:none;padding:20px;color:var(--danger);">Không tải được QR. Dùng link bên dưới.</div>' +
+                '<div style="margin-top:12px;padding:8px 12px;background:rgba(13,92,46,.08);border-radius:var(--radius-md);font-size:12px;color:var(--text-secondary);word-break:break-all;">' +
+                    '<span style="font-weight:600;color:var(--primary);">Link thanh toán:</span><br><a href="' + checkoutUrl + '" target="_blank" style="color:var(--info);">' + checkoutUrl + '</a>' +
+                '</div>' +
+                '<button onclick="checkPaymentStatus(' + orderId + ')" style="margin-top:10px;padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-family);">🔄 Kiểm tra trạng thái</button>' +
+            '<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">Tự động kiểm tra mỗi 5 giây</div>';
+            startPayosPolling(orderId);
+        } else {
+            document.getElementById('payosBody').innerHTML = `<div style="padding:20px;color:var(--danger);">${d.message}</div>`;
+        }
+    } catch(e) {
+        document.getElementById('payosBody').innerHTML = '<div style="padding:20px;color:var(--danger);">Lỗi kết nối PayOS</div>';
+    }
+}
+
+var payosPollers = {};
+async function checkPaymentStatus(orderId) {
+    try {
+        var btn = event ? event.target : null;
+        if (btn) { btn.disabled = true; btn.textContent = 'Đang kiểm tra...'; }
+        const r = await fetch('/api/payment/status/' + orderId);
+        const d = await r.json();
+        if (d.paidFromPayOS) {
+            if (payosPollers[orderId]) { clearInterval(payosPollers[orderId]); delete payosPollers[orderId]; }
+            alert(d.message || '✅ Thanh toán thành công!');
+            closePayosModal();
+            location.reload();
+        } else {
+            if (btn) { btn.disabled = false; btn.textContent = '🔄 Kiểm tra trạng thái'; }
+        }
+    } catch(e) {
+        if (btn) { btn.disabled = false; btn.textContent = '🔄 Kiểm tra trạng thái'; }
+    }
+}
+
+// Start auto-polling after QR is shown
+function startPayosPolling(orderId) {
+    if (payosPollers[orderId]) clearInterval(payosPollers[orderId]);
+    payosPollers[orderId] = setInterval(function() { checkPaymentStatus(orderId); }, 5000);
+}
+
+function closePayosModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    // Stop all polling
+    Object.keys(payosPollers).forEach(function(k) { clearInterval(payosPollers[k]); });
+    payosPollers = {};
+    document.getElementById('payosModal').style.display = 'none';
+}
+
+function closeDetailModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('detailModal').style.display = 'none';
+}
+
+function fmt(n) { return (n||0).toLocaleString('vi-VN') + 'đ'; }
+</script>
+</body>
+</html>

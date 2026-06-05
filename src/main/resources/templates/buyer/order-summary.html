@@ -1,385 +1,376 @@
-<!DOCTYPE html>
-<html lang="vi">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Xác nhận đơn hàng — DealXanh</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{
-  --primary:#0d5c2e;--primary-dark:#08421f;
-  --accent:#d4af37;
-  --surface:#fff;--background:#f5f6f8;
-  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
-  --border:#e0e0e0;--border-light:#f0f0f0;
-  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.11);
-  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
-  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
-  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
-}
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html{-webkit-font-smoothing:antialiased}
-body{font-family:var(--font);background:var(--background);min-height:100vh;color:var(--text-primary)}
-button{cursor:pointer;border:none;background:none;font-family:inherit}
-img{display:block;max-width:100%}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận đơn hàng — DealXanh</title>
+    <meta name="description" content="Xác nhận đơn hàng DealXanh">
 
-/* HEADER */
-.page-header{
-  position:sticky;top:0;z-index:50;
-  background:var(--surface);border-bottom:1px solid var(--border-light);
-  box-shadow:var(--shadow-sm);padding:14px 16px;
-  display:flex;align-items:center;gap:12px;
-}
-.back-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-md);color:var(--text-primary);transition:background var(--tr)}
-.back-btn:hover{background:var(--background)}
-.back-btn svg{width:20px;height:20px}
-.page-title{font-size:17px;font-weight:700;flex:1}
+    <div th:replace="~{common/buyer/css :: css}"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
 
-/* PROGRESS STEPPER */
-.stepper{
-  display:flex;align-items:center;
-  padding:16px 20px;background:var(--surface);
-  border-bottom:1px solid var(--border-light);
-  gap:0;
-}
-.step-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
-.step-circle{
-  width:28px;height:28px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:12px;font-weight:700;
-  transition:all var(--tr);
-}
-.step-circle.done{background:var(--primary);color:#fff}
-.step-circle.active{background:var(--primary);color:#fff;box-shadow:0 0 0 4px rgba(13,92,46,.15)}
-.step-circle.pending{background:var(--background);border:2px solid var(--border);color:var(--text-tertiary)}
-.step-label{font-size:10px;font-weight:600;color:var(--text-tertiary);white-space:nowrap}
-.step-label.active{color:var(--primary)}
-.step-line{flex:1;height:2px;background:var(--border-light);margin:0 -2px;position:relative;top:-8px;z-index:0}
-.step-line.done{background:var(--primary)}
+    <style>
+html{height:auto;min-height:100%}
+body{padding-bottom:120px;background:var(--background)}
 
-/* BODY */
-.order-body{padding:14px 14px 140px;display:flex;flex-direction:column;gap:12px}
+.back-bar{padding:12px 16px;display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.back-bar a{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none}
+.back-bar svg{width:18px;height:18px}
+.back-bar__title{flex:1;font-size:17px;font-weight:700;text-align:center;margin-right:38px}
 
-/* Cards */
-.section-card{
-  background:var(--surface);border-radius:var(--radius-lg);
-  border:1px solid var(--border-light);overflow:hidden;
-  box-shadow:var(--shadow-sm);
-}
-.card-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 16px;border-bottom:1px solid var(--border-light);
-  background:rgba(13,92,46,.02);
-}
-.card-header-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px}
-.card-header-title svg{width:15px;height:15px;color:var(--primary)}
-.card-edit{font-size:12px;font-weight:600;color:var(--primary);padding:4px 8px;border-radius:var(--radius-sm);transition:background var(--tr)}
-.card-edit:hover{background:var(--background)}
+/* ===== STEPPER ===== */
+.stepper{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 12px;position:relative;background:var(--surface);border-bottom:1px solid var(--border-light)}
+.stepper__line{position:absolute;top:28px;left:calc(12% + 16px);right:calc(12% + 16px);height:2px;background:var(--border);z-index:0}
+.step{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:1;flex:0 0 auto;min-width:56px}
+.step__circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--border);color:var(--text-tertiary);transition:all .25s}
+.step__circle--done{background:var(--primary);color:#fff}
+.step__circle--done::after{content:'\2713';font-size:14px}
+.step__circle--active{background:var(--surface);border:2px solid var(--primary);color:var(--primary);box-shadow:0 0 0 4px rgba(13,92,46,.1)}
+.step__label{font-size:10px;font-weight:600;color:var(--text-tertiary);text-align:center;white-space:nowrap}
+.step--active .step__label{color:var(--primary)}
+.step--done .step__label{color:var(--primary)}
 
-/* Store group in summary */
-.summary-store{
-  padding:12px 16px;
-  border-bottom:1px solid var(--border-light);
-  display:flex;align-items:center;gap:10px;
-}
-.summary-store:last-child{border-bottom:none}
-.ss-logo{width:32px;height:32px;border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0}
-.ss-logo img{width:100%;height:100%;object-fit:cover}
-.ss-name{font-size:13px;font-weight:700;flex:1}
-.ss-items{font-size:11px;color:var(--text-tertiary)}
+/* ===== ORDER BODY ===== */
+.order-body{padding:12px 16px 140px;display:flex;flex-direction:column;gap:12px}
 
-/* Order items */
-.order-items{padding:0 16px}
-.oi-row{
-  display:flex;align-items:center;gap:12px;
-  padding:12px 0;border-bottom:1px solid var(--border-light);
-}
-.oi-row:last-child{border-bottom:none}
-.oi-img{width:56px;height:56px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0;position:relative;background:var(--border-light)}
-.oi-img img{width:100%;height:100%;object-fit:cover}
-.oi-qty-badge{
-  position:absolute;top:-6px;right:-6px;
-  width:18px;height:18px;background:var(--primary);
-  border-radius:50%;color:#fff;font-size:10px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  border:1.5px solid var(--surface);
-}
-.oi-body{flex:1;min-width:0}
-.oi-store{font-size:10px;color:var(--text-tertiary);font-weight:500}
-.oi-name{font-size:13px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.oi-slot{
-  display:inline-flex;align-items:center;gap:4px;
-  font-size:10px;font-weight:600;color:var(--text-secondary);
-  padding:2px 7px;background:var(--background);border-radius:var(--radius-full);
-}
-.oi-slot svg{width:9px;height:9px}
-.oi-price{font-size:14px;font-weight:800;color:var(--primary);flex-shrink:0}
+/* Store group card */
+.store-group{background:var(--surface);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);border:1px solid var(--border-light)}
+.store-group__header{padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border-light);background:var(--background)}
+.store-group__header img{width:26px;height:26px;border-radius:50%;object-fit:cover;background:var(--surface);flex-shrink:0}
+.store-group__header .sg-name{font-size:13px;font-weight:700;flex:1}
+.store-group__header .sg-addr{font-size:10px;color:var(--text-secondary);display:flex;align-items:center;gap:2px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.store-group__header .sg-addr svg{width:11px;height:11px;flex-shrink:0}
 
-/* Pickup location */
-.pickup-detail{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
-.pickup-row{display:flex;align-items:flex-start;gap:10px}
-.pickup-icon{width:32px;height:32px;border-radius:var(--radius-sm);background:var(--background);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.pickup-icon svg{width:15px;height:15px;color:var(--primary)}
-.pickup-label{font-size:11px;color:var(--text-tertiary);font-weight:500;margin-bottom:2px}
-.pickup-value{font-size:13px;font-weight:600;color:var(--text-primary)}
-.pickup-map-preview{
-  height:100px;border-radius:var(--radius-md);
-  background:linear-gradient(135deg,#e8f5e9,#c8e6c9);
-  display:flex;align-items:center;justify-content:center;
-  border:1px solid rgba(13,92,46,.1);cursor:pointer;
-  position:relative;overflow:hidden;
-}
-.map-grid{
-  position:absolute;inset:0;
-  background-image:linear-gradient(rgba(13,92,46,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(13,92,46,.06) 1px,transparent 1px);
-  background-size:20px 20px;
-}
-.map-pin-dot{width:32px;height:32px;background:var(--primary);border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(13,92,46,.3);position:relative}
-.map-pin-dot svg{transform:rotate(45deg);color:#fff;width:14px;height:14px}
-.map-open-btn{position:absolute;top:8px;right:8px;background:var(--surface);padding:4px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:600;color:var(--primary);border:1px solid rgba(13,92,46,.15)}
+/* Item row */
+.os-item{display:flex;gap:10px;align-items:center;padding:12px 16px}
+.os-item+.os-item{border-top:1px solid var(--border-light)}
+.os-item__img{width:52px;height:52px;border-radius:var(--radius-md);object-fit:cover;flex-shrink:0;background:var(--background)}
+.os-item__info{flex:1;min-width:0}
+.os-item__name{font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.os-item__meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.os-item__qty{display:inline-flex;align-items:center;background:var(--background);padding:2px 8px;border-radius:var(--radius-full);font-size:11px;font-weight:600;color:var(--text-secondary)}
+.os-item__pickup{font-size:11px;color:var(--text-tertiary);display:flex;align-items:center;gap:3px}
+.os-item__pickup svg{width:11px;height:11px}
+.os-deal-badge{display:inline-block;padding:1px 6px;border-radius:var(--radius-full);font-size:9px;font-weight:700;margin-top:2px}
+.dt-FLASH_SALE{background:#fef3c7;color:#d97706}
+.dt-VOUCHER{background:#dbeafe;color:#2563eb}
+.dt-COMBO{background:#fce7f3;color:#be185d}
+.dt-SEASONAL{background:#e0e7ff;color:#5b21b6}
+.os-item__price{text-align:right;flex-shrink:0}
+.os-item__sale{font-size:15px;font-weight:700;color:var(--primary);display:block}
+.os-item__original{font-size:10px;color:var(--text-tertiary);text-decoration:line-through;display:block;margin-top:1px}
 
-/* Price breakdown */
-.price-rows{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
-.pr-row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
-.pr-key{color:var(--text-secondary)}
-.pr-val{font-weight:500}
-.pr-val.green{color:var(--success)}
-.pr-val.red{color:var(--danger)}
-.pr-divider{height:1px;background:var(--border-light);margin:4px 0}
-.pr-total{display:flex;justify-content:space-between;align-items:baseline}
-.pr-total-label{font-size:15px;font-weight:700}
-.pr-total-val{font-size:22px;font-weight:800;color:var(--primary)}
-.pr-savings-note{font-size:12px;color:var(--success);font-weight:600;text-align:right;margin-top:3px}
+/* Store notes */
+.store-group__notes{padding:8px 16px 14px;border-top:1px solid var(--border-light)}
+.os-notes{width:100%;border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;font-size:12px;font-family:var(--font-family);resize:none;background:var(--background);color:var(--text-primary);box-sizing:border-box;outline:none;transition:border-color .2s}
+.os-notes:focus{border-color:var(--primary)}
 
-/* Note input */
-.note-area{
-  width:100%;padding:12px 14px;
-  border:1.5px solid var(--border);border-radius:var(--radius-md);
-  font-size:14px;font-family:var(--font);color:var(--text-primary);
-  resize:none;outline:none;transition:border-color var(--tr);
-  background:var(--surface);min-height:80px;
-}
-.note-area:focus{border-color:var(--primary)}
-.note-section{padding:14px 16px}
+/* Price breakdown card */
+.price-card{background:var(--surface);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-sm);border:1px solid var(--border-light)}
+.price-card__title{font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text-primary)}
+.price-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;color:var(--text-secondary)}
+.price-row--strike{color:var(--text-tertiary)}
+.price-row--strike .price-row__val{text-decoration:line-through}
+.price-row--discount{color:var(--status-success);font-weight:600}
+.price-row--divider{border-top:1px dashed var(--border);margin-top:8px;padding-top:12px}
+.price-row--total{font-size:16px;font-weight:800;color:var(--primary)}
+.price-row--total .price-row__val{font-size:20px}
 
-/* Confirm footer */
-.confirm-footer{
-  position:fixed;bottom:0;left:0;right:0;z-index:100;
-  background:var(--surface);border-top:1px solid var(--border-light);
-  box-shadow:0 -4px 20px rgba(0,0,0,.1);
-  padding:14px 16px max(16px,env(safe-area-inset-bottom));
-}
-.confirm-total-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
-.confirm-total-label{font-size:14px;color:var(--text-secondary);font-weight:500}
-.confirm-total-val{font-size:20px;font-weight:800;color:var(--primary)}
-.btn-confirm{
-  width:100%;padding:15px;
-  background:var(--primary);color:#fff;
-  font-size:16px;font-weight:800;border-radius:var(--radius-md);
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:all var(--tr);box-shadow:0 4px 16px rgba(13,92,46,.35);
-}
-.btn-confirm:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 24px rgba(13,92,46,.45)}
-.btn-confirm svg{width:18px;height:18px}
+/* ===== STICKY BOTTOM ===== */
+.sticky-bottom{position:fixed;bottom:72px;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:14px 16px 20px;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+.sticky-bottom__left{display:flex;flex-direction:column}
+.sticky-bottom__label{font-size:11px;color:var(--text-secondary)}
+.sticky-bottom__total{font-size:20px;font-weight:800;color:var(--primary)}
+.btn-submit{padding:12px 24px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-family);white-space:nowrap;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-submit:hover{background:var(--primary-dark)}
+.btn-submit:active{transform:scale(.97)}
+.btn-submit svg{width:16px;height:16px}
 
-/* Timer banner */
-.timer-banner{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 14px;
-  background:rgba(239,68,68,.06);
-  border:1px solid rgba(239,68,68,.18);
-  border-radius:var(--radius-md);
-}
-.timer-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#991b1b}
-.timer-left svg{width:15px;height:15px}
-.timer-clock{font-size:20px;font-weight:800;color:var(--danger);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
-</style>
+/* Voucher modal */
+.vm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.vm-overlay.show{display:flex}
+.vm-panel{background:var(--surface);border-radius:var(--radius-xl) var(--radius-xl) 0 0;width:100%;max-width:500px;max-height:70vh;display:flex;flex-direction:column;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.vm-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border-light)}
+.vm-title{font-size:15px;font-weight:700}
+.vm-close{width:28px;height:28px;border-radius:50%;border:none;background:var(--background);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font-family)}
+.vm-list{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.vm-voucher{padding:12px;border:1px solid var(--border-light);border-radius:var(--radius-lg);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px}
+.vm-voucher:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(212,175,55,.15)}
+.vm-voucher--disabled{opacity:.45;pointer-events:none}
+.vm-voucher__left{width:42px;height:42px;border-radius:var(--radius-md);background:rgba(212,175,55,.12);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.vm-voucher__info{flex:1;min-width:0}
+.vm-voucher__code{font-size:14px;font-weight:700;color:var(--text-primary)}
+.vm-voucher__name{font-size:11px;color:var(--text-secondary);margin-top:1px}
+.vm-voucher__meta{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.vm-voucher__chip{font-size:10px;font-weight:600;padding:2px 8px;border-radius:var(--radius-full)}
+.vm-chip-discount{background:rgba(220,38,38,.08);color:#dc2626}
+.vm-chip-min{background:rgba(245,158,11,.08);color:#b45309}
+.vm-chip-expiry{background:rgba(107,114,128,.1);color:#6b7280}
+
+.voucher-select-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(212,175,55,.08);border:1px dashed var(--accent);border-radius:var(--radius-md);font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;font-family:var(--font-family);justify-content:center;width:100%;transition:all .15s}
+.voucher-select-btn:hover{background:rgba(212,175,55,.15);border-style:solid}
+
+/* Empty / error */
+.os-empty{text-align:center;padding:60px 24px;color:var(--text-secondary);font-size:14px}
+.os-empty p{margin-bottom:12px}
+.os-empty a{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:var(--primary);color:#fff;border-radius:var(--radius-md);font-size:13px;font-weight:600;text-decoration:none}
+    </style>
 </head>
 <body>
 
-<!-- Header -->
-<header class="page-header">
-  <button class="back-btn" onclick="history.back()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-  <span class="page-title">Xác nhận đơn hàng</span>
-</header>
+<!-- Desktop Top Navigation Bar -->
+<div th:replace="~{common/buyer/top-nav :: topNav}"></div>
 
-<!-- Stepper -->
-<div class="stepper">
-  <div class="step-item">
-    <div class="step-circle done"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-    <span class="step-label">Giỏ hàng</span>
-  </div>
-  <div class="step-line done"></div>
-  <div class="step-item">
-    <div class="step-circle active">2</div>
-    <span class="step-label active">Xác nhận</span>
-  </div>
-  <div class="step-line"></div>
-  <div class="step-item">
-    <div class="step-circle pending">3</div>
-    <span class="step-label">Thanh toán</span>
-  </div>
-  <div class="step-line"></div>
-  <div class="step-item">
-    <div class="step-circle pending">4</div>
-    <span class="step-label">Hoàn tất</span>
-  </div>
+<!-- Header: Back + Title -->
+<div class="back-bar">
+    <a href="javascript:history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Quay lại
+    </a>
+    <span class="back-bar__title">Xác nhận đơn hàng</span>
 </div>
 
-<!-- Body -->
+<!-- Stepper: Step 2 active -->
+<div class="stepper">
+    <div class="stepper__line"></div>
+    <div class="step step--done">
+        <div class="step__circle step__circle--done"></div>
+        <div class="step__label">Giỏ hàng</div>
+    </div>
+    <div class="step step--active">
+        <div class="step__circle step__circle--active">2</div>
+        <div class="step__label">Xác nhận</div>
+    </div>
+    <div class="step">
+        <div class="step__circle">3</div>
+        <div class="step__label">Thanh toán</div>
+    </div>
+    <div class="step">
+        <div class="step__circle">4</div>
+        <div class="step__label">Hoàn tất</div>
+    </div>
+</div>
+
+<!-- Order body -->
 <div class="order-body">
 
-  <!-- Slot reservation countdown -->
-  <div class="timer-banner">
-    <div class="timer-left">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      Giữ slot trong
-    </div>
-    <span class="timer-clock" id="countdown">09:58</span>
-  </div>
-
-  <!-- Items summary -->
-  <div class="section-card">
-    <div class="card-header">
-      <span class="card-header-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>Sản phẩm đặt mua (4 món)</span>
-      <button class="card-edit" onclick="history.back()">Sửa →</button>
-    </div>
-    <div class="order-items">
-      <div class="oi-row">
-        <div class="oi-img">
-          <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=120&q=70" alt="">
-          <span class="oi-qty-badge">1</span>
+    <!-- Empty state -->
+    <th:block th:if="${storeGroups == null or storeGroups.isEmpty()}">
+        <div class="os-empty">
+            <p>Không có sản phẩm nào trong đơn hàng.</p>
+            <a href="/">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                Săn deal ngay
+            </a>
         </div>
-        <div class="oi-body">
-          <div class="oi-store">Bánh mì Hòa Mai</div>
-          <div class="oi-name">Bánh mì pate nóng hổi</div>
-          <span class="oi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>17:00–18:00</span>
-        </div>
-        <span class="oi-price">12.500đ</span>
-      </div>
-      <div class="oi-row">
-        <div class="oi-img">
-          <img src="https://images.unsplash.com/photo-1591814468924-caf88d1232e1?w=120&q=70" alt="">
-          <span class="oi-qty-badge">2</span>
-        </div>
-        <div class="oi-body">
-          <div class="oi-store">Bánh mì Hòa Mai</div>
-          <div class="oi-name">Bánh mì thịt nguội đặc biệt</div>
-          <span class="oi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>18:00–19:00</span>
-        </div>
-        <span class="oi-price">30.000đ</span>
-      </div>
-      <div class="oi-row">
-        <div class="oi-img">
-          <img src="https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=120&q=70" alt="">
-          <span class="oi-qty-badge">1</span>
-        </div>
-        <div class="oi-body">
-          <div class="oi-store">Mixue Hòa Lạc</div>
-          <div class="oi-name">Trà sữa trân châu đường đen</div>
-          <span class="oi-slot" style="color:var(--danger);background:rgba(239,68,68,.08)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>⚡ Còn 28 phút!</span>
-        </div>
-        <span class="oi-price">15.000đ</span>
-      </div>
-    </div>
-  </div>
+    </th:block>
 
-  <!-- Pickup per store -->
-  <div class="section-card">
-    <div class="card-header">
-      <span class="card-header-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Điểm nhận hàng</span>
+    <!-- Items grouped by store -->
+    <th:block th:if="${storeGroups != null and !storeGroups.isEmpty()}">
+        <th:block th:each="entry : ${storeGroups}">
+            <th:block th:with="storeId=${entry.key}, items=${entry.value}, store=${storeInfo != null ? storeInfo[entry.key] : null}">
+                <div class="store-group">
+                    <!-- Store header -->
+                    <div class="store-group__header">
+                        <img th:src="${store != null and store.logoUrl != null ? store.logoUrl : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
+                        <span class="sg-name" th:text="${store != null ? store.storeName : 'Cửa hàng'}">Cửa hàng</span>
+                        <span class="sg-addr" th:if="${store != null and store.address != null}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <span th:text="${store.address}">Address</span>
+                        </span>
+                        <!-- Distance warning if store > 10km -->
+                        <div class="distance-warning" th:if="${store != null and store.distanceKm != null and store.distanceKm > 10}"
+                             style="margin-top:6px;padding:8px 10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:6px;font-size:11px;color:#92400e;display:flex;align-items:center;gap:6px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span>Luu y: Cua hang cach ban khoang <strong th:text="|${store.distanceKm} km|">10 km</strong>. Quang duong xa co the anh huong den chat luong san pham trong qua trinh van chuyen. Vui long can nhac truoc khi dat hang.</span>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <th:block th:each="item : ${items}">
+                        <div class="os-item">
+                            <img class="os-item__img" th:src="${item.productImage != null and !item.productImage.toString().isEmpty() ? item.productImage : '/img/default-banner.svg'}" th:alt="${item.productName}" onerror="this.src='/img/default-banner.svg'">
+                            <div class="os-item__info">
+                                <div class="os-item__name" th:text="${item.productName}">Product Name</div>
+                                <div class="os-item__deal" th:if="${item.dealType != null and !item.dealType.toString().isEmpty() and item.applyMethod == 'AUTO_APPLY'}">
+                                    <span class="os-deal-badge" th:classappend="|dt-${item.dealType}|" th:text="${item.dealName != null and !item.dealName.toString().isEmpty() ? item.dealName : item.dealType}">Deal</span>
+                                </div>
+                                <div class="os-item__meta">
+                                    <span class="os-item__qty" th:text="|x${item.quantity != null ? item.quantity : 1}|">x1</span>
+                                    <span class="os-item__pickup">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        Nhận tại cửa hàng
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="os-item__price">
+                                <span class="os-item__sale" th:text="|${#numbers.formatDecimal(item.salePrice != null ? item.salePrice : 0, 0, 0)}đ|">50,000đ</span>
+                            </div>
+                        </div>
+                    </th:block>
+
+                    <!-- Store notes -->
+                    <div class="store-group__notes">
+                        <textarea class="os-notes" rows="2" th:attr="placeholder=${store != null ? 'Ghi chú cho ' + store.storeName + ' (không bắt buộc)...' : 'Ghi chú (không bắt buộc)...'}"></textarea>
+                    </div>
+                </div>
+            </th:block>
+        </th:block>
+    </th:block>
+
+    <!-- Voucher code -->
+    <div class="price-card" th:if="${storeGroups != null and !storeGroups.isEmpty()}" id="voucherCard">
+        <div class="price-card__title" style="display:flex;align-items:center;gap:6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>
+            Mã giảm giá
+        </div>
+        <!-- Applied voucher -->
+        <div id="voucherApplied" th:if="${appliedVoucher != null}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius-md)">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:18px;">🎫</span>
+                <div>
+                    <div style="font-size:13px;font-weight:700;color:var(--status-success)" th:text="${appliedVoucher.code}">CODE</div>
+                    <div style="font-size:11px;color:var(--text-secondary)" th:text="${appliedVoucher.dealName}">Tên voucher</div>
+                </div>
+            </div>
+            <button onclick="removeVoucher()" style="padding:4px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:600;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.06);color:#dc2626;cursor:pointer;font-family:var(--font-family)">Xoá</button>
+        </div>
+        <!-- Select voucher button -->
+        <div id="voucherSelect" th:if="${appliedVoucher == null}">
+            <button class="voucher-select-btn" onclick="openVoucherModal()">🎫 Chọn mã giảm giá</button>
+        </div>
+        <div id="voucherMsg" style="font-size:11px;margin-top:6px;display:none;"></div>
     </div>
 
-    <!-- Store 1 -->
-    <div class="pickup-detail" style="border-bottom:1px solid var(--border-light)">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=48&q=70" style="width:28px;height:28px;border-radius:6px;object-fit:cover" alt="">
-        <span style="font-size:13px;font-weight:700">Bánh mì Hòa Mai</span>
-      </div>
-      <div class="pickup-map-preview" onclick="openMap()">
-        <div class="map-grid"></div>
-        <div class="map-pin-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-        <span class="map-open-btn">Mở bản đồ →</span>
-      </div>
-      <div class="pickup-row">
-        <div class="pickup-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-        <div><div class="pickup-label">Địa chỉ</div><div class="pickup-value">123 Đường Thống Nhất, Hòa Lạc</div></div>
-      </div>
-      <div class="pickup-row">
-        <div class="pickup-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <div><div class="pickup-label">Khung giờ pickup</div><div class="pickup-value">2 khung: 17:00–18:00 và 18:00–19:00</div></div>
-      </div>
+<!-- Voucher Modal -->
+<div class="vm-overlay" id="voucherModal" onclick="closeVoucherModal(event)">
+    <div class="vm-panel" onclick="event.stopPropagation()">
+        <div class="vm-header">
+            <span class="vm-title">🎫 Chọn mã giảm giá</span>
+            <button class="vm-close" onclick="closeVoucherModal()">✕</button>
+        </div>
+        <div class="vm-list" id="voucherList">
+            <div style="text-align:center;padding:30px;color:var(--text-tertiary);">Đang tải...</div>
+        </div>
     </div>
+</div>
 
-    <!-- Store 2 -->
-    <div class="pickup-detail">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <img src="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=48&q=70" style="width:28px;height:28px;border-radius:6px;object-fit:cover" alt="">
-        <span style="font-size:13px;font-weight:700">Mixue Hòa Lạc</span>
-      </div>
-      <div class="pickup-row">
-        <div class="pickup-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-        <div><div class="pickup-label">Địa chỉ</div><div class="pickup-value">Big C Hòa Lạc, Tầng 1</div></div>
-      </div>
-      <div class="pickup-row">
-        <div class="pickup-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <div><div class="pickup-label">Khung giờ</div><div class="pickup-value" style="color:var(--danger)">⚡ Còn ~28 phút · Thanh toán ngay!</div></div>
-      </div>
+    <!-- Price breakdown -->
+    <div class="price-card" th:if="${storeGroups != null and !storeGroups.isEmpty()}">
+        <div class="price-card__title">Chi tiết thanh toán</div>
+        <div class="price-row price-row--strike" th:if="${originalTotal != null and originalTotal > subtotal}">
+            <span>Tổng giá gốc</span>
+            <span class="price-row__val" th:text="|${#numbers.formatDecimal(originalTotal, 0, 0)}đ|">0đ</span>
+        </div>
+        <div class="price-row price-row--discount" th:if="${totalDiscount > 0}">
+            <span>Giảm giá Deal</span>
+            <span class="price-row__val" th:text="|-${#numbers.formatDecimal(totalDiscount, 0, 0)}đ|">-0đ</span>
+        </div>
+        <div class="price-row price-row--discount" th:if="${voucherDiscount > 0}">
+            <span th:text="|Voucher ${appliedVoucher != null ? appliedVoucher.code : ''}|">Voucher</span>
+            <span class="price-row__val" th:text="|-${#numbers.formatDecimal(voucherDiscount, 0, 0)}đ|">-0đ</span>
+        </div>
+        <div class="price-row price-row--divider price-row--total">
+            <span>Tổng thanh toán</span>
+            <span class="price-row__val" th:text="|${#numbers.formatDecimal(total, 0, 0)}đ|">0đ</span>
+        </div>
     </div>
-  </div>
-
-  <!-- Price breakdown -->
-  <div class="section-card">
-    <div class="card-header">
-      <span class="card-header-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Chi tiết thanh toán</span>
-    </div>
-    <div class="price-rows">
-      <div class="pr-row"><span class="pr-key">Giá gốc (4 món)</span><span class="pr-val" style="text-decoration:line-through;color:var(--text-tertiary)">128.000đ</span></div>
-      <div class="pr-row"><span class="pr-key">Giảm giá deal</span><span class="pr-val green">-70.500đ</span></div>
-      <div class="pr-row"><span class="pr-key">Mã DEAL20</span><span class="pr-val green">-10.000đ</span></div>
-      <div class="pr-divider"></div>
-      <div class="pr-total">
-        <span class="pr-total-label">Tổng thanh toán</span>
-        <span class="pr-total-val">47.500đ</span>
-      </div>
-      <div class="pr-savings-note">🎉 Bạn tiết kiệm được 80.500đ (63%) cho đơn này!</div>
-    </div>
-  </div>
-
-  <!-- Note -->
-  <div class="section-card">
-    <div class="card-header">
-      <span class="card-header-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Ghi chú cho cửa hàng</span>
-    </div>
-    <div class="note-section">
-      <textarea class="note-area" placeholder="VD: Không cần túi, lấy thêm tương ớt, đến cổng bên phải..."></textarea>
-    </div>
-  </div>
 
 </div>
 
-<!-- Confirm Footer -->
-<div class="confirm-footer">
-  <div class="confirm-total-row">
-    <span class="confirm-total-label">Tổng thanh toán</span>
-    <span class="confirm-total-val">47.500đ</span>
-  </div>
-  <button class="btn-confirm" onclick="window.location.href='payment.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-    Chọn phương thức thanh toán
-  </button>
+<!-- Sticky bottom bar -->
+<div class="sticky-bottom" th:if="${storeGroups != null and !storeGroups.isEmpty()}">
+    <div class="sticky-bottom__left">
+        <span class="sticky-bottom__label" th:text="|${itemCount} sản phẩm|">0 sản phẩm</span>
+        <span class="sticky-bottom__total" th:text="|${#numbers.formatDecimal(total, 0, 0)}đ|">0đ</span>
+    </div>
+    <form th:action="@{/buyer/payment}" method="get" style="margin:0">
+        <button type="submit" class="btn-submit">
+            Chọn phương thức thanh toán
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+    </form>
 </div>
+
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
 
 <script>
-// Countdown 10 minutes
-let secs = 598;
-const el = document.getElementById('countdown');
-const iv = setInterval(() => {
-  if (--secs <= 0) { clearInterval(iv); el.textContent = '00:00'; el.style.color = '#ccc'; return; }
-  if (secs <= 60) el.style.color = '#ef4444';
-  el.textContent = String(Math.floor(secs/60)).padStart(2,'0') + ':' + String(secs%60).padStart(2,'0');
-}, 1000);
-function openMap(){ window.location.href='deal-map.html'; }
+var availableVouchers = [];
+
+function openVoucherModal() {
+    var modal = document.getElementById('voucherModal');
+    modal.classList.add('show');
+    if (availableVouchers.length === 0) {
+        fetch('/api/vouchers/available')
+            .then(function(r){return r.json()})
+            .then(function(d){
+                availableVouchers = d.vouchers || [];
+                renderVoucherList();
+            });
+    } else {
+        renderVoucherList();
+    }
+}
+
+function closeVoucherModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('voucherModal').classList.remove('show');
+}
+
+function renderVoucherList() {
+    var list = document.getElementById('voucherList');
+    if (!availableVouchers.length) {
+        list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-tertiary);">Không có mã giảm giá nào khả dụng</div>';
+        return;
+    }
+    var html = '';
+    availableVouchers.forEach(function(v){
+        var discountText = v.discountType === 'PERCENT' ? v.discountValue + '%' : Number(v.discountValue).toLocaleString('vi-VN') + 'đ';
+        var maxText = v.discountType === 'PERCENT' && v.maxDiscountAmount ? ' (tối đa ' + Number(v.maxDiscountAmount).toLocaleString('vi-VN') + 'đ)' : '';
+        var minText = v.minOrderAmount ? 'Đơn tối thiểu ' + Number(v.minOrderAmount).toLocaleString('vi-VN') + 'đ' : 'Không giới hạn';
+        var expiryText = v.endTime ? 'HSD: ' + new Date(v.endTime).toLocaleDateString('vi-VN') : '';
+        html += '<div class="vm-voucher" onclick="selectVoucher(\'' + (v.code || '').replace(/'/g, "\\'") + '\')">'
+            + '<div class="vm-voucher__left">🎫</div>'
+            + '<div class="vm-voucher__info">'
+            + '<div class="vm-voucher__code">' + esc(v.code) + '</div>'
+            + '<div class="vm-voucher__name">' + esc(v.dealName) + ' · ' + esc(v.storeName) + '</div>'
+            + '<div class="vm-voucher__meta">'
+            + '<span class="vm-voucher__chip vm-chip-discount">Giảm ' + discountText + maxText + '</span>'
+            + '<span class="vm-voucher__chip vm-chip-min">' + minText + '</span>'
+            + (expiryText ? '<span class="vm-voucher__chip vm-chip-expiry">' + expiryText + '</span>' : '')
+            + '</div></div></div>';
+    });
+    list.innerHTML = html;
+}
+
+function selectVoucher(code) {
+    var msg = document.getElementById('voucherMsg');
+    fetch('/api/cart/apply-voucher', {
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:'code=' + encodeURIComponent(code)
+    })
+    .then(function(r){return r.json()})
+    .then(function(d){
+        if (d.success) {
+            location.reload();
+        } else {
+            msg.style.display = 'block';
+            msg.style.color = '#dc2626';
+            msg.textContent = d.message;
+        }
+    });
+}
+
+function removeVoucher() {
+    fetch('/api/cart/remove-voucher', { method: 'POST' })
+    .then(function() { location.reload(); });
+}
+
+function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 </script>
+
 </body>
 </html>

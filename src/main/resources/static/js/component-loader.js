@@ -73,8 +73,4 @@ class ComponentLoader {
 }
 
 // Create singleton instance
-const componentLoader = new ComponentLoader();
-
-// Export for use in other scripts
-export default componentLoader;
-export { ComponentLoader };
+var componentLoader = new ComponentLoader();

@@ -1,9 +1,13 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Quản lý Deals - DealXanh Seller</title>
+    <!-- CSRF Token -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <div th:replace="~{common/admin/css :: css}"></div>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -23,7 +27,7 @@
     --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary)}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary);height:auto;min-height:100%;padding-bottom:80px}
 button{cursor:pointer;border:none;background:none;font-family:inherit}
 img{display:block;max-width:100%}
 
@@ -52,13 +56,6 @@ img{display:block;max-width:100%}
 }
 .hdr-btn:hover{background:rgba(255,255,255,.2)}
 .hdr-btn svg{width:18px;height:18px}
-.hdr-badge{
-    position:absolute;top:-3px;right:-3px;
-    min-width:16px;height:16px;border-radius:8px;
-    background:var(--danger);color:#fff;font-size:10px;font-weight:700;
-    padding:0 3px;display:flex;align-items:center;justify-content:center;
-    border:1.5px solid var(--primary);
-}
 
 /* Summary chips */
 .summary-row{
@@ -113,38 +110,9 @@ img{display:block;max-width:100%}
     font-size:14px;background:var(--bg);transition:border-color var(--tr);
 }
 .search-input:focus{outline:none;border-color:var(--primary);background:var(--surface)}
-.filter-btn{
-    width:38px;height:38px;border-radius:var(--radius-md);
-    background:var(--bg);border:1.5px solid var(--border-light);
-    display:flex;align-items:center;justify-content:center;
-    flex-shrink:0;transition:all var(--tr);
-}
-.filter-btn:hover{border-color:var(--primary)}
-.filter-btn svg{width:16px;height:16px;color:var(--text-secondary)}
 
 /* Body */
-.body{padding:12px 14px 100px}
-
-/* Pending approval section */
-.pending-section{
-    background:var(--warning-bg);border:1px solid rgba(245,158,11,.2);
-    border-radius:var(--radius-lg);padding:14px;margin-bottom:16px;
-}
-.pending-section__header{
-    display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;
-}
-.pending-section__title{
-    font-size:13px;font-weight:700;color:var(--warning);
-    display:flex;align-items:center;gap:6px;
-}
-.pending-section__title svg{width:15px;height:15px}
-.approve-all-btn{
-    padding:6px 12px;border-radius:var(--radius-full);
-    background:var(--warning);color:#fff;
-    font-size:12px;font-weight:700;
-    transition:background var(--tr);
-}
-.approve-all-btn:hover{background:#d48f09}
+.body{padding:12px 14px}
 
 /* Deal card */
 .deal-card{
@@ -158,6 +126,7 @@ img{display:block;max-width:100%}
 .deal-thumb{
     width:72px;height:72px;border-radius:var(--radius-md);
     overflow:hidden;flex-shrink:0;position:relative;
+    background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
 }
 .deal-thumb img{width:100%;height:100%;object-fit:cover}
 .deal-thumb__badge{
@@ -166,10 +135,8 @@ img{display:block;max-width:100%}
     font-size:10px;font-weight:700;color:#fff;
 }
 .deal-info{flex:1;min-width:0}
-.deal-name{font-size:14px;font-weight:700;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.deal-name{font-size:14px;font-weight:700;margin-bottom:5px;line-height:1.4}
 .deal-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
-.deal-price{font-size:16px;font-weight:800;color:var(--primary)}
-.deal-orig{font-size:12px;color:var(--text-tertiary);text-decoration:line-through}
 .deal-discount{
     padding:2px 7px;border-radius:var(--radius-full);
     background:var(--danger-bg);color:var(--danger);
@@ -193,19 +160,6 @@ img{display:block;max-width:100%}
 .deal-expiry svg{width:11px;height:11px}
 .deal-expiry.urgent{color:var(--danger);font-weight:600}
 
-/* Slots progress */
-.deal-card__slots{
-    display:flex;align-items:center;gap:10px;
-    padding:10px 14px;
-}
-.slots-bar{flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
-.slots-bar__fill{height:100%;background:var(--primary);border-radius:3px;transition:width .4s}
-.slots-bar__fill.high{background:var(--success)}
-.slots-bar__fill.mid{background:var(--warning)}
-.slots-bar__fill.low{background:var(--danger)}
-.slots-text{font-size:12px;font-weight:600;color:var(--text-secondary);white-space:nowrap;flex-shrink:0}
-.slots-revenue{font-size:12px;font-weight:700;color:var(--primary);white-space:nowrap;flex-shrink:0}
-
 /* Deal card actions */
 .deal-card__actions{
     display:flex;border-top:1px solid var(--border-light);
@@ -226,34 +180,6 @@ img{display:block;max-width:100%}
 .deal-action--success:hover{background:var(--success-bg)}
 .deal-action svg{width:14px;height:14px}
 
-/* Approve card (pending) */
-.approve-card{
-    background:var(--surface);border-radius:var(--radius-md);
-    border:1px solid rgba(245,158,11,.2);
-    padding:12px;margin-bottom:8px;
-    display:flex;gap:10px;align-items:center;
-}
-.approve-thumb{width:48px;height:48px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0}
-.approve-thumb img{width:100%;height:100%;object-fit:cover}
-.approve-info{flex:1;min-width:0}
-.approve-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.approve-meta{font-size:11px;color:var(--text-secondary);margin-top:2px}
-.approve-btns{display:flex;gap:6px;flex-shrink:0}
-.btn-approve{
-    padding:7px 12px;border-radius:var(--radius-md);
-    background:var(--primary);color:#fff;
-    font-size:12px;font-weight:700;
-    transition:background var(--tr);
-}
-.btn-approve:hover{background:var(--primary-dark)}
-.btn-reject{
-    padding:7px 10px;border-radius:var(--radius-md);
-    background:var(--bg);color:var(--danger);
-    font-size:12px;font-weight:700;border:1px solid var(--border-light);
-    transition:all var(--tr);
-}
-.btn-reject:hover{background:var(--danger-bg);border-color:rgba(239,68,68,.2)}
-
 /* FAB */
 .fab{
     position:fixed;bottom:calc(74px + var(--safe-bot));right:16px;
@@ -273,7 +199,7 @@ img{display:block;max-width:100%}
     border-top:1px solid var(--border-light);
     padding:8px 0 calc(8px + var(--safe-bot));z-index:20;
 }
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;text-decoration:none}
 .nav-item svg{width:22px;height:22px;color:var(--text-tertiary)}
 .nav-item span{font-size:10px;font-weight:500;color:var(--text-tertiary)}
 .nav-item.active svg,.nav-item.active span{color:var(--primary)}
@@ -309,6 +235,50 @@ img{display:block;max-width:100%}
     text-transform:uppercase;letter-spacing:.6px;
     padding:8px 2px 8px;
 }
+
+/* Modal */
+.modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.5);padding:16px;overflow-y:auto;}
+.modal.active{display:flex;align-items:center;justify-content:center;}
+.modal-content{background:var(--surface);border-radius:var(--radius-lg);max-width:500px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;}
+.modal-header{padding:16px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;}
+.modal-header__title{font-size:16px;font-weight:700;}
+.modal-header__close{width:32px;height:32px;border-radius:var(--radius-md);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.modal-header__close svg{width:18px;height:18px;}
+.modal-body{padding:16px;overflow-y:auto;flex:1;}
+.modal-footer{padding:16px;border-top:1px solid var(--border-light);display:flex;gap:8px;justify-content:flex-end;}
+
+/* Product select item */
+.product-select-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--border-light);cursor:pointer;transition:all var(--tr);margin-bottom:8px;}
+.product-select-item:hover{border-color:var(--primary);background:var(--surface)}
+.product-select-item.selected{border-color:var(--primary);background:rgba(13,92,46,.05)}
+.product-select-item input[type="checkbox"]{width:18px;height:18px;cursor:pointer}
+.product-select-item__img{width:48px;height:48px;border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0;background:var(--surface);}
+.product-select-item__img img{width:100%;height:100%;object-fit:cover}
+.product-select-item__info{flex:1;min-width:0}
+.product-select-item__name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.product-select-item__price{font-size:12px;color:var(--text-secondary)}
+
+/* Product price editor */
+.product-price-editor{padding:12px;background:rgba(13,92,46,.05);border-radius:var(--radius-md);margin-top:8px;}
+.product-price-editor__row{display:flex;gap:8px;margin-bottom:8px;}
+.product-price-editor__row:last-child{margin-bottom:0}
+.product-price-editor__label{font-size:11px;color:var(--text-secondary);margin-bottom:4px;}
+.product-price-editor__input{flex:1;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;}
+.product-price-editor__input:focus{outline:none;border-color:var(--primary)}
+.product-price-editor__input.error{border-color:var(--danger)}
+.price-error{font-size:11px;color:var(--danger);margin-top:4px;}
+
+/* Selected summary */
+.selected-summary{margin-top:12px;padding:12px;background:var(--bg);border-radius:var(--radius-md);}
+.selected-summary__title{font-size:12px;font-weight:700;margin-bottom:8px;}
+.selected-product-item{display:flex;align-items:center;justify-content:space-between;padding:8px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:4px;}
+.selected-product-item__name{font-size:12px;}
+.selected-product-item__price{font-size:12px;font-weight:700;color:var(--primary);}
+
+/* Alert messages */
+.alert{padding:12px 16px;border-radius:var(--radius-md);margin-bottom:16px;}
+.alert.success{background:var(--success-bg);color:var(--success);border:1px solid rgba(16,185,129,.2);}
+.alert.error{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(239,68,68,.2);}
     </style>
 </head>
 <body>
@@ -316,322 +286,757 @@ img{display:block;max-width:100%}
 <!-- Header -->
 <header class="page-header">
     <div class="header-top">
-        <button class="back-btn" onclick="window.location.href='dashboard.html'">
+        <a class="back-btn" href="/seller/dashboard">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        </button>
+        </a>
         <span class="header-title">Quản lý Deals</span>
         <div class="header-actions">
-            <button class="hdr-btn" id="pending-bell">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span class="hdr-badge">3</span>
-            </button>
-            <button class="hdr-btn" onclick="window.location.href='create-deal.html'">
+            <a class="hdr-btn" href="/seller/deals/create">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
+            </a>
         </div>
     </div>
     <div class="summary-row">
         <div class="summary-chip">
-            <span class="summary-chip__value">8</span>
+            <span class="summary-chip__value" th:text="${activeCount}">0</span>
             <span class="summary-chip__label">Đang live</span>
         </div>
         <div class="summary-chip">
-            <span class="summary-chip__value">3</span>
-            <span class="summary-chip__label">Chờ duyệt</span>
-        </div>
-        <div class="summary-chip">
-            <span class="summary-chip__value">124</span>
-            <span class="summary-chip__label">Slots đã bán</span>
-        </div>
-        <div class="summary-chip">
-            <span class="summary-chip__value">4.2tr</span>
-            <span class="summary-chip__label">GMV hôm nay</span>
+            <span class="summary-chip__value" th:text="${#lists.size(deals)}">0</span>
+            <span class="summary-chip__label">Tổng deal</span>
         </div>
     </div>
 </header>
 
 <!-- Tabs -->
 <div class="deal-tabs">
-    <button class="deal-tab active" onclick="switchTab(this)">Tất cả</button>
-    <button class="deal-tab" onclick="switchTab(this)">
-        Live <span class="deal-tab__count success">8</span>
+    <button class="deal-tab" th:classappend="${selectedStatus == null or selectedStatus == ''} ? 'active' : ''" onclick="switchTab('all')">Tất cả</button>
+    <button class="deal-tab" th:classappend="${selectedStatus == 'ACTIVE'} ? 'active' : ''" onclick="switchTab('ACTIVE')">
+        Live <span class="deal-tab__count success" th:text="${activeCount}">0</span>
     </button>
-    <button class="deal-tab" onclick="switchTab(this)">
-        Chờ duyệt <span class="deal-tab__count">3</span>
-    </button>
-    <button class="deal-tab" onclick="switchTab(this)">
-        Lên lịch <span class="deal-tab__count warning">2</span>
-    </button>
-    <button class="deal-tab" onclick="switchTab(this)">Đã hết</button>
+    <button class="deal-tab" th:classappend="${selectedStatus == 'PAUSED'} ? 'active' : ''" onclick="switchTab('PAUSED')">Tạm dừng</button>
 </div>
 
 <!-- Search bar -->
 <div class="search-bar">
-    <div class="search-wrap">
-        <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input type="text" class="search-input" placeholder="Tìm tên deal, SKU...">
-    </div>
-    <button class="filter-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
-    </button>
+    <form style="display:flex;gap:10px;width:100%;" action="/seller/deals" method="get">
+        <input type="hidden" name="status" th:value="${selectedStatus}">
+        <div class="search-wrap" style="flex:1">
+            <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input type="text" name="search" class="search-input" placeholder="Tìm tên deal, mã deal..." th:value="${searchQuery}" oninput="debounceSearch()">
+        </div>
+    </form>
 </div>
+
+<!-- Alert messages -->
+<div th:if="${success}" class="alert success" th:text="${success}"></div>
+<div th:if="${error}" class="alert error" th:text="${error}"></div>
 
 <!-- Body -->
 <main class="body">
 
-    <!-- Pending approval -->
-    <div class="pending-section" id="pending-section">
-        <div class="pending-section__header">
-            <span class="pending-section__title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                3 deal chờ bạn duyệt
-            </span>
-            <button class="approve-all-btn" onclick="approveAll()">Duyệt tất cả</button>
+    <!-- Empty state -->
+    <div class="empty-state" th:if="${deals == null or deals.isEmpty()}">
+        <div class="empty-state__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
         </div>
-
-        <div class="approve-card" id="pending-1">
-            <div class="approve-thumb"><img src="https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=96&q=70" alt=""></div>
-            <div class="approve-info">
-                <div class="approve-name">🎁 Blind Box đồ ngọt buổi tối</div>
-                <div class="approve-meta">Nhân viên Hoa · 65.000đ · -60% · 15 slots</div>
-            </div>
-            <div class="approve-btns">
-                <button class="btn-approve" onclick="approveItem('pending-1')">✓ Duyệt</button>
-                <button class="btn-reject" onclick="rejectItem('pending-1')">✕</button>
-            </div>
-        </div>
-
-        <div class="approve-card" id="pending-2">
-            <div class="approve-thumb"><img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=96&q=70" alt=""></div>
-            <div class="approve-info">
-                <div class="approve-name">Flash Sale bánh mì 19h–20h</div>
-                <div class="approve-meta">Nhân viên Dũng · 25.000đ · -75% · 30 slots</div>
-            </div>
-            <div class="approve-btns">
-                <button class="btn-approve" onclick="approveItem('pending-2')">✓ Duyệt</button>
-                <button class="btn-reject" onclick="rejectItem('pending-2')">✕</button>
-            </div>
-        </div>
-
-        <div class="approve-card" id="pending-3">
-            <div class="approve-thumb"><img src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=96&q=70" alt=""></div>
-            <div class="approve-info">
-                <div class="approve-name">Combo bánh ngọt cuối ngày</div>
-                <div class="approve-meta">Nhân viên Hoa · 80.000đ · -55% · 10 slots</div>
-            </div>
-            <div class="approve-btns">
-                <button class="btn-approve" onclick="approveItem('pending-3')">✓ Duyệt</button>
-                <button class="btn-reject" onclick="rejectItem('pending-3')">✕</button>
-            </div>
-        </div>
+        <div class="empty-state__title">Chưa có deal nào</div>
+        <div class="empty-state__desc">Tạo deal đầu tiên để bắt đầu bán hàng</div>
+        <a href="/seller/deals/create" class="btn-create">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tạo Deal ngay
+        </a>
     </div>
 
-    <!-- Live deals -->
-    <div class="section-label">Đang live · 8 deals</div>
+    <!-- Deals list -->
+    <div class="section-label" th:if="${deals != null and not deals.isEmpty()}">Danh sách Deals · <span th:text="${#lists.size(deals)}">0</span> deals</div>
 
-    <!-- Deal 1 -->
-    <div class="deal-card">
-        <div class="deal-card__top">
-            <div class="deal-thumb">
-                <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=144&q=70" alt="">
-                <span class="deal-thumb__badge" style="background:var(--danger)">-65%</span>
-            </div>
-            <div class="deal-info">
-                <div class="deal-name">Bánh mì thịt nguội combo 2 cái</div>
-                <div class="deal-price-row">
-                    <span class="deal-price">35.000đ</span>
-                    <span class="deal-orig">100.000đ</span>
-                    <span class="deal-discount">-65%</span>
+    <th:block th:each="deal : ${deals}">
+        <div class="deal-card" th:id="'deal-' + ${deal.dealId}" th:onclick="|viewDealDetail(${deal.dealId})|" style="cursor:pointer;">
+            <div class="deal-card__top">
+                <div class="deal-thumb">
+                    <img th:src="${deal.bannerUrl != null ? deal.bannerUrl : '/img/default-banner.svg'}" alt="" onerror="this.src='/img/default-banner.svg'">
+                    <span class="deal-thumb__badge" th:style="'background:' + ${deal.dealType == 'FLASH_SALE' ? 'var(--danger)' : deal.dealType == 'VOUCHER' ? 'var(--purple)' : 'var(--accent)'}" th:text="${deal.discountType == 'PERCENT' ? deal.discountValue + '%' : 'FIXED'}">-65%</span>
                 </div>
-                <div class="deal-meta-row">
-                    <span class="deal-status live">Live</span>
-                    <span class="deal-type">Regular</span>
-                    <span class="deal-expiry urgent">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        Còn 45 phút
-                    </span>
-                </div>
-            </div>
-        </div>
-        <div class="deal-card__slots">
-            <div class="slots-bar"><div class="slots-bar__fill low" style="width:60%"></div></div>
-            <span class="slots-text">12/20 slots</span>
-            <span class="slots-revenue">420.000đ</span>
-        </div>
-        <div class="deal-card__actions">
-            <button class="deal-action deal-action--primary">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                Sửa
-            </button>
-            <button class="deal-action">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                + Slots
-            </button>
-            <button class="deal-action">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                Kéo dài
-            </button>
-            <button class="deal-action deal-action--danger">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                Kết thúc
-            </button>
-        </div>
-    </div>
-
-    <!-- Deal 2 -->
-    <div class="deal-card">
-        <div class="deal-card__top">
-            <div class="deal-thumb">
-                <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=144&q=70" alt="">
-                <span class="deal-thumb__badge" style="background:var(--accent);color:#1a1a1a">BOX</span>
-            </div>
-            <div class="deal-info">
-                <div class="deal-name">🎁 Blind Box cà phê & snack</div>
-                <div class="deal-price-row">
-                    <span class="deal-price">45.000đ</span>
-                    <span class="deal-orig">120.000đ+</span>
-                    <span class="deal-discount">-62%</span>
-                </div>
-                <div class="deal-meta-row">
-                    <span class="deal-status live">Live</span>
-                    <span class="deal-type">Blind Box</span>
-                    <span class="deal-expiry">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        Còn 2h 10p
-                    </span>
+                <div class="deal-info">
+                    <div class="deal-name" th:text="${deal.dealName}">Deal Name</div>
+                    <div class="deal-price-row">
+                        <span class="deal-discount" th:text="${deal.discountType == 'PERCENT' ? 'Giảm ' + deal.discountValue + '%' : 'Giảm ' + #numbers.formatDecimal(deal.discountValue, 0, 0) + 'đ'}">-65%</span>
+                        <th:block th:if="${deal.minOrderAmount != null}">
+                            <span style="font-size:12px;color:var(--text-tertiary);">Tối thiểu <span th:text="${#numbers.formatDecimal(deal.minOrderAmount, 0, 0)} + 'đ'">50k</span></span>
+                        </th:block>
+                    </div>
+                    <div class="deal-meta-row">
+                        <span class="deal-status" th:class="'deal-status ' + ${deal.status == 'ACTIVE' ? 'live' : deal.status == 'PAUSED' ? 'pending' : 'expired'}" th:text="${deal.status == 'ACTIVE' ? 'Live' : deal.status == 'PAUSED' ? 'Tạm dừng' : 'Đã hết'}">Live</span>
+                        <span class="deal-type" th:text="${deal.dealType == 'FLASH_SALE' ? 'Flash Sale' : deal.dealType == 'VOUCHER' ? 'Voucher' : deal.dealType == 'COMBO' ? 'Combo' : 'Deal'}">Type</span>
+                        <span class="deal-expiry">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span th:if="${deal.endTime != null}" th:text="${#temporals.format(deal.endTime, 'dd/MM HH:mm')}">End</span>
+                        </span>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="deal-card__slots">
-            <div class="slots-bar"><div class="slots-bar__fill mid" style="width:33%"></div></div>
-            <span class="slots-text">5/15 slots</span>
-            <span class="slots-revenue">225.000đ</span>
-        </div>
-        <div class="deal-card__actions">
-            <button class="deal-action deal-action--primary">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                Sửa
-            </button>
-            <button class="deal-action">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                + Slots
-            </button>
-            <button class="deal-action">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                Kéo dài
-            </button>
-            <button class="deal-action deal-action--danger">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                Xóa
-            </button>
-        </div>
-    </div>
-
-    <!-- Deal 3 - Scheduled -->
-    <div class="section-label" style="margin-top:8px">Lên lịch · 2 deals</div>
-
-    <div class="deal-card">
-        <div class="deal-card__top">
-            <div class="deal-thumb">
-                <img src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=144&q=70" alt="">
-                <span class="deal-thumb__badge" style="background:var(--info)">SCH</span>
-            </div>
-            <div class="deal-info">
-                <div class="deal-name">Hộp bánh ngọt mix buổi tối</div>
-                <div class="deal-price-row">
-                    <span class="deal-price">60.000đ</span>
-                    <span class="deal-orig">200.000đ</span>
-                    <span class="deal-discount">-70%</span>
-                </div>
-                <div class="deal-meta-row">
-                    <span class="deal-status scheduled">Lên lịch 19:00</span>
-                    <span class="deal-type">Regular</span>
-                </div>
+            <div class="deal-card__actions">
+                <button class="deal-action deal-action--primary" th:onclick="|event.stopPropagation();openDealProductsModal(${deal.dealId})|" style="color:var(--primary);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    Gán SP
+                </button>
+                <button class="deal-action deal-action--info" th:onclick="|event.stopPropagation();openViewDealProductsModal(${deal.dealId})|" style="color:var(--info);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Xem SP
+                </button>
+                <button class="deal-action deal-action--success" th:if="${deal.status == 'PAUSED'}" th:onclick="|event.stopPropagation();resumeDeal(${deal.dealId})|">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Kích hoạt
+                </button>
+                <button class="deal-action deal-action--danger" th:if="${deal.status == 'ACTIVE'}" th:onclick="|event.stopPropagation();pauseDeal(${deal.dealId})|">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    Tạm dừng
+                </button>
             </div>
         </div>
-        <div class="deal-card__slots">
-            <div class="slots-bar"><div class="slots-bar__fill high" style="width:0%"></div></div>
-            <span class="slots-text">0/10 slots</span>
-            <span class="slots-revenue">–</span>
-        </div>
-        <div class="deal-card__actions">
-            <button class="deal-action deal-action--primary">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                Sửa
-            </button>
-            <button class="deal-action deal-action--success">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Live ngay
-            </button>
-            <button class="deal-action deal-action--danger">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                Xóa
-            </button>
-        </div>
-    </div>
+    </th:block>
 
 </main>
 
+<!-- Deal Detail Modal -->
+<div class="modal" id="dealDetailModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-header__title">Chi tiết Deal</div>
+            <div class="modal-header__close" onclick="closeDealDetailModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+        </div>
+        <div class="modal-body" id="dealDetailContent">
+            <div style="text-align:center;padding:40px;">Đang tải...</div>
+        </div>
+        <div class="modal-body" id="dealEditForm" style="display:none;">
+            <form id="editDealForm" method="post" th:action="@{/seller/deals/__dealId__/edit}">
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <div><label style="font-size:11px;font-weight:600;">Tên deal</label><input type="text" name="dealName" id="editDealName" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    <div><label style="font-size:11px;font-weight:600;">Mã deal</label><input type="text" name="dealCode" id="editDealCode" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    <div style="display:flex;gap:10px;">
+                        <div style="flex:1;"><label style="font-size:11px;font-weight:600;">Giảm giá</label><input type="number" name="discountValue" id="editDiscountValue" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;font-weight:600;">Đơn tối thiểu</label><input type="number" name="minOrderAmount" id="editMinOrder" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <div style="flex:1;"><label style="font-size:11px;font-weight:600;">Giảm tối đa (nếu PERCENT)</label><input type="number" name="maxDiscountAmount" id="editMaxDisc" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;font-weight:600;">Lượt dùng tối đa</label><input type="number" name="maxUsageCount" id="editMaxUsage" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    </div>
+                    <div><label style="font-size:11px;font-weight:600;">Ngày hết hạn</label><input type="datetime-local" name="endTimeStr" id="editEndTime" class="form-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></div>
+                    <div><label style="font-size:11px;font-weight:600;">Mô tả</label><textarea name="description" id="editDescription" class="form-input" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;"></textarea></div>
+                    <div style="font-size:10px;color:var(--text-tertiary);">💡 Loại deal, kiểu giảm giá và phương thức áp dụng không thể thay đổi sau khi tạo.</div>
+                    <button type="submit" style="width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">💾 Lưu thay đổi</button>
+                    <button type="button" onclick="toggleDealEdit()" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;">Hủy</button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button id="btnEditDeal" onclick="toggleDealEdit()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;border:none;">✏️ Chỉnh sửa</button>
+            <button onclick="closeDealDetailModal()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--bg);font-size:14px;font-weight:600;cursor:pointer;border:none;">Đóng</button>
+        </div>
+    </div>
+</div>
+
 <!-- FAB -->
-<button class="fab" onclick="window.location.href='create-deal.html'">
+<a class="fab" href="/seller/deals/create">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-</button>
+</a>
 
 <!-- Bottom nav -->
-<nav class="bottom-nav">
-    <div class="nav-item" onclick="window.location.href='dashboard.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/></svg>
-        <span>Dashboard</span>
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('deals')}"></div>
+
+<!-- View Deal Products Modal -->
+<div class="modal" id="viewProductsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-header__title">Sản phẩm trong Deal</div>
+            <div class="modal-header__close" onclick="closeViewProductsModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+        </div>
+        <div class="modal-body" id="viewProductsContent">
+            <div style="text-align:center;padding:40px;">Đang tải...</div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeViewProductsModal()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--bg);font-size:14px;font-weight:600;cursor:pointer;">Đóng</button>
+        </div>
     </div>
-    <div class="nav-item active">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>Deals</span>
+</div>
+
+<!-- Deal Products Modal -->
+<div class="modal" id="dealProductsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-header__title">Chọn sản phẩm cho deal</div>
+            <div class="modal-header__close" onclick="closeDealProductsModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <!-- Search products -->
+            <div style="margin-bottom:12px;">
+                <input type="text" id="productSearch" placeholder="Tìm sản phẩm..." oninput="filterProducts()"
+                       style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;">
+            </div>
+
+            <!-- Loading state -->
+            <div id="productsLoading" style="text-align:center;padding:20px;color:var(--text-secondary);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:32px;height:32px;animation:spin 1s linear infinite;margin:0 auto 12px;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+                Đang tải sản phẩm...
+            </div>
+
+            <!-- Products list -->
+            <div id="productsList" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;">
+                <!-- Products will be loaded here -->
+            </div>
+
+            <!-- Selected products summary -->
+            <div id="selectedSummary" class="selected-summary" style="display:none;">
+                <div class="selected-summary__title">Đã chọn <span id="selectedCount">0</span> sản phẩm</div>
+                <div id="selectedProductsList"></div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button onclick="closeDealProductsModal()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--bg);font-size:14px;font-weight:600;cursor:pointer;">Hủy</button>
+            <button onclick="saveDealProducts()" style="padding:10px 16px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Lưu sản phẩm</button>
+        </div>
     </div>
-    <div class="nav-item" onclick="window.location.href='create-deal.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        <span>Tạo deal</span>
-    </div>
-    <div class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        <span>Tài chính</span>
-    </div>
-    <div class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span>Tài khoản</span>
-    </div>
-</nav>
+</div>
+
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+</style>
 
 <script>
-function switchTab(el) {
-    document.querySelectorAll('.deal-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
+let searchTimer;
+function debounceSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        document.querySelector('.search-bar form').submit();
+    }, 300);
 }
-function approveItem(id) {
-    const card = document.getElementById(id);
-    card.style.opacity = '0';
-    card.style.transform = 'translateX(20px)';
-    card.style.transition = 'all .3s ease-out';
-    setTimeout(() => card.remove(), 300);
+
+// Get CSRF token
+const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+let selectedProducts = new Map();
+let availableProducts = [];
+let currentDealId = null;
+let currentDealDiscount = { type: 'PERCENT', value: 50, maxDisc: 0 }; // default, will be fetched
+
+function switchTab(status) {
+    const url = new URL(window.location);
+    if (status === 'all') {
+        url.searchParams.delete('status');
+    } else {
+        url.searchParams.set('status', status);
+    }
+    window.location.href = url.toString();
 }
-function rejectItem(id) {
-    const card = document.getElementById(id);
-    card.style.opacity = '0';
-    card.style.transform = 'translateX(-20px)';
-    card.style.transition = 'all .3s ease-out';
-    setTimeout(() => card.remove(), 300);
+
+function getCsrfHeaders() {
+    const headers = {};
+    headers[csrfHeader] = csrfToken;
+    headers['Content-Type'] = 'application/json';
+    return headers;
 }
-function approveAll() {
-    ['pending-1','pending-2','pending-3'].forEach((id,i) => {
-        setTimeout(() => {
-            const card = document.getElementById(id);
-            if (card) approveItem(id);
-        }, i * 150);
+
+async function openDealProductsModal(dealId) {
+    currentDealId = dealId;
+    const modal = document.getElementById('dealProductsModal');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Reset state
+    selectedProducts.clear();
+    availableProducts = [];
+    updateSelectedSummary();
+
+    // Show loading
+    document.getElementById('productsLoading').style.display = 'block';
+    document.getElementById('productsList').innerHTML = '';
+
+    // Fetch deal discount info to calculate correct default prices
+    try {
+        const dealResp = await fetch('/seller/api/deals/' + dealId + '/detail');
+        const dealData = await dealResp.json();
+        if (dealData.discountType && dealData.discountValue != null) {
+            currentDealDiscount = { type: dealData.discountType, value: dealData.discountValue, maxDisc: dealData.maxDiscountAmount || 0 };
+        }
+    } catch(e) {}
+
+    try {
+        // Fetch available products
+        const response = await fetch(`/seller/deals/${dealId}/available-products`, {
+            headers: getCsrfHeaders()
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        availableProducts = data.products || [];
+        renderProductsList();
+
+    } catch (error) {
+        document.getElementById('productsList').innerHTML = `
+            <div style="text-align:center;padding:20px;color:var(--danger);">
+                ${error.message}
+            </div>
+        `;
+    } finally {
+        document.getElementById('productsLoading').style.display = 'none';
+    }
+}
+
+function closeDealProductsModal() {
+    const modal = document.getElementById('dealProductsModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    selectedProducts.clear();
+    updateSelectedSummary();
+}
+
+function renderProductsList(filter = '') {
+    const container = document.getElementById('productsList');
+
+    const filtered = availableProducts.filter(p =>
+        p.name.toLowerCase().includes(filter.toLowerCase()) ||
+        ((p.productId && String(p.productId).includes(filter)))
+    );
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:20px;color:var(--text-secondary);">
+                Không tìm thấy sản phẩm nào
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(product => {
+        const isSelected = selectedProducts.has(product.productId);
+        const selectedData = selectedProducts.get(product.productId);
+
+        return `
+            <label class="product-select-item ${isSelected ? 'selected' : ''}" data-id="${product.productId}">
+                <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleProduct(${product.productId}, this.checked)">
+                <div class="product-select-item__img">
+                    <img src="${product.imageUrl || '/img/default-product.svg'}" alt="${product.name}" onerror="this.src='/img/default-product.svg'">
+                </div>
+                <div class="product-select-item__info">
+                    <div class="product-select-item__name">${product.name}</div>
+                    <div class="product-select-item__price">${product.originalPrice ? product.originalPrice.toLocaleString() + 'đ' : 'Liên hệ'}</div>
+                    ${isSelected ? renderPriceEditor(product, selectedData) : ''}
+                </div>
+            </label>
+        `;
+    }).join('');
+}
+
+function renderPriceEditor(product, data) {
+    const originalPrice = data.originalPrice || product.originalPrice || 0;
+    // Calculate default sale price based on the actual deal's discount config
+    let defaultSalePrice = originalPrice;
+    if (currentDealDiscount.type === 'PERCENT') {
+        defaultSalePrice = Math.ceil(originalPrice * (1 - currentDealDiscount.value / 100));
+    } else if (currentDealDiscount.type === 'FIXED') {
+        defaultSalePrice = originalPrice; // FIXED: keep original, applied at checkout
+    }
+    // Auto-cap by maxDiscountAmount
+    var maxDisc = currentDealDiscount.maxDisc || 0;
+    if (maxDisc > 0) {
+        var minAllowed = originalPrice - maxDisc;
+        if (defaultSalePrice < minAllowed) defaultSalePrice = Math.ceil(minAllowed);
+    }
+    if (defaultSalePrice < Math.ceil(originalPrice * 0.15)) defaultSalePrice = Math.ceil(originalPrice * 0.15);
+    const salePrice = data.salePrice || defaultSalePrice;
+    const discount = ((originalPrice - salePrice) / originalPrice * 100).toFixed(0);
+    const hasError = salePrice >= originalPrice || salePrice < originalPrice * 0.15;
+
+    return `
+        <div class="product-price-editor">
+            <div class="product-price-editor__row">
+                <div style="flex:1">
+                    <div class="product-price-editor__label">Giá gốc: ${originalPrice.toLocaleString()}đ</div>
+                </div>
+                <div style="flex:1">
+                    <div class="product-price-editor__label">Giảm: ${discount}%</div>
+                </div>
+            </div>
+            <div class="product-price-editor__row">
+                <div style="flex:1">
+                    <div class="product-price-editor__label">Giá sale *</div>
+                    <input type="number" class="product-price-editor__input ${hasError ? 'error' : ''}"
+                           value="${salePrice}" min="${Math.ceil(originalPrice * 0.15)}" max="${originalPrice - 1000}"
+                           oninput="updateProductPrice(${product.productId}, 'salePrice', this.value, ${originalPrice})">
+                </div>
+                <div style="flex:1">
+                    <div class="product-price-editor__label">Số lượng tối đa</div>
+                    <input type="number" class="product-price-editor__input"
+                           value="${data.maxQuantity || ''}" min="1" placeholder="Vô hạn"
+                           oninput="updateProductPrice(${product.productId}, 'maxQuantity', this.value)">
+                </div>
+            </div>
+            ${hasError ? '<div class="price-error">Giá sale phải từ 15% đến 99% giá gốc</div>' : ''}
+        </div>
+    `;
+}
+
+function toggleProduct(productId, isSelected) {
+    const product = availableProducts.find(p => p.productId === productId);
+    if (!product) return;
+
+    const originalPrice = product.originalPrice || 0;
+
+    if (isSelected) {
+        // Calculate default salePrice based on actual deal discount config
+        let defaultSale = originalPrice;
+        if (currentDealDiscount.type === 'PERCENT') {
+            defaultSale = Math.ceil(originalPrice * (1 - currentDealDiscount.value / 100));
+        } else {
+            defaultSale = originalPrice; // FIXED: keep original, discount at checkout
+        }
+        // Auto-cap by maxDiscountAmount
+        var maxDisc2 = currentDealDiscount.maxDisc || 0;
+        if (maxDisc2 > 0) {
+            var minAllowed2 = originalPrice - maxDisc2;
+            if (defaultSale < minAllowed2) defaultSale = Math.ceil(minAllowed2);
+        }
+        if (defaultSale < Math.ceil(originalPrice * 0.15)) defaultSale = Math.ceil(originalPrice * 0.15);
+        selectedProducts.set(productId, {
+            productId: productId,
+            originalPrice: originalPrice,
+            salePrice: defaultSale,
+            maxQuantity: null,
+            priority: 0
+        });
+    } else {
+        selectedProducts.delete(productId);
+    }
+
+    updateSelectedSummary();
+    renderProductsList(document.getElementById('productSearch').value);
+}
+
+function updateProductPrice(productId, field, value, originalPrice) {
+    const data = selectedProducts.get(productId);
+    if (!data) return;
+
+    if (field === 'salePrice') {
+        data.salePrice = parseFloat(value) || 0;
+    } else if (field === 'maxQuantity') {
+        data.maxQuantity = value ? parseInt(value) : null;
+    }
+
+    selectedProducts.set(productId, data);
+    updateSelectedSummary();
+}
+
+function updateSelectedSummary() {
+    const summary = document.getElementById('selectedSummary');
+    const count = document.getElementById('selectedCount');
+    const list = document.getElementById('selectedProductsList');
+
+    if (selectedProducts.size === 0) {
+        summary.style.display = 'none';
+        return;
+    }
+
+    summary.style.display = 'block';
+    count.textContent = selectedProducts.size;
+
+    list.innerHTML = Array.from(selectedProducts.values()).map(data => {
+        const discount = ((data.originalPrice - data.salePrice) / data.originalPrice * 100).toFixed(0);
+        const product = availableProducts.find(p => p.productId === data.productId);
+        return `
+            <div class="selected-product-item">
+                <div class="selected-product-item__name">${product ? product.name : 'Product'}</div>
+                <div class="selected-product-item__price">${data.salePrice.toLocaleString()}đ (-${discount}%)</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function filterProducts() {
+    const query = document.getElementById('productSearch').value;
+    renderProductsList(query);
+}
+
+async function saveDealProducts() {
+    if (selectedProducts.size === 0) {
+        alert('Vui lòng chọn ít nhất một sản phẩm');
+        return;
+    }
+
+    // Validate all selected products
+    for (const [id, data] of selectedProducts) {
+        if (data.salePrice >= data.originalPrice) {
+            alert(`Sản phẩm: Giá sale phải nhỏ hơn giá gốc`);
+            return;
+        }
+        if (data.salePrice < data.originalPrice * 0.15) {
+            alert(`Sản phẩm: Giá sale phải ít nhất 15% giá gốc`);
+            return;
+        }
+    }
+
+    try {
+        const response = await fetch(`/seller/deals/${currentDealId}/assign-products`, {
+            method: 'POST',
+            headers: getCsrfHeaders(),
+            body: JSON.stringify(Array.from(selectedProducts.values()))
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert(result.message || 'Đã thêm sản phẩm vào deal!');
+            closeDealProductsModal();
+            location.reload();
+        } else {
+            alert('Lỗi: ' + (result.message || 'Unknown error'));
+        }
+
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+}
+
+async function openViewDealProductsModal(dealId) {
+    const modal = document.getElementById('viewProductsModal');
+    const content = document.getElementById('viewProductsContent');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    content.innerHTML = '<div style="text-align:center;padding:40px;">Đang tải...</div>';
+
+    try {
+        const response = await fetch(`/seller/deals/${dealId}/products`, { headers: getCsrfHeaders() });
+        const data = await response.json();
+        if (data.products && data.products.length > 0) {
+            content.innerHTML = `<div style="margin-bottom:16px;"><h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Sản phẩm (${data.products.length})</h3><div class="products-list">` +
+                data.products.map(dp => `
+                    <div class="product-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg);border-radius:var(--radius-md);margin-bottom:8px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <img src="${dp.product.imageUrl || '/img/default-product.svg'}" style="width:48px;height:48px;border-radius:var(--radius-sm);object-fit:cover;" onerror="this.src='/img/default-product.svg'">
+                            <div>
+                                <div style="font-weight:600;">${dp.product.name}</div>
+                                <div style="font-size:12px;color:var(--text-secondary);">Giá gốc: ${dp.originalPrice.toLocaleString()}đ</div>
+                                <div style="font-size:14px;font-weight:700;color:var(--danger);">Giá sale: ${dp.salePrice.toLocaleString()}đ (-${Math.round((dp.originalPrice - dp.salePrice) / dp.originalPrice * 100)}%)</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:12px;color:var(--text-secondary);">${dp.maxQuantity ? `Đã bán: ${dp.soldQuantity || 0}/${dp.maxQuantity}` : 'Không giới hạn'}</div>
+                            <button onclick="removeProductFromDeal(${dealId}, ${dp.product.productId})" style="margin-top:4px;padding:6px 12px;border-radius:var(--radius-md);background:var(--danger-bg);color:var(--danger);font-size:11px;font-weight:600;cursor:pointer;">Xóa</button>
+                        </div>
+                    </div>`).join('') + `</div></div>`;
+        } else {
+            content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">Chưa có sản phẩm nào trong deal</div>';
+        }
+    } catch (error) {
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);">Không thể tải sản phẩm</div>';
+    }
+}
+
+function closeViewProductsModal() {
+    document.getElementById('viewProductsModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+async function removeProductFromDeal(dealId, productId) {
+    if (!confirm('Xóa sản phẩm này khỏi deal?')) return;
+    try {
+        const response = await fetch(`/seller/deals/${dealId}/remove-product/${productId}`, {
+            method: 'POST', headers: getCsrfHeaders()
+        });
+        const data = await response.json();
+        if (data.success) {
+            openViewDealProductsModal(dealId);
+        } else {
+            alert(data.message || 'Lỗi');
+        }
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+}
+
+function viewDealDetail(dealId) {
+    const modal = document.getElementById('dealDetailModal');
+    const content = document.getElementById('dealDetailContent');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    content.innerHTML = '<div style="text-align:center;padding:40px;">Đang tải...</div>';
+
+    // Fetch full deal data from API (GET, no CSRF needed)
+    fetch('/seller/api/deals/' + dealId + '/detail')
+    .then(r => r.json())
+    .then(d => {
+        if (d.error) { content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);">' + d.error + '</div>'; return; }
+
+        // Store for edit form
+        currentDealDetailData = {
+            dealId: d.dealId,
+            name: d.dealName,
+            code: d.dealCode,
+            discType: d.discountType,
+            discVal: d.discountValue,
+            maxDisc: d.maxDiscountAmount,
+            minOrder: d.minOrderAmount,
+            maxUsage: d.maxUsageCount,
+            applyMethod: d.applyMethod,
+            endTime: d.endTime,
+            dealType: d.dealType,
+            desc: d.description
+        };
+
+        const img = document.getElementById('deal-' + dealId)?.querySelector('.deal-thumb img')?.src || '/img/default-banner.svg';
+        const card = document.getElementById('deal-' + dealId);
+        const status = card?.querySelector('.deal-status')?.textContent || '';
+        const type = card?.querySelector('.deal-type')?.textContent || '';
+        const statusLabels = {'Live':'ACTIVE','Tạm dừng':'PAUSED','Đã hết':'ENDED'};
+        const currentStatus = Object.entries(statusLabels).find(([k,v]) => status.includes(k))?.[1] || '';
+
+        var discountText = d.discountType === 'PERCENT' ? 'Giảm ' + d.discountValue + '%' : 'Giảm ' + (d.discountValue||0).toLocaleString('vi-VN') + 'đ';
+        var expiryText = d.endTime ? new Date(d.endTime).toLocaleDateString('vi-VN') + ' ' + new Date(d.endTime).toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'}) : 'N/A';
+        var codeText = d.dealCode ? 'Mã: ' + (d.dealCode||'') : '';
+        var applyText = d.applyMethod === 'AUTO_APPLY' ? 'Tự động áp' : 'Cần nhập mã';
+
+        content.innerHTML =
+        '<div style="text-align:center;margin-bottom:20px;">' +
+            '<img src="' + img + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:16px;" onerror="this.src=\'/img/default-banner.svg\'">' +
+            '<h2 style="font-size:20px;font-weight:700;margin-bottom:4px;">' + (d.dealName||'') + '</h2>' +
+            '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px;">' + codeText + '</div>' +
+            '<div style="display:flex;gap:8px;justify-content:center;align-items:center;">' +
+                '<span style="font-size:12px;font-weight:600;color:var(--' + (currentStatus === 'ACTIVE' ? 'success' : currentStatus === 'PAUSED' ? 'warning' : 'text-secondary') + ');">' + status + '</span>' +
+                '<span style="font-size:12px;color:var(--text-tertiary);">·</span>' +
+                '<span style="font-size:12px;color:var(--text-secondary);">' + type + '</span>' +
+                '<span style="font-size:12px;color:var(--text-tertiary);">·</span>' +
+                '<span style="font-size:12px;color:var(--text-secondary);">' + applyText + '</span>' +
+            '</div>' +
+        '</div>' +
+        '<div class="detail-section">' +
+            '<div class="detail-section__title">Giảm giá</div>' +
+            '<div style="font-size:24px;font-weight:800;color:var(--danger);">' + discountText + '</div>' +
+            '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Hết hạn: ' + expiryText + '</div>' +
+            (d.minOrderAmount > 0 ? '<div style="font-size:12px;color:var(--text-secondary);">Đơn tối thiểu: ' + d.minOrderAmount.toLocaleString('vi-VN') + 'đ</div>' : '') +
+        '</div>' +
+        '<div style="display:flex;gap:8px;margin-top:16px;justify-content:center;">' +
+            (currentStatus === 'ACTIVE' ? '<button onclick="closeDealDetailModal();pauseDeal(' + dealId + ')" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--warning);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">⏸ Tạm dừng</button>' : '') +
+            (currentStatus === 'PAUSED' ? '<button onclick="closeDealDetailModal();resumeDeal(' + dealId + ')" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--success);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">▶ Kích hoạt</button>' : '') +
+            (currentStatus === 'ACTIVE' || currentStatus === 'PAUSED' ? '<button onclick="closeDealDetailModal();openDealProductsModal(' + dealId + ')" style="padding:8px 16px;border-radius:var(--radius-md);background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;">+ Gán sản phẩm</button>' : '') +
+        '</div>';
+    }).catch(function() {
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--danger);">Lỗi tải dữ liệu deal</div>';
     });
-    setTimeout(() => {
-        const section = document.getElementById('pending-section');
-        if (section) { section.style.display = 'none'; }
-    }, 800);
 }
+
+let currentDealDetailData = null;
+function toggleDealEdit() {
+    var detail = document.getElementById('dealDetailContent');
+    var form = document.getElementById('dealEditForm');
+    var btn = document.getElementById('btnEditDeal');
+    if (form.style.display === 'none') {
+        detail.style.display = 'none';
+        form.style.display = 'block';
+        if (btn) btn.textContent = '👁 Xem chi tiết';
+        // Fill form with current deal data
+        if (currentDealDetailData) {
+            var d = currentDealDetailData;
+            document.getElementById('editDealName').value = d.name || '';
+            document.getElementById('editDealCode').value = d.code || '';
+            document.getElementById('editDiscountValue').value = d.discVal || '';
+            document.getElementById('editMinOrder').value = d.minOrder || '';
+            document.getElementById('editMaxDisc').value = d.maxDisc || '';
+            document.getElementById('editMaxUsage').value = d.maxUsage || '';
+            document.getElementById('editEndTime').value = d.endTime ? d.endTime.substring(0, 16) : '';
+            document.getElementById('editDescription').value = d.desc || '';
+            document.getElementById('editDealForm').action = '/seller/deals/' + d.dealId + '/edit';
+        }
+    } else {
+        detail.style.display = 'block';
+        form.style.display = 'none';
+        if (btn) btn.textContent = '✏️ Chỉnh sửa';
+    }
+}
+
+function closeDealDetailModal() {
+    document.getElementById('dealDetailModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+    // Reset edit form
+    var form = document.getElementById('dealEditForm');
+    var detail = document.getElementById('dealDetailContent');
+    if (form) form.style.display = 'none';
+    if (detail) detail.style.display = 'block';
+    var btn = document.getElementById('btnEditDeal');
+    if (btn) btn.textContent = '✏️ Chỉnh sửa';
+    currentDealDetailData = null;
+}
+
+async function pauseDeal(dealId) {
+    if (!confirm('Bạn có chắc muốn tạm dừng deal này?')) return;
+
+    try {
+        const response = await fetch(`/seller/deals/${dealId}/pause`, {
+            method: 'POST',
+            headers: getCsrfHeaders()
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Lỗi: ' + (result.message || 'Unknown error'));
+        }
+
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+}
+
+async function resumeDeal(dealId) {
+    try {
+        const response = await fetch(`/seller/deals/${dealId}/resume`, {
+            method: 'POST',
+            headers: getCsrfHeaders()
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Lỗi: ' + (result.message || 'Unknown error'));
+        }
+
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+}
+
+// Close modal on backdrop click
+document.getElementById('dealProductsModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDealProductsModal();
+    }
+});
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDealProductsModal();
+    }
+});
 </script>
 </body>
 </html>
