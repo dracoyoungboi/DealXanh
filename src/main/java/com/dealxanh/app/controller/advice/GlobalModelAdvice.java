@@ -30,6 +30,7 @@ public class GlobalModelAdvice {
         int notifCount = 0;
         String currentUserFullName = null;
         String currentUserInitials = null;
+        String currentUserAvatar = null;
 
         if (principal != null) {
             try {
@@ -46,6 +47,10 @@ public class GlobalModelAdvice {
                                     + parts[parts.length - 1].substring(0, 1)).toUpperCase();
                         }
                     }
+                    // Pass avatar URL to model for desktop avatar pill
+                    if (user.getAvatarUrl() != null && !user.getAvatarUrl().trim().isEmpty()) {
+                        currentUserAvatar = user.getAvatarUrl().trim();
+                    }
                 }
             } catch (Exception e) {
                 // DB or service error — fail gracefully, don't block page rendering
@@ -57,6 +62,7 @@ public class GlobalModelAdvice {
         model.addAttribute("notifCount", notifCount);
         model.addAttribute("currentUserFullName", currentUserFullName);
         model.addAttribute("currentUserInitials", currentUserInitials);
+        model.addAttribute("currentUserAvatar", currentUserAvatar);
     }
 
     /**

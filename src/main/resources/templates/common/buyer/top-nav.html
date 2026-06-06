@@ -119,8 +119,15 @@
 
             <!-- Avatar pill button — logged in: show initials + name + chevron -->
             <a th:if="${currentUserFullName != null}" href="#" onclick="handleAccountClick(event)" class="desktop-top-nav__avatar-pill" th:classappend="${activeNav == 'account'} ? 'desktop-top-nav__avatar-pill--active' : ''">
-                <span class="desktop-top-nav__avatar-circle" th:style="'background:#1a5c38;color:#fff;font-weight:700;font-size:13px;'">
-                    <span th:text="${currentUserInitials}">MT</span>
+                <!-- Avatar circle: shows real photo when available, falls back to initials -->
+                <span class="desktop-top-nav__avatar-circle" style="position:relative;background:#1a5c38;color:#fff;font-weight:700;font-size:13px;">
+                    <img th:if="${currentUserAvatar != null and !currentUserAvatar.isEmpty()}"
+                         th:src="${currentUserAvatar}"
+                         alt="" width="30" height="30"
+                         onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='';"
+                         style="width:100%;height:100%;border-radius:50%;object-fit:cover;position:absolute;top:0;left:0;display:block;">
+                    <span th:text="${currentUserInitials}"
+                          th:style="${currentUserAvatar != null and !currentUserAvatar.isEmpty()} ? 'display:none' : ''">MT</span>
                 </span>
                 <span class="desktop-top-nav__avatar-name" th:text="${currentUserFullName}">Nguyễn Minh Tuấn</span>
                 <svg class="desktop-top-nav__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
