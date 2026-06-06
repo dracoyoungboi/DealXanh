@@ -127,6 +127,155 @@
   border:2px solid var(--surface);
   line-height:1;
 }
+
+/* === DX AVATAR HEADER MOBILE === */
+#dx-av-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #1a5c2a;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+}
+#dx-av-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dx-av-fb {
+  width: 100%;
+  height: 100%;
+  background: #1a5c2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+/* === DX POPUP MOBILE === */
+.dx-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+}
+.dx-overlay.open { display: block; }
+.dx-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+}
+.dx-popup {
+  position: absolute;
+  top: 60px;
+  right: 8px;
+  width: 210px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+  overflow: hidden;
+  transform: scale(0.9) translateY(-6px);
+  transform-origin: top right;
+  opacity: 0;
+  transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s;
+}
+.dx-overlay.open .dx-popup {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+.dx-pu-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.dx-pu-av {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid #1a5c2a;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.dx-pu-av img { width:100%; height:100%; object-fit:cover; display:block; }
+.dx-pu-av-fb {
+  width:100%; height:100%;
+  background:#1a5c2a;
+  align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; color:#fff;
+}
+.dx-pu-name { font-size:14px; font-weight:600; color:#111; }
+.dx-pu-email {
+  font-size:11px; color:#999; margin-top:2px;
+  white-space:nowrap; overflow:hidden;
+  text-overflow:ellipsis; max-width:124px;
+}
+.dx-menu { padding: 4px 0; }
+.dx-mi {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px; color: #222;
+  background: none; border: none;
+  width: 100%; text-align: left; cursor: pointer;
+}
+.dx-mi i { font-size: 19px; color: #555; flex-shrink: 0; }
+.dx-mi:active { background: #f7f7f7; }
+.dx-divider { height:1px; background:#f0f0f0; margin:3px 0; }
+.dx-tog-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 10px 14px; cursor:pointer;
+}
+.dx-tog-left { display:flex; align-items:center; gap:10px; }
+.dx-tog-left i { font-size:19px; color:#555; }
+.dx-tog-left span { font-size:13.5px; color:#222; }
+.dx-tog {
+  width:36px; height:20px;
+  background:#ccc; border-radius:10px;
+  position:relative; transition:background .2s; flex-shrink:0;
+}
+.dx-tog.on { background:#1a5c2a; }
+.dx-tog::after {
+  content:''; position:absolute;
+  width:16px; height:16px;
+  background:#fff; border-radius:50%;
+  top:2px; left:2px; transition:left .2s;
+}
+.dx-tog.on::after { left:18px; }
+
+/* ĐĂNG XUẤT — đỏ */
+.dx-logout i,
+.dx-logout span { color: #c62828 !important; }
+
+/* ĐĂNG NHẬP — màu xanh giống button desktop */
+.dx-login i,
+.dx-login span { color: #1a5c2a !important; }
+.dx-login { font-weight: 600; }
+
+/* Mobile login button — compact text button matching desktop btn-header-login */
+.dx-mb-login-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: transparent;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+.dx-mb-login-btn:active {
+  background-color: #f3f4f6;
+}
 </style>
 
 <header class="mobile-header">
@@ -149,8 +298,73 @@
             </svg>
             <span class="notification-badge" id="notif-badge" th:if="${notifCount != null and notifCount > 0}" th:text="${notifCount}">0</span>
         </button>
+        <!-- DX Avatar Button -->
+        <div id="dx-av-btn" class="dx-av-btn" th:if="${currentUserFullName != null}">
+          <img
+            id="dx-av-img"
+            th:src="${currentUserAvatar != null ? currentUserAvatar : ''}"
+            alt="avatar"
+            onerror="this.style.display='none';
+                     document.getElementById('dx-av-fb').style.display='flex';"
+          />
+          <div id="dx-av-fb" class="dx-av-fb" th:style="${currentUserAvatar != null} ? 'display:none;' : 'display:flex;'" th:text="${currentUserInitials}" th:if="${currentUserInitials != null}">PT</div>
+        </div>
+        <!-- DX Login Button (visible when logged out) — compact text button like desktop -->
+        <a href="/login" class="dx-mb-login-btn" th:if="${currentUserFullName == null}">Đăng nhập</a>
     </div>
 </header>
+
+<!-- DX Profile Popup Overlay -->
+<div id="dx-overlay" class="dx-overlay" th:if="${currentUserFullName != null}">
+  <div id="dx-backdrop" class="dx-backdrop"></div>
+  <div class="dx-popup">
+
+    <!-- USER INFO -->
+    <div class="dx-pu-user">
+      <div class="dx-pu-av">
+        <img
+          th:src="${currentUserAvatar != null ? currentUserAvatar : ''}"
+          alt="avatar"
+          onerror="this.style.display='none';
+                   this.nextElementSibling.style.display='flex';"
+        />
+        <div class="dx-pu-av-fb" th:style="${currentUserAvatar != null} ? 'display:none;' : 'display:flex;'" th:text="${currentUserInitials}" th:if="${currentUserInitials != null}">PT</div>
+      </div>
+      <div>
+        <div class="dx-pu-name" th:text="${currentUserFullName}">Tên User</div>
+        <div class="dx-pu-email" th:text="${currentUserEmail}">email@example.com</div>
+      </div>
+    </div>
+
+    <!-- MENU ITEMS -->
+    <div class="dx-menu">
+      <button class="dx-mi" data-action="account">
+        <i class="ti ti-user"></i><span>Tài khoản của tôi</span>
+      </button>
+      <button class="dx-mi" data-action="orders">
+        <i class="ti ti-clipboard-list"></i><span>Đơn đặt hàng</span>
+      </button>
+      <button class="dx-mi" data-action="favorites">
+        <i class="ti ti-heart"></i><span>Yêu thích</span>
+      </button>
+      <div class="dx-divider"></div>
+      <button class="dx-mi" data-action="about">
+        <i class="ti ti-info-circle"></i><span>Về chúng tôi</span>
+      </button>
+      <button class="dx-mi" data-action="help">
+        <i class="ti ti-help-circle"></i><span>Trợ giúp</span>
+      </button>
+      <div class="dx-divider"></div>
+
+      <!-- ĐĂNG XUẤT / ĐĂNG NHẬP — tự động đổi theo trạng thái -->
+      <button class="dx-mi dx-logout" id="dx-auth-btn" data-action="logout">
+        <i class="ti ti-logout"></i>
+        <span id="dx-auth-label">Đăng xuất</span>
+      </button>
+    </div>
+
+  </div>
+</div>
 
 <!-- Desktop Top Navigation Bar (visible on min-width: 768px) -->
 <div th:replace="~{common/buyer/top-nav :: topNav}"></div>
@@ -467,6 +681,44 @@ function performSearchNow() {
         window.location.href = '/buyer/search?q=' + encodeURIComponent(q);
     }
 }
+
+// === DX HEADER MOBILE POPUP ===
+(function () {
+  const avBtn     = document.getElementById('dx-av-btn');
+  const overlay   = document.getElementById('dx-overlay');
+  const backdrop  = document.getElementById('dx-backdrop');
+
+  // All elements only exist when user is logged in (th:if guards)
+  if (!avBtn || !overlay) return;
+
+  function openPopup()  { overlay.classList.add('open'); }
+  function closePopup() { overlay.classList.remove('open'); }
+
+  avBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    overlay.classList.contains('open') ? closePopup() : openPopup();
+  });
+
+  backdrop.addEventListener('click', closePopup);
+
+  document.querySelectorAll('.dx-mi').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const action = btn.dataset.action;
+      if (action === 'logout') {
+        // Đăng xuất — dùng GET /logout giống profile page
+        window.location.href = '/logout';
+      } else if (action === 'account') {
+        closePopup();
+        window.location.href = '/buyer/profile';
+      } else if (action === 'orders') {
+        closePopup();
+        window.location.href = '/buyer/orders';
+      } else {
+        closePopup();
+      }
+    });
+  });
+})();
 </script>
 </body>
 </html>

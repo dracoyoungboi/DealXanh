@@ -31,6 +31,7 @@ public class GlobalModelAdvice {
         String currentUserFullName = null;
         String currentUserInitials = null;
         String currentUserAvatar = null;
+        String currentUserEmail = null;
 
         if (principal != null) {
             try {
@@ -51,6 +52,10 @@ public class GlobalModelAdvice {
                     if (user.getAvatarUrl() != null && !user.getAvatarUrl().trim().isEmpty()) {
                         currentUserAvatar = user.getAvatarUrl().trim();
                     }
+                    // Pass email for profile popup
+                    if (user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+                        currentUserEmail = user.getEmail().trim();
+                    }
                 }
             } catch (Exception e) {
                 // DB or service error — fail gracefully, don't block page rendering
@@ -63,6 +68,7 @@ public class GlobalModelAdvice {
         model.addAttribute("currentUserFullName", currentUserFullName);
         model.addAttribute("currentUserInitials", currentUserInitials);
         model.addAttribute("currentUserAvatar", currentUserAvatar);
+        model.addAttribute("currentUserEmail", currentUserEmail);
     }
 
     /**

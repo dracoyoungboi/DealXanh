@@ -66,12 +66,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 .prod-card__original{font-size:9px;color:#999;text-decoration:line-through;line-height:1}
 .prod-card__nodeal{font-size:9px;color:#999}
 
-.prod-card__actions{display:flex;gap:5px;padding:0 6px 7px}
-.prod-card__btn{flex:1;padding:5px 0;border-radius:5px;font-size:9px;font-weight:600;font-family:inherit;cursor:pointer;border:none;text-align:center;transition:all .15s}
-.prod-card__btn--cart{background:#e8f5e9;color:var(--primary);border:1px solid rgba(13,92,46,.15)}
-.prod-card__btn--cart:active{background:rgba(13,92,46,.15)}
-.prod-card__btn--buy{background:var(--primary);color:#fff}
-.prod-card__btn--buy:active{background:#0a4824}
+.prod-card__actions{display:flex;gap:6px;padding:0 6px 7px;align-items:center}
+.prod-card__btn{height:34px;border-radius:10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.prod-card__btn--cart{width:42px;min-width:42px;flex-shrink:0;background:#F3FAF5;border:1px solid #CDE7D4;color:var(--primary);padding:0}
+.prod-card__btn--cart svg{width:18px;height:18px;flex-shrink:0}
+.prod-card__btn--cart:hover{background:#E6F4EA;border-color:#A3D4AF}
+.prod-card__btn--cart:active{background:#CDE7D4;transform:scale(0.94)}
+.prod-card__btn--cart.cart-added{animation:cartPopIn .45s ease;background:#D4EDDA;border-color:#28a745;color:#1e7e34}
+.prod-card__btn--buy{flex:1;min-width:0;background:var(--primary);color:#fff;white-space:nowrap;padding:0 6px}
+.prod-card__btn--buy:active{background:#0a4824;transform:scale(0.98)}
 
 /* Deals */
 .deal-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
@@ -223,10 +226,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
                     <div class="prod-card__actions">
                         <button class="prod-card__btn prod-card__btn--cart"
                             th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${salePrice},data-oprice=${origPrice},data-sname=${store != null ? store.storeName : ''},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
-                            onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">+ Giỏ</button>
+                            onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)" aria-label="Thêm vào giỏ"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></button>
                         <button class="prod-card__btn prod-card__btn--buy"
                             th:attr="data-pid=${p.productId},data-pname=${p.name},data-sprice=${salePrice},data-oprice=${origPrice},data-sname=${store != null ? store.storeName : ''},data-img=${p.imageUrl != null ? p.imageUrl : ''},data-did=${dealInfo != null ? dealInfo.dealId : 0},data-sid=${p.store != null ? p.store.storeId : 0},data-dtype=${dealInfo != null ? dealInfo.dealType : ''},data-dname=${dealInfo != null ? dealInfo.typeLabel : ''}"
-                            onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua</button>
+                            onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
                     </div>
                 </div>
             </th:block>
@@ -331,7 +334,7 @@ function addToCartHome(pid, pname, sprice, oprice, sname, img, did, sid, dtype, 
     fetch('/api/cart/add', {method:'POST',body:formData})
     .then(function(r){return r.json()})
     .then(function(d){
-        if(d.success){showStoreToast('Đã thêm vào giỏ');updateCartBadge()}else{showStoreToast(d.message||'Lỗi',true)}
+        if(d.success){flashCartBtn(pid);showStoreToast('Đã thêm vào giỏ');updateCartBadge()}else{showStoreToast(d.message||'Lỗi',true)}
     }).catch(function(){showStoreToast('Lỗi kết nối',true)});
 }
 function buyNowHome(pid, pname, sprice, oprice, sname, img, did, sid, dtype, dname) {
@@ -352,6 +355,7 @@ function buyNowHome(pid, pname, sprice, oprice, sname, img, did, sid, dtype, dna
     .catch(function(){showStoreToast('Lỗi kết nối',true)});
 }
 function showStoreToast(msg,isErr){var t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:'+(isErr?'var(--danger)':'var(--primary)')+';color:#fff;padding:8px 20px;border-radius:var(--radius-full);font-size:13px;font-weight:600;z-index:9999;box-shadow:var(--shadow-md)';document.body.appendChild(t);setTimeout(function(){t.remove()},2000);}
+function flashCartBtn(pid){var btn=document.querySelector('.prod-card__btn--cart[data-pid="'+pid+'"]');if(!btn)return;btn.classList.add('cart-added');setTimeout(function(){btn.classList.remove('cart-added')},600);}
 function updateCartBadge(){fetch('/api/cart/count').then(function(r){return r.json()}).then(function(d){var b=document.getElementById('mobile-nav-cart-badge');if(b){b.textContent=d.count||0;b.style.display=d.count>0?'':'none'}}).catch(function(){})}
 
 // Apply store page config (section toggles + order from seller store-page builder)
