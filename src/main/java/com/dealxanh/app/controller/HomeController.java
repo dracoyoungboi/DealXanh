@@ -260,6 +260,18 @@ public class HomeController {
             model.addAttribute("flashSaleCount", flashSaleProducts.size());
         }
 
+        // Featured deals banner data: earliest endTime for countdown
+        if (!allProducts.isEmpty()) {
+            String earliestFeaturedEnd = null;
+            for (Map<String, Object> p : allProducts) {
+                String et = (String) p.get("endTime");
+                if (et != null && (earliestFeaturedEnd == null || et.compareTo(earliestFeaturedEnd) < 0)) {
+                    earliestFeaturedEnd = et;
+                }
+            }
+            model.addAttribute("featuredDealEndTime", earliestFeaturedEnd);
+        }
+
         // Categories for category grid
         List<Category> allCategories = categoryRepository.findAll();
         model.addAttribute("categories", allCategories);
