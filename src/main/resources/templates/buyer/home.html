@@ -8,7 +8,7 @@
   <div th:replace="~{common/buyer/css :: css}"></div>
   <link rel="stylesheet" th:href="@{/css/pages/home.css}">
   <style>
-html{height:auto;min-height:100%}
+html{height:auto;min-height:100%;scroll-behavior:smooth}
 body{padding-bottom:80px}
 
 /* ===== PRODUCT CARD (dùng chung CSS từ home.css .deal-card) ===== */
@@ -173,11 +173,28 @@ body{padding-bottom:80px}
 </section>
 
 <!-- ===== QUICK FILTERS ===== -->
-<section class="container" style="margin-top:-30px;position:relative;z-index:10;margin-bottom:16px;">
-  <div class="quick-filters" style="background:var(--surface);padding:12px 16px;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);">
-    <button class="filter-chip filter-chip--active" onclick="scrollToSection('all',this)">Tất cả</button>
-    <button class="filter-chip" onclick="scrollToSection('flash',this)">Flash Sale</button>
-    <button class="filter-chip" onclick="scrollToSection('combo',this)">Combo</button>
+<section class="dx-filter-section">
+  <div class="dx-filter-card">
+    <!-- Left: Icon + Text (desktop only) -->
+    <div class="dx-filter-left">
+      <div class="deal-ticket-logo" aria-hidden="true">
+        <span>%</span>
+      </div>
+      <div class="dx-filter-text">
+        <span class="dx-filter-title">Khám phá deal hôm nay</span>
+        <span class="dx-filter-subtitle">Chọn loại ưu đãi phù hợp với nhu cầu của bạn</span>
+      </div>
+    </div>
+
+    <!-- Vertical divider (desktop only) -->
+    <div class="dx-filter-divider"></div>
+
+    <!-- Right: Tab pills -->
+    <div class="dx-filter-tabs">
+      <button class="filter-chip filter-chip--active" onclick="scrollToSection('all',this)">Tất cả</button>
+      <button class="filter-chip" onclick="scrollToSection('flash',this)">Flash Sale</button>
+      <button class="filter-chip" onclick="scrollToSection('combo',this)">Combo</button>
+    </div>
   </div>
 </section>
 
@@ -544,13 +561,15 @@ function scrollToSection(type, btn) {
   if(btn) btn.classList.add('filter-chip--active');
 
   if (type === 'flash') {
-    var el = document.getElementById('flashGrid');
+    var el = document.getElementById('featuredGrid');
     if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
   } else if (type === 'combo') {
     var el = document.getElementById('comboGrid');
     if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
   } else {
-    window.scrollTo({top:0, behavior:'smooth'});
+    // Tất cả → Gợi ý hôm nay
+    var el = document.getElementById('gynGrid');
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
   }
 }
 
