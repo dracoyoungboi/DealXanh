@@ -16,8 +16,23 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Autowired
     private BuyerAccessInterceptor buyerAccessInterceptor;
 
+    @Autowired
+    private com.dealxanh.app.security.MaintenanceInterceptor maintenanceInterceptor;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // Maintenance check runs first — redirects non-staff to /maintenance
+        // Admin/Seller/Staff/Login paths excluded: they bypass via role check anyway,
+        // so skip the interceptor entirely for speed.
+        registry.addInterceptor(maintenanceInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns("/admin/**", "/moderator/**", "/seller/**", "/staff/**",
+                        "/login", "/admin/login", "/seller/login", "/perform_login",
+                        "/logout", "/oauth2/**",
+                        "/css/**", "/js/**", "/img/**", "/images/**",
+                        "/uploads/**", "/static/**", "/favicon.ico",
+                        "/error", "/maintenance");
+
         registry.addInterceptor(buyerAccessInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns("/admin/**", "/moderator/**", "/seller/**", "/staff/**",

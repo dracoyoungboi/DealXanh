@@ -101,6 +101,12 @@ public class AdminController {
     @Autowired
     private com.dealxanh.app.repository.CartItemRepository cartItemRepository;
 
+    @Autowired
+    private com.dealxanh.app.repository.AppConfigRepository appConfigRepository;
+
+    @Autowired
+    private com.dealxanh.app.security.MaintenanceInterceptor maintenanceInterceptor;
+
     @GetMapping("/dashboard")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public String dashboard(Model model, Authentication authentication) {
@@ -192,6 +198,28 @@ public class AdminController {
 
         // Set active sidebar
         model.addAttribute("activeSidebar", "dashboard");
+
+        // Maintenance mode status for sidebar toggle
+        try {
+            com.dealxanh.app.entity.AppConfig maintenanceConfig =
+                appConfigRepository.findByConfigKey("maintenance_mode").orElse(null);
+            model.addAttribute("maintenanceMode",
+                maintenanceConfig != null && "true".equalsIgnoreCase(maintenanceConfig.getConfigValue()));
+
+            com.dealxanh.app.entity.AppConfig messageConfig =
+                appConfigRepository.findByConfigKey("maintenance_message").orElse(null);
+            model.addAttribute("maintenanceMessage",
+                messageConfig != null ? messageConfig.getConfigValue() : "");
+
+            com.dealxanh.app.entity.AppConfig endTimeConfig =
+                appConfigRepository.findByConfigKey("maintenance_end_time").orElse(null);
+            model.addAttribute("maintenanceEndTime",
+                endTimeConfig != null ? endTimeConfig.getConfigValue() : "");
+        } catch (Exception e) {
+            model.addAttribute("maintenanceMode", false);
+            model.addAttribute("maintenanceMessage", "");
+            model.addAttribute("maintenanceEndTime", "");
+        }
 
         return "admin/dashboard";
     }
@@ -2823,5 +2851,77 @@ public class AdminController {
 
         try { request.getSession().invalidate(); } catch (Exception ignored) {}
         return "redirect:/admin/login?logout=password_changed";
+    }
+
+    // ========== MAINTENANCE MODE ==========
+
+    @PostMapping("/settings/maintenance/toggle")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> toggleMaintenance(
+            @RequestParam boolean mode,
+            @RequestParam(required = false) String message,
+            @RequestParam(required = false) String endTime) {
+
+        try {
+            // Update maintenance mode
+            com.dealxanh.app.entity.AppConfig config =
+                appConfigRepository.findByConfigKey("maintenance_mode")
+                    .orElse(new com.dealxanh.app.entity.AppConfig("maintenance_mode", "false"));
+            config.setConfigValue(mode ? "true" : "false");
+            appConfigRepository.save(config);
+
+            // Update message if provided
+            if (message != null && !message.trim().isEmpty()) {
+                com.dealxanh.app.entity.AppConfig msgConfig =
+                    appConfigRepository.findByConfigKey("maintenance_message")
+                        .orElse(new com.dealxanh.app.entity.AppConfig("maintenance_message", ""));
+                msgConfig.setConfigValue(message.trim());
+                appConfigRepository.save(msgConfig);
+            }
+
+            // Update end time if provided
+            if (endTime != null) {
+                com.dealxanh.app.entity.AppConfig timeConfig =
+                    appConfigRepository.findByConfigKey("maintenance_end_time")
+                        .orElse(new com.dealxanh.app.entity.AppConfig("maintenance_end_time", ""));
+                timeConfig.setConfigValue(endTime.trim());
+                appConfigRepository.save(timeConfig);
+            }
+
+            // Refresh interceptor cache
+            maintenanceInterceptor.refreshCache();
+
+            return java.util.Map.of(
+                "success", true,
+                "message", mode ? "Đã bật chế độ bảo trì" : "Đã tắt chế độ bảo trì",
+                "maintenanceMode", mode
+            );
+        } catch (Exception e) {
+            return java.util.Map.of("success", false, "message", "Lỗi: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/api/settings/maintenance/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @ResponseBody
+    public java.util.Map<String, Object> getMaintenanceStatus() {
+        try {
+            com.dealxanh.app.entity.AppConfig config =
+                appConfigRepository.findByConfigKey("maintenance_mode").orElse(null);
+            com.dealxanh.app.entity.AppConfig msgConfig =
+                appConfigRepository.findByConfigKey("maintenance_message").orElse(null);
+            com.dealxanh.app.entity.AppConfig timeConfig =
+                appConfigRepository.findByConfigKey("maintenance_end_time").orElse(null);
+
+            return java.util.Map.of(
+                "success", true,
+                "maintenanceMode", config != null && "true".equalsIgnoreCase(config.getConfigValue()),
+                "maintenanceMessage", msgConfig != null ? msgConfig.getConfigValue() : "",
+                "maintenanceEndTime", timeConfig != null ? timeConfig.getConfigValue() : ""
+            );
+        } catch (Exception e) {
+            return java.util.Map.of("success", false, "message", "Lỗi: " + e.getMessage());
+        }
     }
 }

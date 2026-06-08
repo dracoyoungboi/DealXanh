@@ -61,7 +61,8 @@ public class SecurityConfig {
                     "/register", "/register/buyer", "/seller/register",
                     "/forgot-password", "/admin/forgot-password", "/seller/forgot-password",
                     "/reset-password", "/terms", "/logout",
-                    "/oauth2/**", "/login/oauth2/**", "/api/auth/**", "/perform_login"
+                    "/oauth2/**", "/login/oauth2/**", "/api/auth/**", "/perform_login",
+                    "/maintenance"
                 ).permitAll()
 
                 // Onboarding pending page - allow authenticated users (role may be pending update)
@@ -153,7 +154,8 @@ public class SecurityConfig {
                     "/staff/products/create", "/staff/products/*/toggle",
                     "/pickup/*/confirm",
                     "/buyer/checkout/confirm",
-                    "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject"
+                    "/moderator/seller-verify/*/approve", "/moderator/seller-verify/*/reject",
+                    "/admin/settings/maintenance/toggle"
                 )
             )
                 .exceptionHandling(exceptions -> exceptions

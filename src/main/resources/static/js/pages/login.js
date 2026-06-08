@@ -166,7 +166,6 @@ class LoginPage {
 
             // Social buttons
             socialGoogle: document.getElementById('social-google'),
-            socialFacebook: document.getElementById('social-facebook'),
             socialZalo: document.getElementById('social-zalo'),
 
             // Guest banner
@@ -216,7 +215,6 @@ class LoginPage {
 
         // Social login
         this.elements.socialGoogle?.addEventListener('click', () => this.handleSocialLogin('google'));
-        this.elements.socialFacebook?.addEventListener('click', () => this.handleSocialLogin('facebook'));
         this.elements.socialZalo?.addEventListener('click', () => this.handleSocialLogin('zalo'));
 
         // Guest access

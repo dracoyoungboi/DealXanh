@@ -10,23 +10,31 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
-    background: var(--glass);
-    backdrop-filter: blur(12px);
+    padding: 8px 20px 6px 20px;
+    background: var(--surface);
     border-bottom: 1px solid var(--border);
 }
 
 .mobile-header__logo {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: flex-start;
+    height: 36px;
+    width: auto;
+    flex-shrink: 0;
+}
+
+.mobile-header__logo a {
+    display: block;
+    height: 100%;
 }
 
 .mobile-header__logo img {
-    height: 24px;
+    display: block;
+    height: 100%;
     width: auto;
     object-fit: contain;
-    display: block;
+    image-rendering: auto;
 }
 
 .mobile-header__brand {
@@ -113,17 +121,19 @@
     .desktop-top-nav__logo {
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: center;
+        width: 110px;
+        height: 48px;
         text-decoration: none;
         flex-shrink: 0;
-        padding-right: 16px;
+        padding-right: 6px;
     }
 
     .desktop-top-nav__logo img {
-        height: 32px;
-        width: auto;
-        object-fit: contain;
         display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 
     .desktop-top-nav__brand {
@@ -1573,7 +1583,7 @@
 }
 
 .footer__logo img {
-    height: 36px;
+    height: 48px;
     width: auto;
     object-fit: contain;
     display: block;
@@ -2574,3 +2584,34 @@
 
 /* Desktop: Clean minimal card — see home.html inline styles */
 /* Mobile: horizontal scroll row — see home.html inline styles */
+
+/* ===== GỢI Ý HÔM NAY ===== */
+.gyn-section {
+  padding: 2rem 0;
+}
+
+/* Grid — đồng bộ với featured-grid */
+.gyn-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (min-width: 768px) {
+  .gyn-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.gyn-card-wrapper {
+  height: 100%;
+}
+
+/* Animation xoay icon Làm mới */
+.gyn-btn-spinning #gynRefreshIcon {
+  animation: gynSpin 0.5s linear;
+}
+@keyframes gynSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+/* ===== HẾT GỢI Ý HÔM NAY ===== */

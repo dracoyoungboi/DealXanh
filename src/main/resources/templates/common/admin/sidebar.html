@@ -109,6 +109,20 @@
     </div>
 
 
+    <div class="nav-section">
+        <div class="nav-section__label">Hệ thống</div>
+        <div class="maintenance-toggle">
+            <div class="maintenance-toggle__row">
+                <span> Chế độ bảo trì</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="maintenanceCheckbox" th:checked="${maintenanceMode}"
+                           onchange="toggleMaintenance(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
     <div class="sidebar-footer">
         <a th:href="@{/admin/profile}" class="sidebar-user" style="text-decoration:none;">
             <div class="sidebar-user__avatar">
@@ -124,5 +138,82 @@
         </a>
     </div>
 </aside>
+
+<style>
+/* Maintenance toggle switch */
+.maintenance-toggle {
+    padding: 4px 0;
+}
+.maintenance-toggle__row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background .2s;
+}
+.maintenance-toggle__row:hover {
+    background: rgba(255,255,255,.08);
+}
+.maintenance-toggle__row span {
+    font-size: 13px; color: rgba(255,255,255,.8);
+    font-weight: 500;
+}
+.toggle-switch {
+    position: relative; width: 44px; height: 24px; display: inline-block;
+    flex-shrink: 0;
+}
+.toggle-switch input {
+    opacity: 0; width: 0; height: 0;
+}
+.toggle-slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,.25); border-radius: 24px; transition: .3s;
+}
+.toggle-slider:before {
+    content: ""; position: absolute; height: 18px; width: 18px;
+    left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .3s;
+}
+input:checked + .toggle-slider { background: #f59e0b; }
+input:checked + .toggle-slider:before { transform: translateX(20px); }
+</style>
+
+<script>
+function toggleMaintenance(enabled) {
+    var message = enabled ? prompt('Nhập thông báo bảo trì (để trống để giữ mặc định):', 'Hệ thống đang bảo trì, vui lòng quay lại sau.') : '';
+    var endTime = '';
+    if (enabled && message !== null) {
+        endTime = prompt('Dự kiến quay lại lúc (VD: 22:00 ngày 09/06/2026) — để trống nếu chưa xác định:', '') || '';
+    }
+    if (message === null) { document.getElementById('maintenanceCheckbox').checked = !enabled; return; }
+
+    var formData = new URLSearchParams();
+    formData.append('mode', enabled);
+    if (message) formData.append('message', message);
+    if (endTime) formData.append('endTime', endTime);
+
+    fetch('/admin/settings/maintenance/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            if (enabled) {
+                alert('🔧 Đã bật chế độ bảo trì. Khách truy cập sẽ thấy trang bảo trì.\nAdmin/Seller/Staff vẫn truy cập bình thường.');
+            } else {
+                alert('✅ Đã tắt chế độ bảo trì. Trang web hoạt động bình thường.');
+            }
+        } else {
+            alert('Lỗi: ' + (data.message || 'Không thể thay đổi'));
+            document.getElementById('maintenanceCheckbox').checked = !enabled;
+        }
+    })
+    .catch(function(err) {
+        alert('Lỗi kết nối: ' + err.message);
+        document.getElementById('maintenanceCheckbox').checked = !enabled;
+    });
+}
+</script>
+
 </body>
 </html>

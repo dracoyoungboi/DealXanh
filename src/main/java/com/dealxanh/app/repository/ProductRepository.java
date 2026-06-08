@@ -127,4 +127,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Product p SET p.active = :active, p.updatedAt = CURRENT_TIMESTAMP WHERE p.productId = :id")
     void setActive(@Param("id") Long id, @Param("active") Boolean active);
+
+    /** Sản phẩm không thuộc bất kỳ deal ACTIVE nào — dùng cho "Gợi ý hôm nay" */
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.deleted = false AND p.stockQuantity > 0 " +
+           "AND p.approvalStatus = 'APPROVED' " +
+           "AND p.productId NOT IN (SELECT dp.product.productId FROM DealProduct dp WHERE dp.deal.status = 'ACTIVE')")
+    Page<Product> findProductsNotInActiveDeal(Pageable pageable);
 }

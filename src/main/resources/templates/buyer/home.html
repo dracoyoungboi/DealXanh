@@ -251,7 +251,7 @@ body{padding-bottom:80px}
       <div class="deal-card" th:each="p : ${flashSaleProducts}" th:attr="data-type=${p.dealType}">
         <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
           <div class="deal-card__image">
-            <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
+            <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" loading="lazy" decoding="async" onerror="this.src='/img/default-banner.svg'">
             <div class="deal-card__badges">
               <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
             </div>
@@ -263,7 +263,7 @@ body{padding-bottom:80px}
           </div>
           <div class="deal-card__content">
             <div class="deal-card__store">
-              <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
+              <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">
               <span class="deal-card__store-name" th:text="${p.storeName}">Store</span><span class="deal-card__store-addr" style="font-size:10px;color:var(--text-tertiary);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;" th:if="${p.storeAddress != null and !p.storeAddress.isEmpty()}" th:text="${p.storeAddress}">Address</span>
             </div>
             <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
@@ -343,7 +343,7 @@ body{padding-bottom:80px}
       <div class="featured-card" th:each="p : ${allProducts}">
         <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:6px;flex:1;">
           <div class="fc-image">
-            <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
+            <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" loading="lazy" decoding="async" onerror="this.src='/img/default-banner.svg'">
             <span class="fc-badge" th:text="|-${p.discountPercent}%|">-50%</span>
           </div>
           <div class="fc-name" th:text="${p.productName}">Tên sản phẩm</div>
@@ -367,82 +367,70 @@ body{padding-bottom:80px}
       </div>
     </div>
 
-    <div class="empty-state" id="emptyDeals" style="display:none;">
-      <div class="empty-state__icon">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      </div>
-      <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Không có sản phẩm nào</h3>
-      <p style="font-size:14px;color:var(--text-secondary);">Không tìm thấy sản phẩm cho bộ lọc này</p>
-    </div>
   </div>
 </section>
 
 <!-- ===== COMBO GIẢM GIÁ ===== -->
-<section class="section" th:if="${hasCombo}">
+<section class="section" th:if="${hasCombo}" style="padding:24px 0 0 0;">
   <div class="container">
-    <div class="blind-box-section">
-      <div class="blind-box-section__background">
-        <img src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=1200&fit=crop" alt="Combo Deal">
+
+    <!-- Banner: same green #0F4C35 style as DEAL NỔI BẬT, custom combo image -->
+    <div class="featured-deal-banner" style="background:linear-gradient(rgba(15,76,53,.35),rgba(15,76,53,.35)),url('https://i.pinimg.com/736x/17/12/9f/17129fe9b37222f3412f44b660573fbb.jpg') center/cover no-repeat;background-color:#0F4C35;">
+      <!-- Badge (top-left) -->
+      <div class="fdb-badge">
+        <span class="fdb-badge-dot"></span>
+         COMBO DEALS
       </div>
-      <div class="blind-box-section__overlay"></div>
-      <div class="blind-box-section__content">
-        <div class="blind-box-section__tag">📦 COMBO DEALS</div>
-        <div class="blind-box-section__title">Săn Combo — Tiết kiệm hơn nữa</div>
-        <div class="blind-box-section__description">Ghép nhiều sản phẩm thành combo giá tốt. Combo cận date giúp bạn tiết kiệm đến 65% so với giá gốc.</div>
-        <div class="blind-box-section__features">
-          <div class="blind-box-feature">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Tiết kiệm đến 65%</span>
-          </div>
-          <div class="blind-box-feature">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            <span th:text="|${#lists.size(comboProducts)} combo đang có|">5 combo</span>
-          </div>
+      <!-- Top row: text left -->
+      <div class="fdb-top-row">
+        <div class="fdb-left">
+          <h2 class="fdb-title">Săn Combo — Tiết kiệm hơn nữa</h2>
+          <p class="fdb-subtitle" th:text="|Ghép nhiều món giá tốt · ${#lists.size(comboProducts)} combo đang có|">Ghép nhiều món giá tốt</p>
         </div>
-        <a class="blind-box-section__cta" href="#comboGrid" onclick="document.getElementById('comboGrid')?.scrollIntoView({behavior:'smooth'});return true;">
+      </div>
+      <!-- Divider (visible on mobile only) -->
+      <hr class="fdb-divider" aria-hidden="true">
+      <!-- CTA row: button -->
+      <div class="fdb-cta-row">
+        <a class="fdb-cta" href="#comboGrid" onclick="document.getElementById('comboGrid')?.scrollIntoView({behavior:'smooth'});return true;">
           Xem Combo ngay
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
       </div>
     </div>
 
-    <div class="section-header" style="margin-top:20px;">
-      <div class="section-header__left">
-        <h2 class="section-header__title">Sản phẩm Combo</h2>
-        <p class="section-header__subtitle">📦 Ghép nhiều món — Giá tốt hơn</p>
+    <!-- Product strip header -->
+    <div class="featured-header">
+      <div class="featured-header__left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F4C35" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        <span class="featured-header__title">Sản phẩm Combo</span>
       </div>
+      <a class="featured-header__link" href="#comboGrid" onclick="document.getElementById('comboGrid')?.scrollIntoView({behavior:'smooth'});return true;">Xem tất cả <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
     </div>
-    <div class="deal-grid" id="comboGrid">
-      <div class="deal-card" th:each="p : ${comboProducts}" th:attr="data-type=${p.dealType}">
-        <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;">
-          <div class="deal-card__image">
-            <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" onerror="this.src='/img/default-banner.svg'">
-            <div class="deal-card__badges">
-              <span class="deal-card__badge" th:text="|${p.discountPercent}% GIẢM|">50% GIẢM</span>
-            </div>
-            <div class="deal-card__expiry" th:if="${p.daysLeft >= 0}" th:classappend="${p.daysLeft <= 1 ? 'urgent' : ''}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
-              <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
-            </div>
-          </div>
-          <div class="deal-card__content">
-            <div class="deal-card__store">
-              <img class="deal-card__store-avatar" th:src="${p.storeLogo != null ? p.storeLogo : '/img/default-avatar.svg'}" alt="" onerror="this.style.display='none'">
-              <span class="deal-card__store-name" th:text="${p.storeName}">Store</span><span class="deal-card__store-addr" style="font-size:10px;color:var(--text-tertiary);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;" th:if="${p.storeAddress != null and !p.storeAddress.isEmpty()}" th:text="${p.storeAddress}">Address</span>
-            </div>
-            <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
-            <div class="deal-card__price">
-              <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
 
-            </div>
+    <!-- Product grid: compact cards, 4-col desktop, 2-col mobile — SAME AS DEAL NỔI BẬT -->
+    <div class="featured-grid" id="comboGrid">
+      <div class="featured-card" th:each="p : ${comboProducts}">
+        <a th:href="@{'/products/' + ${p.productId}}" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:6px;flex:1;">
+          <div class="fc-image">
+            <img th:src="${p.productImage != null ? p.productImage : '/img/default-banner.svg'}" th:alt="${p.productName}" loading="lazy" decoding="async" onerror="this.src='/img/default-banner.svg'">
+            <span class="fc-badge" th:text="|-${p.discountPercent}%|">-50%</span>
+          </div>
+          <div class="fc-name" th:text="${p.productName}">Tên sản phẩm</div>
+          <div class="fc-price">
+            <span class="fc-price__sale" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+          </div>
+          <div class="fc-pill" th:if="${p.daysLeft >= 0}">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span th:if="${p.daysLeft > 0}" th:text="|Còn ${p.daysLeft} ngày|">Còn 3 ngày</span>
+            <span th:unless="${p.daysLeft > 0}">Hôm nay</span>
           </div>
         </a>
-        <div class="deal-card__actions">
-          <button class="deal-card__btn deal-card__btn--cart"
+        <div class="fc-actions">
+          <button class="fc-btn fc-btn--cart"
             th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
-            onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)" aria-label="Thêm vào giỏ"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></button>
-          <button class="deal-card__btn deal-card__btn--buy"
+            onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)" aria-label="Thêm vào giỏ"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></button>
+          <button class="fc-btn fc-btn--buy"
             th:attr="data-pid=${p.productId},data-pname=${p.productName},data-sprice=${p.salePrice},data-oprice=${p.originalPrice},data-sname=${p.storeName},data-img=${p.productImage != null ? p.productImage : ''},data-did=${p.dealId},data-sid=${p.storeId != null ? p.storeId : 0},data-dtype=${p.dealType != null ? p.dealType : ''},data-dname=${p.typeLabel != null ? p.typeLabel : ''}"
             onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,Number(this.dataset.did),Number(this.dataset.sid),this.dataset.dtype,this.dataset.dname)">Mua ngay</button>
         </div>
@@ -451,8 +439,65 @@ body{padding-bottom:80px}
   </div>
 </section>
 
+<!-- ===== GỢI Ý HÔM NAY ===== -->
+<section class="section gyn-section" th:if="${suggestedProducts != null and !suggestedProducts.isEmpty()}" style="padding:24px 0 32px 0;">
+  <div class="container">
 
-<!-- ===== TRUST SECTION ===== -->
+    <!-- Header — đồng bộ với "Sản phẩm đang sale" -->
+    <div class="featured-header">
+      <div class="featured-header__left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F4C35" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span class="featured-header__title">Gợi ý hôm nay</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="featured-header__link" id="gynRefreshBtn" onclick="gynShuffle()" style="background:none;border:none;cursor:pointer;font-family:inherit;">
+          <svg id="gynRefreshIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Làm mới
+        </button>
+        <a class="featured-header__link" href="#gynGrid" onclick="document.getElementById('gynGrid')?.scrollIntoView({behavior:'smooth'});return true;">Xem tất cả <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+      </div>
+    </div>
+
+    <!-- Grid sản phẩm -->
+    <div class="gyn-grid" id="gynGrid">
+      <div class="gyn-card-wrapper"
+           th:each="product : ${suggestedProducts}"
+           style="display:none;">
+
+        <div class="featured-card">
+          <a th:href="@{'/products/' + ${product.productId}}" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:6px;flex:1;">
+            <div class="fc-image">
+              <img th:src="${product.productImage != null ? product.productImage : '/img/default-banner.svg'}" th:alt="${product.productName}" loading="lazy" decoding="async" onerror="this.src='/img/default-banner.svg'">
+            </div>
+            <div class="fc-name" th:text="${product.productName}">Tên sản phẩm</div>
+            <div class="fc-price">
+              <span class="fc-price__sale" th:text="|${#numbers.formatDecimal(product.price, 0, 0)}đ|">50,000đ</span>
+            </div>
+          </a>
+          <div class="fc-actions">
+            <button class="fc-btn fc-btn--cart"
+              th:attr="data-pid=${product.productId},data-pname=${product.productName},data-sprice=${product.price},data-oprice=${product.price},data-sname=${product.storeName},data-img=${product.productImage != null ? product.productImage : ''},data-did=0,data-sid=${product.storeId != null ? product.storeId : 0}"
+              onclick="event.stopPropagation();addToCartHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,0,Number(this.dataset.sid),'','')" aria-label="Thêm vào giỏ"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></button>
+            <button class="fc-btn fc-btn--buy"
+              th:attr="data-pid=${product.productId},data-pname=${product.productName},data-sprice=${product.price},data-oprice=${product.price},data-sname=${product.storeName},data-img=${product.productImage != null ? product.productImage : ''},data-did=0,data-sid=${product.storeId != null ? product.storeId : 0}"
+              onclick="event.stopPropagation();buyNowHome(Number(this.dataset.pid),this.dataset.pname,Number(this.dataset.sprice),Number(this.dataset.oprice),this.dataset.sname,this.dataset.img,0,Number(this.dataset.sid),'','')">Mua ngay</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="gynEmpty" style="display:none; text-align:center; padding:40px; color:#888;">
+      Chưa có sản phẩm gợi ý hôm nay. Hãy quay lại sau nhé!
+    </div>
+
+  </div>
+</section>
+<!-- ===== HẾT GỢI Ý HÔM NAY ===== -->
+
+<!-- ===== TRUST SECTION (ẩn — sẽ chỉnh sửa sau) ===== -->
+<div style="display:none;">
 <section class="section trust-section">
   <div class="container">
     <div class="section-header">
@@ -486,6 +531,7 @@ body{padding-bottom:80px}
     </div>
   </div>
 </section>
+</div>
 
 <div th:replace="~{common/buyer/footer :: footer}"></div>
 <div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
@@ -672,6 +718,58 @@ function updateCartBadge(count) {
 
   observer.observe(grid);
 })();
+</script>
+
+<script>
+/* ===== GỢI Ý HÔM NAY — SHUFFLE ===== */
+(function () {
+  var SHOW_COUNT = 12;
+
+  // Fisher-Yates shuffle
+  function gynFisherYates(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  // Shuffle và hiển thị SHOW_COUNT card
+  window.gynShuffle = function () {
+    var grid  = document.getElementById('gynGrid');
+    var empty = document.getElementById('gynEmpty');
+    var btn   = document.getElementById('gynRefreshBtn');
+    if (!grid) return;
+
+    var cards = Array.from(grid.querySelectorAll('.gyn-card-wrapper'));
+
+    // Xử lý trường hợp không có sản phẩm
+    if (cards.length === 0) {
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+
+    // Animation nút Làm mới
+    if (btn) {
+      btn.classList.add('gyn-btn-spinning');
+      setTimeout(function () { btn.classList.remove('gyn-btn-spinning'); }, 500);
+    }
+
+    // Shuffle + hiện/ẩn
+    gynFisherYates(cards).forEach(function (card, index) {
+      card.style.display = index < SHOW_COUNT ? '' : 'none';
+      grid.appendChild(card); // re-append để đổi vị trí trong DOM
+    });
+  };
+
+  // Chạy khi trang load
+  document.addEventListener('DOMContentLoaded', function () {
+    window.gynShuffle();
+  });
+})();
+/* ===== HẾT SHUFFLE ===== */
 </script>
 </body>
 </html>

@@ -78,6 +78,9 @@ public class HomeController {
     private CartService cartService;
 
     @Autowired
+    private com.dealxanh.app.service.ProductService productService;
+
+    @Autowired
     private NotificationService notificationService;
 
     @Autowired
@@ -85,6 +88,9 @@ public class HomeController {
 
     @Autowired
     private LocationService locationService;
+
+    @Autowired
+    private com.dealxanh.app.repository.AppConfigRepository appConfigRepository;
 
     /**
      * Global model attribute — adds login state + notification count for all buyer pages served by this controller.
@@ -276,6 +282,24 @@ public class HomeController {
         List<Category> allCategories = categoryRepository.findAll();
         model.addAttribute("categories", allCategories);
 
+        // ===== GỢI Ý HÔM NAY =====
+        List<Product> suggestedProducts = productService.getSuggestedProducts();
+        List<Map<String, Object>> suggestedProductCards = new ArrayList<>();
+        for (Product p : suggestedProducts) {
+            if (!p.isAvailable()) continue;
+            Store s = p.getStore();
+            Map<String, Object> card = new HashMap<>();
+            card.put("productId", p.getProductId());
+            card.put("productName", p.getName());
+            card.put("productImage", p.getImageUrl());
+            card.put("price", Math.round(p.getDisplayPrice()));
+            card.put("storeName", s != null ? s.getStoreName() : "");
+            card.put("storeLogo", s != null ? s.getLogoUrl() : null);
+            card.put("storeId", s != null ? s.getStoreId() : null);
+            suggestedProductCards.add(card);
+        }
+        model.addAttribute("suggestedProducts", suggestedProductCards);
+
         return "buyer/home";
     }
 
@@ -290,6 +314,31 @@ public class HomeController {
         User user = getCurrentUser(principal);
         if (user == null) return 0;
         return cartService.getItemCount(user);
+    }
+
+    @GetMapping("/maintenance")
+    public String maintenance(Model model) {
+        try {
+            com.dealxanh.app.entity.AppConfig msgConfig =
+                appConfigRepository.findByConfigKey("maintenance_message").orElse(null);
+            com.dealxanh.app.entity.AppConfig timeConfig =
+                appConfigRepository.findByConfigKey("maintenance_end_time").orElse(null);
+
+            model.addAttribute("maintenanceTitle", "Hệ thống đang bảo trì");
+            model.addAttribute("maintenanceMessage",
+                (msgConfig != null && msgConfig.getConfigValue() != null && !msgConfig.getConfigValue().isEmpty())
+                    ? msgConfig.getConfigValue()
+                    : "Chúng tôi đang nâng cấp hệ thống để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút.");
+            model.addAttribute("maintenanceEndTime",
+                (timeConfig != null && timeConfig.getConfigValue() != null && !timeConfig.getConfigValue().isEmpty())
+                    ? timeConfig.getConfigValue()
+                    : null);
+        } catch (Exception e) {
+            model.addAttribute("maintenanceTitle", "Hệ thống đang bảo trì");
+            model.addAttribute("maintenanceMessage", "Chúng tôi đang nâng cấp hệ thống để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút.");
+            model.addAttribute("maintenanceEndTime", null);
+        }
+        return "error/maintenance";
     }
 
     @GetMapping("/category/{categoryId}")
