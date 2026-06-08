@@ -22,6 +22,7 @@ import com.dealxanh.app.repository.UserRepository;
 import com.dealxanh.app.service.CartService;
 import com.dealxanh.app.service.LocationService;
 import com.dealxanh.app.service.NotificationService;
+import com.dealxanh.app.service.PayOSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -88,6 +89,9 @@ public class HomeController {
 
     @Autowired
     private LocationService locationService;
+
+    @Autowired
+    private PayOSService payOSService;
 
     @Autowired
     private com.dealxanh.app.repository.AppConfigRepository appConfigRepository;
@@ -1213,6 +1217,7 @@ public class HomeController {
 
     // ============ BUYER CANCEL ORDER ============
 
+    @Transactional
     @PostMapping("/api/orders/{orderId}/cancel")
     @ResponseBody
     public java.util.Map<String, Object> buyerCancelOrder(@PathVariable Long orderId,
@@ -1226,6 +1231,18 @@ public class HomeController {
             return java.util.Map.of("success", false, "message", "Bạn không sở hữu đơn hàng này");
         if (!"PENDING".equals(order.getStatus()))
             return java.util.Map.of("success", false, "message", "Chỉ được hủy đơn đang chờ xác nhận");
+
+        // Chỉ cho hủy trong vòng 30 phút kể từ khi đặt hàng
+        if (order.getCreatedAt() != null) {
+            java.time.LocalDateTime deadline = java.time.LocalDateTime.now().minusMinutes(30);
+            if (order.getCreatedAt().isBefore(deadline)) {
+                return java.util.Map.of("success", false, "message",
+                    "Đã quá 30 phút kể từ khi đặt hàng, không thể tự hủy. Vui lòng liên hệ cửa hàng.");
+            }
+        }
+
+        // Cancel PayOS payment link if exists
+        payOSService.cancelPaymentLink(orderId);
 
         // Restore stock for each item
         if (order.getOrderItems() != null) {

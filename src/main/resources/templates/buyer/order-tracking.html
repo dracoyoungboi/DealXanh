@@ -187,31 +187,41 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
         display: flex !important;
     }
 
-    /* ===== ORDER CARD — unwrap mobile card styling ===== */
-    .order-card {
-        border: none;
-        border-radius: 0;
-        overflow: visible;
-        background: transparent;
+    /* ===== ORDER LIST — desktop spacing ===== */
+    .order-list {
+        padding: 16px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    /* ===== ORDER ROW — 5-column grid ===== */
+    /* ===== ORDER CARD — desktop card styling ===== */
+    .order-card {
+        border: 1px solid var(--border, #e5e7eb) !important;
+        border-radius: var(--radius-lg, 12px) !important;
+        overflow: hidden !important;
+        background: var(--surface, #fff) !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,.03);
+        transition: box-shadow .15s ease;
+    }
+    .order-card:hover {
+        box-shadow: 0 3px 12px rgba(0,0,0,.07);
+    }
+
+    /* ===== ORDER ROW — 5-column grid inside card ===== */
     .order-row {
         display: grid;
         grid-template-columns: 44px 1fr auto auto 36px;
         align-items: center;
         gap: 16px;
-        padding: 14px 24px;
-        border-bottom: 0.5px solid #f0f0f0;
+        padding: 16px 20px;
+        border-bottom: none;
         cursor: pointer;
-        transition: background 0.15s ease;
+        transition: background 0.12s ease;
         background: transparent;
     }
-    .order-row:last-child {
-        border-bottom: none;
-    }
     .order-row:hover {
-        background: #f9fafb;
+        background: #fafbfc;
     }
 
     /* ===== GRID PLACEMENT ===== */
@@ -454,17 +464,46 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
         padding: 0 20px;
         font-size: 13px;
     }
+    .order-row .order-actions--cancel {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+    .order-row .order-action-btn--cancel {
+        flex: 0 0 auto;
+        height: 34px;
+        padding: 0 24px;
+        font-size: 13px;
+    }
 }
 
-/* ===== CANCEL BUTTON (PENDING) ===== */
-.order-cancel-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    border: 1px solid var(--border); background: var(--surface);
-    font-size: 16px; cursor: pointer; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: all .12s; margin: 0 4px; color: var(--danger, #ef4444);
+/* ===== CANCEL ACTION (PENDING) ===== */
+.order-actions.order-actions--cancel { display: flex; }
+.order-action-btn--cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    flex: 1;
+    height: 40px;
+    padding: 0 20px;
+    border-radius: var(--radius-full, 999px);
+    border: 1.5px solid #fecaca;
+    background: #fff;
+    color: #dc2626;
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
 }
-.order-cancel-btn:hover { background: #fef2f2; border-color: #fecaca; }
+.order-action-btn--cancel:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+}
+.order-action-btn--cancel:active {
+    transform: scale(.97);
+    background: #fee2e2;
+}
 
 /* ===== ACTION BUTTONS — COMPLETED orders (always in DOM, no animation) ===== */
 .order-actions {
@@ -693,12 +732,22 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                     <div class="price-label">Tổng tiền</div>
                     <div class="price-val" th:text="|${#numbers.formatDecimal(order.finalAmount != null ? order.finalAmount : (order.totalAmount != null ? order.totalAmount : 0), 0, 0)}đ|">0đ</div>
                 </div>
-                <!-- Cancel button (only PENDING orders) -->
-                <button class="order-cancel-btn" th:if="${order.status == 'PENDING'}"
-                        th:attr="onclick=|event.stopPropagation();cancelOrder(${order.orderId})|"
-                        title="Hủy đơn">✕</button>
                 <!-- Chevron Arrow -->
                 <svg class="order-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <!-- ===== CANCEL ACTION for PENDING orders ===== -->
+            <div class="order-actions order-actions--cancel" th:if="${order.status == 'PENDING'}" onclick="event.stopPropagation()">
+                <button class="order-action-btn--cancel"
+                        th:attr="data-oid=${order.orderId}"
+                        onclick="cancelOrder(Number(this.dataset.oid))">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                    Hủy đơn
+                </button>
             </div>
             <!-- ===== ACTION BUTTONS for COMPLETED orders ===== -->
             <div class="order-actions" th:classappend="${order.status == 'COMPLETED'} ? 'order-actions--show'" onclick="event.stopPropagation()">
