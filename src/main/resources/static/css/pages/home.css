@@ -482,7 +482,7 @@
         display: flex; align-items: center; justify-content: center;
         transition: all .12s;
     }
-    .cart-dropdown-item-del:hover { background: #fee2e2; color: var(--danger); }
+    .cart-dropdown-item-del:hover { background: #fee2e2; color: var(--danger, #ef4444); }
 
     .cart-dropdown-more {
         text-align: center;
@@ -569,7 +569,7 @@
     .cart-dropdown-voucher-code { font-size: 11px; font-weight: 700; color: var(--success); }
     .cart-dropdown-voucher-remove {
         width: 20px; height: 20px; border-radius: 50%; border: none;
-        background: rgba(239,68,68,.1); color: var(--danger);
+        background: rgba(239,68,68,.1); color: var(--danger, #ef4444);
         font-size: 10px; cursor: pointer; flex-shrink: 0;
     }
     /* Inline voucher list */
