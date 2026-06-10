@@ -335,5 +335,7 @@ function updateBadge(count) {
     if (b) { b.textContent = count || ''; b.style.display = (count > 0) ? 'flex' : 'none'; }
 }
 </script>
+
+<div th:replace="~{common/buyer/footer :: footer}"></div>
 </body>
 </html>

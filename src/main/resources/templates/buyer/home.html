@@ -150,24 +150,34 @@ body{padding-bottom:80px}
 <!-- ===== HERO ===== -->
 <section class="hero">
   <div class="hero__background">
-    <video autoplay muted loop playsinline class="hero__video">
-      <source src="https://assets.grab.com/wp-content/uploads/media/videos/IWD_hero_banner_desktop_2025.webm" type="video/webm">
-    </video>
-    <div class="hero__overlay"></div>
+    <div class="hero__slide active">
+      <img src="https://images.pexels.com/photos/5498228/pexels-photo-5498228.jpeg" alt="DealXanh hero" class="hero__image" onerror="this.style.display='none'">
+    </div>
+    <div class="hero__slide">
+      <img src="https://images.pexels.com/photos/7621144/pexels-photo-7621144.jpeg" alt="DealXanh hero" class="hero__image" onerror="this.style.display='none'">
+    </div>
+    <div class="hero__overlay"></div> 
+  </div>
+  <!-- Navigation Arrows -->
+  <button class="hero__arrow hero__arrow--prev" aria-label="Previous slide" onclick="heroPrev()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <button class="hero__arrow hero__arrow--next" aria-label="Next slide" onclick="heroNext()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+  <!-- Pagination Dots -->
+  <div class="hero__dots">
+    <button class="hero__dot active" data-index="0" onclick="heroGoTo(0)" aria-label="Slide 1"></button>
+    <button class="hero__dot" data-index="1" onclick="heroGoTo(1)" aria-label="Slide 2"></button>
   </div>
   <div class="container">
     <div class="hero__content">
       <div class="hero__badge">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.97 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <span th:text="|Được tin dùng bởi ${#numbers.formatDecimal(totalUsers, 0, 0)}+ người|">Được tin dùng</span>
+        <span>Deal tốt hôm nay, tiết kiệm mỗi ngày</span>
       </div>
       <h1 class="hero__title">Săn deal đồ ăn ngon<br><span class="hero__title--accent">Giảm đến 70%</span></h1>
-      <p class="hero__subtitle">Tiết kiệm chi phí ăn uống hàng ngày với các deal đồ ăn cận date chất lượng cao từ nhà hàng, quán ăn uy tín.</p>
-      <div class="hero__stats">
-        <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalStores, 0, 0)}+'+'">1,000+</div><div class="hero-stat__label">Cửa hàng</div></div>
-        <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalUsers, 0, 0)}+'+'">50K+</div><div class="hero-stat__label">Người dùng</div></div>
-        <div class="hero-stat"><div class="hero-stat__value" th:text="${#numbers.formatDecimal(totalDeals, 0, 0)}+'+'">100K+</div><div class="hero-stat__label">Deal đã bán</div></div>
-      </div>
+      <p class="hero__subtitle">Tiết kiệm chi phí ăn uống hàng ngày với các deal đồ ăn cận date chất lượng cao từ siêu thị, nhà cung cấp uy tín.</p>
     </div>
   </div>
 </section>
@@ -392,7 +402,7 @@ body{padding-bottom:80px}
   <div class="container">
 
     <!-- Banner: same green #0F4C35 style as DEAL NỔI BẬT, custom combo image -->
-    <div class="featured-deal-banner" style="background:linear-gradient(rgba(15,76,53,.35),rgba(15,76,53,.35)),url('https://i.pinimg.com/736x/17/12/9f/17129fe9b37222f3412f44b660573fbb.jpg') center/cover no-repeat;background-color:#0F4C35;">
+    <div class="featured-deal-banner" style="background:linear-gradient(rgba(15,76,53,.35),rgba(15,76,53,.35)),url('https://images.pexels.com/photos/15886790/pexels-photo-15886790.jpeg') center/cover no-repeat;background-color:#0F4C35;">
       <!-- Badge (top-left) -->
       <div class="fdb-badge">
         <span class="fdb-badge-dot"></span>
@@ -789,6 +799,65 @@ function updateCartBadge(count) {
   });
 })();
 /* ===== HẾT SHUFFLE ===== */
+</script>
+
+<script>
+// ===== HERO CAROUSEL =====
+var heroSlides = document.querySelectorAll('.hero__slide');
+var heroDots = document.querySelectorAll('.hero__dot');
+var heroCurrent = 0;
+var heroTotal = heroSlides.length;
+var heroInterval;
+var heroPaused = false;
+
+function heroGoTo(index) {
+  if (index === heroCurrent) return;
+  heroSlides[heroCurrent].classList.remove('active');
+  heroDots[heroCurrent].classList.remove('active');
+  heroCurrent = index;
+  heroSlides[heroCurrent].classList.add('active');
+  heroDots[heroCurrent].classList.add('active');
+}
+
+function heroNext() {
+  heroGoTo((heroCurrent + 1) % heroTotal);
+}
+
+function heroPrev() {
+  heroGoTo((heroCurrent - 1 + heroTotal) % heroTotal);
+}
+
+function heroStart() {
+  heroStop();
+  heroInterval = setInterval(heroNext, 4500);
+}
+
+function heroStop() {
+  if (heroInterval) { clearInterval(heroInterval); heroInterval = null; }
+}
+
+// Pause on hover
+var heroEl = document.querySelector('.hero');
+if (heroEl) {
+  heroEl.addEventListener('mouseenter', function() { heroStop(); });
+  heroEl.addEventListener('mouseleave', function() { heroStart(); });
+}
+
+// Touch swipe support
+var touchStartX = 0;
+var touchEndX = 0;
+if (heroEl) {
+  heroEl.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+  heroEl.addEventListener('touchend', function(e) {
+    touchEndX = e.changedTouches[0].screenX;
+    var diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) heroNext(); else heroPrev();
+    }
+  }, {passive: true});
+}
+
+heroStart();
 </script>
 </body>
 </html>
