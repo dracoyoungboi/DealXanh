@@ -176,6 +176,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                             <div class="prod-card__price-row">
                                 <span class="prod-card__price" th:if="${dealInfo != null}" th:text="${@priceFormatter.format(dealInfo.salePrice)}">50,000đ</span>
                                 <span class="prod-card__price" th:unless="${dealInfo != null}" th:text="${@priceFormatter.format(p.currentPrice != null ? p.currentPrice : p.originalPrice)}">50,000đ</span>
+                                <span class="prod-card__original" th:if="${dealInfo != null and dealInfo.originalPrice != null and dealInfo.salePrice != null and dealInfo.originalPrice > dealInfo.salePrice}" th:text="${@priceFormatter.format(dealInfo.originalPrice)}">52,000đ</span>
                                 <span class="prod-card__nodeal" th:unless="${dealInfo != null}">Giá gốc</span>
                             </div>
                             <div class="prod-card__store-row">

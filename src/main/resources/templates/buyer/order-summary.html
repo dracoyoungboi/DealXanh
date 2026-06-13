@@ -206,6 +206,7 @@ body{padding-bottom:120px;background:var(--background)}
                             </div>
                             <div class="os-item__price">
                                 <span class="os-item__sale" th:text="${@priceFormatter.format(item.salePrice != null ? item.salePrice : 0)}">50,000đ</span>
+                                <span class="os-item__original" th:if="${item.originalPrice != null and item.salePrice != null and item.originalPrice > item.salePrice}" th:text="${@priceFormatter.format(item.originalPrice)}">52,000đ</span>
                             </div>
                         </div>
                     </th:block>

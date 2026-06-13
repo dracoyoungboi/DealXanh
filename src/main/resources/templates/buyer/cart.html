@@ -299,6 +299,8 @@ function renderCart() {
                 + '<div class="ci-store">' + esc(item.storeName) + '</div>'
                 + '<div class="ci-price">'
                 + '<span class="ci-sale">' + fmt(item.salePrice) + '</span>'
+                + (item.originalPrice && item.salePrice && item.originalPrice > item.salePrice
+                    ? '<span class="ci-original">' + fmt(item.originalPrice) + '</span>' : '')
                 + '</div>'
                 + (maxStock > 0 ? '<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">Kho: ' + maxStock + ' sản phẩm</div>' : '')
                 + '</div>'

@@ -131,6 +131,7 @@ body{padding-bottom:80px;background:var(--background)}
                 <div class="pi-desc" th:text="${p.description}">Description</div>
                 <div class="pi-price">
                     <span class="pi-sale" th:text="${@priceFormatter.format(p.salePrice)}">50,000đ</span>
+                    <span class="pi-original" th:if="${p.originalPrice != null and p.salePrice != null and p.originalPrice > p.salePrice}" th:text="${@priceFormatter.format(p.originalPrice)}">52,000đ</span>
                     <span class="pi-discount" th:text="|${p.discountPercent}%|">50%</span>
                 </div>
                 <div class="pi-actions">

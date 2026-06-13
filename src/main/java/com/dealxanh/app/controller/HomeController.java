@@ -1599,9 +1599,52 @@ public class HomeController {
         List<Product> products = productRepository.findByStoreStoreIdAndDeletedFalse(storeId).stream()
             .filter(p -> p.getActive() && "APPROVED".equals(p.getApprovalStatus()))
             .toList();
+
+        // Build deal product map for active deals on this store's products
+        LocalDateTime now = LocalDateTime.now();
+        List<Deal> activeDeals = dealRepository.findByStatusAndStartTimeBeforeAndEndTimeAfterOrderByPriorityDesc(
+                "ACTIVE", now, now);
+        Map<Long, Map<String, Object>> dealProductMap = new HashMap<>();
+        for (Deal deal : activeDeals) {
+            List<DealProduct> dps = dealProductRepository.findByDeal(deal);
+            if (dps != null) {
+                for (DealProduct dp : dps) {
+                    if (dp.getProduct() == null) continue;
+                    Long prodId = dp.getProduct().getProductId();
+                    // Only include if product belongs to this store
+                    if (dp.getProduct().getStore() == null
+                        || !dp.getProduct().getStore().getStoreId().equals(storeId)) continue;
+                    double discountPercent = 0;
+                    if ("PERCENT".equals(deal.getDiscountType())) {
+                        discountPercent = deal.getDiscountValue() != null ? deal.getDiscountValue() : 0;
+                    } else if (dp.getOriginalPrice() != null && dp.getOriginalPrice() > 0) {
+                        discountPercent = ((dp.getOriginalPrice() - dp.getSalePrice()) / dp.getOriginalPrice()) * 100;
+                    }
+                    String typeLabel;
+                    switch (deal.getDealType() != null ? deal.getDealType() : "") {
+                        case "FLASH_SALE": typeLabel = "Flash Sale"; break;
+                        case "VOUCHER": typeLabel = "Voucher"; break;
+                        case "COMBO": typeLabel = "Combo"; break;
+                        case "SEASONAL": typeLabel = "Seasonal"; break;
+                        default: typeLabel = "Deal";
+                    }
+                    Map<String, Object> info = new HashMap<>();
+                    info.put("salePrice", Math.round(dp.getSalePrice()));
+                    info.put("originalPrice", Math.round(dp.getOriginalPrice()));
+                    info.put("discountPercent", Math.round(discountPercent));
+                    info.put("dealType", deal.getDealType());
+                    info.put("dealName", deal.getDealName());
+                    info.put("typeLabel", typeLabel);
+                    info.put("dealId", deal.getDealId());
+                    dealProductMap.put(prodId, info);
+                }
+            }
+        }
+
         model.addAttribute("store", store);
         model.addAttribute("products", products);
         model.addAttribute("productCount", products.size());
+        model.addAttribute("dealProductMap", dealProductMap);
         return "buyer/store-profile";
     }
 

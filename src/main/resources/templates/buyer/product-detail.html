@@ -134,6 +134,8 @@ body{padding-bottom:100px;background:var(--background);font-family:var(--font-fa
                   th:text="${@priceFormatter.format(dealInfo.salePrice)}">0đ</span>
             <span class="prod-price__sale" th:if="${dealInfo == null}"
                   th:text="${@priceFormatter.format(product.getDisplayPrice())}">0đ</span>
+            <span class="prod-price__original" th:if="${dealInfo != null and dealInfo.originalPrice != null and dealInfo.salePrice != null and dealInfo.originalPrice > dealInfo.salePrice}"
+                  th:text="${@priceFormatter.format(dealInfo.originalPrice)}">0đ</span>
             <th:block th:if="${dealInfo != null}">
                 <span class="prod-price__discount" th:text="|-${dealInfo.discountPercent}%|">-0%</span>
             </th:block>
