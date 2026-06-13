@@ -423,7 +423,7 @@ public class StaffController {
                 product.setExpiryDate(LocalDateTime.parse(expiryDateStr + "T23:59:59"));
             }
 
-            productRepository.save(product);
+            productService.createProduct(product);
             String msg = "COMBO".equals(productType)
                 ? "Tạo combo thành công!"
                 : "Tạo sản phẩm thành công!";

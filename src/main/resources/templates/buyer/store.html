@@ -62,8 +62,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
 .prod-card__body{padding:5px 6px 7px}
 .prod-card__name{font-size:10px;font-weight:400;color:#222;line-height:1.3;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px}
 .prod-card__price-row{display:flex;align-items:baseline;gap:4px;flex-wrap:wrap}
-.prod-card__price{font-size:13px;font-weight:700;color:#ee4d2d;line-height:1}
-.prod-card__original{font-size:9px;color:#999;text-decoration:line-through;line-height:1}
+.prod-card__price{font-size:13px;font-weight:700;color:#ee4d2d;line-height:1.2}
+.prod-card__original{font-size:9px;color:#999;text-decoration:line-through;line-height:1.2}
 .prod-card__nodeal{font-size:9px;color:#999}
 
 .prod-card__actions{display:flex;gap:6px;padding:0 6px 7px;align-items:center}
@@ -171,7 +171,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
         <div class="deal-card" th:each="deal : ${activeDeals}">
             <span class="deal-type" th:classappend="${deal.dealType}" th:text="${deal.dealType == 'FLASH_SALE' ? '⚡ Flash Sale' : deal.dealType == 'VOUCHER' ? '🎫 Voucher' : deal.dealType == 'COMBO' ? '🎁 Combo' : '🌸 Seasonal'}">Type</span>
             <div class="deal-name" th:text="${deal.dealName}">Deal</div>
-            <div class="deal-discount" th:text="${deal.discountType == 'PERCENT' ? deal.discountValue + '%' : #numbers.formatDecimal(deal.discountValue, 0, 0) + 'đ'}">Discount</div>
+            <div class="deal-discount" th:text="${deal.discountType == 'PERCENT' ? deal.discountValue + '%' : @priceFormatter.format(deal.discountValue)}">Discount</div>
             <div class="deal-time" th:text="|Đến ${#temporals.format(deal.endTime, 'dd/MM')}|">Time</div>
         </div>
     </div>
@@ -217,8 +217,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text-primary);padd
                     <div class="prod-card__body">
                         <div class="prod-card__name" th:text="${p.name}">Product</div>
                         <div class="prod-card__price-row">
-                            <span class="prod-card__price" th:text="|${#numbers.formatDecimal(salePrice, 0, 0)}đ|">50,000đ</span>
-                            <span class="prod-card__original" th:if="${dealInfo != null}" th:text="|${#numbers.formatDecimal(origPrice, 0, 0)}đ|">70,000đ</span>
+                            <span class="prod-card__price" th:text="${@priceFormatter.format(salePrice)}">50,000đ</span>
+                            <span class="prod-card__original" th:if="${dealInfo != null}" th:text="${@priceFormatter.format(origPrice)}">70,000đ</span>
                             <span class="prod-card__nodeal" th:unless="${dealInfo != null}">Giá gốc</span>
                         </div>
                     </div>

@@ -308,6 +308,28 @@
         align-items: center;
     }
 
+    .desktop-top-nav__notif-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .desktop-top-nav__notif-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        z-index: var(--z-dropdown, 300);
+        width: 380px;
+        max-height: 420px;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        margin-top: 10px;
+    }
+
     .desktop-top-nav__cart-dropdown {
         position: absolute;
         top: 100%;
@@ -1275,6 +1297,11 @@
     font-size: 13px;
     font-weight: var(--font-weight-medium);
     color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex-shrink: 1;
 }
 
 .deal-card__title {
@@ -3040,4 +3067,10 @@
         border-color: #0a4824;
         color: #fff;
     }
+}
+
+/* Fix password dots spacing — browser mặc định để dấu chấm quá xa */
+input[type="password"] {
+    letter-spacing: 0;
+    font-family: var(--font-family, 'Inter', -apple-system, sans-serif);
 }

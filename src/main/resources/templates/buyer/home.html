@@ -295,7 +295,7 @@ body{padding-bottom:80px}
             </div>
             <h3 class="deal-card__title" th:text="${p.productName}">Product</h3>
             <div class="deal-card__price">
-              <span class="deal-card__current" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+              <span class="deal-card__current" th:text="${@priceFormatter.format(p.salePrice)}">50,000đ</span>
 
             </div>
           </div>
@@ -375,7 +375,7 @@ body{padding-bottom:80px}
           </div>
           <div class="fc-name" th:text="${p.productName}">Tên sản phẩm</div>
           <div class="fc-price">
-            <span class="fc-price__sale" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+            <span class="fc-price__sale" th:text="${@priceFormatter.format(p.salePrice)}">50,000đ</span>
           </div>
           <div class="fc-pill" th:if="${p.daysLeft >= 0}">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -445,7 +445,7 @@ body{padding-bottom:80px}
           </div>
           <div class="fc-name" th:text="${p.productName}">Tên sản phẩm</div>
           <div class="fc-price">
-            <span class="fc-price__sale" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+            <span class="fc-price__sale" th:text="${@priceFormatter.format(p.salePrice)}">50,000đ</span>
           </div>
           <div class="fc-pill" th:if="${p.daysLeft >= 0}">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -498,7 +498,7 @@ body{padding-bottom:80px}
             </div>
             <div class="fc-name" th:text="${product.productName}">Tên sản phẩm</div>
             <div class="fc-price">
-              <span class="fc-price__sale" th:text="|${#numbers.formatDecimal(product.price, 0, 0)}đ|">50,000đ</span>
+              <span class="fc-price__sale" th:text="${@priceFormatter.format(product.price)}">50,000đ</span>
             </div>
           </a>
           <div class="fc-actions">

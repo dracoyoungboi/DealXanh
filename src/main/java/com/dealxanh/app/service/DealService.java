@@ -72,6 +72,96 @@ public class DealService {
     @Autowired
     private ResourceLockManager lockManager;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserAddressRepository userAddressRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private LocationService locationService;
+
+    // ============ NOTIFICATION: NOTIFY NEARBY BUYERS ============
+
+    /**
+     * Thông báo cho buyer có địa chỉ gần cửa hàng về deal mới.
+     * Chạy bất đồng bộ (thread riêng), best-effort — không ảnh hưởng luồng chính.
+     */
+    public void notifyNearbyBuyers(Deal deal) {
+        Store store = deal.getStore();
+        if (store == null || store.getLatitude() == null || store.getLongitude() == null) {
+            return;
+        }
+
+        String storeCity = store.getCity();
+        String dealName = deal.getDealName();
+        Long dealId = deal.getDealId();
+        String storeName = store.getStoreName();
+        double storeLat = store.getLatitude();
+        double storeLng = store.getLongitude();
+
+        new Thread(() -> {
+            try {
+                // Tìm role buyer (thử cả 2 format)
+                Role buyerRole = roleRepository.findByName("ROLE_USER").orElse(null);
+                if (buyerRole == null) buyerRole = roleRepository.findByName("USER").orElse(null);
+                if (buyerRole == null) return;
+
+                List<User> buyers = userRepository.findByRole(buyerRole);
+                int notified = 0;
+
+                for (User buyer : buyers) {
+                    try {
+                        var addresses = userAddressRepository.findByUserUserIdOrderByIsDefaultDesc(buyer.getUserId());
+                        if (addresses == null || addresses.isEmpty()) continue;
+
+                        UserAddress addr = addresses.get(0);
+                        String fullAddr = addr.getFullAddress();
+                        if (fullAddr == null || fullAddr.isEmpty()) continue;
+
+                        // Quick filter: bỏ qua nếu khác thành phố
+                        if (storeCity != null && !storeCity.isEmpty()
+                                && addr.getCity() != null && !addr.getCity().isEmpty()
+                                && !storeCity.equalsIgnoreCase(addr.getCity())) {
+                            continue;
+                        }
+
+                        // Geocode địa chỉ buyer
+                        double[] buyerLoc = locationService.geocodeAddress(fullAddr);
+                        if (buyerLoc == null) continue;
+
+                        double dist = locationService.distanceKm(
+                                buyerLoc[0], buyerLoc[1], storeLat, storeLng);
+
+                        // Thông báo nếu trong bán kính 20km
+                        if (dist >= 0 && dist <= 20) {
+                            notificationService.notifyNewDealNearby(
+                                    buyer, storeName, dealName, dealId);
+                            notified++;
+                        }
+
+                        // Tôn trọng rate limit Nominatim (~1 req/s)
+                        Thread.sleep(250);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    } catch (Exception ignored) {
+                        // Bỏ qua user này nếu có lỗi
+                    }
+                }
+                System.out.println("DealService: Đã gửi " + notified + " thông báo deal gần cho deal #" + dealId);
+            } catch (Exception e) {
+                System.err.println("DealService.notifyNearbyBuyers lỗi: " + e.getMessage());
+            }
+        }).start();
+    }
+
     // ============ DEAL CRUD ============
 
     public Page<Deal> getAllDeals(Pageable pageable) {
@@ -95,7 +185,9 @@ public class DealService {
             deal.setUpdatedAt(LocalDateTime.now());
             deal.setStatus("ACTIVE");
             deal.setUsageCount(0L);
-            return dealRepository.save(deal);
+            Deal saved = dealRepository.save(deal);
+            notifyNearbyBuyers(saved);
+            return saved;
         } finally {
             if (lock != null) lock.unlock();
         }
@@ -640,20 +732,17 @@ public class DealService {
             excludeDealId
         );
 
+        // Nới lỏng: không chặn toàn store nữa.
+        // validateProductNotInOverlappingDeal() đã chặn khi gán SP vào 2 deal chồng lấn.
+        // Ở đây chỉ log cảnh báo nếu có deal chồng lấn thời gian.
         if (!overlappingDeals.isEmpty()) {
             String overlappingDealNames = overlappingDeals.stream()
-                .map(Deal::getDealName)
-                .limit(2)
+                .map(d -> d.getDealName() + " (#" + d.getDealId() + ")")
+                .limit(3)
                 .collect(java.util.stream.Collectors.joining(", "));
-
-            int moreCount = overlappingDeals.size() - 2;
-            String suffix = moreCount > 0 ? " và " + moreCount + " deal khác" : "";
-
-            throw new IllegalArgumentException(String.format(
-                "Thời gian deal trùng với các deal đang chạy: %s%s. " +
-                "Vui lòng chọn thời gian khác hoặc hủy các deal cũ.",
-                overlappingDealNames, suffix
-            ));
+            System.out.println("INFO: Deal \"" + deal.getDealName()
+                + "\" chồng lấn thời gian với: " + overlappingDealNames
+                + " — cho phép tạo, sẽ kiểm tra SP khi gán.");
         }
     }
 

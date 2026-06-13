@@ -459,12 +459,12 @@ a{text-decoration:none;color:inherit}
 
                             <div class="form-group">
                                 <label class="form-label">Mật khẩu hiện tại</label>
-                                <input type="password" name="currentPassword" id="currentPassword" class="form-input" placeholder="Nhập mật khẩu hiện tại" required>
+                                <input type="password" name="currentPassword" id="currentPassword" class="form-input" placeholder="Nhập mật khẩu hiện tại" required><button type="button" class="pwd-eye-btn" onclick="var i=this.parentElement.querySelector("input");i.type=i.type==="password"?"text":"password";this.innerHTML=i.type==="password"?"👁":"🙈"" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;z-index:2;padding:4px;line-height:1">👁</button>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Mật khẩu mới</label>
-                                <input type="password" name="newPassword" id="newPassword" class="form-input" placeholder="Nhập mật khẩu mới (ít nhất 8 ký tự)" required minlength="8" oninput="checkPasswordStrength()">
+                                <input type="password" name="newPassword" id="newPassword" class="form-input" placeholder="Nhập mật khẩu mới (ít nhất 8 ký tự)" required minlength="8" oninput="checkPasswordStrength()"><button type="button" class="pwd-eye-btn" onclick="var i=this.parentElement.querySelector("input");i.type=i.type==="password"?"text":"password";this.innerHTML=i.type==="password"?"👁":"🙈"" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;z-index:2;padding:4px;line-height:1">👁</button>
                                 <!-- Password strength meter -->
                                 <div style="margin-top:8px;">
                                     <div style="display:flex;gap:4px;margin-bottom:4px;">
@@ -480,7 +480,7 @@ a{text-decoration:none;color:inherit}
 
                             <div class="form-group">
                                 <label class="form-label">Xác nhận mật khẩu mới</label>
-                                <input type="password" name="confirmPassword" id="confirmPassword" class="form-input" placeholder="Nhập lại mật khẩu mới" required minlength="8" oninput="checkConfirmMatch()">
+                                <input type="password" name="confirmPassword" id="confirmPassword" class="form-input" placeholder="Nhập lại mật khẩu mới" required minlength="8" oninput="checkConfirmMatch()"><button type="button" class="pwd-eye-btn" onclick="var i=this.parentElement.querySelector("input");i.type=i.type==="password"?"text":"password";this.innerHTML=i.type==="password"?"👁":"🙈"" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;z-index:2;padding:4px;line-height:1">👁</button>
                                 <div id="confirmMatchHint" style="font-size:11px;margin-top:4px;display:none;"></div>
                             </div>
 

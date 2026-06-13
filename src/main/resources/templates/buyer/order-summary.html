@@ -119,6 +119,9 @@ body{padding-bottom:120px;background:var(--background)}
 </head>
 <body>
 
+<!-- Shared Header (mobile) -->
+<div th:replace="~{common/buyer/header :: header}"></div>
+
 <!-- Desktop Top Navigation Bar -->
 <div th:replace="~{common/buyer/top-nav :: topNav}"></div>
 
@@ -205,7 +208,7 @@ body{padding-bottom:120px;background:var(--background)}
                                 </div>
                             </div>
                             <div class="os-item__price">
-                                <span class="os-item__sale" th:text="|${#numbers.formatDecimal(item.salePrice != null ? item.salePrice : 0, 0, 0)}đ|">50,000đ</span>
+                                <span class="os-item__sale" th:text="${@priceFormatter.format(item.salePrice != null ? item.salePrice : 0)}">50,000đ</span>
                             </div>
                         </div>
                     </th:block>
@@ -261,19 +264,19 @@ body{padding-bottom:120px;background:var(--background)}
         <div class="price-card__title">Chi tiết thanh toán</div>
         <div class="price-row price-row--strike" th:if="${originalTotal != null and originalTotal > subtotal}">
             <span>Tổng giá gốc</span>
-            <span class="price-row__val" th:text="|${#numbers.formatDecimal(originalTotal, 0, 0)}đ|">0đ</span>
+            <span class="price-row__val" th:text="${@priceFormatter.format(originalTotal)}">0đ</span>
         </div>
         <div class="price-row price-row--discount" th:if="${totalDiscount > 0}">
             <span>Giảm giá Deal</span>
-            <span class="price-row__val" th:text="|-${#numbers.formatDecimal(totalDiscount, 0, 0)}đ|">-0đ</span>
+            <span class="price-row__val" th:text="|−${@priceFormatter.formatPlain(totalDiscount)}đ|">-0đ</span>
         </div>
         <div class="price-row price-row--discount" th:if="${voucherDiscount > 0}">
             <span th:text="|Voucher ${appliedVoucher != null ? appliedVoucher.code : ''}|">Voucher</span>
-            <span class="price-row__val" th:text="|-${#numbers.formatDecimal(voucherDiscount, 0, 0)}đ|">-0đ</span>
+            <span class="price-row__val" th:text="|−${@priceFormatter.formatPlain(voucherDiscount)}đ|">-0đ</span>
         </div>
         <div class="price-row price-row--divider price-row--total">
             <span>Tổng thanh toán</span>
-            <span class="price-row__val" th:text="|${#numbers.formatDecimal(total, 0, 0)}đ|">0đ</span>
+            <span class="price-row__val" th:text="${@priceFormatter.format(total)}">0đ</span>
         </div>
     </div>
 
@@ -283,7 +286,7 @@ body{padding-bottom:120px;background:var(--background)}
 <div class="sticky-bottom" th:if="${storeGroups != null and !storeGroups.isEmpty()}">
     <div class="sticky-bottom__left">
         <span class="sticky-bottom__label" th:text="|${itemCount} sản phẩm|">0 sản phẩm</span>
-        <span class="sticky-bottom__total" th:text="|${#numbers.formatDecimal(total, 0, 0)}đ|">0đ</span>
+        <span class="sticky-bottom__total" th:text="${@priceFormatter.format(total)}">0đ</span>
     </div>
     <form th:action="@{/buyer/payment}" method="get" style="margin:0">
         <button type="submit" class="btn-submit">

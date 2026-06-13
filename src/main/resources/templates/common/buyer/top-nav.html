@@ -108,14 +108,29 @@
                 </div>
             </div>
 
-            <!-- Notifications with badge -->
-            <button class="desktop-top-nav__icon-btn" id="desktop-notif-toggle" aria-label="Thông báo" onclick="toggleNotifications()" style="position:relative">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-                <span id="desktop-notif-badge" class="desktop-top-nav__badge" th:text="${notifCount != null ? notifCount : ''}" th:style="${notifCount != null and notifCount > 0} ? 'display:flex' : ''">0</span>
-            </button>
+            <!-- Notifications with hover dropdown (desktop) -->
+            <div class="desktop-top-nav__notif-wrap" id="desktop-notif-wrap">
+                <button class="desktop-top-nav__icon-btn" id="desktop-notif-toggle" aria-label="Thông báo" onclick="if(window.innerWidth<768)toggleNotifications()" style="position:relative">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span id="desktop-notif-badge" class="desktop-top-nav__badge" th:text="${notifCount != null ? notifCount : ''}" th:style="${notifCount != null and notifCount > 0} ? 'display:flex' : ''">0</span>
+                </button>
+                <!-- Mini-notif dropdown (desktop hover) -->
+                <div class="desktop-top-nav__notif-dropdown" id="desktop-notif-dropdown" style="display:none">
+                    <div class="cart-dropdown-header">
+                        <span class="cart-dropdown-title">Thông báo</span>
+                        <span class="cart-dropdown-count" id="desktop-notif-dropdown-count">0</span>
+                    </div>
+                    <div class="cart-dropdown-list" id="desktop-notif-dropdown-list">
+                        <div class="cart-dropdown-loading">Đang tải...</div>
+                    </div>
+                    <div class="cart-dropdown-footer" style="text-align:center">
+                        <a href="/buyer/orders" style="font-size:13px;font-weight:600;color:var(--primary);text-decoration:none">Xem tất cả</a>
+                    </div>
+                </div>
+            </div>
 
             <!-- Avatar pill button — logged in: show initials + name + chevron -->
             <a th:if="${currentUserFullName != null}" href="#" onclick="handleAccountClick(event)" class="desktop-top-nav__avatar-pill" th:classappend="${activeNav == 'account'} ? 'desktop-top-nav__avatar-pill--active' : ''">
@@ -571,6 +586,110 @@
         if (!text) return '';
         return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
+})();
+
+// ===== DESKTOP NOTIF HOVER DROPDOWN =====
+(function() {
+    var notifWrap = document.getElementById('desktop-notif-wrap');
+    var notifDropdown = document.getElementById('desktop-notif-dropdown');
+    var closeTimer = null;
+    var hasFetched = false;
+
+    if (!notifWrap || !notifDropdown) return;
+
+    function timeAgo(dateStr) {
+        if (!dateStr) return '';
+        var d = new Date(dateStr), now = new Date();
+        var diff = Math.floor((now - d) / 1000);
+        if (diff < 60) return 'Vừa xong';
+        if (diff < 3600) return Math.floor(diff/60) + ' phút trước';
+        if (diff < 86400) return Math.floor(diff/3600) + ' giờ trước';
+        if (diff < 604800) return Math.floor(diff/86400) + ' ngày trước';
+        return d.toLocaleDateString('vi-VN');
+    }
+
+    function getNotifIcon(type) {
+        if (!type) return '🔔';
+        if (type.indexOf('ORDER') === 0) return '📦';
+        if (type.indexOf('DEAL') === 0) return '🎉';
+        if (type === 'COMPLETED') return '✅';
+        if (type === 'CANCELLED') return '❌';
+        return '🔔';
+    }
+
+    function showNotifDropdown() {
+        if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+        if (notifDropdown.style.display !== 'none') return;
+        if (!hasFetched) fetchNotifs();
+        notifDropdown.style.display = 'flex';
+    }
+
+    function hideNotifDropdown() {
+        if (closeTimer) clearTimeout(closeTimer);
+        closeTimer = setTimeout(function() {
+            notifDropdown.style.display = 'none';
+            hasFetched = false;
+            closeTimer = null;
+        }, 200);
+    }
+
+    function cancelHide() {
+        if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+    }
+
+    function fetchNotifs() {
+        var list = document.getElementById('desktop-notif-dropdown-list');
+        if (list) list.innerHTML = '<div class="cart-dropdown-loading">Đang tải...</div>';
+        fetch('/api/notifications')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            hasFetched = true;
+            if (!data.success || !data.notifications) {
+                if (list) list.innerHTML = '<div class="cart-dropdown-empty"><p>Không thể tải thông báo</p></div>';
+                return;
+            }
+            var notifs = data.notifications;
+            var countEl = document.getElementById('desktop-notif-dropdown-count');
+            if (countEl) countEl.textContent = data.unreadCount || 0;
+
+            if (notifs.length === 0) {
+                if (list) list.innerHTML = '<div class="cart-dropdown-empty"><p>Chưa có thông báo nào</p></div>';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < Math.min(notifs.length, 10); i++) {
+                var n = notifs[i];
+                var unreadClass = n.isRead ? '' : ' unread';
+                html += '<div class="cart-dropdown-item' + unreadClass + '" onclick="event.stopPropagation();window.location.href=\'' + (n.linkUrl || '/buyer/orders') + '\'" style="align-items:flex-start;gap:10px">' +
+                    '<span style="font-size:20px;flex-shrink:0">' + getNotifIcon(n.type) + '</span>' +
+                    '<div style="flex:1;min-width:0">' +
+                        '<div style="font-size:13px;font-weight:600;color:var(--text-primary);line-height:1.3;margin-bottom:2px">' + escapeHtml(n.title) + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-secondary);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + escapeHtml(n.message) + '</div>' +
+                        '<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px">' + timeAgo(n.createdAt) + '</div>' +
+                    '</div>' +
+                    (n.isRead ? '' : '<span style="width:7px;height:7px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:4px"></span>') +
+                '</div>';
+            }
+            if (list) list.innerHTML = html;
+        })
+        .catch(function() {
+            hasFetched = true;
+            if (list) list.innerHTML = '<div class="cart-dropdown-empty"><p>Không thể tải thông báo</p></div>';
+        });
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        var d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+
+    notifWrap.addEventListener('mouseenter', showNotifDropdown);
+    notifWrap.addEventListener('mouseleave', hideNotifDropdown);
+    notifDropdown.addEventListener('mouseenter', cancelHide);
+    notifDropdown.addEventListener('mouseleave', hideNotifDropdown);
 })();
 </script>
 </body>

@@ -69,6 +69,9 @@ body{padding-bottom:80px;background:var(--background)}
 </head>
 <body>
 
+<!-- Shared Header (mobile) -->
+<div th:replace="~{common/buyer/header :: header}"></div>
+
 <!-- Desktop Top Navigation Bar -->
 <div th:replace="~{common/buyer/top-nav :: topNav}"></div>
 
@@ -97,15 +100,15 @@ body{padding-bottom:80px;background:var(--background)}
     <div class="dc-badge" th:text="|${deal.discountValue.intValue()}%|">50%</div>
     <div class="dc-info">
         <div class="dc-title" th:text="|Giảm ${deal.discountValue.intValue()}%|">Giảm 50%</div>
-        <div class="dc-desc" th:if="${deal.minOrderAmount != null and deal.minOrderAmount > 0}" th:text="|Cho đơn từ ${#numbers.formatDecimal(deal.minOrderAmount, 0, 0)}đ|">Cho đơn từ 50k</div>
+        <div class="dc-desc" th:if="${deal.minOrderAmount != null and deal.minOrderAmount > 0}" th:text="|Cho đơn từ ${@priceFormatter.formatPlain(deal.minOrderAmount)}đ|">Cho đơn từ 50k</div>
         <div class="dc-desc" th:unless="${deal.minOrderAmount != null and deal.minOrderAmount > 0}">Áp dụng cho tất cả sản phẩm</div>
     </div>
 </div>
 <div class="discount-card" th:unless="${deal.discountType == 'PERCENT'}">
-    <div class="dc-badge" th:text="|${#numbers.formatDecimal(deal.discountValue, 0, 0)}đ|">20k</div>
+    <div class="dc-badge" th:text="|${@priceFormatter.formatPlain(deal.discountValue)}đ|">20k</div>
     <div class="dc-info">
-        <div class="dc-title" th:text="|Giảm ${#numbers.formatDecimal(deal.discountValue, 0, 0)}đ|">Giảm 20,000đ</div>
-        <div class="dc-desc" th:if="${deal.minOrderAmount != null and deal.minOrderAmount > 0}" th:text="|Cho đơn từ ${#numbers.formatDecimal(deal.minOrderAmount, 0, 0)}đ|">Cho đơn từ 50k</div>
+        <div class="dc-title" th:text="|Giảm ${@priceFormatter.formatPlain(deal.discountValue)}đ|">Giảm 20,000đ</div>
+        <div class="dc-desc" th:if="${deal.minOrderAmount != null and deal.minOrderAmount > 0}" th:text="|Cho đơn từ ${@priceFormatter.formatPlain(deal.minOrderAmount)}đ|">Cho đơn từ 50k</div>
         <div class="dc-desc" th:unless="${deal.minOrderAmount != null and deal.minOrderAmount > 0}">Áp dụng cho tất cả sản phẩm</div>
     </div>
 </div>
@@ -130,7 +133,7 @@ body{padding-bottom:80px;background:var(--background)}
                 <div class="pi-name" th:text="${p.name}">Product Name</div>
                 <div class="pi-desc" th:text="${p.description}">Description</div>
                 <div class="pi-price">
-                    <span class="pi-sale" th:text="|${#numbers.formatDecimal(p.salePrice, 0, 0)}đ|">50,000đ</span>
+                    <span class="pi-sale" th:text="${@priceFormatter.format(p.salePrice)}">50,000đ</span>
                     <span class="pi-discount" th:text="|${p.discountPercent}%|">50%</span>
                 </div>
                 <div class="pi-actions">

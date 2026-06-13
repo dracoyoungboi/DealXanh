@@ -126,6 +126,18 @@ public class HomeController {
         model.addAttribute("notifCount", count);
         model.addAttribute("currentUserFullName", currentUserFullName);
         model.addAttribute("currentUserInitials", currentUserInitials);
+        // OTP verification popup
+        if (principal != null) {
+            try {
+                User user = getCurrentUser(principal);
+                model.addAttribute("emailVerified", user != null ? user.getEmailVerified() : true);
+                model.addAttribute("userEmail", user != null ? user.getEmail() : "");
+            } catch (Exception e) {
+                model.addAttribute("emailVerified", true);
+            }
+        } else {
+            model.addAttribute("emailVerified", true);
+        }
     }
 
     @GetMapping("/")
@@ -214,6 +226,44 @@ public class HomeController {
                     comboProducts.add(card);
                 }
             }
+        }
+
+        // Also add standalone COMBO products (productType = "COMBO") directly
+        // These don't need a deal — they are self-contained bundles
+        List<Product> standaloneCombos = productRepository.findByProductTypeAndActiveTrueAndDeletedFalseAndApprovalStatus(
+                "COMBO", "APPROVED");
+        java.util.Set<Long> alreadyAddedIds = new java.util.HashSet<>();
+        for (Map<String, Object> card : allProducts) {
+            alreadyAddedIds.add((Long) card.get("productId"));
+        }
+        for (Product combo : standaloneCombos) {
+            if (!combo.isAvailable()) continue;
+            if (alreadyAddedIds.contains(combo.getProductId())) continue;
+
+            Store store = combo.getStore();
+            Map<String, Object> card = new HashMap<>();
+            card.put("productId", combo.getProductId());
+            card.put("dealId", 0L);
+            card.put("productName", combo.getName());
+            card.put("productImage", combo.getImageUrl());
+            card.put("storeName", store != null ? store.getStoreName() : "");
+            card.put("storeLogo", store != null ? store.getLogoUrl() : null);
+            card.put("storeId", store != null ? store.getStoreId() : null);
+            card.put("storeAddress", store != null ? store.getAddress() : "");
+            card.put("dealType", "COMBO");
+            card.put("originalPrice", Math.round(combo.getOriginalPrice() != null ? combo.getOriginalPrice() : 0));
+            card.put("salePrice", Math.round(combo.getDisplayPrice()));
+            card.put("maxQuantity", combo.getStockQuantity());
+            card.put("endTime", combo.getExpiryDate() != null ? combo.getExpiryDate().toString() : null);
+            card.put("daysLeft", combo.getExpiryDate() != null
+                    ? Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(LocalDateTime.now(), combo.getExpiryDate())) : 0);
+            double discPct = combo.getOriginalPrice() != null && combo.getOriginalPrice() > 0
+                    ? ((combo.getOriginalPrice() - combo.getDisplayPrice()) / combo.getOriginalPrice()) * 100 : 0;
+            card.put("discountPercent", Math.round(discPct));
+            card.put("typeLabel", "Combo");
+
+            allProducts.add(card);
+            comboProducts.add(card);
         }
 
         // Sort products by distance from user (nearest first)

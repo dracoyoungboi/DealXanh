@@ -330,13 +330,6 @@ input,select{font-family:inherit}
                         <div id="pws4" style="flex:1;height:4px;border-radius:2px;background:var(--border-light);transition:background .3s"></div>
                     </div>
                     <div id="pwd-strength-text" style="font-size:12px;color:var(--text-secondary)"></div>
-                    <ul style="font-size:11px;color:var(--text-tertiary);padding-left:16px;margin-top:6px;line-height:1.8">
-                        <li id="req-len" style="color:#ef4444">✕ Ít nhất 8 ký tự</li>
-                        <li id="req-upper" style="color:#ef4444">✕ Có chữ in hoa (A-Z)</li>
-                        <li id="req-lower" style="color:#ef4444">✕ Có chữ thường (a-z)</li>
-                        <li id="req-digit" style="color:#ef4444">✕ Có chữ số (0-9)</li>
-                        <li id="req-special" style="color:#ef4444">✕ Có ký tự đặc biệt (!@#$...)</li>
-                    </ul>
                     <div id="pwd-warning" style="display:none;font-size:11px;color:#92400e;margin-top:6px;padding:6px 8px;background:rgba(245,158,11,.1);border-radius:6px;">⚠️ Mật khẩu của bạn quá yếu và dễ đoán. Chúng tôi sẽ không chịu trách nhiệm nếu bạn bị đánh cắp tài khoản.</div>
                 </div>
                 <div class="form-error" id="err-password">Mật khẩu tối thiểu 8 ký tự, gồm chữ và số</div>
@@ -346,7 +339,7 @@ input,select{font-family:inherit}
                 <label class="form-label">Xác nhận mật khẩu <span>*</span></label>
                 <div class="input-wrap">
                     <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                    <input type="password" class="form-input" id="confirmPassword" placeholder="Nhập lại mật khẩu">
+                    <input type="password" class="form-input" id="confirmPassword" placeholder="Nhập lại mật khẩu"><button type="button" class="pwd-eye-btn" onclick="var i=this.parentElement.querySelector("input");i.type=i.type==="password"?"text":"password";this.innerHTML=i.type==="password"?"👁":"🙈"" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;z-index:2;padding:4px;line-height:1">👁</button>
                 </div>
                 <div class="form-error" id="err-confirmPassword">Mật khẩu xác nhận không khớp</div>
             </div>
@@ -1044,19 +1037,6 @@ function updatePwdStrength(v) {
         digit: /[0-9]/.test(v),
         special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v)
     };
-    // Update requirement list - old style with X/check marks
-    const setReq = (id, ok) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.style.color = ok ? 'var(--status-success)' : '#ef4444';
-            el.textContent = (ok ? '✓' : '✕') + el.textContent.substring(1);
-        }
-    };
-    setReq('req-len', checks.len);
-    setReq('req-upper', checks.upper);
-    setReq('req-lower', checks.lower);
-    setReq('req-digit', checks.digit);
-    setReq('req-special', checks.special);
     const score = Object.values(checks).filter(Boolean).length;
     const colors = ['#ef4444','#f59e0b','#f59e0b','var(--status-success)','var(--status-success)'];
     const labels = ['Rất yếu','Yếu','Trung bình','Đủ mạnh','Mạnh '];

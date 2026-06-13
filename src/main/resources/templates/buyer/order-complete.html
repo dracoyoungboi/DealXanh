@@ -206,15 +206,15 @@ body{padding-bottom:120px;background:var(--background);font-family:var(--font-fa
                     <div class="ticket-items-list">
                         <div class="ticket-item-row" th:each="item : ${order.orderItems}">
                             <span class="ticket-item-name" th:text="|${item.quantity}x ${item.product?.name}|">Sản phẩm</span>
-                            <span class="ticket-item-price" th:text="|${#numbers.formatDecimal(item.subtotal, 0, 0)}đ|">0đ</span>
+                            <span class="ticket-item-price" th:text="${@priceFormatter.format(item.subtotal)}">0đ</span>
                         </div>
                     </div>
                     <div class="ticket-subtotal">
                         <span class="ticket-subtotal-label">Tổng cửa hàng này</span>
-                        <span class="ticket-subtotal-val" th:text="|${#numbers.formatDecimal(order.finalAmount, 0, 0)}đ|">0đ</span>
+                        <span class="ticket-subtotal-val" th:text="${@priceFormatter.format(order.finalAmount)}">0đ</span>
                     </div>
                     <div class="ticket-discount" th:if="${order.discountAmount != null and order.discountAmount > 0}">
-                        <span th:text="|(Tiết kiệm ${#numbers.formatDecimal(order.discountAmount, 0, 0)}đ)|">(Tiết kiệm 0đ)</span>
+                        <span th:text="|(Tiết kiệm ${@priceFormatter.format(order.discountAmount)})|">(Tiết kiệm 0đ)</span>
                     </div>
                 </div>
             </div>
@@ -235,7 +235,7 @@ body{padding-bottom:120px;background:var(--background);font-family:var(--font-fa
                         Thanh toán trước qua PayOS
                     </span>
                     <span class="prepay-amount" style="font-size:14px;font-weight:700;color:var(--text-primary);"
-                          th:text="|${#numbers.formatDecimal(order.finalAmount, 0, 0)}d|">0d</span>
+                          th:text="${@priceFormatter.format(order.finalAmount)}">0đ</span>
                 </div>
                 <button class="btn-prepay" th:attr="onclick=|createPrepayQR(${order.orderId})|"
                         style="width:100%;padding:10px;font-size:14px;font-weight:600;color:#fff;background:var(--primary);border:none;border-radius:8px;cursor:pointer;">

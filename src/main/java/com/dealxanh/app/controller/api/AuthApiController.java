@@ -144,45 +144,27 @@ public class AuthApiController {
             }
         }
         
-        // 2. Verify OTP
-        boolean isValid = otpService.verifyOtp(request.getEmail(), request.getOtp());
-        if (!isValid) {
-            response.put("success", false);
-            response.put("message", "Mã OTP không chính xác hoặc đã hết hạn");
-            return ResponseEntity.badRequest().body(response);
-        }
-
-        // 3. Check if email exists
+        // 2. Check if email exists
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             response.put("success", false);
             response.put("message", "Email đã được sử dụng. Vui lòng chọn email khác.");
             return ResponseEntity.badRequest().body(response);
         }
 
-        // 3. Create User
+        // 3. Create User (không yêu cầu OTP, emailVerified = false)
         try {
             User newUser = new User();
             newUser.setEmail(request.getEmail());
-            // Lấy email prefix làm username tạm thời
-            newUser.setUsername(request.getEmail().split("@")[0]); 
+            newUser.setUsername(request.getEmail().split("@")[0]);
             newUser.setFullName(request.getFullName());
             newUser.setPhone(request.getPhone());
             newUser.setPassword(passwordEncoder.encode(request.getPassword()));
             newUser.setProvider("local");
             newUser.setActive(true);
+            // Chưa xác thực email — sẽ hiện popup OTP sau khi vào trang
+            newUser.setEmailVerified(false);
             newUser.setCreatedAt(LocalDateTime.now());
-            
-            // Handle avatar upload
-            try {
-                String avatarUrl = saveFile(request.getAvatarFile());
-                if (avatarUrl != null) {
-                    newUser.setAvatarUrl(avatarUrl);
-                }
-            } catch (Exception e) {
-                // Log error but don't fail registration
-                System.err.println("Error saving avatar: " + e.getMessage());
-            }
-            
+
             // Assign Role USER
             Role userRole = roleRepository.findByName("ROLE_USER")
                 .orElseGet(() -> {
@@ -191,14 +173,23 @@ public class AuthApiController {
                     return roleRepository.save(r);
                 });
 
-            System.out.println("DEBUG: Assigning ROLE_USER to new buyer: " + newUser.getEmail());
-
             newUser.setRole(userRole);
-
             userRepository.save(newUser);
-            
+
+            // Auto-login sau đăng ký
+            try {
+                var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                    newUser.getUsername(), null,
+                    java.util.Collections.singletonList(
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER")));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            } catch (Exception e) {
+                System.err.println("Auto-login failed: " + e.getMessage());
+            }
+
             response.put("success", true);
             response.put("message", "Đăng ký tài khoản thành công!");
+            response.put("redirectUrl", "/");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);

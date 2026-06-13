@@ -79,6 +79,9 @@ public class SellerController {
     private com.dealxanh.app.repository.RoleRepository roleRepository;
 
     @Autowired
+    private com.dealxanh.app.service.PriceSuggestionService priceSuggestionService;
+
+    @Autowired
     private ResourceLockManager lockManager;
 
     @Autowired
@@ -795,6 +798,8 @@ public class SellerController {
             deal.setStatus("ACTIVE");
             deal.setUpdatedAt(LocalDateTime.now());
             dealRepository.save(deal);
+            // Thông báo cho buyer gần cửa hàng
+            dealService.notifyNearbyBuyers(deal);
             return Map.of("success", true, "message", "Đã kích hoạt deal");
         } catch (Exception ex) {
             return Map.of("success", false, "message", "Lỗi: " + ex.getMessage());
@@ -1071,6 +1076,7 @@ public class SellerController {
             @RequestParam(required = false) String productType,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String expiryDateStr,
+            @RequestParam(required = false) String manufacturingDateStr,
             @RequestParam(required = false) String comboProductIds,
             @RequestParam(required = false) org.springframework.web.multipart.MultipartFile imageFile,
             @RequestParam(required = false) String imageUrl,
@@ -1133,6 +1139,11 @@ public class SellerController {
                 }
             } else if (expiryDateStr != null && !expiryDateStr.isEmpty()) {
                 product.setExpiryDate(java.time.LocalDateTime.parse(expiryDateStr + "T23:59:59"));
+            }
+
+            // Set manufacturing date
+            if (manufacturingDateStr != null && !manufacturingDateStr.isEmpty()) {
+                product.setManufacturingDate(java.time.LocalDateTime.parse(manufacturingDateStr + "T00:00:00"));
             }
 
             productService.createProduct(product);
@@ -2433,5 +2444,56 @@ public class SellerController {
             role = roleRepository.findByName(withoutPrefix).orElse(null);
         }
         return role;
+    }
+
+    // ===== PRICE SUGGESTION ENDPOINTS =====
+
+    /** Lấy danh sách sản phẩm có đề xuất giảm giá (cho popup) */
+    @GetMapping("/api/products/suggested")
+    @ResponseBody
+    public java.util.Map<String, Object> getSuggestedProducts(Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null || user.getWorkStore() == null)
+            return java.util.Map.of("success", false, "message", "Không tìm thấy cửa hàng");
+
+        Long storeId = user.getWorkStore().getStoreId();
+        List<Product> products = productRepository.findByStoreStoreIdAndDeletedFalse(storeId);
+        java.util.List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
+        for (Product p : products) {
+            if (p.getSuggestedPrice() != null && p.getSuggestedDiscount() != null && p.getActive()) {
+                java.util.Map<String, Object> item = new java.util.HashMap<>();
+                item.put("productId", p.getProductId());
+                item.put("name", p.getName());
+                item.put("originalPrice", p.getOriginalPrice());
+                item.put("suggestedPrice", p.getSuggestedPrice());
+                item.put("suggestedDiscount", p.getSuggestedDiscount());
+                item.put("remainingHours", p.getRemainingHours());
+                item.put("imageUrl", p.getImageUrl());
+                list.add(item);
+            }
+        }
+        return java.util.Map.of("success", true, "products", list);
+    }
+
+    /** Seller xác nhận áp dụng giá đề xuất */
+    @PostMapping("/api/products/{productId}/confirm-suggestion")
+    @ResponseBody
+    public java.util.Map<String, Object> confirmSuggestion(@PathVariable Long productId, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return java.util.Map.of("success", false, "message", "Vui lòng đăng nhập");
+        String error = priceSuggestionService.confirmSuggestedPrice(productId, user);
+        if (error != null) return java.util.Map.of("success", false, "message", error);
+        return java.util.Map.of("success", true, "message", "Đã áp dụng giá đề xuất");
+    }
+
+    /** Seller từ chối / bỏ qua đề xuất */
+    @PostMapping("/api/products/{productId}/dismiss-suggestion")
+    @ResponseBody
+    public java.util.Map<String, Object> dismissSuggestion(@PathVariable Long productId, Principal principal) {
+        User user = getCurrentUser(principal);
+        if (user == null) return java.util.Map.of("success", false, "message", "Vui lòng đăng nhập");
+        String error = priceSuggestionService.dismissSuggestion(productId, user);
+        if (error != null) return java.util.Map.of("success", false, "message", error);
+        return java.util.Map.of("success", true, "message", "Đã bỏ qua đề xuất");
     }
 }

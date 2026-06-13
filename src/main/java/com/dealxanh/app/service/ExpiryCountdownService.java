@@ -58,31 +58,16 @@ public class ExpiryCountdownService {
                 long daysUntilExpiry = ChronoUnit.DAYS.between(now.toLocalDate(), product.getExpiryDate().toLocalDate());
 
                 if (daysUntilExpiry <= 0) {
+                    // Hết hạn → deactive sản phẩm
                     product.setCurrentPrice(0.0);
                     product.setActive(false);
                     product.setUpdatedAt(now);
                     productRepository.save(product);
                     expiredCount++;
                     System.out.println("EXPIRED: " + product.getName() + " (ID=" + product.getProductId() + ") - set price=0, inactive");
-                } else if (daysUntilExpiry <= COUNTDOWN_START_DAYS) {
-                    double ratio = (double) daysUntilExpiry / COUNTDOWN_START_DAYS;
-                    long newPrice = Math.round(product.getOriginalPrice() * ratio);
-                    Double oldCurrentPrice = product.getCurrentPrice();
-                    product.setCurrentPrice((double) newPrice);
-                    product.setUpdatedAt(now);
-                    productRepository.save(product);
-                    updatedCount++;
-                    System.out.println("COUNTDOWN: " + product.getName() + " (ID=" + product.getProductId()
-                        + ") - " + daysUntilExpiry + " days left, price: "
-                        + (oldCurrentPrice != null ? Math.round(oldCurrentPrice) : product.getOriginalPrice())
-                        + " -> " + newPrice);
-                } else {
-                    if (product.getCurrentPrice() != null && !product.getCurrentPrice().equals(product.getOriginalPrice())) {
-                        product.setCurrentPrice(product.getOriginalPrice());
-                        product.setUpdatedAt(now);
-                        productRepository.save(product);
-                    }
                 }
+                // NOTE: Auto-giảm giá đã được thay thế bởi PriceSuggestionService
+                // Seller sẽ nhận thông báo đề xuất và tự xác nhận mức giảm giá
             } finally {
                 lock.unlock();
             }

@@ -148,7 +148,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                 </div>
                 <div class="prod-card__body">
                     <div class="prod-card__name" th:text="${p.name}">Product name</div>
-                    <div class="prod-card__price" th:text="|${#numbers.formatDecimal(p.currentPrice != null ? p.currentPrice : p.originalPrice, 0, 0)}đ|">50,000đ</div>
+                    <div class="prod-card__price" th:text="${@priceFormatter.format(p.currentPrice != null ? p.currentPrice : p.originalPrice)}">50,000đ</div>
                 </div>
             </a>
         </th:block>

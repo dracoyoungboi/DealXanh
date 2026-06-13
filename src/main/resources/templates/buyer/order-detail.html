@@ -122,6 +122,9 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
 </head>
 <body>
 
+<!-- Shared Header (mobile) -->
+<div th:replace="~{common/buyer/header :: header}"></div>
+
 <!-- Desktop Top Navigation Bar -->
 <div th:replace="~{common/buyer/top-nav :: topNav}"></div>
 
@@ -191,10 +194,10 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                 </div>
                 <div class="item-info">
                     <div class="item-info__name" th:text="${item.product?.name}">Tên sản phẩm</div>
-                    <div class="item-info__meta" th:text="|${item.quantity} x ${#numbers.formatDecimal(item.unitPrice, 0, 0)}đ|">SL x Giá</div>
+                    <div class="item-info__meta" th:text="|${item.quantity} x ${@priceFormatter.formatPlain(item.unitPrice)}đ|">SL x Giá</div>
                 </div>
                 <div class="item-price">
-                    <div class="item-price__subtotal" th:text="|${#numbers.formatDecimal(item.subtotal, 0, 0)}đ|">0đ</div>
+                    <div class="item-price__subtotal" th:text="${@priceFormatter.format(item.subtotal)}">0đ</div>
                 </div>
             </div>
 
@@ -202,15 +205,15 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
             <div class="price-breakdown">
                 <div class="price-row">
                     <span class="price-row__label">Tạm tính</span>
-                    <span class="price-row__value" th:text="|${#numbers.formatDecimal(order.totalAmount, 0, 0)}đ|">0đ</span>
+                    <span class="price-row__value" th:text="${@priceFormatter.format(order.totalAmount)}">0đ</span>
                 </div>
                 <div class="price-row price-row--discount" th:if="${order.discountAmount != null and order.discountAmount > 0}">
                     <span class="price-row__label">Giảm giá</span>
-                    <span class="price-row__value" th:text="|-${#numbers.formatDecimal(order.discountAmount, 0, 0)}đ|">-0đ</span>
+                    <span class="price-row__value" th:text="|−${@priceFormatter.formatPlain(order.discountAmount)}đ|">-0đ</span>
                 </div>
                 <div class="price-row price-row--total">
                     <span class="price-row__label">Tổng cộng</span>
-                    <span class="price-row__value" th:text="|${#numbers.formatDecimal(order.finalAmount, 0, 0)}đ|">0đ</span>
+                    <span class="price-row__value" th:text="${@priceFormatter.format(order.finalAmount)}">0đ</span>
                 </div>
             </div>
         </div>
@@ -263,7 +266,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
             </div>
             <div class="prepay-card__title">Thanh toán qua PayOS</div>
-            <div class="prepay-card__amount" th:text="|${#numbers.formatDecimal(order.finalAmount, 0, 0)}đ|">0đ</div>
+            <div class="prepay-card__amount" th:text="${@priceFormatter.format(order.finalAmount)}">0đ</div>
             <div class="prepay-card__hint">Quét mã VietQR trong app ngân hàng để thanh toán ngay</div>
             <button class="prepay-btn" th:attr="onclick=|createPrepayQR(${order.orderId})|">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M17 14h3"/><path d="M14 17v3"/><path d="M17 20h3v-3"/></svg>

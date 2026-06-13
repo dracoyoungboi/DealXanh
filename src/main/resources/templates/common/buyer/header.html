@@ -15,16 +15,25 @@
 .notif-overlay.show{opacity:1;visibility:visible}
 
 .notif-dropdown {
-  position:fixed;top:56px;left:0;right:0;z-index:500;
+  position:fixed;top:56px;left:8px;right:8px;z-index:500;
   background:var(--surface);
-  border-radius:0 0 16px 16px;
+  border-radius:16px;
   box-shadow:0 12px 40px rgba(0,0,0,.18);
   max-height:70vh;
   display:flex;flex-direction:column;
   transform:translateY(-16px);
   opacity:0;visibility:hidden;
   transition:all .25s cubic-bezier(.4,0,.2,1);
-  margin:0 8px;
+}
+/* PC: notification as popup near bell icon */
+@media(min-width:768px){
+  .notif-dropdown {
+    position:fixed;top:60px;left:auto;right:calc((100vw - var(--container-max, 1200px)) / 2 + 120px);
+    width:380px;max-width:calc(100vw - 24px);
+    border-radius:14px;border:1px solid var(--border, #e0e0e0);
+    box-shadow:0 8px 32px rgba(0,0,0,.12);
+  }
+  .notif-overlay{display:none!important}
 }
 .notif-dropdown.show {
   transform:translateY(0);
@@ -718,6 +727,111 @@ function performSearchNow() {
       }
     });
   });
+})();
+
+// ===== OTP VERIFICATION POPUP =====
+(function() {
+    var dismissedKey = 'dx_otp_popup_dismissed_v1';
+    var emailVerified = /*[[${emailVerified}]]*/ true;
+    var userEmail = /*[[${userEmail}]]*/ '';
+
+    if (emailVerified === false && localStorage.getItem(dismissedKey) !== '1') {
+        showOtpPopup();
+    }
+
+    function showOtpPopup() {
+        var html = '<div id="otp-verify-overlay" class="otp-verify-overlay" onclick="if(event.target===this)closeOtpPopup()">' +
+            '<div class="otp-verify-popup">' +
+                '<div class="otp-verify-popup__icon">📧</div>' +
+                '<h3 class="otp-verify-popup__title">Xác thực tài khoản</h3>' +
+                '<p class="otp-verify-popup__desc">Tài khoản của bạn chưa được xác thực. Nhấn nút bên dưới để nhận mã OTP qua email <strong>' + userEmail + '</strong>.</p>' +
+                '<p class="otp-verify-popup__warn">⚠️ Nếu không xác thực tài khoản, sau <strong>7 ngày</strong> bạn sẽ không thể truy cập vào web vì vi phạm chính sách.</p>' +
+                '<button class="otp-verify-popup__btn" id="otp-send-btn" onclick="sendOtpVerification()">📩 Nhận mã OTP xác thực</button>' +
+                '<div id="otp-verify-input-row" style="display:none;margin-top:12px">' +
+                    '<input type="text" id="otp-verify-input" class="otp-verify-popup__input" placeholder="Nhập mã OTP" maxlength="6" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;text-align:center;letter-spacing:4px">' +
+                    '<button class="otp-verify-popup__btn" style="margin-top:8px;background:var(--primary)" onclick="verifyOtpCode()">✅ Xác nhận</button>' +
+                '</div>' +
+                '<div id="otp-verify-msg" style="margin-top:8px;font-size:12px;text-align:center"></div>' +
+                '<div class="otp-verify-popup__footer">' +
+                    '<label class="otp-verify-dismiss"><input type="checkbox" id="otp-dismiss-check"> Không hiển thị lại</label>' +
+                    '<button class="otp-verify-close" onclick="closeOtpPopup()">✕</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+
+        var style = document.createElement('style');
+        style.textContent = '.otp-verify-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;animation:fadeIn .2s}' +
+            '.otp-verify-popup{background:var(--surface,#fff);border-radius:16px;width:90vw;max-width:420px;padding:24px 20px 16px;box-shadow:0 16px 48px rgba(0,0,0,.25);animation:popIn .25s ease-out;text-align:center}' +
+            '@keyframes popIn{from{opacity:0;transform:scale(.9) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}' +
+            '@keyframes fadeIn{from{opacity:0}to{opacity:1}}' +
+            '.otp-verify-popup__icon{font-size:40px;margin-bottom:12px}' +
+            '.otp-verify-popup__title{font-size:17px;font-weight:700;color:var(--text-primary);margin-bottom:8px}' +
+            '.otp-verify-popup__desc{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px}' +
+            '.otp-verify-popup__warn{font-size:11px;color:#b45309;background:rgba(245,158,11,.08);padding:8px 12px;border-radius:8px;line-height:1.5;margin-bottom:14px}' +
+            '.otp-verify-popup__btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:10px;border:none;background:var(--primary,#0d5c2e);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}' +
+            '.otp-verify-popup__btn:active{opacity:.85}' +
+            '.otp-verify-popup__footer{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--border-light)}' +
+            '.otp-verify-dismiss{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-tertiary);cursor:pointer}' +
+            '.otp-verify-close{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text-tertiary);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}';
+        document.head.appendChild(style);
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    window.sendOtpVerification = function() {
+        var btn = document.getElementById('otp-send-btn');
+        btn.disabled = true;
+        btn.textContent = 'Đang gửi...';
+        fetch('/api/auth/send-otp?email=' + encodeURIComponent(userEmail), {method:'POST'})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                document.getElementById('otp-verify-input-row').style.display = 'block';
+                document.getElementById('otp-verify-msg').textContent = 'Đã gửi OTP, kiểm tra email';
+                document.getElementById('otp-verify-msg').style.color = '#059669';
+                btn.textContent = 'Đã gửi ✓';
+            } else {
+                document.getElementById('otp-verify-msg').textContent = d.message || 'Lỗi gửi OTP';
+                document.getElementById('otp-verify-msg').style.color = '#dc2626';
+                btn.disabled = false;
+                btn.textContent = '📩 Nhận mã OTP xác thực';
+            }
+        })
+        .catch(function() {
+            document.getElementById('otp-verify-msg').textContent = 'Lỗi kết nối';
+            document.getElementById('otp-verify-msg').style.color = '#dc2626';
+            btn.disabled = false;
+            btn.textContent = '📩 Nhận mã OTP xác thực';
+        });
+    };
+
+    window.verifyOtpCode = function() {
+        var code = document.getElementById('otp-verify-input').value.trim();
+        if (!code) return;
+        fetch('/api/auth/verify-otp?email=' + encodeURIComponent(userEmail) + '&otp=' + encodeURIComponent(code), {method:'POST'})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                document.getElementById('otp-verify-msg').textContent = 'Xác thực thành công! ✅';
+                document.getElementById('otp-verify-msg').style.color = '#059669';
+                setTimeout(function() {
+                    var overlay = document.getElementById('otp-verify-overlay');
+                    if (overlay) overlay.remove();
+                    localStorage.setItem(dismissedKey, '1');
+                }, 1000);
+            } else {
+                document.getElementById('otp-verify-msg').textContent = d.message || 'OTP không đúng';
+                document.getElementById('otp-verify-msg').style.color = '#dc2626';
+            }
+        });
+    };
+
+    window.closeOtpPopup = function() {
+        if (document.getElementById('otp-dismiss-check').checked) {
+            localStorage.setItem(dismissedKey, '1');
+        }
+        var overlay = document.getElementById('otp-verify-overlay');
+        if (overlay) overlay.remove();
+    };
 })();
 </script>
 </body>

@@ -433,14 +433,20 @@ function showStorePopup(s) {
     html += '<div style="text-align:center;font-size:11px;color:#999;padding:6px;">+ ' + (prods.length - 6) + ' sản phẩm khác</div>';
   }
 
-  L.popup({maxWidth: 320, className: 'deal-popup-container'})
+  var isMobile = window.innerWidth < 768;
+  L.popup({
+    maxWidth: isMobile ? (window.innerWidth - 24) : 320,
+    className: 'deal-popup-container',
+    autoPanPaddingTopLeft: L.point(16, isMobile ? 60 : 16),
+    autoPanPaddingBottomRight: L.point(16, isMobile ? 76 : 16)
+  })
     .setLatLng([s.lat, s.lng])
     .setContent(
       '<div class="mp-popup">' +
         '<div class="mp-header">' +
           '<div class="mp-header-left">' +
             '<img src="' + (s.storeLogo || '/img/default-banner.svg') + '" alt="" onerror="this.style.display=\'none\'">' +
-            '<div>' +
+            '<div style="min-width:0">' +
               '<div class="mp-store-name">' + (s.storeName || '') + '</div>' +
               '<div class="mp-store-sub">' + prods.length + ' deal đang chạy</div>' +
             '</div>' +

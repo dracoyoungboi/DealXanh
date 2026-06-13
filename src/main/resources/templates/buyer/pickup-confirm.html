@@ -77,13 +77,13 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
       <div class="item" th:each="item : ${items}">
         <span class="item-qty" th:text="${item.quantity}">1</span>
         <span class="item-name" th:text="${item.product?.name}">Sản phẩm</span>
-        <span class="item-price" th:text="${#numbers.formatDecimal(item.subtotal, 0, 0) + 'đ'}">0đ</span>
+        <span class="item-price" th:text="${@priceFormatter.format(item.subtotal)}">0đ</span>
       </div>
     </div>
 
     <div class="total">
       <span>Tổng cộng</span>
-      <span style="color:var(--primary);" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 0) + 'đ'}">0đ</span>
+      <span style="color:var(--primary);" th:text="${@priceFormatter.format(order.finalAmount)}">0đ</span>
     </div>
 
     <button class="btn btn-primary" id="confirmBtn" onclick="confirmPickup()">✅ Xác nhận đã nhận hàng</button>

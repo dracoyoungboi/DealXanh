@@ -10,10 +10,11 @@
 html{height:auto;min-height:100%}
 body{padding-bottom:80px;background:var(--background)}
 
-.back-bar{padding:12px 16px;display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border)}
-.back-bar a{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none}
+.back-bar{padding:12px 16px;display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.back-bar a{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none;flex-shrink:0}
 .back-bar svg{width:18px;height:18px}
-.cart-count-badge{background:var(--status-danger);color:#fff;min-width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.back-bar__title{flex:1;font-size:17px;font-weight:700;color:var(--text-primary);text-align:center}
+.cart-count-badge{background:var(--status-danger);color:#fff;min-width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0}
 
 /* Cart items */
 .cart-body{padding:12px 16px 220px;display:flex;flex-direction:column;gap:10px}
@@ -103,15 +104,18 @@ body{padding-bottom:80px;background:var(--background)}
 </head>
 <body>
 
+<!-- Shared Header (mobile) -->
+<div th:replace="~{common/buyer/header :: header}"></div>
+
 <!-- Desktop Top Navigation Bar -->
 <div th:replace="~{common/buyer/top-nav :: topNav}"></div>
 
+<!-- Mobile back bar with title -->
 <div class="back-bar">
-    <a href="/">
+    <a href="javascript:history.back()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Trang chủ
     </a>
-    <span style="flex:1;font-size:17px;font-weight:700;">Giỏ hàng</span>
+    <span class="back-bar__title">Giỏ hàng</span>
     <span class="cart-count-badge" id="cartCountTop">0</span>
 </div>
 

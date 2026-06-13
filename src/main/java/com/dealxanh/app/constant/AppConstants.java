@@ -22,7 +22,6 @@ public class AppConstants {
 
     // Product types
     public static final String PRODUCT_SPECIFIC_DEAL = "SPECIFIC_DEAL";
-    public static final String PRODUCT_BLIND_BOX = "BLIND_BOX";
 
     // Store statuses
     public static final String STORE_PENDING = "PENDING";

@@ -143,7 +143,7 @@ public class SecurityConfig {
                     "/seller/deals/*/assign-products", "/seller/deals/*/remove-product/*",
                     "/seller/deals/*/pause", "/seller/deals/*/resume",
                     "/seller/products/*/toggle", "/seller/products/*/edit",
-                    "/seller/api/products/*/delete", "/seller/api/products/quick-push",
+                    "/seller/api/products/*/delete", "/seller/api/products/*/confirm-suggestion", "/seller/api/products/*/dismiss-suggestion", "/seller/api/products/quick-push",
                     "/seller/orders/*/status",
                     "/seller/api/finance/**",
                     "/seller/profile/update-store", "/seller/profile/update-documents", "/seller/profile/change-password",

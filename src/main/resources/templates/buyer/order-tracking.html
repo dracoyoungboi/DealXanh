@@ -730,7 +730,7 @@ body{padding-bottom:80px;background:var(--background);font-family:var(--font-fam
                 <!-- Price -->
                 <div class="order-price">
                     <div class="price-label">Tổng tiền</div>
-                    <div class="price-val" th:text="|${#numbers.formatDecimal(order.finalAmount != null ? order.finalAmount : (order.totalAmount != null ? order.totalAmount : 0), 0, 0)}đ|">0đ</div>
+                    <div class="price-val" th:text="${@priceFormatter.format(order.finalAmount != null ? order.finalAmount : (order.totalAmount != null ? order.totalAmount : 0))}">0đ</div>
                 </div>
                 <!-- Chevron Arrow -->
                 <svg class="order-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>

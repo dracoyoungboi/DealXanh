@@ -38,6 +38,14 @@ public class Product {
     // Hạn sử dụng / Ngày cận date
     private LocalDateTime expiryDate;
 
+    // Ngày sản xuất
+    private LocalDateTime manufacturingDate;
+
+    // Đề xuất giảm giá (từ hệ thống, cho seller xác nhận)
+    private Double suggestedDiscount;
+    private Double suggestedPrice;
+    private LocalDateTime suggestedAt;
+
     // Thời gian deal có hiệu lực
     private LocalDateTime dealStartTime;
     private LocalDateTime dealEndTime;
@@ -142,6 +150,38 @@ public class Product {
 
     public LocalDateTime getExpiryDate() { return expiryDate; }
     public void setExpiryDate(LocalDateTime expiryDate) { this.expiryDate = expiryDate; }
+
+    public LocalDateTime getManufacturingDate() { return manufacturingDate; }
+    public void setManufacturingDate(LocalDateTime manufacturingDate) { this.manufacturingDate = manufacturingDate; }
+
+    public Double getSuggestedDiscount() { return suggestedDiscount; }
+    public void setSuggestedDiscount(Double suggestedDiscount) { this.suggestedDiscount = suggestedDiscount; }
+
+    public Double getSuggestedPrice() { return suggestedPrice; }
+    public void setSuggestedPrice(Double suggestedPrice) { this.suggestedPrice = suggestedPrice; }
+
+    public LocalDateTime getSuggestedAt() { return suggestedAt; }
+    public void setSuggestedAt(LocalDateTime suggestedAt) { this.suggestedAt = suggestedAt; }
+
+    /** Số giờ còn lại đến HSD (có thể âm nếu đã hết hạn) */
+    public long getRemainingHours() {
+        if (expiryDate == null) return Long.MAX_VALUE;
+        return java.time.temporal.ChronoUnit.HOURS.between(java.time.LocalDateTime.now(), expiryDate);
+    }
+
+    /** Tổng số giờ từ NSX đến HSD */
+    public long getTotalShelfLifeHours() {
+        if (manufacturingDate == null || expiryDate == null) return -1;
+        return java.time.temporal.ChronoUnit.HOURS.between(manufacturingDate, expiryDate);
+    }
+
+    /** Tỉ lệ thời gian còn lại (0.0 - 1.0), -1 nếu không tính được */
+    public double getRemainingRatio() {
+        long total = getTotalShelfLifeHours();
+        if (total <= 0) return -1;
+        long remaining = getRemainingHours();
+        return Math.max(0.0, Math.min(1.0, (double) remaining / total));
+    }
 
     public LocalDateTime getDealStartTime() { return dealStartTime; }
     public void setDealStartTime(LocalDateTime dealStartTime) { this.dealStartTime = dealStartTime; }

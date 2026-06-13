@@ -57,12 +57,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Find by category and deleted false
     List<Product> findByCategoryAndDeletedFalse(com.dealxanh.app.entity.Category category);
 
-    // Combo / Blind Box filter (supports both legacy BLIND_BOX and new COMBO type)
-    @Query("SELECT p FROM Product p WHERE p.active = true AND p.deleted = false AND p.stockQuantity > 0 " +
-           "AND (p.productType = 'BLIND_BOX' OR p.productType = 'COMBO') " +
-           "AND (p.dealEndTime IS NULL OR p.dealEndTime >= :now)")
-    Page<Product> findAvailableBlindBoxes(@Param("now") LocalDateTime now, Pageable pageable);
-
     // For admin
     Page<Product> findByDeletedFalse(Pageable pageable);
 
@@ -92,6 +86,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // For combo: get active products with HSD warning
     @Query("SELECT p FROM Product p WHERE p.deleted = false AND p.active = true AND p.store.storeId = :storeId AND p.productType = 'SPECIFIC_DEAL'")
     List<Product> findComboAvailableByStore(@Param("storeId") Long storeId);
+
+    // Standalone COMBO products (productType = "COMBO") for buyer display
+    List<Product> findByProductTypeAndActiveTrueAndDeletedFalseAndApprovalStatus(
+            String productType, String approvalStatus);
 
     // Pessimistic write lock for stock deduction concurrency (SELECT ... FOR UPDATE)
     @Lock(LockModeType.PESSIMISTIC_WRITE)

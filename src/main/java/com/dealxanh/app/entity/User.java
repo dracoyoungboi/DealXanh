@@ -25,6 +25,9 @@ public class User {
     // Đánh dấu mật khẩu yếu (tự động sinh) — cần đổi khi login
     private Boolean weakPassword = false;
 
+    // Đã xác thực email (OTP) chưa? Nếu chưa, popup OTP sẽ hiện
+    private Boolean emailVerified = true;
+
     // OAuth2 (Google Login)
     private String provider; // local, google
     private String providerId;
@@ -86,6 +89,9 @@ public class User {
 
     public Boolean getWeakPassword() { return weakPassword != null ? weakPassword : false; }
     public void setWeakPassword(Boolean weakPassword) { this.weakPassword = weakPassword; }
+
+    public Boolean getEmailVerified() { return emailVerified != null ? emailVerified : true; }
+    public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
 
     public String getProvider() { return provider; }
     public void setProvider(String provider) { this.provider = provider; }

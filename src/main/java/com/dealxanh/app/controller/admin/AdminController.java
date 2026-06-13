@@ -2233,6 +2233,8 @@ public class AdminController {
         deal.setStatus("ACTIVE");
         deal.setUpdatedAt(LocalDateTime.now());
         dealRepository.save(deal);
+        // Thông báo cho buyer gần cửa hàng
+        dealService.notifyNearbyBuyers(deal);
         return java.util.Map.of("success", true, "message", "Đã kích hoạt deal");
     }
 
