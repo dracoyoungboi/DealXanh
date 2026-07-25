@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-DealXanhApplication<DealXanh>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.dealxanh.app.DealXanhApplication",
+            "projectName": "DealXanh",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-PasswordGenerator<DealXanh>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.dealxanh.app.util.PasswordGenerator",
+            "projectName": "DealXanh",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

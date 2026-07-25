@@ -1,1 +1,0 @@
-ALTER TABLE products ADD COLUMN current_price DOUBLE DEFAULT NULL;
