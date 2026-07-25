@@ -4,25 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Quét QR nhận hàng — DealXanh Seller</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<div th:replace="~{common/seller/css :: css}"></div>
 <style>
-:root{
-  --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
-  --accent:#d4af37;
-  --surface:#fff;--bg:#f5f6f8;
-  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
-  --border:#e0e0e0;--border-light:#f0f0f0;
-  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;--info:#3b82f6;
-  --danger-bg:rgba(239,68,68,.08);--warning-bg:rgba(245,158,11,.08);
-  --success-bg:rgba(16,185,129,.08);--info-bg:rgba(59,130,246,.08);
-  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
-  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 20px rgba(0,0,0,.12);--shadow-lg:0 8px 32px rgba(0,0,0,.2);
-  --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;--tr:200ms ease-out;
-  --safe-top:env(safe-area-inset-top,0px);
-  --safe-bot:env(safe-area-inset-bottom,0px);
-}
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;background:#0d1a0f;color:var(--text-primary);overflow:hidden}
 button{cursor:pointer;border:none;background:none;font-family:inherit}
 img,video{display:block}
 
@@ -428,6 +411,13 @@ img,video{display:block}
 </head>
 <body>
 
+<div class="sl-sidebar-overlay" id="slSidebarOverlay" onclick="closeMobileSidebar()"></div>
+<div class="sl-layout">
+    <div th:replace="~{common/seller/sidebar :: sidebar('fulfillment')}"></div>
+    <div class="sl-main">
+        <div th:replace="~{common/seller/header :: header('Xử lý đơn Pickup', 'fulfillment')}"></div>
+        <main class="sl-content">
+
 <!-- =================== SCANNER VIEW =================== -->
 <div id="scanner-view">
 
@@ -666,6 +656,13 @@ img,video{display:block}
   </div>
 
 </div>
+
+        </main>
+        <div th:replace="~{common/seller/footer :: footer}"></div>
+    </div>
+</div>
+
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('fulfillment')}"></div>
 
 <!-- ============= SCRIPTS ============= -->
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>

@@ -1,462 +1,416 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Nhân viên — DealXanh</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{
-  --primary:#0d5c2e;--primary-dark:#08421f;--primary-light:#1a7c40;
-  --accent:#d4af37;
-  --surface:#fff;--bg:#f5f6f8;
-  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
-  --border:#e0e0e0;--border-light:#f0f0f0;
-  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 20px rgba(0,0,0,.12);
-  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
-  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
-  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
-  --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
-}
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary)}
-button{cursor:pointer;border:none;background:none;font-family:inherit}
-img{display:block;max-width:100%}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — DealXanh Seller</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <div th:replace="~{common/seller/css :: css}"></div>
+    <style>
+        body{padding-bottom:0}
 
-/* ===== HEADER ===== */
-.emp-header{
-  background:var(--primary);
-  padding:calc(var(--safe-top) + 16px) 16px 20px;
-  position:relative;overflow:hidden;
-}
-.emp-header::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(circle at 90% 10%,rgba(255,255,255,.1) 0%,transparent 50%);
-}
-.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative;z-index:1}
-.emp-greeting{display:flex;align-items:center;gap:10px}
-.emp-avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.3);flex-shrink:0}
-.emp-avatar img{width:100%;height:100%;object-fit:cover}
-.emp-name{font-size:14px;font-weight:700;color:#fff}
-.emp-role{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px}
-.header-actions{display:flex;gap:8px}
-.hdr-btn{
-  width:38px;height:38px;border-radius:var(--radius-md);
-  background:rgba(255,255,255,.12);
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;transition:background var(--tr);position:relative;
-}
-.hdr-btn:hover{background:rgba(255,255,255,.2)}
-.hdr-btn svg{width:18px;height:18px}
-.notif-dot{
-  position:absolute;top:7px;right:7px;
-  width:8px;height:8px;border-radius:50%;
-  background:#ef4444;border:1.5px solid var(--primary);
-}
+        /* Product grid */
+        .dash-product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+        .dash-product-card{
+            background:var(--bg-alt);border-radius:var(--radius-md);
+            border:1px solid var(--border-light);padding:14px;
+            display:flex;align-items:center;gap:12px;
+            transition:all var(--tr);text-decoration:none;color:inherit;
+        }
+        .dash-product-card:hover{border-color:var(--primary);box-shadow:var(--shadow-sm);background:var(--surface)}
+        .dash-product-card__img{width:48px;height:48px;border-radius:var(--radius-sm);object-fit:cover;flex-shrink:0;background:var(--bg)}
+        .dash-product-card__info{flex:1;min-width:0}
+        .dash-product-card__name{font-size:13px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .dash-product-card__meta{font-size:11px;color:var(--text-tertiary);margin-top:2px}
+        .dash-product-card__price{font-size:14px;font-weight:700;color:var(--primary);text-align:right;flex-shrink:0}
+        .dash-product-card__price small{font-size:10px;color:var(--text-tertiary);display:block;font-weight:400}
 
-/* Slot status strip */
-.slot-strip{
-  display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
-  position:relative;z-index:1;
-}
-.slot-strip::-webkit-scrollbar{display:none}
-.slot-pill{
-  flex-shrink:0;
-  padding:8px 14px;border-radius:var(--radius-full);
-  border:1.5px solid rgba(255,255,255,.2);
-  font-size:12px;font-weight:600;color:rgba(255,255,255,.75);
-  display:flex;align-items:center;gap:6px;
-  transition:all var(--tr);cursor:pointer;
-  white-space:nowrap;
-}
-.slot-pill.active{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5);color:#fff}
-.slot-pill.urgent{border-color:rgba(239,68,68,.5);color:#fca5a5;animation:urgentPulse 1.5s ease-in-out infinite}
-@keyframes urgentPulse{0%,100%{background:rgba(239,68,68,.15)}50%{background:rgba(239,68,68,.25)}}
-.slot-pill-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.8}
+        /* Quick-create card */
+        .dash-create-card{
+            background:linear-gradient(135deg,rgba(13,92,46,.03) 0%,rgba(13,92,46,.01) 100%);
+            border:2px dashed var(--border);border-radius:var(--radius-md);
+            padding:24px 16px;display:flex;flex-direction:column;align-items:center;
+            justify-content:center;gap:8px;cursor:pointer;
+            transition:all var(--tr);text-decoration:none;color:inherit;min-height:100%;
+        }
+        .dash-create-card:hover{border-color:var(--primary);background:rgba(13,92,46,.05)}
+        .dash-create-card__icon{width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center}
+        .dash-create-card__icon svg{width:18px;height:18px}
+        .dash-create-card__text{font-size:13px;font-weight:700;color:var(--text-primary)}
+        .dash-create-card__sub{font-size:10px;color:var(--text-tertiary)}
 
-/* ===== PRIMARY ACTION — TAP 1 ===== */
-.scan-cta-section{padding:16px 14px 0}
-.scan-cta-card{
-  background:var(--primary);
-  border-radius:var(--radius-xl);
-  padding:22px 20px;
-  display:flex;align-items:center;gap:16px;
-  cursor:pointer;
-  transition:all .15s;
-  box-shadow:0 6px 24px rgba(13,92,46,.4);
-  position:relative;overflow:hidden;
-  border:1px solid rgba(255,255,255,.1);
-}
-.scan-cta-card::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(circle at 80% 50%,rgba(255,255,255,.08) 0%,transparent 60%);
-}
-.scan-cta-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(13,92,46,.5)}
-.scan-cta-card:active{transform:scale(.98)}
-.scan-cta-icon{
-  width:60px;height:60px;border-radius:var(--radius-lg);
-  background:rgba(255,255,255,.2);
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;border:1.5px solid rgba(255,255,255,.2);
-  position:relative;z-index:1;
-}
-.scan-cta-icon svg{width:30px;height:30px;color:#fff}
-/* Pulse ring */
-.scan-cta-icon::before{
-  content:'';position:absolute;inset:-6px;border-radius:var(--radius-lg);
-  border:2px solid rgba(255,255,255,.15);
-  animation:ringPulse 2s ease-in-out infinite;
-}
-@keyframes ringPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:.5}}
-.scan-cta-text{flex:1;position:relative;z-index:1}
-.scan-cta-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:4px}
-.scan-cta-subtitle{font-size:13px;color:rgba(255,255,255,.75)}
-.scan-cta-badge{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:3px 10px;background:rgba(255,255,255,.15);
-  border-radius:var(--radius-full);font-size:11px;font-weight:700;color:#fff;
-  margin-top:6px;
-}
-.scan-cta-arrow{
-  width:32px;height:32px;border-radius:50%;
-  background:rgba(255,255,255,.15);
-  display:flex;align-items:center;justify-content:center;color:#fff;
-  position:relative;z-index:1;flex-shrink:0;
-}
-.scan-cta-arrow svg{width:16px;height:16px}
+        /* Store banner */
+        .store-banner{
+            background:linear-gradient(135deg,var(--surface) 0%,var(--bg-alt) 100%);
+            border-radius:var(--radius-lg);border:1px solid var(--border-light);
+            padding:20px 24px;display:flex;align-items:center;gap:20px;
+        }
+        .store-banner__logo{width:56px;height:56px;border-radius:var(--radius-lg);overflow:hidden;flex-shrink:0;border:2px solid var(--border-light);background:var(--bg)}
+        .store-banner__logo img{width:100%;height:100%;object-fit:cover}
+        .store-banner__info{flex:1;min-width:0}
+        .store-banner__name{font-size:18px;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+        .store-banner__meta{font-size:12px;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:14px}
+        .store-banner__actions{display:flex;gap:8px;flex-shrink:0}
 
-/* ===== TAP COUNTER ===== */
-.tap-indicator{
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  padding:10px;
-}
-.tap-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
-.tap-dot.done{background:var(--primary)}
-.tap-dot.current{background:var(--primary);transform:scale(1.3);box-shadow:0 0 0 3px rgba(13,92,46,.2)}
-.tap-label{font-size:11px;color:var(--text-tertiary);font-weight:500}
+        .tier-pill{padding:4px 12px;border-radius:var(--radius-full);font-size:10px;font-weight:700;color:#fff;letter-spacing:.3px}
+        .tier-pill.DIAMOND{background:linear-gradient(135deg,#667eea,#764ba2)}
+        .tier-pill.GOLD{background:linear-gradient(135deg,#d4af37,#b8932a)}
+        .tier-pill.SILVER{background:linear-gradient(135deg,#a8b8c8,#7a8a9a)}
+        .tier-pill.BRONZE{background:linear-gradient(135deg,#cd7f32,#a0522d)}
 
-/* ===== QUICK STATS ===== */
-.quick-stats{
-  display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
-  padding:0 14px;margin-bottom:12px;
-}
-.qs-card{
-  background:var(--surface);border-radius:var(--radius-lg);
-  border:1px solid var(--border-light);
-  padding:14px;box-shadow:var(--shadow-sm);
-}
-.qs-val{font-size:22px;font-weight:800;margin-bottom:3px}
-.qs-val.primary{color:var(--primary)}
-.qs-val.warning{color:var(--warning)}
-.qs-lbl{font-size:11px;color:var(--text-tertiary);font-weight:500}
-.qs-sub{font-size:12px;font-weight:600;margin-top:4px}
-.qs-sub.green{color:var(--success)}
-.qs-sub.orange{color:var(--warning)}
+        .status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        .status-dot.active{background:var(--success)}
+        .status-dot.danger{background:var(--danger)}
 
-/* ===== PENDING ORDERS LIST ===== */
-.section-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 14px;margin-bottom:10px;
-}
-.section-title{font-size:15px;font-weight:700}
-.section-link{font-size:13px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:3px}
-.section-link svg{width:13px;height:13px}
-
-.order-queue{padding:0 14px;display:flex;flex-direction:column;gap:8px;padding-bottom:100px}
-.queue-item{
-  background:var(--surface);border-radius:var(--radius-lg);
-  border:1px solid var(--border-light);
-  display:flex;gap:0;overflow:hidden;
-  box-shadow:var(--shadow-sm);
-  cursor:pointer;transition:all var(--tr);
-  position:relative;
-}
-.queue-item:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:rgba(13,92,46,.15)}
-/* Urgency left bar */
-.queue-item::before{
-  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
-}
-.queue-item.urgent::before{background:var(--danger)}
-.queue-item.warning::before{background:var(--warning)}
-.queue-item.safe::before{background:var(--success)}
-
-.qi-main{flex:1;padding:13px 14px 13px 16px;min-width:0}
-.qi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.qi-order-id{font-size:12px;font-weight:700;color:var(--primary)}
-.qi-time-left{
-  display:flex;align-items:center;gap:3px;
-  font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--radius-full);
-}
-.time-urgent{background:var(--danger);color:#fff}
-.time-warning{background:rgba(245,158,11,.12);color:var(--warning)}
-.time-safe{background:rgba(16,185,129,.1);color:var(--success)}
-.qi-time-left svg{width:10px;height:10px}
-.qi-buyer{font-size:13px;font-weight:600;margin-bottom:3px}
-.qi-items{font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.qi-slot-row{display:flex;align-items:center;gap:6px;margin-top:6px}
-.qi-slot{
-  display:flex;align-items:center;gap:4px;
-  font-size:11px;font-weight:600;color:var(--text-tertiary);
-  padding:3px 8px;background:var(--bg);border-radius:var(--radius-full);
-}
-.qi-slot svg{width:10px;height:10px}
-.qi-pay{font-size:11px;font-weight:600;padding:3px 8px;background:var(--bg);border-radius:var(--radius-full);color:var(--text-secondary)}
-
-.qi-action{
-  padding:0 14px;display:flex;align-items:center;justify-content:center;
-  border-left:1px solid var(--border-light);background:rgba(13,92,46,.03);
-  flex-shrink:0;
-}
-.qi-action-btn{
-  width:44px;height:44px;border-radius:var(--radius-md);
-  background:var(--primary);color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  transition:all var(--tr);
-}
-.qi-action-btn:hover{background:var(--primary-dark);transform:scale(1.05)}
-.qi-action-btn svg{width:20px;height:20px}
-
-/* Empty state */
-.empty-queue{
-  padding:40px 24px;text-align:center;
-  display:flex;flex-direction:column;align-items:center;gap:12px;
-}
-.eq-icon{width:72px;height:72px;background:rgba(16,185,129,.1);border-radius:50%;display:flex;align-items:center;justify-content:center}
-.eq-icon svg{width:34px;height:34px;color:var(--success)}
-.eq-title{font-size:16px;font-weight:700}
-.eq-desc{font-size:13px;color:var(--text-secondary);line-height:1.6}
-
-/* ===== FOOTER NAV (employee) ===== */
-.emp-nav{
-  position:fixed;bottom:0;left:0;right:0;z-index:100;
-  background:rgba(255,255,255,.95);backdrop-filter:blur(12px);
-  border-top:1px solid var(--border-light);
-  display:grid;grid-template-columns:repeat(3,1fr);
-  height:calc(60px + var(--safe-bot));
-  padding-bottom:var(--safe-bot);
-}
-.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-tertiary);font-size:10px;font-weight:500;transition:color var(--tr);position:relative}
-.nav-item.active{color:var(--primary)}
-.nav-item svg{width:22px;height:22px}
-/* Big scan button in center nav */
-.nav-scan-wrap{display:flex;align-items:center;justify-content:center}
-.nav-scan-circle{
-  width:52px;height:52px;border-radius:50%;
-  background:var(--primary);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 16px rgba(13,92,46,.4);
-  margin-bottom:16px;
-  transition:all var(--tr);
-}
-.nav-scan-circle:hover{transform:scale(1.05);box-shadow:0 6px 20px rgba(13,92,46,.5)}
-.nav-scan-circle svg{width:24px;height:24px;color:#fff}
-.nav-badge{position:absolute;top:8px;right:calc(50% - 16px);width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
-</style>
+        @media(max-width:1024px){
+            .dash-product-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+            .store-banner{flex-wrap:wrap}
+            .store-banner__actions{width:100%}
+        }
+        @media(max-width:640px){
+            .dash-product-grid{grid-template-columns:1fr 1fr}
+            .store-banner__name{font-size:15px}
+        }
+    </style>
 </head>
 <body>
 
-<!-- Header -->
-<header class="emp-header">
-  <div class="header-top">
-    <div class="emp-greeting">
-      <div class="emp-avatar">
-        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=70" alt="">
-      </div>
-      <div>
-        <div class="emp-name">Nguyễn Văn Nhân</div>
-        <div class="emp-role">Nhân viên · Bánh mì Hòa Mai</div>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="hdr-btn" onclick="window.location.href='dashboard.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      </button>
-      <button class="hdr-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="notif-dot"></span>
-      </button>
-    </div>
-  </div>
+<div class="sl-sidebar-overlay" id="slSidebarOverlay" onclick="closeMobileSidebar()"></div>
+<div class="sl-layout">
+    <div th:replace="~{common/seller/sidebar :: sidebar('dashboard')}"></div>
+    <div class="sl-main">
+        <div th:replace="~{common/seller/header :: header('Dashboard', 'dashboard')}"></div>
+        <main class="sl-content" style="padding-bottom:40px;">
 
-  <!-- Slot pills -->
-  <div class="slot-strip">
-    <div class="slot-pill urgent">
-      <span class="slot-pill-dot"></span>⏰ 17:00–18:00 · 2 còn lại
-    </div>
-    <div class="slot-pill active">
-      <span class="slot-pill-dot"></span>18:00–19:00 · 3 đơn
-    </div>
-    <div class="slot-pill">
-      <span class="slot-pill-dot"></span>19:00–20:00 · 5 đơn
-    </div>
-  </div>
-</header>
+        <!-- Store Banner -->
+        <div class="store-banner">
+            <div class="store-banner__logo">
+                <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}"
+                     alt="" onerror="this.src='/img/default-store.svg'">
+            </div>
+            <div class="store-banner__info">
+                <div class="store-banner__name">
+                    <span th:text="${store.storeName}">Store</span>
+                    <span th:if="${store.partnerTier != null}" th:text="${store.partnerTierLabel}"
+                          class="tier-pill" th:classappend="${store.partnerTier}">Đồng</span>
+                </div>
+                <div class="store-banner__meta">
+                    <span th:if="${store.phone != null}">📞 <span th:text="${store.phone}"></span></span>
+                    <span>⭐ <span th:text="${store.averageRating}">0</span> (<span th:text="${store.totalReviews}">0</span> đánh giá)</span>
+                    <span>🏷 Hoa hồng <span th:text="|${#numbers.formatDecimal(store.getCommissionRate() * 100, 0, 0)}%|">10%</span></span>
+                    <span>📋 <span th:text="${totalDeals}">0</span> deal · <span th:text="${totalProducts}">0</span> sản phẩm</span>
+                </div>
+            </div>
+            <div class="store-banner__actions">
+                <a href="/seller/products/create" class="sl-btn sl-btn--primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Tạo sản phẩm mới
+                </a>
+                <a href="/seller/deals/create" class="sl-btn sl-btn--outline">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Tạo Deal
+                </a>
+            </div>
+        </div>
 
-<!-- PRIMARY SCAN CTA — TAP 1 -->
-<div class="scan-cta-section">
-  <div class="scan-cta-card" onclick="goScan()">
-    <div class="scan-cta-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z M17 14h3 M14 17v3 M17 20h3v-3"/></svg>
-    </div>
-    <div class="scan-cta-text">
-      <div class="scan-cta-title">Quét QR / Nhập OTP</div>
-      <div class="scan-cta-subtitle">Nhấn đây để phục vụ khách ngay</div>
-      <div class="scan-cta-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        2 đơn đang chờ slot này
-      </div>
-    </div>
-    <div class="scan-cta-arrow">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </div>
-  </div>
+        <!-- KPI Cards -->
+        <div class="sl-kpi-grid">
+            <div class="sl-kpi-card">
+                <div class="sl-kpi-card__top">
+                    <div class="sl-kpi-card__label">Tổng đơn hàng</div>
+                    <div class="sl-kpi-card__icon" style="background:rgba(13,92,46,.08);color:var(--primary)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+                    </div>
+                </div>
+                <div class="sl-kpi-card__value" style="color:var(--primary)" th:text="${totalOrders}">0</div>
+                <div class="sl-kpi-card__sub"><span th:text="${pendingOrders}">0</span> đang chờ xử lý</div>
+            </div>
+            <div class="sl-kpi-card">
+                <div class="sl-kpi-card__top">
+                    <div class="sl-kpi-card__label">Deal đang chạy</div>
+                    <div class="sl-kpi-card__icon" style="background:rgba(16,185,129,.08);color:var(--success)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    </div>
+                </div>
+                <div class="sl-kpi-card__value" style="color:var(--success)" th:text="${activeDeals}">0</div>
+                <div class="sl-kpi-card__sub"><span th:text="${scheduledDeals}">0</span> sắp diễn ra · <span th:text="${totalDeals}">0</span> tổng</div>
+            </div>
+            <div class="sl-kpi-card">
+                <div class="sl-kpi-card__top">
+                    <div class="sl-kpi-card__label">Tổng sản phẩm</div>
+                    <div class="sl-kpi-card__icon" style="background:rgba(59,130,246,.08);color:var(--info)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+                    </div>
+                </div>
+                <div class="sl-kpi-card__value" style="color:var(--info)" th:text="${totalProducts}">0</div>
+                <div class="sl-kpi-card__sub">
+                    <span th:if="${outOfStockCount > 0}" style="color:var(--danger);font-weight:600">⚠ <span th:text="${outOfStockCount}">0</span> hết hàng</span>
+                    <span th:unless="${outOfStockCount > 0}">Tất cả còn hàng ✅</span>
+                </div>
+            </div>
+            <div class="sl-kpi-card">
+                <div class="sl-kpi-card__top">
+                    <div class="sl-kpi-card__label">Đơn chờ xác nhận</div>
+                    <div class="sl-kpi-card__icon" style="background:rgba(245,158,11,.08);color:var(--warning)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                </div>
+                <div class="sl-kpi-card__value" style="color:var(--warning)" th:text="${pendingOrders}">0</div>
+                <div class="sl-kpi-card__sub">Cần xác nhận ngay</div>
+            </div>
+        </div>
 
-  <!-- 3-tap indicator -->
-  <div class="tap-indicator">
-    <div class="tap-dot current"></div>
-    <div class="tap-dot"></div>
-    <div class="tap-dot"></div>
-    <span class="tap-label">Tap 1/3 — Quét QR</span>
-  </div>
+        <!-- Two Columns -->
+        <div class="sl-two-col">
+
+            <!-- LEFT: Products -->
+            <div class="sl-panel">
+                <div class="sl-panel__header">
+                    <div class="sl-panel__title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+                        Sản phẩm gần đây
+                    </div>
+                    <a href="/seller/products" class="sl-btn sl-btn--ghost sl-btn--sm">Xem tất cả →</a>
+                </div>
+                <div class="sl-panel__body">
+                    <div th:if="${recentProducts != null and !recentProducts.isEmpty()}">
+                        <div class="dash-product-grid">
+                            <a th:each="product : ${recentProducts}" th:href="@{/seller/products}" class="dash-product-card">
+                                <img class="dash-product-card__img"
+                                     th:src="${product.imageUrl != null ? product.imageUrl : '/img/default-banner.svg'}"
+                                     alt="" onerror="this.src='/img/default-banner.svg'">
+                                <div class="dash-product-card__info">
+                                    <div class="dash-product-card__name" th:text="${product.name}">Product</div>
+                                    <div class="dash-product-card__meta">
+                                        <span th:text="${product.category != null ? product.category.name : 'Chưa phân loại'}">Cat</span>
+                                        ·
+                                        <span th:if="${product.stockQuantity > 0}"><span class="status-dot active"></span> Còn <span th:text="${product.stockQuantity}">0</span></span>
+                                        <span th:unless="${product.stockQuantity > 0}"><span class="status-dot danger"></span> Hết hàng</span>
+                                    </div>
+                                </div>
+                                <div class="dash-product-card__price">
+                                    <span th:text="|${#numbers.formatDecimal(product.originalPrice, 0, 0)}đ|">0đ</span>
+                                    <small th:if="${product.currentPrice != null and product.currentPrice > 0 and product.currentPrice < product.originalPrice}"
+                                           th:text="|↓ ${#numbers.formatDecimal(product.currentPrice, 0, 0)}đ|"></small>
+                                </div>
+                            </a>
+                            <a href="/seller/products/create" class="dash-create-card">
+                                <div class="dash-create-card__icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                </div>
+                                <div class="dash-create-card__text">Tạo sản phẩm mới</div>
+                                <div class="dash-create-card__sub">Thêm nhanh vào kho</div>
+                            </a>
+                        </div>
+                    </div>
+                    <div th:unless="${recentProducts != null and !recentProducts.isEmpty()}" class="sl-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+                        <div class="sl-empty__title">Chưa có sản phẩm nào</div>
+                        <div class="sl-empty__sub">Tạo sản phẩm đầu tiên để bắt đầu bán hàng</div>
+                        <a href="/seller/products/create" class="sl-btn sl-btn--primary" style="margin-top:12px">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Tạo sản phẩm đầu tiên
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Orders -->
+            <div class="sl-panel">
+                <div class="sl-panel__header">
+                    <div class="sl-panel__title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                        Đơn hàng gần đây
+                    </div>
+                    <a href="/seller/orders" class="sl-btn sl-btn--ghost sl-btn--sm">Xem tất cả →</a>
+                </div>
+                <div class="sl-panel__body" style="padding:0 20px">
+                    <div th:if="${recentOrders != null and !recentOrders.isEmpty()}">
+                        <div class="sl-order-item" th:each="order : ${recentOrders}">
+                            <span class="sl-order-item__id" th:text="'#' + ${order.orderId}">#123</span>
+                            <span class="sl-order-item__customer" th:text="${order.user != null ? (order.user.fullName != null ? order.user.fullName : order.user.username) : 'Khách vãng lai'}">Customer</span>
+                            <span class="sl-badge"
+                                  th:classappend="${order.status == 'PENDING' ? 'sl-badge--pending' : order.status == 'CONFIRMED' ? 'sl-badge--confirmed' : order.status == 'READY_FOR_PICKUP' ? 'sl-badge--ready' : order.status == 'COMPLETED' ? 'sl-badge--completed' : 'sl-badge--cancelled'}"
+                                  th:text="${order.status == 'PENDING' ? '⏳ Chờ' : order.status == 'CONFIRMED' ? '✅ Xác nhận' : order.status == 'READY_FOR_PICKUP' ? '📦 Sẵn sàng' : order.status == 'COMPLETED' ? '🏁 Xong' : '❌ Hủy'}">Status</span>
+                            <span class="sl-order-item__amount" th:text="|${#numbers.formatDecimal(order.finalAmount, 0, 0)}đ|">0đ</span>
+                        </div>
+                    </div>
+                    <div th:unless="${recentOrders != null and !recentOrders.isEmpty()}" class="sl-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg>
+                        <div class="sl-empty__title">Chưa có đơn hàng nào</div>
+                        <div class="sl-empty__sub">Đơn hàng sẽ xuất hiện ở đây khi có khách đặt</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        </main>
+        <div th:replace="~{common/seller/footer :: footer}"></div>
+    </div>
 </div>
 
-<!-- Quick stats -->
-<div class="quick-stats">
-  <div class="qs-card">
-    <div class="qs-val primary">3</div>
-    <div class="qs-lbl">Đã phục vụ hôm nay</div>
-    <div class="qs-sub green">↑ Tốt hơn hôm qua</div>
-  </div>
-  <div class="qs-card">
-    <div class="qs-val warning">5</div>
-    <div class="qs-lbl">Đơn đang chờ hôm nay</div>
-    <div class="qs-sub orange">⏰ 2 đơn cần gấp</div>
-  </div>
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('dashboard')}"></div>
+
+<!-- ===== PRICE SUGGESTION POPUP ===== -->
+<div id="suggestion-overlay" class="suggestion-overlay" style="display:none" onclick="closeSuggestionPopup(event)">
+    <div class="suggestion-popup" onclick="event.stopPropagation()">
+        <div class="suggestion-popup__header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Sản phẩm sắp hết hạn — Đề xuất giảm giá</span>
+        </div>
+        <div class="suggestion-popup__body" id="suggestion-list">
+            <div style="text-align:center;padding:20px;color:var(--text-tertiary)">Đang kiểm tra...</div>
+        </div>
+        <div class="suggestion-popup__footer">
+            <label class="suggestion-dismiss-all" id="suggestion-dismiss-label">
+                <input type="checkbox" id="suggestion-dismiss-check" onchange="dismissSuggestionForever()">
+                <span>Không hiển thị lại đề xuất này</span>
+            </label>
+            <button class="suggestion-close-btn" onclick="closeSuggestionPopup()">Đóng</button>
+        </div>
+    </div>
 </div>
 
-<!-- Pending orders -->
-<div class="section-head">
-  <span class="section-title">Đơn đang chờ phục vụ</span>
-  <button class="section-link" onclick="window.location.href='deals.html'">Tất cả <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-</div>
+<style>
+.suggestion-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
+.suggestion-popup{background:var(--surface);border-radius:16px;width:90vw;max-width:480px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,.2);animation:sugIn .25s ease-out}
+@keyframes sugIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.suggestion-popup__header{display:flex;align-items:center;gap:8px;padding:16px 18px 12px;border-bottom:1px solid var(--border-light);font-size:15px;font-weight:700;color:var(--text-primary);flex-shrink:0}
+.suggestion-popup__header svg{width:20px;height:20px;color:#b45309;flex-shrink:0}
+.suggestion-popup__body{overflow-y:auto;flex:1;padding:8px 0}
+.suggestion-popup__footer{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border-light);flex-shrink:0;gap:10px}
+.suggestion-dismiss-all{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-tertiary);cursor:pointer}
+.suggestion-dismiss-all input{margin:0}
+.suggestion-close-btn{padding:8px 20px;border-radius:var(--radius-full);border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-family)}
 
-<div class="order-queue">
-
-  <!-- URGENT -->
-  <div class="queue-item urgent" onclick="goScan()">
-    <div class="qi-main">
-      <div class="qi-top">
-        <span class="qi-order-id">#DX-38291-A</span>
-        <span class="qi-time-left time-urgent">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          12 phút!
-        </span>
-      </div>
-      <div class="qi-buyer">Trần Thị B</div>
-      <div class="qi-items">1× Bánh mì pate · 2× Bánh mì thịt nguội</div>
-      <div class="qi-slot-row">
-        <span class="qi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>17:00–18:00</span>
-        <span class="qi-pay">💜 MoMo · 42.500đ</span>
-      </div>
-    </div>
-    <div class="qi-action">
-      <div class="qi-action-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- WARNING -->
-  <div class="queue-item warning" onclick="goScan()">
-    <div class="qi-main">
-      <div class="qi-top">
-        <span class="qi-order-id">#DX-38291-B</span>
-        <span class="qi-time-left time-warning">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          45 phút
-        </span>
-      </div>
-      <div class="qi-buyer">Lê Văn C</div>
-      <div class="qi-items">1× Bún bò Huế cận date</div>
-      <div class="qi-slot-row">
-        <span class="qi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>17:00–18:00</span>
-        <span class="qi-pay">💙 ZaloPay · 27.000đ</span>
-      </div>
-    </div>
-    <div class="qi-action">
-      <div class="qi-action-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- SAFE upcoming -->
-  <div class="queue-item safe" onclick="showToast('Slot này bắt đầu lúc 18:00')">
-    <div class="qi-main">
-      <div class="qi-top">
-        <span class="qi-order-id">#DX-38303-A</span>
-        <span class="qi-time-left time-safe">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          1h 12m
-        </span>
-      </div>
-      <div class="qi-buyer">Phạm Minh D</div>
-      <div class="qi-items">1× Bánh baguette tươi giòn</div>
-      <div class="qi-slot-row">
-        <span class="qi-slot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>18:00–19:00</span>
-        <span class="qi-pay">💵 Tiền mặt · 8.000đ</span>
-      </div>
-    </div>
-    <div class="qi-action">
-      <div class="qi-action-btn" style="background:var(--bg);border:1.5px solid var(--border)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- Empty slot for upcoming (collapsed) -->
-  <div style="padding:10px 0;text-align:center;font-size:12px;color:var(--text-tertiary);font-weight:500">
-    + 2 đơn slot 19:00–20:00
-    <button onclick="showToast('Xem tất cả đơn hàng')" style="color:var(--primary);font-weight:700;font-size:12px;margin-left:6px">Xem →</button>
-  </div>
-
-</div>
-
-<!-- Bottom nav (employee simplified) -->
-<nav class="emp-nav">
-  <a class="nav-item active">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span>Trang chủ</span>
-  </a>
-  <div class="nav-scan-wrap">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
-      <div class="nav-scan-circle" onclick="goScan()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg>
-      </div>
-    </div>
-  </div>
-  <a class="nav-item" onclick="window.location.href='deals.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    <span>Đơn hàng</span>
-    <span class="nav-badge">5</span>
-  </a>
-</nav>
+.sug-item{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid #f8f8f8}
+.sug-item:hover{background:var(--background)}
+.sug-item img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--background)}
+.sug-item-info{flex:1;min-width:0}
+.sug-item-name{font-size:13px;font-weight:600;color:var(--text-primary);line-height:1.3;margin-bottom:2px}
+.sug-item-meta{font-size:11px;color:var(--text-tertiary);margin-bottom:2px}
+.sug-item-price-row{display:flex;align-items:baseline;gap:8px}
+.sug-item-original{font-size:11px;color:var(--text-tertiary);text-decoration:line-through}
+.sug-item-suggested{font-size:14px;font-weight:700;color:var(--danger)}
+.sug-item-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:var(--radius-full);background:rgba(239,68,68,.1);color:var(--danger);white-space:nowrap}
+.sug-item-actions{display:flex;gap:6px;flex-shrink:0}
+.sug-btn-apply{padding:6px 14px;border-radius:var(--radius-full);border:none;background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-family)}
+.sug-btn-apply:hover{background:var(--primary-dark)}
+.sug-btn-dismiss{padding:6px 10px;border-radius:var(--radius-full);border:1px solid var(--border);background:var(--surface);color:var(--text-tertiary);font-size:11px;cursor:pointer}
+.sug-empty{text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:13px}
+</style>
 
 <script>
-function goScan(){ window.location.href = 'fulfillment.html'; }
-function showToast(msg){
-  const t=document.createElement('div');
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap';
-  t.textContent=msg;document.body.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
+(function() {
+    var dismissedKey = 'dx_suggestion_dismissed_v1';
+    if (localStorage.getItem(dismissedKey) === '1') return;
+
+    fetch('/seller/api/products/suggested')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.success || !data.products || data.products.length === 0) return;
+        showSuggestionPopup(data.products);
+    })
+    .catch(function() {});
+
+    function showSuggestionPopup(products) {
+        var overlay = document.getElementById('suggestion-overlay');
+        var list = document.getElementById('suggestion-list');
+        if (!overlay || !list) return;
+
+        var html = '';
+        for (var i = 0; i < products.length; i++) {
+            var p = products[i];
+            var hours = p.remainingHours || 0;
+            var timeText = hours >= 24 ? Math.floor(hours/24) + ' ngày' : hours + ' giờ';
+            html += '<div class="sug-item" id="sug-item-' + p.productId + '">' +
+                '<img src="' + (p.imageUrl || '/img/default-banner.svg') + '" alt="" onerror="this.src=\'/img/default-banner.svg\'">' +
+                '<div class="sug-item-info">' +
+                    '<div class="sug-item-name">' + escapeHtml(p.name) + '</div>' +
+                    '<div class="sug-item-meta">Còn ' + timeText + ' trước HSD</div>' +
+                    '<div class="sug-item-price-row">' +
+                        '<span class="sug-item-original">' + (p.originalPrice || 0).toLocaleString('vi-VN') + 'đ</span>' +
+                        '<span class="sug-item-suggested">' + (p.suggestedPrice || 0).toLocaleString('vi-VN') + 'đ</span>' +
+                        '<span class="sug-item-badge">-' + Math.round(p.suggestedDiscount || 0) + '%</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="sug-item-actions">' +
+                    '<button class="sug-btn-apply" onclick="confirmSuggestion(' + p.productId + ')">Áp dụng</button>' +
+                    '<button class="sug-btn-dismiss" onclick="dismissOne(' + p.productId + ')">✕</button>' +
+                '</div>' +
+            '</div>';
+        }
+        list.innerHTML = html;
+        overlay.style.display = 'flex';
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        var d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+})();
+
+function confirmSuggestion(productId) {
+    fetch('/seller/api/products/' + productId + '/confirm-suggestion', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': (document.querySelector('meta[name="_csrf"]') || {}).content || ''}
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) {
+            var el = document.getElementById('sug-item-' + productId);
+            if (el) { el.style.opacity = '0.5'; el.style.pointerEvents = 'none'; }
+            showToast('Đã áp dụng giá đề xuất!');
+        } else {
+            showToast(d.message || 'Lỗi');
+        }
+    });
 }
-// Update clock
-function updateTime(){
-  const now=new Date();
-  const h=now.getHours(),m=now.getMinutes().toString().padStart(2,'0');
-  const slot=h<17?'17:00–18:00':h<18?'17:00–18:00':h<19?'18:00–19:00':'19:00–20:00';
+
+function dismissOne(productId) {
+    fetch('/seller/api/products/' + productId + '/dismiss-suggestion', {
+        method: 'POST',
+        headers: {'X-CSRF-TOKEN': (document.querySelector('meta[name="_csrf"]') || {}).content || ''}
+    })
+    .then(function() {
+        var el = document.getElementById('sug-item-' + productId);
+        if (el) el.remove();
+        var items = document.querySelectorAll('.sug-item');
+        if (items.length === 0) closeSuggestionPopup();
+    });
 }
-updateTime();setInterval(updateTime,30000);
+
+function dismissSuggestionForever() {
+    if (document.getElementById('suggestion-dismiss-check').checked) {
+        localStorage.setItem('dx_suggestion_dismissed_v1', '1');
+        showToast('Sẽ không hiển thị lại đề xuất này');
+    } else {
+        localStorage.removeItem('dx_suggestion_dismissed_v1');
+    }
+}
+
+function closeSuggestionPopup(e) {
+    if (e && e.target !== e.currentTarget) return;
+    var overlay = document.getElementById('suggestion-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function showToast(msg) {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:120px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:50px;background:#333;color:#fff;font-size:13px;font-weight:600;z-index:99999;white-space:nowrap';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.remove(); }, 2000);
+}
 </script>
+
 </body>
 </html>

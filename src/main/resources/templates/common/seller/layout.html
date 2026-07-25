@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  common/seller/layout.html — REFERENCE ONLY (do NOT use directly)
+
+  The __*__ content injection pattern does NOT work reliably in this Thymeleaf version.
+  Instead, each seller page uses the proven INLINE layout pattern below.
+
+  CORRECT PATTERN for every seller page:
+  ─────────────────────────────────────
+  <body>
+
+  <div class="sl-sidebar-overlay" id="slSidebarOverlay" onclick="closeMobileSidebar()"></div>
+  <div class="sl-layout">
+      <div th:replace="~{common/seller/sidebar :: sidebar('PAGE_NAME')}"></div>
+      <div class="sl-main">
+          <div th:replace="~{common/seller/header :: header('PAGE_TITLE', 'PAGE_NAME')}"></div>
+          <main class="sl-content">
+              <!-- page content here -->
+          </main>
+          <div th:replace="~{common/seller/footer :: footer}"></div>
+      </div>
+  </div>
+
+  <div th:replace="~{common/seller/bottom-nav :: bottom-nav('PAGE_NAME')}"></div>
+
+  <!-- page scripts here -->
+  </body>
+  ─────────────────────────────────────
+
+  To edit sidebar, header, footer, or bottom-nav: edit common/seller/sidebar.html,
+  header.html, footer.html, or bottom-nav.html — ALL seller pages update automatically.
+
+  To edit layout CSS: edit static/css/pages/seller-layout.css
+-->
+</html>

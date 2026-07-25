@@ -361,8 +361,8 @@ a:hover{text-decoration:underline}
         </div>
     </div>
 
-    <!-- CTA -->
-    <div class="footer-cta">
+    <!-- CTA — only show for guest users -->
+    <div class="footer-cta" th:if="${isLoggedIn == null or !isLoggedIn}">
         <p>Bạn đã đọc và hiểu rõ các điều khoản của DealXanh.<br>Hãy bắt đầu hành trình săn deal thực phẩm ngay hôm nay!</p>
         <div class="btn-group">
             <a href="/register" class="btn-primary">🛒 Đăng ký Buyer</a>
@@ -373,5 +373,24 @@ a:hover{text-decoration:underline}
     <p class="effective-date">© 2026 DealXanh. Tài liệu này được cập nhật lần cuối ngày 25/04/2026.</p>
 
 </div>
+
+<script>
+// Scroll to hash section on page load
+(function() {
+    var hash = window.location.hash;
+    if (hash) {
+        setTimeout(function() {
+            var el = document.querySelector(hash);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Highlight the section briefly
+                el.style.transition = 'box-shadow .4s';
+                el.style.boxShadow = '0 0 0 4px rgba(13,92,46,.2)';
+                setTimeout(function() { el.style.boxShadow = ''; }, 1500);
+            }
+        }, 300);
+    }
+})();
+</script>
 </body>
 </html>

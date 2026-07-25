@@ -1,5 +1,6 @@
 package com.dealxanh.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
@@ -32,8 +33,22 @@ public class Store {
     private Double averageRating = 0.0;
     private Integer totalReviews = 0;
 
-    // Status: PENDING, ACTIVE, SUSPENDED
+    // Status: PENDING, ACTIVE, SUSPENDED, REJECTED
     private String status = "PENDING";
+
+    // Approval tracking
+    @ManyToOne
+    @JoinColumn(name = "approved_by")
+    private User approvedBy;
+
+    @ManyToOne
+    @JoinColumn(name = "rejected_by")
+    private User rejectedBy;
+
+    @Column(length = 500)
+    private String rejectionReason;
+
+    private LocalDateTime reviewedAt;
 
     // --- New Fields for Registration Flow ---
     private String businessType;
@@ -42,8 +57,13 @@ public class Store {
     private String district;
     
     // Documents
+    @Column(length = 1000)
     private String cccdUrl;
+
+    @Column(length = 1000)
     private String businessLicenseUrl;
+
+    @Column(length = 1000)
     private String vsattpUrl;
     
     // Bank details
@@ -57,6 +77,13 @@ public class Store {
     private Integer maxSlotsPerTime;
     private Integer pickupDurationMinutes;
     private String approvalMode; // "manual" or "auto"
+
+    // Partner tier: BRONZE, SILVER, GOLD, DIAMOND
+    private String partnerTier = "BRONZE";
+
+    // Store page builder config: JSON with sectionToggles + sectionOrder
+    @Column(columnDefinition = "TEXT")
+    private String storePageConfig;
     // ----------------------------------------
 
     private LocalDateTime createdAt;
@@ -66,12 +93,15 @@ public class Store {
     @JoinColumn(name = "owner_id")
     private User owner;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL)
     private List<Product> products;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "store")
     private List<Order> orders;
 
+    @JsonIgnore
     // Danh sách nhân viên trực thuộc cửa hàng
     @OneToMany(mappedBy = "workStore")
     private List<User> staffList;
@@ -184,4 +214,44 @@ public class Store {
 
     public String getApprovalMode() { return approvalMode; }
     public void setApprovalMode(String approvalMode) { this.approvalMode = approvalMode; }
+
+    public String getPartnerTier() { return partnerTier != null ? partnerTier : "BRONZE"; }
+    public void setPartnerTier(String partnerTier) { this.partnerTier = partnerTier; }
+
+    public String getStorePageConfig() { return storePageConfig; }
+    public void setStorePageConfig(String storePageConfig) { this.storePageConfig = storePageConfig; }
+
+    /** Commission rate based on partner tier */
+    public double getCommissionRate() {
+        if (partnerTier == null) return 0.10;
+        return switch (partnerTier) {
+            case "DIAMOND" -> 0.04;
+            case "GOLD" -> 0.06;
+            case "SILVER" -> 0.08;
+            default -> 0.10; // BRONZE
+        };
+    }
+
+    public String getPartnerTierLabel() {
+        if (partnerTier == null) return "Đồng";
+        return switch (partnerTier) {
+            case "DIAMOND" -> "Kim Cương";
+            case "GOLD" -> "Bạch Kim";
+            case "SILVER" -> "Vàng";
+            default -> "Đồng";
+        };
+    }
+
+    // Approval tracking getters and setters
+    public User getApprovedBy() { return approvedBy; }
+    public void setApprovedBy(User approvedBy) { this.approvedBy = approvedBy; }
+
+    public User getRejectedBy() { return rejectedBy; }
+    public void setRejectedBy(User rejectedBy) { this.rejectedBy = rejectedBy; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public LocalDateTime getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
 }

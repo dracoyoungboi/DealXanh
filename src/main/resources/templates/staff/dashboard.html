@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Nhân viên — DealXanh</title>
+<div th:replace="~{common/staff/css :: css}"></div>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+.scan-cta-section{padding:16px 14px 0}
+.scan-cta-card{background:var(--primary);border-radius:var(--radius-xl);padding:22px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .15s;box-shadow:0 6px 24px rgba(13,92,46,.4);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+.scan-cta-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 50%,rgba(255,255,255,.08) 0%,transparent 60%)}
+.scan-cta-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(13,92,46,.5)}
+.scan-cta-card:active{transform:scale(.98)}
+.scan-cta-icon{width:60px;height:60px;border-radius:var(--radius-lg);background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1.5px solid rgba(255,255,255,.2);position:relative;z-index:1}
+.scan-cta-icon svg{width:30px;height:30px;color:#fff}
+.scan-cta-icon::before{content:'';position:absolute;inset:-6px;border-radius:var(--radius-lg);border:2px solid rgba(255,255,255,.15);animation:ringPulse 2s ease-in-out infinite}
+@keyframes ringPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:.5}}
+.scan-cta-text{flex:1;position:relative;z-index:1}
+.scan-cta-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:4px}
+.scan-cta-subtitle{font-size:13px;color:rgba(255,255,255,.75)}
+.scan-cta-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:rgba(255,255,255,.15);border-radius:var(--radius-full);font-size:11px;font-weight:700;color:#fff;margin-top:6px}
+.scan-cta-arrow{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;color:#fff;position:relative;z-index:1;flex-shrink:0}
+.scan-cta-arrow svg{width:16px;height:16px}
+
+.tap-indicator{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px}
+.tap-dot{width:22px;height:22px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text-tertiary);cursor:pointer;transition:all 0.2s;font-family:var(--font);border:none}
+.tap-dot.current{background:var(--primary);color:#fff;transform:scale(1.2);box-shadow:0 0 0 3px rgba(13,92,46,.2)}
+.tap-dot.done{background:var(--success);color:#fff}
+.tap-line{width:20px;height:2px;background:var(--border);transition:background 0.2s}
+.tap-line.done{background:var(--success)}
+.tap-label{font-size:11px;color:var(--text-secondary);font-weight:600;cursor:pointer}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:0 14px;margin-bottom:10px}
+.section-title{font-size:15px;font-weight:700}
+.section-filter{font-size:11px;color:var(--text-tertiary);font-weight:500}
+.section-link{font-size:13px;font-weight:600;color:var(--primary);text-decoration:none;display:flex;align-items:center;gap:3px}
+.section-link svg{width:13px;height:13px}
+
+.order-queue{padding:0 14px;display:flex;flex-direction:column;gap:8px;padding-bottom:16px}
+.queue-item{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);display:flex;gap:0;overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:all var(--tr);position:relative}
+.queue-item:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:rgba(13,92,46,.15)}
+.queue-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.queue-item.urgent::before{background:var(--danger)}
+.queue-item.warning::before{background:var(--warning)}
+.queue-item.safe::before{background:var(--success)}
+
+.qi-main{flex:1;padding:13px 14px 13px 16px;min-width:0}
+.qi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.qi-order-id{font-size:12px;font-weight:700;color:var(--primary)}
+.qi-time-left{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--radius-full)}
+.time-urgent{background:#dc2626;color:#fff}
+.time-warning{background:rgba(245,158,11,.12);color:var(--warning)}
+.time-safe{background:rgba(16,185,129,.1);color:var(--success)}
+.qi-buyer{font-size:13px;font-weight:600;margin-bottom:3px}
+.qi-items{font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qi-slot-row{display:flex;align-items:center;gap:6px;margin-top:6px}
+.qi-slot{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--text-tertiary);padding:3px 8px;background:var(--bg);border-radius:var(--radius-full)}
+.qi-pay{font-size:11px;font-weight:600;padding:3px 8px;background:var(--bg);border-radius:var(--radius-full);color:var(--text-secondary)}
+.qi-action{padding:0 14px;display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border-light);background:rgba(13,92,46,.03);flex-shrink:0}
+.qi-action-btn{width:44px;height:44px;border-radius:var(--radius-md);background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;transition:all var(--tr)}
+.qi-action-btn:hover{background:var(--primary-dark);transform:scale(1.05)}
+.qi-action-btn svg{width:20px;height:20px}
+
+.empty-queue{padding:40px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.eq-icon{width:72px;height:72px;background:rgba(16,185,129,.1);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.eq-icon svg{width:34px;height:34px;color:var(--success)}
+.eq-title{font-size:16px;font-weight:700}
+.eq-desc{font-size:13px;color:var(--text-secondary);line-height:1.6}
+
+/* Weak password modal */
+.pwd-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.pwd-modal{background:var(--surface);border-radius:var(--radius-xl);padding:24px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.pwd-modal .warn-icon{width:56px;height:56px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px}
+.pwd-modal h3{font-size:16px;font-weight:800;margin-bottom:8px}
+.pwd-modal p{font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.5}
+.pwd-modal .btn-row{display:flex;flex-direction:column;gap:8px}
+.pwd-modal .btn-accept{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.pwd-modal .btn-later{font-size:12px;color:var(--text-tertiary);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--font);padding:6px}
+
+.active-slot-badge{display:inline-flex;align-items:center;gap:3px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:var(--radius-full);font-size:10px;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div th:replace="~{common/staff/header :: header}"></div>
+
+<!-- Scan CTA -->
+<div class="scan-cta-section">
+  <div class="scan-cta-card" id="scanCta" onclick="goToStep(1)">
+    <div class="scan-cta-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z M17 14h3 M14 17v3 M17 20h3v-3"/></svg>
+    </div>
+    <div class="scan-cta-text" id="scanCtaText">
+      <div class="scan-cta-title">Quản lý đơn hàng</div>
+      <div class="scan-cta-subtitle">Nhấn để xem và xử lý đơn hàng đang chờ</div>
+      <div class="scan-cta-badge" th:if="${pendingToday > 0}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span th:text="${pendingToday} + ' đơn đang chờ'">0</span>
+      </div>
+    </div>
+    <div class="scan-cta-arrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </div>
+  </div>
+  <div class="tap-indicator">
+    <div class="tap-dot current" onclick="goToStep(0)" title="Xem đơn chờ">1</div>
+    <div class="tap-line" id="tapLine1"></div>
+    <div class="tap-dot" onclick="goToStep(1)" title="Quét QR / Xác nhận">2</div>
+    <div class="tap-line" id="tapLine2"></div>
+    <div class="tap-dot" onclick="goToStep(2)" title="Hoàn thành">3</div>
+    <span class="tap-label" id="tapLabel">Bước 1/3 — Xem đơn chờ</span>
+  </div>
+</div>
+
+<!-- Pending orders -->
+<div class="section-head">
+  <div>
+    <span class="section-title">Đơn đang chờ phục vụ</span>
+    <span class="section-filter" id="slotFilterLabel"></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="active-slot-badge" id="activeSlotBadge" style="display:none;" onclick="clearSlotFilter()">✕ <span id="activeSlotName"></span></span>
+    <a class="section-link" th:href="@{/staff/orders}">Tất cả <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+  </div>
+</div>
+
+<div class="order-queue" id="orderQueue">
+  <th:block th:each="order : ${pendingOrders}">
+    <div class="queue-item urgent" data-slot="" th:onclick="|window.location.href='/staff/orders'|">
+      <div class="qi-main">
+        <div class="qi-top">
+          <span class="qi-order-id" th:text="'#' + ${order.orderId}">#0</span>
+          <span class="qi-time-left time-urgent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Chờ xác nhận
+          </span>
+        </div>
+        <div class="qi-buyer" th:text="${order.user != null and order.user.fullName != null and !order.user.fullName.isEmpty()} ? ${order.user.fullName} : (${order.user != null ? order.user.username : 'Khách'})">Khách</div>
+        <div class="qi-items">
+          <th:block th:each="item, iterStat : ${order.orderItems}">
+            <span th:text="${item.quantity} + '× ' + (${item.product != null and item.product.name != null} ? ${item.product.name} : 'SP')">1× SP</span><span th:unless="${iterStat.last}"> · </span>
+          </th:block>
+        </div>
+      </div>
+      <div class="qi-action"><div class="qi-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg></div></div>
+    </div>
+  </th:block>
+  <th:block th:each="order : ${confirmedOrders}">
+    <div class="queue-item warning" data-slot="" th:onclick="|window.location.href='/staff/orders'|">
+      <div class="qi-main">
+        <div class="qi-top">
+          <span class="qi-order-id" th:text="'#' + ${order.orderId}">#0</span>
+          <span class="qi-time-left time-warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Đã xác nhận
+          </span>
+        </div>
+        <div class="qi-buyer" th:text="${order.user != null and order.user.fullName != null and !order.user.fullName.isEmpty()} ? ${order.user.fullName} : (${order.user != null ? order.user.username : 'Khách'})">Khách</div>
+        <div class="qi-items">
+          <th:block th:each="item, iterStat : ${order.orderItems}">
+            <span th:text="${item.quantity} + '× ' + (${item.product != null and item.product.name != null} ? ${item.product.name} : 'SP')">1× SP</span><span th:unless="${iterStat.last}"> · </span>
+          </th:block>
+        </div>
+      </div>
+      <div class="qi-action"><div class="qi-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg></div></div>
+    </div>
+  </th:block>
+  <th:block th:each="order : ${readyOrders}">
+    <div class="queue-item safe" data-slot="" th:onclick="|window.location.href='/staff/orders'|">
+      <div class="qi-main">
+        <div class="qi-top">
+          <span class="qi-order-id" th:text="'#' + ${order.orderId}">#0</span>
+          <span class="qi-time-left time-safe">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Sẵn sàng pickup
+          </span>
+        </div>
+        <div class="qi-buyer" th:text="${order.user != null and order.user.fullName != null and !order.user.fullName.isEmpty()} ? ${order.user.fullName} : (${order.user != null ? order.user.username : 'Khách'})">Khách</div>
+        <div class="qi-items">
+          <th:block th:each="item, iterStat : ${order.orderItems}">
+            <span th:text="${item.quantity} + '× ' + (${item.product != null and item.product.name != null} ? ${item.product.name} : 'SP')">1× SP</span><span th:unless="${iterStat.last}"> · </span>
+          </th:block>
+        </div>
+      </div>
+      <div class="qi-action"><div class="qi-action-btn" style="background:var(--bg);border:1.5px solid var(--border)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div>
+    </div>
+  </th:block>
+  <div class="empty-queue" th:if="${pendingOrders.isEmpty() && confirmedOrders.isEmpty() && readyOrders.isEmpty()}">
+    <div class="eq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+    <div class="eq-title">Không có đơn chờ!</div>
+    <div class="eq-desc">Tất cả đơn hàng đã được xử lý xong</div>
+  </div>
+</div>
+
+<!-- Weak Password Modal -->
+<div class="pwd-modal-overlay" id="weakPasswordModal" style="display:none;" th:if="${weakPassword}">
+  <div class="pwd-modal">
+    <div class="warn-icon">⚠️</div>
+    <h3>Mật khẩu của bạn quá yếu</h3>
+    <p>Mật khẩu hiện tại là mật khẩu tự động, dễ bị đoán. Vui lòng đổi mật khẩu mới để bảo vệ tài khoản của bạn.</p>
+    <div class="btn-row">
+      <button class="btn-accept" onclick="goChangePassword()">Chấp nhận đổi mật khẩu</button>
+      <button class="btn-later" onclick="dismissWeakPassword()">Để sau</button>
+    </div>
+  </div>
+</div>
+
+<div th:replace="~{common/staff/bottom-nav :: bottom-nav}"></div>
+
+<script>
+// ===== WEAK PASSWORD MODAL =====
+(function() {
+    const modal = document.getElementById('weakPasswordModal');
+    if (modal) modal.style.display = 'flex';
+})();
+
+function goChangePassword() {
+    window.location.href = '/staff/profile?changePassword=1';
+}
+
+function dismissWeakPassword() {
+    const modal = document.getElementById('weakPasswordModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// ===== TAP INDICATOR STEPS =====
+let currentStep = 0;
+const stepLabels = ['Bước 1/3 — Xem đơn chờ', 'Bước 2/3 — Xác nhận / Pickup', 'Bước 3/3 — Hoàn thành'];
+const stepTitles = ['Quản lý đơn hàng', 'Quét QR / Xác nhận đơn', 'Hoàn thành đơn hàng'];
+const stepSubs = ['Nhấn để xem và xử lý đơn hàng đang chờ', 'Quét mã QR của khách để xác nhận', 'Tất cả đơn đã hoàn tất'];
+const stepLinks = ['/staff/orders', '/staff/orders?status=READY_FOR_PICKUP', '/staff/orders?status=COMPLETED'];
+
+function goToStep(step) {
+  currentStep = step;
+  // Update dots
+  document.querySelectorAll('.tap-dot').forEach((dot, i) => {
+    dot.classList.remove('current', 'done');
+    if (i < step) dot.classList.add('done');
+    if (i === step) dot.classList.add('current');
+  });
+  // Update lines
+  document.querySelectorAll('.tap-line').forEach((line, i) => {
+    if (i < step) line.classList.add('done');
+    else line.classList.remove('done');
+  });
+  // Update label
+  document.getElementById('tapLabel').textContent = stepLabels[step];
+  // Update CTA card
+  document.querySelector('.scan-cta-title').textContent = stepTitles[step];
+  document.querySelector('.scan-cta-subtitle').textContent = stepSubs[step];
+  document.getElementById('scanCta').onclick = function() { window.location.href = stepLinks[step]; };
+}
+
+// ===== SLOT PILL FILTER =====
+let activeSlot = null;
+
+document.querySelectorAll('.slot-pill').forEach(pill => {
+  pill.style.cursor = 'pointer';
+  pill.addEventListener('click', function() {
+    const slotText = (this.textContent || '').trim().replace(/^[•⏰]\s*/, '');
+    if (activeSlot === slotText) {
+      clearSlotFilter();
+      return;
+    }
+    activeSlot = slotText;
+    // Highlight active pill
+    document.querySelectorAll('.slot-pill').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    // Filter orders
+    filterBySlot(slotText);
+  });
+});
+
+function filterBySlot(slot) {
+  document.getElementById('activeSlotBadge').style.display = 'inline-flex';
+  document.getElementById('activeSlotName').textContent = slot;
+  document.getElementById('slotFilterLabel').textContent = ' · Lọc: ' + slot;
+  document.querySelectorAll('#orderQueue .queue-item').forEach(item => {
+    const slotRow = item.querySelector('.qi-slot span')?.textContent?.trim() || '';
+    item.style.display = slotRow.includes(slot.replace('–', '-').split('-')[0].trim()) ? '' : 'none';
+  });
+}
+
+function clearSlotFilter() {
+  activeSlot = null;
+  document.getElementById('activeSlotBadge').style.display = 'none';
+  document.getElementById('slotFilterLabel').textContent = '';
+  document.querySelectorAll('.slot-pill').forEach((p, i) => p.classList.toggle('active', i === 0));
+  document.querySelectorAll('#orderQueue .queue-item').forEach(item => item.style.display = '');
+}
+</script>
+</body>
+</html>

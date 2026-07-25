@@ -36,8 +36,20 @@ public class Transaction {
     // Trạng thái: COMPLETED, PENDING, FAILED
     private String status = "PENDING";
 
+    // Mã tham chiếu PayOS (orderCode từ PayOS)
+    private String transactionRef;
+
+    // Phương thức thanh toán: CASH, MOMO, BANK_TRANSFER, ZALOPAY
+    private String paymentMethod;
+
     private String description;
-    
+
+    // Admin manual payout processing fields
+    private String adminAccountNumber; // Số tài khoản admin dùng để chuyển tiền
+    private String adminNote;          // Ghi chú của admin khi xử lý payout
+    private String processedBy;        // Username của admin đã xử lý
+    private LocalDateTime processedAt; // Thời điểm admin xác nhận đã chuyển tiền
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
@@ -68,8 +80,26 @@ public class Transaction {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    public String getTransactionRef() { return transactionRef; }
+    public void setTransactionRef(String transactionRef) { this.transactionRef = transactionRef; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getAdminAccountNumber() { return adminAccountNumber; }
+    public void setAdminAccountNumber(String adminAccountNumber) { this.adminAccountNumber = adminAccountNumber; }
+
+    public String getAdminNote() { return adminNote; }
+    public void setAdminNote(String adminNote) { this.adminNote = adminNote; }
+
+    public String getProcessedBy() { return processedBy; }
+    public void setProcessedBy(String processedBy) { this.processedBy = processedBy; }
+
+    public LocalDateTime getProcessedAt() { return processedAt; }
+    public void setProcessedAt(LocalDateTime processedAt) { this.processedAt = processedAt; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

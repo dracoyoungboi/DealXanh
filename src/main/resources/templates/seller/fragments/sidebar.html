@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  seller/fragments/sidebar.html
+  Delegation wrapper → common/seller/sidebar
+  Usage: <div th:replace="~{seller/fragments/sidebar :: sidebar('activePage')}"></div>
+-->
+<body th:fragment="sidebar(activePage)">
+    <th:block th:replace="~{common/seller/sidebar :: sidebar(${activePage})}"/>
+</body>
+</html>

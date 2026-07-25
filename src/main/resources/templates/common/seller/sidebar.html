@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:fragment="sidebar(activePage)">
+<aside class="sl-sidebar" id="slSidebar" aria-expanded="true">
+
+    <!-- Collapse toggle (desktop) -->
+    <button class="sl-sidebar__toggle" id="sidebarToggle" title="Thu gọn sidebar"
+            onclick="toggleSidebar()" aria-label="Thu gọn sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+    </button>
+
+    <!-- Mobile close button -->
+    <button class="sl-sidebar__close" id="sidebarClose" title="Đóng menu"
+            onclick="closeMobileSidebar()" aria-label="Đóng menu">
+        ✕
+    </button>
+
+    <!-- Store Branding — keep all th:* intact -->
+    <a th:href="@{/seller/dashboard}" class="sl-sidebar__brand" style="text-decoration:none;">
+        <div class="sl-sidebar__logo">
+            <img th:src="${store.logoUrl != null ? store.logoUrl : '/img/default-store.svg'}" alt=""
+                 onerror="this.src='/img/default-store.svg'">
+        </div>
+        <div class="sl-sidebar__text" style="min-width:0;">
+            <div class="sl-sidebar__name" th:text="${store.storeName}">Store Name</div>
+            <div class="sl-sidebar__tier">
+                <span class="sl-sidebar__tier-dot" th:classappend="${store.partnerTier}"></span>
+                <span th:text="${store.partnerTierLabel}">Đồng</span>
+                <span style="opacity:.5;">·</span>
+                <span th:text="|${#numbers.formatDecimal(store.getCommissionRate() * 100, 0, 0)}%|">10%</span>
+            </div>
+        </div>
+    </a>
+
+    <!-- Navigation: Tổng quan -->
+    <div class="sl-nav-section">
+        <div class="sl-nav-label">Tổng quan</div>
+        <a class="sl-nav-item" th:href="@{/seller/dashboard}"
+           th:classappend="${activePage == 'dashboard'} ? 'active' : ''"
+           title="Dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7z"/>
+            </svg>
+            <span class="sl-sidebar__text">Dashboard</span>
+            <span class="sl-nav-badge" th:if="${pendingOrders != null and pendingOrders > 0}"
+                  th:text="${pendingOrders}">0</span>
+        </a>
+    </div>
+
+    <!-- Navigation: Sản phẩm -->
+    <div class="sl-nav-section">
+        <div class="sl-nav-label">Sản phẩm</div>
+        <a class="sl-nav-item" th:href="@{/seller/products}"
+           th:classappend="${activePage == 'products'} ? 'active' : ''"
+           title="Tất cả sản phẩm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            </svg>
+            <span class="sl-sidebar__text">Tất cả sản phẩm</span>
+        </a>
+        <a class="sl-nav-item" th:href="@{/seller/products/create}"
+           th:classappend="${activePage == 'create-product'} ? 'active' : ''"
+           title="Tạo sản phẩm mới">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span class="sl-sidebar__text">Tạo sản phẩm mới</span>
+        </a>
+    </div>
+
+    <!-- Navigation: Deals -->
+    <div class="sl-nav-section">
+        <div class="sl-nav-label">Khuyến mãi</div>
+        <a class="sl-nav-item" th:href="@{/seller/deals}"
+           th:classappend="${activePage == 'deals'} ? 'active' : ''"
+           title="Quản lý Deals">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span class="sl-sidebar__text">Quản lý Deals</span>
+            <span class="sl-nav-badge green" th:if="${activeDeals != null and activeDeals > 0}"
+                  th:text="${activeDeals}">0</span>
+        </a>
+        <a class="sl-nav-item" th:href="@{/seller/deals/create}"
+           th:classappend="${activePage == 'create-deal'} ? 'active' : ''"
+           title="Tạo Deal mới">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span class="sl-sidebar__text">Tạo Deal mới</span>
+        </a>
+    </div>
+
+    <!-- Navigation: Đơn hàng -->
+    <div class="sl-nav-section">
+        <div class="sl-nav-label">Đơn hàng</div>
+        <a class="sl-nav-item" th:href="@{/seller/orders}"
+           th:classappend="${activePage == 'orders'} ? 'active' : ''"
+           title="Tất cả đơn hàng">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+            <span class="sl-sidebar__text">Tất cả đơn hàng</span>
+        </a>
+        <a class="sl-nav-item" th:href="@{/seller/Fulfillment}"
+           th:classappend="${activePage == 'fulfillment'} ? 'active' : ''"
+           title="Xử lý đơn (Pickup)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/>
+            </svg>
+            <span class="sl-sidebar__text">Xử lý đơn (Pickup)</span>
+        </a>
+    </div>
+
+    <!-- Navigation: Tài chính & Phân tích -->
+    <div class="sl-nav-section">
+        <div class="sl-nav-label">Kinh doanh</div>
+        <a class="sl-nav-item" th:href="@{/seller/finance}"
+           th:classappend="${activePage == 'finance'} ? 'active' : ''"
+           title="Tài chính & Đối soát">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            <span class="sl-sidebar__text">Tài chính & Đối soát</span>
+        </a>
+        <a class="sl-nav-item" th:href="@{/seller/analytics}"
+           th:classappend="${activePage == 'analytics'} ? 'active' : ''"
+           title="Phân tích & Báo cáo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            <span class="sl-sidebar__text">Phân tích & Báo cáo</span>
+        </a>
+    </div>
+
+    <!-- Navigation: Cửa hàng -->
+    <div class="sl-nav-section">
+        <div class="sl-nav-label">Cửa hàng</div>
+        <a class="sl-nav-item" th:href="@{/seller/manage-staff}"
+           th:classappend="${activePage == 'manage-staff'} ? 'active' : ''"
+           title="Quản lý nhân viên">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span class="sl-sidebar__text">Quản lý nhân viên</span>
+        </a>
+        <a class="sl-nav-item" th:href="@{/seller/store-page}"
+           th:classappend="${activePage == 'store-page'} ? 'active' : ''"
+           title="Trang cửa hàng">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span class="sl-sidebar__text">Trang cửa hàng</span>
+        </a>
+        <a class="sl-nav-item" th:href="@{/seller/profile}"
+           th:classappend="${activePage == 'profile'} ? 'active' : ''"
+           title="Hồ sơ cửa hàng">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span class="sl-sidebar__text">Hồ sơ cửa hàng</span>
+        </a>
+    </div>
+
+    <!-- Sidebar Footer: User Info -->
+    <div class="sl-sidebar__footer">
+        <a th:href="@{/seller/profile}" class="sl-sidebar__user">
+            <div class="sl-sidebar__avatar">
+                <img th:src="${user != null && user.avatarUrl != null ? user.avatarUrl : '/img/default-avatar.svg'}"
+                     alt="" onerror="this.src='/img/default-avatar.svg'">
+            </div>
+            <div class="sl-sidebar__text" style="min-width:0;">
+                <div class="sl-sidebar__user-name"
+                     th:text="${user != null ? (user.fullName != null ? user.fullName : user.username) : 'Seller'}">Seller</div>
+                <div class="sl-sidebar__user-role"
+                     th:text="${user != null and user.role == 'STORE_OWNER' ? 'Chủ cửa hàng' : 'Nhân viên'}">Owner</div>
+            </div>
+        </a>
+    </div>
+
+</aside>
+
+<!-- Sidebar overlay (mobile only) -->
+<div class="sl-sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+<!-- ===== SIDEBAR JS ===== -->
+<script>
+(function() {
+    var STORAGE_KEY = 'dx_seller_sidebar_collapsed';
+    var MOBILE_BP = 1024;
+
+    var sidebar = document.getElementById('slSidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    var layout = document.querySelector('.sl-layout');
+
+    if (!sidebar) return;
+
+    // ===== INIT: restore saved state =====
+    var saved = localStorage.getItem(STORAGE_KEY);
+    var isCollapsed = saved === '1';
+    var isMobile = window.innerWidth < MOBILE_BP;
+
+    function applyState() {
+        if (isMobile) {
+            // Mobile: hide sidebar drawer by default, ensure no collapsed class
+            sidebar.classList.remove('collapsed', 'mobile-open');
+            if (layout) layout.classList.remove('sidebar-collapsed');
+            sidebar.setAttribute('aria-expanded', 'false');
+            overlay.classList.remove('show');
+        } else {
+            // Desktop: apply collapse state
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                sidebar.classList.remove('mobile-open');
+                if (layout) layout.classList.add('sidebar-collapsed');
+                sidebar.setAttribute('aria-expanded', 'false');
+                updateToggleTitle('Mở rộng sidebar');
+            } else {
+                sidebar.classList.remove('collapsed', 'mobile-open');
+                if (layout) layout.classList.remove('sidebar-collapsed');
+                sidebar.setAttribute('aria-expanded', 'true');
+                updateToggleTitle('Thu gọn sidebar');
+            }
+        }
+    }
+
+    function updateToggleTitle(text) {
+        var btn = document.getElementById('sidebarToggle');
+        if (btn) btn.setAttribute('title', text);
+    }
+
+    applyState();
+
+    // ===== DESKTOP: collapse/expand toggle =====
+    window.toggleSidebar = function() {
+        if (window.innerWidth < MOBILE_BP) return; // ignore on mobile
+        isCollapsed = !isCollapsed;
+        localStorage.setItem(STORAGE_KEY, isCollapsed ? '1' : '0');
+        isMobile = false;
+        applyState();
+    };
+
+    // ===== MOBILE: open drawer =====
+    window.openMobileSidebar = function() {
+        if (window.innerWidth >= MOBILE_BP) return;
+        sidebar.classList.add('mobile-open');
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        sidebar.setAttribute('aria-expanded', 'true');
+    };
+
+    // ===== MOBILE: close drawer =====
+    window.closeMobileSidebar = function() {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+        sidebar.setAttribute('aria-expanded', 'false');
+    };
+
+    // ===== RESIZE: switch between desktop/mobile modes =====
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            var nowMobile = window.innerWidth < MOBILE_BP;
+            if (nowMobile !== isMobile) {
+                isMobile = nowMobile;
+                // Close mobile drawer when switching
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('show');
+                document.body.style.overflow = '';
+                applyState();
+            }
+        }, 150);
+    });
+
+    // ===== Close drawer on Escape key =====
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
+            closeMobileSidebar();
+        }
+    });
+
+    // ===== Auto-close drawer after clicking a nav link (mobile) =====
+    sidebar.addEventListener('click', function(e) {
+        if (sidebar.classList.contains('mobile-open') && e.target.closest('.sl-nav-item')) {
+            // Let the link navigate, then close (small delay)
+            setTimeout(closeMobileSidebar, 100);
+        }
+    });
+
+})();
+</script>
+</body>
+</html>

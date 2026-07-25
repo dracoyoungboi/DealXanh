@@ -1,466 +1,351 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bánh mì Hòa Mai — DealXanh</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{
-  --primary:#0d5c2e;--primary-dark:#08421f;
-  --accent:#d4af37;
-  --surface:#fff;--background:#f5f6f8;
-  --text-primary:#1a1a1a;--text-secondary:#666;--text-tertiary:#999;
-  --border:#e0e0e0;--border-light:#f0f0f0;
-  --shadow-sm:0 2px 8px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.11);
-  --danger:#ef4444;--warning:#f59e0b;--success:#10b981;
-  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-xl:20px;--radius-full:9999px;
-  --font:'Inter',-apple-system,sans-serif;--tr:200ms ease-out;
-}
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html{-webkit-font-smoothing:antialiased}
-body{font-family:var(--font);background:var(--background);min-height:100vh;color:var(--text-primary)}
-button{cursor:pointer;border:none;background:none;font-family:inherit}
-img{display:block;max-width:100%}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${store.storeName + ' — DealXanh'}">Cửa hàng — DealXanh</title>
+    <div th:replace="~{common/buyer/css :: css}"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    <style>
+        html{height:auto;min-height:100%}
+        body{padding-bottom:80px;background:var(--background);font-family:var(--font-family);margin:0}
+        *,*::before,*::after{box-sizing:border-box}
 
-/* ===== COVER & HEADER ===== */
-.store-cover{
-  position:relative;height:220px;overflow:hidden;background:#1a2e1a;
-}
-@media(min-width:600px){.store-cover{height:280px}}
-.store-cover img{width:100%;height:100%;object-fit:cover;opacity:.75}
-.cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.15) 0%,rgba(0,0,0,.55) 100%)}
-.cover-back{
-  position:absolute;top:14px;left:14px;
-  width:38px;height:38px;border-radius:var(--radius-md);
-  background:rgba(0,0,0,.4);backdrop-filter:blur(6px);
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;
-}
-.cover-actions{
-  position:absolute;top:14px;right:14px;
-  display:flex;gap:8px;
-}
-.cover-action{
-  width:38px;height:38px;border-radius:var(--radius-md);
-  background:rgba(0,0,0,.4);backdrop-filter:blur(6px);
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;transition:background var(--tr);
-}
-.cover-action:hover{background:rgba(0,0,0,.6)}
-.cover-action svg{width:18px;height:18px}
+        /* Back bar */
+        .back-bar{padding:12px 16px;display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+        .back-bar a{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none}
+        .back-bar svg{width:18px;height:18px}
 
-/* Store info strip */
-.store-info-strip{
-  position:relative;
-  background:var(--surface);
-  padding:0 16px 20px;
-  border-bottom:1px solid var(--border-light);
-}
-.store-avatar-wrap{
-  position:absolute;top:-36px;left:16px;
-  width:72px;height:72px;border-radius:var(--radius-lg);
-  border:3px solid var(--surface);
-  overflow:hidden;box-shadow:var(--shadow-md);
-  background:var(--border-light);
-}
-.store-avatar-wrap img{width:100%;height:100%;object-fit:cover}
-.store-verified-badge{
-  position:absolute;bottom:-4px;right:-4px;
-  width:20px;height:20px;border-radius:50%;
-  background:var(--success);border:2px solid var(--surface);
-  display:flex;align-items:center;justify-content:center;
-}
-.store-verified-badge svg{width:10px;height:10px;color:#fff}
-.store-name-row{padding-top:44px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.store-name{font-size:20px;font-weight:800;letter-spacing:-.3px}
-.follow-btn{
-  padding:9px 18px;border-radius:var(--radius-full);
-  border:1.5px solid var(--primary);
-  font-size:13px;font-weight:700;color:var(--primary);
-  transition:all var(--tr);flex-shrink:0;
-  display:flex;align-items:center;gap:5px;
-}
-.follow-btn:hover,.follow-btn.active{background:var(--primary);color:#fff}
-.follow-btn svg{width:14px;height:14px}
-.store-tagline{font-size:13px;color:var(--text-secondary);margin-top:4px;margin-bottom:12px;line-height:1.5}
-.store-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.store-tag{
-  padding:4px 10px;border-radius:var(--radius-full);
-  border:1px solid var(--border);font-size:11px;font-weight:500;color:var(--text-secondary);
-}
+        /* Store hero */
+        .sp-hero{background:linear-gradient(135deg, #0d5c2e 0%, #166534 100%);padding:28px 20px 32px;text-align:center;position:relative;overflow:hidden}
+        .sp-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 70%, rgba(255,255,255,.06) 0%, transparent 60%)}
+        .sp-avatar{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,.3);object-fit:cover;background:#fff;position:relative;z-index:1}
+        .sp-avatar-ph{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;margin:0 auto;position:relative;z-index:1}
+        .sp-name{font-size:20px;font-weight:700;color:#fff;margin-top:12px;position:relative;z-index:1}
+        .sp-meta{font-size:13px;color:rgba(255,255,255,.75);margin-top:4px;position:relative;z-index:1}
+        .sp-rating{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:var(--radius-full);font-size:13px;color:#fff;position:relative;z-index:1}
+        .sp-rating svg{width:14px;height:14px;color:#f59e0b;fill:#f59e0b}
 
-/* Stats row */
-.store-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border-light);border-radius:var(--radius-lg);overflow:hidden}
-.store-stat{padding:12px 6px;text-align:center;border-right:1px solid var(--border-light)}
-.store-stat:last-child{border-right:none}
-.stat-val{font-size:16px;font-weight:800;color:var(--text-primary)}
-.stat-lbl{font-size:10px;color:var(--text-tertiary);margin-top:2px;font-weight:500}
-.stat-val.accent{color:var(--accent)}
-.stat-val.primary{color:var(--primary)}
+        /* Info cards */
+        .sp-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px;background:var(--surface)}
+        .sp-info-card{background:var(--background);border-radius:var(--radius-md);padding:12px 14px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-secondary)}
+        .sp-info-card svg{width:16px;height:16px;flex-shrink:0;color:var(--primary)}
+        .sp-info-card strong{display:block;font-size:14px;color:var(--text-primary);margin-bottom:1px}
 
-/* ===== TABS ===== */
-.store-tabs{
-  display:flex;gap:0;
-  background:var(--surface);
-  border-bottom:1px solid var(--border-light);
-  position:sticky;top:0;z-index:10;
-  box-shadow:var(--shadow-sm);
-}
-.store-tab{
-  flex:1;padding:13px 8px;
-  font-size:13px;font-weight:600;color:var(--text-tertiary);
-  border-bottom:2px solid transparent;text-align:center;
-  transition:all var(--tr);
-}
-.store-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+        /* Section title */
+        .sp-section-title{font-size:16px;font-weight:700;color:var(--text-primary);padding:16px 20px 8px;background:var(--surface);display:flex;align-items:center;gap:8px}
+        .sp-section-title svg{width:20px;height:20px;color:var(--primary)}
 
-/* ===== DEALS TAB ===== */
-.deals-section{padding:14px}
+        /* Product grid */
+        .sp-prod-grid{padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;background:var(--background)}
+        .sp-prod-card{background:var(--surface);border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border);text-decoration:none;color:inherit;transition:box-shadow .15s}
+        .sp-prod-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+        .sp-prod-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--background)}
+        .sp-prod-body{padding:10px 12px}
+        .sp-prod-name{font-size:13px;font-weight:600;color:var(--text-primary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;min-height:36px}
+        .sp-prod-price{font-size:15px;font-weight:700;color:var(--danger);margin-top:6px}
+        .sp-prod-original{font-size:12px;color:var(--text-tertiary);text-decoration:line-through;margin-left:6px}
+        .sp-prod-deal-badge{display:inline-block;background:#fef3c7;color:#b45309;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:4px}
 
-/* Sort strip */
-.deals-sort{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:12px;
-}
-.deals-count{font-size:13px;color:var(--text-secondary)}
-.deals-count strong{color:var(--text-primary)}
-.sort-select{
-  display:flex;align-items:center;gap:5px;
-  padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius-full);
-  font-size:12px;font-weight:600;color:var(--text-secondary);
-}
-.sort-select svg{width:13px;height:13px}
+        .sp-empty{padding:40px 20px;text-align:center;color:var(--text-tertiary);font-size:14px;background:var(--surface)}
 
-/* Deal list cards */
-.deal-list{display:flex;flex-direction:column;gap:10px}
-.deal-item{
-  background:var(--surface);border-radius:var(--radius-lg);
-  border:1px solid var(--border-light);overflow:hidden;
-  display:flex;gap:0;cursor:pointer;
-  transition:all var(--tr);box-shadow:var(--shadow-sm);
-}
-.deal-item:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:rgba(13,92,46,.15)}
-.deal-item-img{width:110px;flex-shrink:0;position:relative;overflow:hidden;background:var(--border-light)}
-.deal-item-img img{width:100%;height:100%;object-fit:cover}
-.deal-item-img-badge{
-  position:absolute;top:6px;left:6px;
-  padding:2px 7px;border-radius:var(--radius-full);
-  font-size:10px;font-weight:700;color:#fff;
-}
-.deal-item-body{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between}
-.deal-item-name{font-size:14px;font-weight:700;line-height:1.3;margin-bottom:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.deal-item-price-row{display:flex;align-items:baseline;gap:6px}
-.di-new{font-size:15px;font-weight:800;color:var(--primary)}
-.di-old{font-size:11px;color:var(--text-tertiary);text-decoration:line-through}
-.di-save{font-size:11px;font-weight:600;color:var(--success);padding:1px 6px;background:rgba(16,185,129,.1);border-radius:var(--radius-full)}
-.deal-item-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
-.di-meta{display:flex;gap:6px;align-items:center}
-.di-chip{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:3px 7px;border-radius:var(--radius-full)}
-.di-chip svg{width:10px;height:10px}
-.chip-t-danger{background:rgba(239,68,68,.1);color:#ef4444}
-.chip-t-warning{background:rgba(245,158,11,.1);color:#f59e0b}
-.chip-t-safe{background:rgba(16,185,129,.1);color:#10b981}
-.di-add{
-  width:30px;height:30px;border-radius:var(--radius-sm);
-  background:var(--primary);
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;transition:all var(--tr);flex-shrink:0;
-}
-.di-add:hover{background:var(--primary-dark);transform:scale(1.05)}
-.di-add svg{width:15px;height:15px}
+        /* ===== REVIEW POPUP ===== */
+        .review-popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:100000;align-items:center;justify-content:center;padding:20px;animation:spFadeIn .25s ease-out}
+        .review-popup-overlay--visible{display:flex}
+        @keyframes spFadeIn{from{opacity:0}to{opacity:1}}
+        .review-popup{background:var(--surface);width:100%;max-width:440px;border-radius:var(--radius-lg);padding:28px 24px 24px;position:relative;box-shadow:0 16px 48px rgba(0,0,0,.18);animation:spPopIn .3s cubic-bezier(.175,.885,.32,1.275);max-height:90vh;overflow-y:auto}
+        @keyframes spPopIn{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        .review-popup__close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:var(--background);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);transition:all .2s;z-index:1}
+        .review-popup__close:hover{background:#e5e7eb;color:var(--text-primary)}
+        .review-popup__store{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border-light)}
+        .review-popup__avatar{width:48px;height:48px;border-radius:var(--radius-md);background:linear-gradient(135deg,#0d5c2e,#1a7c40);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 2px 8px rgba(13,92,46,.2)}
+        .review-popup__avatar img{width:100%;height:100%;object-fit:cover}
+        .review-popup__avatar-ph{color:#fff;font-size:20px;font-weight:700}
+        .review-popup__store-name{font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:2px}
+        .review-popup__store-sub{font-size:13px;color:var(--text-tertiary)}
+        .review-popup__stars-wrap{text-align:center;margin-bottom:20px}
+        .review-popup__stars-label{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:14px}
+        .review-popup__stars{display:inline-flex;gap:8px;cursor:pointer;user-select:none}
+        .review-popup__stars span{font-size:40px;color:#e5e7eb;transition:color .15s,transform .15s;line-height:1}
+        .review-popup__stars span:hover{transform:scale(1.15)}
+        .review-popup__stars span.active{color:#f59e0b}
+        .review-popup__stars span.preview{color:#fcd34d}
+        .review-popup__rating-hint{font-size:13px;color:var(--text-tertiary);margin-top:8px;min-height:18px}
+        .review-popup__error{color:var(--danger);font-size:12.5px;margin-top:6px;display:none;font-weight:500}
+        .review-popup__comment{width:100%;min-height:100px;padding:14px 16px;border:1.5px solid var(--border);border-radius:var(--radius-md);font-family:var(--font-family);font-size:14px;line-height:1.6;color:var(--text-primary);resize:vertical;outline:none;background:#fafafa;transition:border-color .2s,background .2s,box-shadow .2s;box-sizing:border-box;margin-bottom:4px}
+        .review-popup__comment:focus{border-color:#0d5c2e;background:#fff;box-shadow:0 0 0 3px rgba(13,92,46,.08)}
+        .review-popup__comment::placeholder{color:#bbb}
+        .review-popup__submit{width:100%;padding:14px;margin-top:4px;background:linear-gradient(135deg,#0d5c2e,#166534);color:#fff;border:none;border-radius:var(--radius-md);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 2px 8px rgba(13,92,46,.2)}
+        .review-popup__submit:hover{background:linear-gradient(135deg,#0b4f26,#14532d);box-shadow:0 4px 14px rgba(13,92,46,.3);transform:translateY(-1px)}
+        .review-popup__submit:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+        .review-popup__msg{text-align:center;font-size:13px;margin-top:12px;min-height:18px;font-weight:500}
+        .review-popup__success{display:none;text-align:center;padding:20px 0 8px}
+        .review-popup__success-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 16px rgba(16,185,129,.3)}
+        .review-popup__success-title{font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+        .review-popup__success-sub{font-size:13.5px;color:var(--text-tertiary)}
+        @keyframes spSpinReview{to{transform:rotate(360deg)}}
 
-/* ===== INFO TAB ===== */
-.info-section{padding:16px;display:none}
-.info-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:18px;margin-bottom:12px}
-.info-card-title{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
-.info-card-title svg{width:16px;height:16px;color:var(--primary)}
-.info-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light)}
-.info-row:last-child{border-bottom:none;padding-bottom:0}
-.info-icon{width:32px;height:32px;border-radius:var(--radius-sm);background:var(--background);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.info-icon svg{width:15px;height:15px;color:var(--primary)}
-.info-label{font-size:12px;color:var(--text-tertiary);margin-bottom:2px}
-.info-value{font-size:13px;font-weight:600;color:var(--text-primary)}
-.info-value a{color:var(--primary)}
-
-/* Map placeholder */
-.map-placeholder{
-  height:150px;border-radius:var(--radius-lg);overflow:hidden;
-  background:linear-gradient(135deg,#e8f5e9,#c8e6c9);
-  display:flex;align-items:center;justify-content:center;
-  border:1px solid rgba(13,92,46,.1);margin-bottom:12px;
-  cursor:pointer;position:relative;
-}
-.map-placeholder-inner{display:flex;flex-direction:column;align-items:center;gap:8px}
-.map-placeholder-pin{width:44px;height:44px;background:var(--primary);border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(13,92,46,.3)}
-.map-placeholder-pin svg{transform:rotate(45deg);color:#fff;width:18px;height:18px}
-.map-placeholder-label{font-size:13px;font-weight:600;color:var(--primary)}
-
-/* ===== REVIEWS TAB ===== */
-.reviews-section{padding:16px;display:none}
-.reviews-summary{
-  display:flex;align-items:center;gap:16px;
-  padding:16px;background:var(--background);
-  border-radius:var(--radius-lg);border:1px solid var(--border-light);
-  margin-bottom:16px;
-}
-.review-big{font-size:44px;font-weight:800;line-height:1}
-.review-stars-row{display:flex;gap:2px;margin:6px 0}
-.review-stars-row svg{width:16px;height:16px}
-.star-f{color:var(--accent)}.star-e{color:var(--border)}
-.review-total{font-size:13px;color:var(--text-tertiary)}
-.review-bars{flex:1}
-.rbar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-.rbar-label{font-size:11px;color:var(--text-secondary);width:20px;text-align:right;flex-shrink:0}
-.rbar-track{flex:1;height:6px;background:var(--border-light);border-radius:var(--radius-full);overflow:hidden}
-.rbar-fill{height:100%;background:var(--accent);border-radius:var(--radius-full)}
-.rbar-pct{font-size:10px;color:var(--text-tertiary);width:28px;flex-shrink:0}
-.review-cards{display:flex;flex-direction:column;gap:14px}
-.review-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:14px}
-.rc-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.rc-avatar{width:38px;height:38px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--border-light)}
-.rc-avatar img{width:100%;height:100%;object-fit:cover}
-.rc-name{font-size:13px;font-weight:600}
-.rc-date{font-size:11px;color:var(--text-tertiary);margin-top:1px}
-.rc-stars{display:flex;gap:2px;margin-left:auto}
-.rc-stars svg{width:12px;height:12px;color:var(--accent)}
-.rc-text{font-size:13px;color:var(--text-secondary);line-height:1.6}
-
-/* Mobile nav */
-.mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--border-light);display:flex;height:64px}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text-tertiary);font-size:10px;font-weight:500;transition:color var(--tr)}
-.nav-item.active{color:var(--primary)}
-.nav-item svg{width:22px;height:22px}
-</style>
+        @media (min-width:768px){
+            .sp-info-grid{grid-template-columns:repeat(3,1fr)}
+            .sp-prod-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+        }
+        @media (max-width:480px){
+            .review-popup{border-radius:var(--radius-lg);padding:24px 18px 20px;max-width:100%;margin:0 8px}
+            .review-popup__stars span{font-size:36px;gap:6px}
+        }
+    </style>
 </head>
 <body>
 
-<!-- Cover -->
-<div class="store-cover">
-  <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=400&fit=crop&q=75" alt="Cover">
-  <div class="cover-overlay"></div>
-  <button class="cover-back" onclick="history.back()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-  <div class="cover-actions">
-    <button class="cover-action" id="share-btn" onclick="shareStore()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
-  </div>
+<div th:replace="~{common/buyer/header :: header}"></div>
+
+<!-- Back Bar -->
+<div class="back-bar">
+    <a href="javascript:history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Quay lại
+    </a>
 </div>
 
-<!-- Store Info -->
-<div class="store-info-strip">
-  <div class="store-avatar-wrap">
-    <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=144&h=144&fit=crop&q=75" alt="Bánh mì Hòa Mai">
-    <div class="store-verified-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-  </div>
-  <div class="store-name-row">
-    <div>
-      <h1 class="store-name">Bánh mì Hòa Mai</h1>
+<!-- Store Hero -->
+<div class="sp-hero">
+    <img th:if="${store.logoUrl != null and !store.logoUrl.isEmpty()}" th:src="${store.logoUrl}" class="sp-avatar" alt="Logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="sp-avatar-ph" th:if="${store.logoUrl == null or store.logoUrl.isEmpty()}" th:text="${store.storeName != null and !store.storeName.isEmpty() ? store.storeName.charAt(0) : 'S'}">S</div>
+    <h1 class="sp-name" th:text="${store.storeName}">Tên cửa hàng</h1>
+    <div class="sp-meta" th:text="${store.businessType != null ? store.businessType : 'Cửa hàng'}">Loại cửa hàng</div>
+    <div class="sp-rating">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span th:text="${store.averageRating != null ? #numbers.formatDecimal(store.averageRating, 0, 1) : '0.0'}">0.0</span>
+        <span th:text="'(' + ${store.totalReviews != null ? store.totalReviews : 0} + ' đánh giá)'">(0)</span>
     </div>
-    <button class="follow-btn" id="follow-btn" onclick="toggleFollow()" aria-pressed="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      Theo dõi
-    </button>
-  </div>
-  <div class="store-tagline">Bánh mì gia truyền 3 đời · Công thức đặc biệt từ 1985 · Giao trước 8h sáng</div>
-  <div class="store-tags">
-    <span class="store-tag">🍞 Bánh mì</span>
-    <span class="store-tag">🥐 Bánh baguette</span>
-    <span class="store-tag">🥗 Đồ ăn nhẹ</span>
-    <span class="store-tag">✅ Xác minh</span>
-  </div>
-  <div class="store-stats">
-    <div class="store-stat"><div class="stat-val accent">4.5★</div><div class="stat-lbl">Đánh giá</div></div>
-    <div class="store-stat"><div class="stat-val">128</div><div class="stat-lbl">Reviews</div></div>
-    <div class="store-stat"><div class="stat-val primary">1.2K</div><div class="stat-lbl">Đã bán</div></div>
-    <div class="store-stat"><div class="stat-val">2.3K</div><div class="stat-lbl">Followers</div></div>
-  </div>
 </div>
 
-<!-- Tabs -->
-<div class="store-tabs" id="store-tabs">
-  <button class="store-tab active" onclick="switchTab('deals',this)">Deal đang có</button>
-  <button class="store-tab" onclick="switchTab('info',this)">Thông tin</button>
-  <button class="store-tab" onclick="switchTab('reviews',this)">Đánh giá</button>
+<!-- Info Cards -->
+<div class="sp-info-grid">
+    <div class="sp-info-card" th:if="${store.address != null}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <div>
+            <strong>Địa chỉ</strong>
+            <span th:text="${store.address}">—</span>
+        </div>
+    </div>
+    <div class="sp-info-card" th:if="${store.openTime != null}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div>
+            <strong>Giờ mở cửa</strong>
+            <span th:text="${store.openTime + ' - ' + store.closeTime}">—</span>
+        </div>
+    </div>
+    <div class="sp-info-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
+        <div>
+            <strong>Sản phẩm</strong>
+            <span th:text="${productCount != null ? productCount : 0}">0</span>
+        </div>
+    </div>
 </div>
 
-<!-- Deals Tab -->
-<div id="tab-deals" class="deals-section">
-  <div class="deals-sort">
-    <div class="deals-count">Đang có <strong>6 deal</strong> hoạt động</div>
-    <button class="sort-select"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>Sắp hết hạn</button>
-  </div>
-  <div class="deal-list">
-    <!-- Deal items rendered by JS -->
-  </div>
+<!-- Products -->
+<div class="sp-section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
+    Sản phẩm của cửa hàng
 </div>
 
-<!-- Info Tab -->
-<div id="tab-info" class="info-section">
-  <div class="map-placeholder" onclick="window.location.href='deal-map.html'">
-    <div class="map-placeholder-inner">
-      <div class="map-placeholder-pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-      <span class="map-placeholder-label">Xem trên bản đồ →</span>
-    </div>
-  </div>
-  <div class="info-card">
-    <div class="info-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Thông tin cơ bản</div>
-    <div class="info-row">
-      <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-      <div><div class="info-label">Địa chỉ</div><div class="info-value">123 Đường Thống Nhất, Hòa Lạc, Thạch Thất, Hà Nội</div></div>
-    </div>
-    <div class="info-row">
-      <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.03 12.03 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
-      <div><div class="info-label">Điện thoại</div><div class="info-value"><a href="tel:0123456789">0123 456 789</a></div></div>
-    </div>
-    <div class="info-row">
-      <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-      <div><div class="info-label">Giờ mở cửa</div><div class="info-value">06:00 – 22:00 · Mở cả tuần</div></div>
-    </div>
-    <div class="info-row">
-      <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-      <div><div class="info-label">Giấy phép VSATTP</div><div class="info-value" style="color:var(--success)">✅ Đã xác minh · Cập nhật 01/2025</div></div>
-    </div>
-  </div>
-  <div class="info-card">
-    <div class="info-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Khung giờ pickup hôm nay</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div style="padding:10px 12px;background:var(--background);border-radius:var(--radius-md);text-align:center;border:1px solid var(--border-light)">
-        <div style="font-size:13px;font-weight:700">17:00–18:00</div>
-        <div style="font-size:11px;color:var(--success);font-weight:600;margin-top:3px">Còn 5 suất</div>
-      </div>
-      <div style="padding:10px 12px;background:var(--background);border-radius:var(--radius-md);text-align:center;border:1px solid var(--border-light)">
-        <div style="font-size:13px;font-weight:700">18:00–19:00</div>
-        <div style="font-size:11px;color:var(--warning);font-weight:600;margin-top:3px">Còn 2 suất</div>
-      </div>
-      <div style="padding:10px 12px;background:var(--background);border-radius:var(--radius-md);text-align:center;border:1px solid var(--border-light)">
-        <div style="font-size:13px;font-weight:700">19:00–20:00</div>
-        <div style="font-size:11px;color:var(--success);font-weight:600;margin-top:3px">Còn 8 suất</div>
-      </div>
-      <div style="padding:10px 12px;background:var(--background);border-radius:var(--radius-md);text-align:center;border:1px solid var(--border-light);opacity:.5">
-        <div style="font-size:13px;font-weight:700">20:00–21:00</div>
-        <div style="font-size:11px;color:var(--text-tertiary);font-weight:600;margin-top:3px">Hết suất</div>
-      </div>
-    </div>
-  </div>
+<div th:if="${products != null and !products.isEmpty()}" class="sp-prod-grid">
+    <th:block th:each="p : ${products}">
+        <th:block th:with="dealInfo=${dealProductMap != null ? dealProductMap[p.productId] : null},
+                          salePrice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},
+                          origPrice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice}">
+            <a th:href="@{'/products/' + ${p.productId}}" class="sp-prod-card">
+                <img th:src="${p.imageUrl != null ? p.imageUrl : '/img/default-banner.svg'}" th:alt="${p.name}" class="sp-prod-img" onerror="this.src='/img/default-banner.svg'" loading="lazy">
+                <div class="sp-prod-body">
+                    <div class="sp-prod-name" th:text="${p.name}">Tên sản phẩm</div>
+                    <div class="sp-prod-price">
+                        <span th:text="${@priceFormatter.format(salePrice)}">0đ</span>
+                        <span th:if="${dealInfo != null}" class="sp-prod-original" th:text="${@priceFormatter.format(origPrice)}">0đ</span>
+                    </div>
+                    <span class="sp-prod-deal-badge" th:if="${dealInfo != null}" th:text="|Giảm ${dealInfo.discountPercent}%|">Giảm 50%</span>
+                </div>
+            </a>
+        </th:block>
+    </th:block>
+</div>
+<div class="sp-empty" th:unless="${products != null and !products.isEmpty()}">
+    Cửa hàng hiện chưa có sản phẩm nào.
 </div>
 
-<!-- Reviews Tab -->
-<div id="tab-reviews" class="reviews-section">
-  <div class="reviews-summary">
-    <div style="text-align:center;flex-shrink:0">
-      <div class="review-big">4.5</div>
-      <div class="review-stars-row">
-        <svg class="star-f" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <svg class="star-f" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <svg class="star-f" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <svg class="star-f" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <svg class="star-e" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      </div>
-      <div class="review-total">128 đánh giá</div>
+<!-- Hidden review data -->
+<input type="hidden" id="review-store-id" th:value="${store.storeId}">
+<input type="hidden" id="review-order-id" th:value="${reviewOrderId}">
+<input type="hidden" id="review-mode-flag" th:value="${reviewMode ? '1' : '0'}">
+
+<!-- ===== REVIEW POPUP ===== -->
+<div class="review-popup-overlay" id="reviewPopupOverlay" onclick="closeReviewPopup(event)">
+    <div class="review-popup" onclick="event.stopPropagation()">
+        <button class="review-popup__close" onclick="closeReviewPopup()" aria-label="Đóng">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <div class="review-popup__store">
+            <div class="review-popup__avatar">
+                <img th:if="${store.logoUrl != null and !store.logoUrl.isEmpty()}" th:src="${store.logoUrl}" alt="Logo" onerror="this.style.display='none';this.parentElement.querySelector('.review-popup__avatar-ph').style.display='flex'">
+                <span class="review-popup__avatar-ph" th:if="${store.logoUrl == null or store.logoUrl.isEmpty()}" th:text="${store.storeName != null and !store.storeName.isEmpty() ? store.storeName.charAt(0) : 'S'}" style="display:none;">S</span>
+            </div>
+            <div>
+                <div class="review-popup__store-name" th:text="${store.storeName}">Tên cửa hàng</div>
+                <div class="review-popup__store-sub">Đánh giá trải nghiệm mua sắm của bạn</div>
+            </div>
+        </div>
+
+        <div class="review-popup__stars-wrap" id="reviewStarsWrap">
+            <div class="review-popup__stars-label" th:text="${reviewOrderId != null ? 'Đơn hàng #' + reviewOrderId + ' — Bạn thấy thế nào?' : 'Bạn thấy cửa hàng này thế nào?'}">Bạn thấy cửa hàng này thế nào?</div>
+            <div class="review-popup__stars" id="reviewStars">
+                <span data-star="1" onclick="setReviewRating(1)" onmouseenter="previewStars(1)" onmouseleave="clearStarPreview()">★</span>
+                <span data-star="2" onclick="setReviewRating(2)" onmouseenter="previewStars(2)" onmouseleave="clearStarPreview()">★</span>
+                <span data-star="3" onclick="setReviewRating(3)" onmouseenter="previewStars(3)" onmouseleave="clearStarPreview()">★</span>
+                <span data-star="4" onclick="setReviewRating(4)" onmouseenter="previewStars(4)" onmouseleave="clearStarPreview()">★</span>
+                <span data-star="5" onclick="setReviewRating(5)" onmouseenter="previewStars(5)" onmouseleave="clearStarPreview()">★</span>
+            </div>
+            <div class="review-popup__rating-hint" id="reviewRatingHint"></div>
+            <input type="hidden" id="reviewRatingValue" value="0">
+            <p class="review-popup__error" id="reviewRatingError">Vui lòng chọn số sao đánh giá</p>
+        </div>
+
+        <textarea id="reviewComment" class="review-popup__comment" placeholder="Chia sẻ chi tiết trải nghiệm của bạn về chất lượng sản phẩm, thái độ phục vụ..." rows="3"></textarea>
+
+        <button id="reviewSubmitBtn" class="review-popup__submit" onclick="submitReview()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Gửi đánh giá
+        </button>
+        <p class="review-popup__msg" id="reviewSubmitMsg"></p>
+
+        <div class="review-popup__success" id="reviewSuccessState">
+            <div class="review-popup__success-icon">✓</div>
+            <div class="review-popup__success-title">Cảm ơn bạn đã đánh giá!</div>
+            <div class="review-popup__success-sub">Đánh giá của bạn giúp ích cho cộng đồng DealXanh</div>
+        </div>
     </div>
-    <div class="review-bars">
-      <div class="rbar-row"><span class="rbar-label">5★</span><div class="rbar-track"><div class="rbar-fill" style="width:68%"></div></div><span class="rbar-pct">68%</span></div>
-      <div class="rbar-row"><span class="rbar-label">4★</span><div class="rbar-track"><div class="rbar-fill" style="width:20%"></div></div><span class="rbar-pct">20%</span></div>
-      <div class="rbar-row"><span class="rbar-label">3★</span><div class="rbar-track"><div class="rbar-fill" style="width:8%"></div></div><span class="rbar-pct">8%</span></div>
-      <div class="rbar-row"><span class="rbar-label">2★</span><div class="rbar-track"><div class="rbar-fill" style="width:3%"></div></div><span class="rbar-pct">3%</span></div>
-      <div class="rbar-row"><span class="rbar-label">1★</span><div class="rbar-track"><div class="rbar-fill" style="width:1%"></div></div><span class="rbar-pct">1%</span></div>
-    </div>
-  </div>
-  <div class="review-cards">
-    <div class="review-card">
-      <div class="rc-header">
-        <div class="rc-avatar"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=70" alt=""></div>
-        <div><div class="rc-name">Trần Thị B</div><div class="rc-date">2 ngày trước</div></div>
-        <div class="rc-stars"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-      </div>
-      <div class="rc-text">Bánh mì ngon tuyệt! Đúng như mô tả, mới ra lò nóng hổi. Giảm 50% mà chất lượng vẫn như thường. Sẽ mua lại nhiều lần nữa!</div>
-    </div>
-    <div class="review-card">
-      <div class="rc-header">
-        <div class="rc-avatar"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=70" alt=""></div>
-        <div><div class="rc-name">Lê Văn C</div><div class="rc-date">1 tuần trước</div></div>
-        <div class="rc-stars"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-      </div>
-      <div class="rc-text">Bánh giòn, nhân đầy đủ. Pickup nhanh gọn, QR scan xong là có ngay. Chỉ tiếc là chỗ đợi hơi lâu.</div>
-    </div>
-  </div>
 </div>
 
-<!-- Mobile nav -->
-<nav class="mobile-nav" style="padding-bottom:env(safe-area-inset-bottom)">
-  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Trang chủ</span></a>
-  <a class="nav-item" href='deal-map.html'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg><span>Bản đồ</span></a>
-  <a class="nav-item" href='cart.html'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span>Giỏ hàng</span></a>
-  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Đơn hàng</span></a>
-  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Tài khoản</span></a>
-</nav>
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
 
 <script>
-const DEALS=[
-  {id:1,name:'Bánh mì pate nóng hổi',price:12500,original:25000,discount:50,urgency:'warning',timeLeft:'1h 45m',slots:5,img:'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=220&q=70'},
-  {id:2,name:'Bánh mì thịt nguội đặc biệt',price:15000,original:28000,discount:46,urgency:'safe',timeLeft:'3h',slots:8,img:'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?w=220&q=70'},
-  {id:3,name:'Bánh baguette tươi giòn',price:8000,original:15000,discount:47,urgency:'danger',timeLeft:'30m',slots:3,img:'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?w=220&q=70'},
-];
-const urgColor={danger:'#ef4444',warning:'#f59e0b',safe:'#10b981'};
-const urgClass={danger:'chip-t-danger',warning:'chip-t-warning',safe:'chip-t-safe'};
+    var reviewSelectedRating = 0;
 
-const list=document.querySelector('.deal-list');
-list.innerHTML=DEALS.map(d=>`
-  <div class="deal-item" onclick="window.location.href='deal-detail.html?id=${d.id}'">
-    <div class="deal-item-img">
-      <img src="${d.img}" alt="${d.name}" loading="lazy">
-      <span class="deal-item-img-badge" style="background:${d.discount>=50?'#ef4444':'#f59e0b'}">-${d.discount}%</span>
-    </div>
-    <div class="deal-item-body">
-      <div class="deal-item-name">${d.name}</div>
-      <div class="deal-item-price-row">
-        <span class="di-new">${d.price.toLocaleString('vi-VN')}đ</span>
-        <span class="di-old">${d.original.toLocaleString('vi-VN')}đ</span>
-        <span class="di-save">-${d.discount}%</span>
-      </div>
-      <div class="deal-item-bottom">
-        <div class="di-meta">
-          <span class="di-chip ${urgClass[d.urgency]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${d.timeLeft}</span>
-          <span class="di-chip" style="background:var(--background);color:var(--text-secondary)">Còn ${d.slots}</span>
-        </div>
-        <button class="di-add" onclick="event.stopPropagation();addToCart(${d.id})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-      </div>
-    </div>
-  </div>`).join('');
+    function previewStars(stars) {
+        var starEls = document.querySelectorAll('#reviewStars span');
+        starEls.forEach(function(el, i) {
+            if (i < stars) el.classList.add('preview');
+            else el.classList.remove('preview');
+        });
+        var hint = document.getElementById('reviewRatingHint');
+        var labels = ['', 'Rất tệ', 'Không hài lòng', 'Bình thường', 'Hài lòng', 'Tuyệt vời'];
+        if (hint) { hint.textContent = labels[stars] || ''; hint.style.color = stars >= 4 ? '#f59e0b' : 'var(--text-tertiary)'; }
+    }
 
-function switchTab(tab,btn){
-  document.querySelectorAll('.store-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-deals').style.display='none';
-  document.getElementById('tab-info').style.display='none';
-  document.getElementById('tab-reviews').style.display='none';
-  const map={deals:'tab-deals',info:'tab-info',reviews:'tab-reviews'};
-  const el=document.getElementById(map[tab]);
-  el.style.display=tab==='deals'?'block':tab==='info'?'block':'block';
-  el.classList.add(tab==='deals'?'deals-section':tab==='info'?'info-section':'reviews-section');
-}
+    function clearStarPreview() {
+        var starEls = document.querySelectorAll('#reviewStars span');
+        starEls.forEach(function(el) { el.classList.remove('preview'); });
+        var hint = document.getElementById('reviewRatingHint');
+        if (hint && reviewSelectedRating > 0) {
+            var labels = ['', 'Rất tệ', 'Không hài lòng', 'Bình thường', 'Hài lòng', 'Tuyệt vời'];
+            hint.textContent = labels[reviewSelectedRating] || '';
+            hint.style.color = reviewSelectedRating >= 4 ? '#f59e0b' : 'var(--text-tertiary)';
+        } else if (hint) { hint.textContent = ''; }
+    }
 
-// Init display
-document.getElementById('tab-info').style.display='none';
-document.getElementById('tab-reviews').style.display='none';
+    function setReviewRating(stars) {
+        reviewSelectedRating = stars;
+        document.getElementById('reviewRatingValue').value = stars;
+        var starEls = document.querySelectorAll('#reviewStars span');
+        starEls.forEach(function(el, i) {
+            if (i < stars) el.classList.add('active');
+            else el.classList.remove('active', 'preview');
+        });
+        document.getElementById('reviewRatingError').style.display = 'none';
+        var hint = document.getElementById('reviewRatingHint');
+        var labels = ['', 'Rất tệ', 'Không hài lòng', 'Bình thường', 'Hài lòng', 'Tuyệt vời'];
+        if (hint) { hint.textContent = labels[stars] || ''; hint.style.color = stars >= 4 ? '#f59e0b' : 'var(--text-tertiary)'; }
+    }
 
-function toggleFollow(){
-  const btn=document.getElementById('follow-btn');
-  const isActive=btn.classList.toggle('active');
-  btn.setAttribute('aria-pressed',isActive);
-  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${isActive?'Đang theo dõi':'Theo dõi'}`;
-}
-function addToCart(id){showToast('✅ Đã thêm vào giỏ hàng!');}
-function shareStore(){navigator.share?navigator.share({title:'Bánh mì Hòa Mai',url:location.href}):showToast('📋 Đã copy link!');}
+    function openReviewPopup() {
+        var overlay = document.getElementById('reviewPopupOverlay');
+        overlay.style.display = 'flex';
+        reviewSelectedRating = 0;
+        document.getElementById('reviewRatingValue').value = '0';
+        document.getElementById('reviewComment').value = '';
+        document.getElementById('reviewSubmitMsg').textContent = '';
+        document.getElementById('reviewRatingError').style.display = 'none';
+        document.getElementById('reviewRatingHint').textContent = '';
+        document.getElementById('reviewSubmitBtn').style.display = 'flex';
+        document.getElementById('reviewSuccessState').style.display = 'none';
+        document.getElementById('reviewStarsWrap').style.display = '';
+        document.getElementById('reviewComment').style.display = '';
+        var starEls = document.querySelectorAll('#reviewStars span');
+        starEls.forEach(function(el) { el.classList.remove('active', 'preview'); });
+        var popup = overlay.querySelector('.review-popup');
+        if (popup) { popup.style.animation = 'none'; popup.offsetHeight; popup.style.animation = 'spPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; }
+    }
 
-function showToast(msg){
-  document.querySelector('.map-toast')?.remove();
-  const t=document.createElement('div');
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap';
-  t.textContent=msg;document.body.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
-}
+    function closeReviewPopup(e) {
+        if (e && e.target !== e.currentTarget) return;
+        document.getElementById('reviewPopupOverlay').style.display = 'none';
+    }
+
+    function submitReview() {
+        var storeId = document.getElementById('review-store-id').value;
+        var orderId = document.getElementById('review-order-id').value;
+        var rating = parseInt(document.getElementById('reviewRatingValue').value) || 0;
+        var comment = document.getElementById('reviewComment').value.trim();
+        var btn = document.getElementById('reviewSubmitBtn');
+        var msg = document.getElementById('reviewSubmitMsg');
+
+        if (rating < 1 || rating > 5) {
+            document.getElementById('reviewRatingError').style.display = 'block';
+            return;
+        }
+        btn.disabled = true;
+        btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spSpinReview .6s linear infinite;"></span> Đang gửi...';
+        msg.textContent = '';
+
+        var formData = new FormData();
+        formData.append('storeId', storeId);
+        if (orderId) formData.append('orderId', orderId);
+        formData.append('rating', rating);
+        formData.append('comment', comment);
+
+        fetch('/api/review/create', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                document.getElementById('reviewStarsWrap').style.display = 'none';
+                document.getElementById('reviewComment').style.display = 'none';
+                btn.style.display = 'none';
+                msg.textContent = '';
+                document.getElementById('reviewSuccessState').style.display = 'block';
+                setTimeout(function() { closeReviewPopup(); }, 3000);
+            } else {
+                msg.style.color = 'var(--danger)';
+                msg.textContent = d.message || 'Lỗi gửi đánh giá';
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Gửi đánh giá';
+            }
+        }).catch(function() {
+            msg.style.color = 'var(--danger)';
+            msg.textContent = 'Lỗi kết nối máy chủ';
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Gửi đánh giá';
+        });
+    }
+
+    // Auto-open when coming from order review link
+    document.addEventListener('DOMContentLoaded', function() {
+        var flag = document.getElementById('review-mode-flag');
+        if (flag && flag.value === '1') {
+            setTimeout(openReviewPopup, 500);
+        }
+    });
 </script>
 </body>
 </html>

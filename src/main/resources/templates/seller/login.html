@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/css/reset.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages/login.css">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
     <div class="login-container">
@@ -72,10 +73,7 @@
             <div class="login-card">
                 <!-- Mobile Logo (hidden on desktop) -->
                 <div class="login-card__mobile-logo">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    </svg>
-                    <span class="login-card__mobile-brand">DealXanh Partner</span>
+                    <img th:src="@{/img/logo-header.svg}" alt="DealXanh" style="height:64px;">
                 </div>
 
                 <div id="login-view">
@@ -88,9 +86,39 @@
                     <!-- Email Login Form -->
                     <div id="tab-email">
                         <div class="login-card__body">
+                            <!-- Error Message for Wrong Login Page - Admin -->
+                            <div id="wrong-login-admin-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 2px;">Đăng nhập tại trang không đúng!</div>
+                                        <div style="font-size: 13px;">Tài khoản Admin vui lòng đăng nhập tại <a href="/admin/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Admin</a>.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error Message for Wrong Login Page - Buyer -->
+                            <div id="wrong-login-buyer-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 2px;">Đăng nhập tại trang không đúng!</div>
+                                        <div style="font-size: 13px;">Tài khoản Buyer vui lòng đăng nhập tại <a href="/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Buyer</a>.</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <form action="/perform_login" method="post" id="email-form" class="login-card__form">
                                 <div class="form-group">
-                                    <label class="form-label" for="username">Tài khoản (Email hoặc Số điện thoại)</label>
+                                    <label class="form-label" for="username" style="font-weight:600;">Tài khoản (Username hoặc Email)</label>
                                     <div class="input-with-icon">
                                         <span class="input-with-icon__icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -103,7 +131,7 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label" for="password">Mật khẩu</label>
+                                    <label class="form-label" for="password" style="font-weight:600;">Mật khẩu</label>
                                     <div class="input-with-icon">
                                         <span class="input-with-icon__icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -119,6 +147,8 @@
                                             </svg>
                                         </button>
                                     </div>
+                                    <!-- Error message placeholder -->
+                                    <div id="password-error" class="error-message" style="display:none; color:#ef4444; font-size:13px; margin-top:5px;"></div>
                                 </div>
 
                                 <div class="form-options">
@@ -129,19 +159,32 @@
                                     <a href="/seller/forgot-password" class="forgot-link">Quên mật khẩu?</a>
                                 </div>
 
-                                <button type="submit" class="login-submit">Đăng nhập</button>
+                                <div class="cf-turnstile" data-sitekey="0x4AAAAAADfjOpw6QvPRmL0v" data-callback="onTurnstileSuccess" data-theme="light"></div>
+                                <button type="submit" class="login-submit" disabled>Đăng nhập</button>
                             </form>
                         </div>
                         
                         <!-- Footer -->
-                        <div class="login-card__footer" style="margin-top: 24px;">
-                            <p class="login-card__footer-text">
-                                Bạn là đối tác mới? <br>
-                                Cửa hàng đăng ký bằng việc <a href="/seller/register" class="login-card__footer-link">Tạo tài khoản Chủ Cửa Hàng ngay</a>.<br>
-                                <span style="font-size: 0.8rem; color: var(--text-tertiary); display: block; margin-top: 10px;">
-                                    *Nhân viên (Staff) cần xin tài khoản từ Chủ cửa hàng, không tự đăng ký.
-                                </span>
-                            </p>
+                        <div class="login-card__footer" style="border-top:none;">
+                            <!-- Thin divider -->
+                            <div style="border-top:1px solid var(--border); margin-bottom:14px;"></div>
+
+                            <!-- Đăng ký tài khoản mới -->
+                            <div style="text-align:center; margin-bottom:4px;">
+                                <span style="font-size:14px; color:var(--text-secondary);">Bạn là đối tác mới?</span>
+                                <a href="/seller/register" style="font-size:14px; color:#3B6D11; font-weight:var(--font-weight-semibold); text-decoration:none;">Tạo tài khoản</a>
+                            </div>
+                            <p style="font-size:11px; color:var(--text-tertiary); text-align:center; margin:0 0 14px; font-style:italic;">*Nhân viên (Staff) cần xin tài khoản từ Chủ cửa hàng, không tự đăng ký.</p>
+
+                            <!-- Nút chuyển kênh người mua (ghost button) -->
+                            <a href="/login" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:42px; background:transparent; border:1px solid var(--border); border-radius:var(--radius-md); font-size:14px; color:var(--text-secondary); text-decoration:none; cursor:pointer; transition:all 0.2s;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+                                Đăng nhập kênh người mua
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -151,6 +194,72 @@
 
     <!-- JavaScript -->
     <script>
+        // Check for error parameter on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Check for session expired
+            if (urlParams.get('expired') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = '⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#f59e0b';
+            }
+
+            // Check for kicked (concurrent login from another device)
+            if (urlParams.get('kicked') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = '🔒 Tài khoản của bạn đang đăng nhập ở nơi khác. Phiên này đã bị ngắt.';
+                errorDiv.style.display = 'block';
+                errorDiv.style.color = '#ef4444';
+            }
+
+            if (urlParams.get('error') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = 'Tài khoản hoặc mật khẩu không chính xác';
+                errorDiv.style.display = 'block';
+
+                // Focus on password field and clear it
+                const passwordField = document.getElementById('password');
+                passwordField.value = '';
+                passwordField.focus();
+            }
+
+            // Check for wrong_login_page error
+            if (urlParams.get('error') === 'please_use_correct_login') {
+                // Check if this is admin or buyer trying to login from wrong page
+                if (urlParams.get('from') === 'admin') {
+                    const wrongLoginAlert = document.getElementById('wrong-login-admin-alert');
+                    if (wrongLoginAlert) {
+                        wrongLoginAlert.style.display = 'block';
+                    }
+                } else if (urlParams.get('from') === 'buyer') {
+                    const wrongLoginAlert = document.getElementById('wrong-login-buyer-alert');
+                    if (wrongLoginAlert) {
+                        wrongLoginAlert.style.display = 'block';
+                    }
+                }
+            }
+
+            // Store username in sessionStorage for recovery after redirect
+            const form = document.getElementById('email-form');
+            const usernameField = document.getElementById('username');
+
+            form.addEventListener('submit', function() {
+                if (usernameField.value.trim()) {
+                    sessionStorage.setItem('login_username', usernameField.value.trim());
+                }
+            });
+
+            // Restore username if available
+            const savedUsername = sessionStorage.getItem('login_username');
+            if (savedUsername && !usernameField.value) {
+                usernameField.value = savedUsername;
+                sessionStorage.removeItem('login_username');
+            }
+        });
+
+        // Toggle password visibility
         document.getElementById('toggle-password').addEventListener('click', function() {
             var passInput = document.getElementById('password');
             if(passInput.type === 'password') {
@@ -159,6 +268,12 @@
                 passInput.type = 'password';
             }
         });
+    </script>
+    <script>
+      function onTurnstileSuccess(token) {
+        var btn = document.querySelector('[type="submit"]');
+        if (btn) btn.disabled = false;
+      }
     </script>
 </body>
 </html>

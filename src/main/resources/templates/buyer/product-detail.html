@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="|${product.name} — DealXanh|">Sản phẩm — DealXanh</title>
+    <meta name="description" th:content="${product.description}">
+    <div th:replace="~{common/buyer/css :: css}"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    <style>
+html{height:auto;min-height:100%}
+body{background:var(--background);font-family:var(--font-family)}
+
+/* ========== MOBILE / TABLET (≤1023px) — giữ nguyên như cũ ========== */
+.back-bar{padding:12px 16px;display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.back-bar a{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none}
+.back-bar svg{width:18px;height:18px}
+
+/* Product image */
+.prod-hero{background:var(--surface);padding:8px;display:flex;justify-content:center}
+.prod-hero img{width:100%;max-height:400px;object-fit:contain;display:block;background:#fafafa;border-radius:var(--radius-lg);border:1px solid var(--border-light)}
+
+/* Info section */
+.prod-body{padding:12px 16px 100px;display:flex;flex-direction:column;gap:12px}
+
+/* Product card */
+.prod-card{background:var(--surface);border-radius:var(--radius-lg);padding:16px;border:1px solid var(--border-light);box-shadow:var(--shadow-sm)}
+.prod-card__cat{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:rgba(13,92,46,.08);border-radius:var(--radius-full);font-size:11px;font-weight:600;color:var(--primary);margin-bottom:10px}
+.prod-card__cat svg{width:11px;height:11px}
+.prod-card__name{font-size:18px;font-weight:800;color:var(--text-primary);margin-bottom:8px;line-height:1.3}
+.prod-card__desc{font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px}
+
+/* Price */
+.prod-price{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.prod-price__sale{font-size:24px;font-weight:800;color:var(--primary)}
+.prod-price__original{font-size:14px;color:var(--text-tertiary);text-decoration:line-through}
+.prod-price__discount{display:inline-flex;align-items:center;padding:2px 8px;background:rgba(220,38,38,.1);color:#dc2626;border-radius:var(--radius-full);font-size:12px;font-weight:700}
+
+/* Meta info */
+.prod-meta{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light)}
+.prod-meta__row{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.prod-meta__label{color:var(--text-tertiary)}
+.prod-meta__val{font-weight:600;color:var(--text-primary)}
+.prod-meta__val--green{color:var(--success)}
+.prod-meta__val--red{color:var(--danger)}
+
+/* Deal badge */
+.deal-badge-sm{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:700;white-space:nowrap}
+.deal-badge--FLASH_SALE{background:#fef3c7;color:#d97706}
+.deal-badge--VOUCHER{background:#dbeafe;color:#2563eb}
+.deal-badge--COMBO{background:#fce7f3;color:#be185d}
+.deal-badge--SEASONAL{background:#e0e7ff;color:#5b21b6}
+
+/* Countdown */
+.expiry-countdown{display:flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-md);font-size:12px;font-weight:600;color:#b45309;margin-top:8px}
+.expiry-countdown svg{width:13px;height:13px;flex-shrink:0}
+
+/* Store card */
+.store-card{background:var(--surface);border-radius:var(--radius-lg);padding:14px 16px;border:1px solid var(--border-light);box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px}
+.store-card__img{width:48px;height:48px;border-radius:var(--radius-md);overflow:hidden;flex-shrink:0;background:var(--background);display:flex;align-items:center;justify-content:center}
+.store-card__img img{width:100%;height:100%;object-fit:cover}
+.store-card__img .fallback-icon{width:24px;height:24px;color:var(--text-tertiary)}
+.store-card__info{flex:1;min-width:0}
+.store-card__name{font-size:14px;font-weight:700;color:var(--text-primary)}
+.store-card__addr{font-size:11px;color:var(--text-tertiary);margin-top:2px}
+.store-card__meta{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
+.store-card__rating{font-size:11px;font-weight:600;color:#b45309}
+.store-card__tier{display:inline-flex;padding:2px 7px;border-radius:var(--radius-full);font-size:9px;font-weight:700}
+.tier--BRONZE{background:rgba(205,127,50,.12);color:#cd7f32}
+.tier--SILVER{background:rgba(192,192,192,.2);color:#888}
+.tier--GOLD{background:rgba(255,215,0,.2);color:#b8860b}
+.tier--DIAMOND{background:rgba(185,242,255,.3);color:#0284c7}
+
+/* Action buttons — MOBILE: fixed bottom */
+.action-strip{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom, 0px));left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:12px 16px 20px;z-index:50;box-shadow:0 -4px 16px rgba(0,0,0,.08);display:flex;gap:10px}
+.btn-add-cart{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border:2px solid var(--primary);background:var(--surface);color:var(--primary);border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-family);transition:all .15s}
+.btn-add-cart:hover{background:var(--status-success-bg)}
+.btn-buy-now{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-family);transition:all .15s;box-shadow:0 4px 16px rgba(13,92,46,.25)}
+.btn-buy-now:hover{background:var(--primary-dark)}
+
+/* Toast */
+.toast{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom, 0px) + 68px);left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:var(--radius-md);font-size:13px;font-weight:600;z-index:200;background:#059669;color:#fff;box-shadow:var(--shadow-lg);animation:toastIn .3s ease}
+.toast.error{background:#dc2626}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ========== TABLET (768px - 1023px) ========== */
+@media(min-width:768px) and (max-width:1023px){
+    body{padding-bottom:80px}
+    .prod-hero{max-width:520px;margin:0 auto;border-radius:var(--radius-lg);border:1px solid var(--border-light)}
+    .prod-body{max-width:520px;margin:0 auto}
+    .action-strip{bottom:0;max-width:560px;left:50%;transform:translateX(-50%);border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+}
+
+/* ========== DESKTOP (≥1024px) — 2-column Shopee-style layout ========== */
+@media(min-width:1024px){
+    /* Page background */
+    html{height:auto;min-height:100%}
+    body{padding-bottom:0 !important;background:#f5f5f5}
+
+    /* Hide mobile-only elements */
+    .back-bar{display:none !important}
+    .prod-hero{display:none}   /* mobile image — hidden, use .product-gallery instead */
+    .prod-body{display:none}   /* mobile info — hidden, use .product-info-panel instead */
+    .mobile-action-wrap{display:none !important}
+
+    /* ===== PAGE CONTAINER ===== */
+    .product-detail-page{padding:24px 24px 40px;min-height:100vh}
+    .product-detail-container{max-width:1180px;margin:0 auto}
+
+    /* ===== BREADCRUMB ===== */
+    .pd-breadcrumb{padding:6px 0 14px;font-size:13px;color:#999;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .pd-breadcrumb a{color:#0d5c2e;text-decoration:none;font-weight:500}
+    .pd-breadcrumb a:hover{text-decoration:underline}
+    .pd-breadcrumb span{color:#555}
+
+    /* ===== PRODUCT OVERVIEW — 2 columns ===== */
+    .product-overview{display:flex;gap:32px;background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+
+    /* --- Left: Gallery --- */
+    .product-gallery{flex:0 0 500px;width:500px;position:sticky;top:84px;align-self:flex-start}
+    .product-gallery__main{width:100%;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#fafafa;border:1px solid #f0f0f0;display:flex;align-items:center;justify-content:center}
+    .product-gallery__main img{width:100%;height:100%;object-fit:contain;display:block}
+
+    /* --- Right: Info Panel --- */
+    .product-info-panel{flex:1;min-width:0;display:flex;flex-direction:column;gap:0}
+
+    /* Category badge */
+    .product-info-panel .prod-card__cat{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;background:rgba(13,92,46,.08);border-radius:var(--radius-full);font-size:12px;font-weight:600;color:var(--primary);margin-bottom:12px;width:fit-content}
+    .product-info-panel .prod-card__cat svg{width:12px;height:12px}
+
+    /* Product name */
+    .product-info-panel .prod-card__name{font-size:24px;font-weight:700;color:#1a1a1a;margin-bottom:10px;line-height:1.35}
+
+    /* Description */
+    .product-info-panel .prod-card__desc{font-size:14px;color:#666;line-height:1.7;margin-bottom:16px}
+
+    /* Price section */
+    .product-info-panel .prod-price{margin-bottom:8px;align-items:center}
+    .product-info-panel .prod-price__sale{font-size:30px;font-weight:800;color:#15803d}
+    .product-info-panel .prod-price__original{font-size:16px;color:#aaa;text-decoration:line-through}
+    .product-info-panel .prod-price__discount{font-size:13px;padding:3px 10px}
+
+    /* Deal badge row */
+    .pd-deal-row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+
+    /* Meta info */
+    .product-info-panel .prod-meta{border-top:1px solid #f0f0f0;margin-top:0;padding-top:14px;gap:10px}
+    .product-info-panel .prod-meta__row{font-size:13px}
+    .product-info-panel .prod-meta__label{color:#888;min-width:110px}
+    .product-info-panel .prod-meta__val{color:#333}
+    .product-info-panel .expiry-countdown{margin-top:10px;font-size:13px;padding:10px 14px}
+
+    /* ===== QUANTITY SELECTOR ===== */
+    .pd-quantity-section{display:flex;align-items:center;gap:16px;margin-top:18px;padding-top:16px;border-top:1px solid #f0f0f0}
+    .pd-quantity-label{font-size:13px;color:#888;min-width:110px}
+    .pd-quantity{display:flex;align-items:center;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden}
+    .pd-qty-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;background:#f5f5f5;color:#333;font-size:18px;font-weight:600;cursor:pointer;transition:background .12s;font-family:inherit;line-height:1}
+    .pd-qty-btn:hover{background:#e8e8e8}
+    .pd-qty-btn:active{background:#ddd}
+    .pd-qty-btn:disabled{opacity:.3;cursor:not-allowed}
+    .pd-qty-input{width:56px;height:36px;text-align:center;border:none;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;font-size:15px;font-weight:600;color:#1a1a1a;font-family:inherit;outline:none;background:#fff;-moz-appearance:textfield}
+    .pd-qty-input::-webkit-outer-spin-button,
+    .pd-qty-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+    .pd-stock-hint{font-size:12px;color:#888}
+
+    /* ===== ACTION BUTTONS — desktop: inline, NOT fixed ===== */
+    .action-strip{position:static !important;bottom:auto !important;left:auto !important;right:auto !important;box-shadow:none;border:none;border-top:1px solid #f0f0f0;padding:18px 0 0;margin-top:16px;gap:14px;z-index:auto;background:transparent;transform:none !important;max-width:none !important;border-radius:0 !important}
+    .btn-add-cart{flex:1;max-width:220px;padding:14px 16px;border:2px solid #15803d;background:#fff;color:#15803d;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+    .btn-add-cart:hover{background:#f0fdf4;border-color:#166534}
+    .btn-add-cart:active{background:#dcfce7;transform:scale(.98)}
+    .btn-add-cart svg{width:20px;height:20px}
+    .btn-buy-now{flex:1;max-width:220px;padding:14px 16px;background:#15803d;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(21,128,61,.2);font-family:inherit}
+    .btn-buy-now:hover{background:#166534;box-shadow:0 6px 20px rgba(21,128,61,.3)}
+    .btn-buy-now:active{background:#14532d;transform:scale(.98)}
+    .btn-buy-now svg{width:20px;height:20px}
+
+    /* ===== SHOP CARD — desktop ===== */
+    .pd-shop-card-link{text-decoration:none;color:inherit;display:block}
+    .pd-shop-card{background:#fff;border-radius:12px;padding:18px 24px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:16px;transition:box-shadow .15s}
+    .pd-shop-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.1)}
+    .pd-shop-card__avatar{width:60px;height:60px;border-radius:12px;overflow:hidden;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;border:1px solid #f0f0f0}
+    .pd-shop-card__avatar img{width:100%;height:100%;object-fit:cover}
+    .pd-shop-card__avatar .fallback-icon{width:28px;height:28px;color:#ccc}
+    .pd-shop-card__info{flex:1;min-width:0}
+    .pd-shop-card__name{font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+    .pd-shop-card__name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pd-shop-card__tier{display:inline-flex;padding:2px 8px;border-radius:var(--radius-full);font-size:10px;font-weight:700;flex-shrink:0}
+    .pd-shop-card__meta{display:flex;align-items:center;gap:16px;font-size:13px;color:#888}
+    .pd-shop-card__rating{display:flex;align-items:center;gap:4px;color:#b45309;font-weight:600}
+    .pd-shop-card__address{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px}
+    .pd-shop-card__action{flex-shrink:0}
+    .pd-shop-card__btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:1px solid #15803d;background:#fff;color:#15803d;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;font-family:inherit;white-space:nowrap}
+    .pd-shop-card__btn:hover{background:#f0fdf4}
+    .pd-shop-card__btn svg{width:14px;height:14px}
+
+    /* ===== RELATED PRODUCTS — desktop ===== */
+    .pd-related{background:#fff;border-radius:12px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .pd-related__title{font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:16px}
+    .pd-related__grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+    .pd-related__card{background:#fff;border:1px solid #f0f0f0;border-radius:8px;overflow:hidden;text-decoration:none;color:inherit;transition:all .15s;display:flex;flex-direction:column}
+    .pd-related__card:hover{border-color:#c0d8c4;box-shadow:0 2px 10px rgba(0,0,0,.06);transform:translateY(-2px)}
+    .pd-related__thumb{width:100%;aspect-ratio:1;overflow:hidden;background:#fafafa;position:relative}
+    .pd-related__thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .pd-related__body{padding:8px 10px 10px;flex:1;display:flex;flex-direction:column}
+    .pd-related__name{font-size:12px;font-weight:500;color:#333;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px;min-height:34px}
+    .pd-related__price{font-size:15px;font-weight:700;color:#15803d}
+}
+
+/* Fix for tablet view showing desktop elements — hide desktop-only by default */
+.product-detail-page,
+.product-detail-container,
+.pd-breadcrumb,
+.product-overview,
+.product-gallery,
+.product-info-panel,
+.pd-quantity-section,
+.pd-shop-card-link,
+.pd-shop-card,
+.pd-related,
+.pd-related__grid,
+.pd-related__title,
+.pd-related__card,
+.pd-related__thumb,
+.pd-related__body,
+.pd-related__name,
+.pd-related__price,
+.pd-shop-card__avatar,
+.pd-shop-card__info,
+.pd-shop-card__name,
+.pd-shop-card__meta,
+.pd-shop-card__action,
+.pd-shop-card__btn,
+.pd-shop-card__name-text,
+.pd-shop-card__address,
+.pd-shop-card__rating,
+.pd-deal-row{display:none}
+
+@media(min-width:1024px){
+    .product-detail-page{display:block}
+    .product-detail-container{display:block}
+    .pd-breadcrumb{display:flex}
+    .product-overview{display:flex}
+    .product-gallery{display:block}
+    .product-info-panel{display:flex}
+    .pd-quantity-section{display:flex}
+    .pd-shop-card-link{display:block}
+    .pd-shop-card{display:flex}
+    .pd-shop-card__avatar{display:flex}
+    .pd-shop-card__info{display:block}
+    .pd-shop-card__name{display:flex}
+    .pd-shop-card__meta{display:flex}
+    .pd-shop-card__action{display:block}
+    .pd-shop-card__btn{display:inline-flex}
+    .pd-shop-card__name-text{display:inline}
+    .pd-shop-card__address{display:inline}
+    .pd-shop-card__rating{display:inline}
+    .pd-related{display:block}
+    .pd-related__title{display:block}
+    .pd-related__grid{display:grid}
+    .pd-related__card{display:flex}
+    .pd-related__thumb{display:block}
+    .pd-related__body{display:flex}
+    .pd-deal-row{display:flex}
+
+    /* Toast on desktop — appear at top-center, not bottom */
+    .toast{bottom:auto !important;top:84px;left:50% !important;transform:translateX(-50%) !important}
+    .toast.error{background:#dc2626}
+}
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div th:replace="~{common/buyer/header :: header}"></div>
+
+<!-- Back bar — mobile only (hidden on desktop via CSS) -->
+<div class="back-bar">
+    <a href="javascript:history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Quay lại
+    </a>
+</div>
+
+<!-- ===== MOBILE LAYOUT (≤1023px) — giữ nguyên hoàn toàn ===== -->
+
+<!-- Product image (mobile) -->
+<div class="prod-hero">
+    <img th:src="${product.imageUrl != null and !product.imageUrl.isEmpty() ? product.imageUrl : '/img/default-banner.svg'}"
+         th:alt="${product.name}"
+         onerror="this.src='/img/default-banner.svg'">
+</div>
+
+<div class="prod-body">
+
+    <!-- Product info card -->
+    <div class="prod-card">
+        <!-- Category badge -->
+        <div class="prod-card__cat" th:if="${category != null}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M17 14h3"/><path d="M14 17v3"/><path d="M17 20h3v-3"/></svg>
+            <span th:text="${category.name}">Danh mục</span>
+        </div>
+
+        <!-- Name -->
+        <h1 class="prod-card__name" th:text="${product.name}">Tên sản phẩm</h1>
+
+        <!-- Description -->
+        <div class="prod-card__desc" th:text="${product.description != null ? product.description : 'Chưa có mô tả'}">
+            Mô tả sản phẩm
+        </div>
+
+        <!-- Price -->
+        <div class="prod-price">
+            <span class="prod-price__sale" th:if="${dealInfo != null}"
+                  th:text="${@priceFormatter.format(dealInfo.salePrice)}">0đ</span>
+            <span class="prod-price__sale" th:if="${dealInfo == null}"
+                  th:text="${@priceFormatter.format(product.getDisplayPrice())}">0đ</span>
+            <span class="prod-price__original" th:if="${dealInfo != null and dealInfo.originalPrice != null and dealInfo.salePrice != null and dealInfo.originalPrice > dealInfo.salePrice}"
+                  th:text="${@priceFormatter.format(dealInfo.originalPrice)}">0đ</span>
+            <th:block th:if="${dealInfo != null}">
+                <span class="prod-price__discount" th:text="|-${dealInfo.discountPercent}%|">-0%</span>
+            </th:block>
+        </div>
+
+        <!-- Deal badge if active deal -->
+        <div th:if="${dealInfo != null}" style="margin-bottom:6px;">
+            <span class="deal-badge-sm" th:classappend="|deal-badge--${dealInfo.dealType}|"
+                  th:text="${dealInfo.typeLabel}">Deal</span>
+            <span style="font-size:11px;font-weight:600;color:var(--text-primary);margin-left:6px;"
+                  th:text="${dealInfo.dealName}">Tên deal</span>
+        </div>
+
+        <!-- Meta info -->
+        <div class="prod-meta">
+            <div class="prod-meta__row">
+                <span class="prod-meta__label">Kho</span>
+                <span class="prod-meta__val prod-meta__val--green" th:if="${product.stockQuantity > 0}"
+                      th:text="|${product.stockQuantity} sản phẩm|">0 sản phẩm</span>
+                <span class="prod-meta__val prod-meta__val--red" th:unless="${product.stockQuantity > 0}"
+                      th:text="|${product.stockQuantity} sản phẩm|">0 sản phẩm</span>
+            </div>
+            <div class="prod-meta__row" th:if="${product.manufacturingDate != null}">
+                <span class="prod-meta__label">Ngày sản xuất</span>
+                <span class="prod-meta__val"
+                      th:text="${#temporals.format(product.manufacturingDate, 'dd/MM/yyyy')}">-</span>
+            </div>
+            <div class="prod-meta__row" th:if="${product.expiryDate != null}">
+                <span class="prod-meta__label">Hạn sử dụng</span>
+                <span class="prod-meta__val"
+                      th:text="${#temporals.format(product.expiryDate, 'dd/MM/yyyy')}">-</span>
+            </div>
+            <!-- Countdown đến HSD -->
+            <div class="expiry-countdown" th:if="${product.expiryDate != null and product.remainingHours > 0 and product.remainingHours < 168}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span th:if="${product.remainingHours >= 24}"
+                      th:text="|Còn ${product.remainingHours / 24} ngày trước HSD|">Còn X ngày</span>
+                <span th:unless="${product.remainingHours >= 24}"
+                      th:text="|Còn ${product.remainingHours} giờ trước HSD|">Còn X giờ</span>
+            </div>
+            <div class="prod-meta__row" th:if="${product.productType != null}">
+                <span class="prod-meta__label">Loại</span>
+                <span class="prod-meta__val"
+                      th:text="${product.productType == 'COMBO' ? 'Combo' : 'Sản phẩm lẻ'}">-</span>
+            </div>
+        </div>
+
+        <!-- Expiry countdown -->
+        <div class="expiry-countdown" th:if="${expiryDate != null}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span th:text="|Hạn sử dụng: ${#temporals.format(product.expiryDate, 'dd/MM/yyyy')}|">HSD</span>
+        </div>
+    </div>
+
+    <!-- Store card - clickable to store page -->
+    <a th:if="${store != null}" th:href="@{'/store/' + ${store.storeId}}" style="text-decoration:none;color:inherit;">
+        <div class="store-card">
+            <div class="store-card__img">
+                <img th:src="${store.logoUrl != null and !store.logoUrl.isEmpty() ? store.logoUrl : '/img/default-avatar.svg'}"
+                     alt="Store"
+                     onerror="this.src='/img/default-avatar.svg'">
+            </div>
+            <div class="store-card__info">
+                <div class="store-card__name" th:text="${store.storeName}">Tên cửa hàng</div>
+                <div class="store-card__addr" th:text="${store.address}">Địa chỉ</div>
+                <div class="store-card__meta">
+                    <span class="store-card__tier"
+                          th:classappend="|tier--${store.partnerTier}|"
+                          th:text="${store.getPartnerTierLabel()}">Đồng</span>
+                    <span class="store-card__rating" th:if="${store.averageRating != null and store.averageRating > 0}"
+                          th:text="|★ ${#numbers.formatDecimal(store.averageRating, 0, 1)}/5 (${store.totalReviews} đánh giá)|">★ 4.5/5 (0 đánh giá)</span>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <!-- Related products from same store -->
+    <div th:if="${relatedProducts != null and !relatedProducts.isEmpty()}" style="margin-top:8px">
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:10px;padding-left:4px">
+            Sản phẩm khác từ shop này
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <a th:each="rp : ${relatedProducts}" th:href="@{'/products/' + ${rp.productId}}"
+               style="background:var(--surface);border-radius:var(--radius-md);overflow:hidden;text-decoration:none;color:inherit;border:1px solid var(--border-light)">
+                <div style="width:100%;padding-top:75%;position:relative;overflow:hidden;background:#fafafa">
+                    <img th:src="${rp.imageUrl != null and !rp.imageUrl.isEmpty() ? rp.imageUrl : '/img/default-banner.svg'}"
+                         th:alt="${rp.name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover"
+                         onerror="this.src='/img/default-banner.svg'" loading="lazy">
+                </div>
+                <div style="padding:6px 8px 8px">
+                    <div style="font-size:10px;font-weight:500;color:#222;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px" th:text="${rp.name}">Name</div>
+                    <div style="font-size:12px;font-weight:700;color:#ee4d2d" th:text="${@priceFormatter.format(rp.getDisplayPrice())}">0đ</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<!-- Mobile action buttons (hidden on desktop via .mobile-action-wrap) -->
+<div class="mobile-action-wrap">
+<div class="action-strip" th:if="${product.stockQuantity > 0}">
+    <button class="btn-add-cart"
+            th:attr="data-pid=${product.productId},data-pname=${product.name},data-sale=${dealInfo != null ? dealInfo.salePrice : product.getDisplayPrice()},data-original=${dealInfo != null ? dealInfo.originalPrice : product.originalPrice},data-storename=${store != null ? store.storeName : ''},data-image=${product.imageUrl != null ? product.imageUrl : ''},data-dealid=${dealInfo != null ? dealInfo.dealId : 0},data-storeid=${store != null ? store.storeId : 0},data-dealtype=${dealInfo != null ? dealInfo.dealType : ''},data-dealname=${dealInfo != null ? dealInfo.dealName : ''}"
+            onclick="addToCartDetail(
+                Number(this.dataset.pid), this.dataset.pname,
+                Number(this.dataset.sale), Number(this.dataset.original),
+                this.dataset.storename, this.dataset.image,
+                Number(this.dataset.dealid), Number(this.dataset.storeid),
+                this.dataset.dealtype, this.dataset.dealname
+            )">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        Thêm vào giỏ
+    </button>
+    <button class="btn-buy-now"
+            th:attr="data-pid=${product.productId},data-pname=${product.name},data-sale=${dealInfo != null ? dealInfo.salePrice : product.getDisplayPrice()},data-original=${dealInfo != null ? dealInfo.originalPrice : product.originalPrice},data-storename=${store != null ? store.storeName : ''},data-image=${product.imageUrl != null ? product.imageUrl : ''},data-dealid=${dealInfo != null ? dealInfo.dealId : 0},data-storeid=${store != null ? store.storeId : 0},data-dealtype=${dealInfo != null ? dealInfo.dealType : ''},data-dealname=${dealInfo != null ? dealInfo.dealName : ''}"
+            onclick="buyNowDetail(
+                Number(this.dataset.pid), this.dataset.pname,
+                Number(this.dataset.sale), Number(this.dataset.original),
+                this.dataset.storename, this.dataset.image,
+                Number(this.dataset.dealid), Number(this.dataset.storeid),
+                this.dataset.dealtype, this.dataset.dealname
+            )">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Mua ngay
+    </button>
+</div>
+
+<div class="action-strip" th:if="${product.stockQuantity <= 0}" style="justify-content:center;">
+    <button class="btn-add-cart" disabled style="opacity:.5;cursor:not-allowed;flex:none;padding:12px 24px;">
+        Hết hàng
+    </button>
+</div>
+</div>
+<!-- end mobile-action-wrap -->
+
+<!-- ===== DESKTOP LAYOUT (≥1024px) — hiển thị khi màn hình rộng ===== -->
+
+<div class="product-detail-page">
+    <div class="product-detail-container">
+
+        <!-- Breadcrumb -->
+        <div class="pd-breadcrumb">
+            <a href="/">Trang chủ</a>
+            <span>›</span>
+            <a th:if="${category != null}" th:href="@{'/category/' + ${category.categoryId}}" th:text="${category.name}">Danh mục</a>
+            <span th:if="${category != null}">›</span>
+            <span th:text="${product.name}">Sản phẩm</span>
+        </div>
+
+        <!-- Product Overview — 2 columns -->
+        <div class="product-overview">
+
+            <!-- Left: Gallery -->
+            <div class="product-gallery">
+                <div class="product-gallery__main">
+                    <img th:src="${product.imageUrl != null and !product.imageUrl.isEmpty() ? product.imageUrl : '/img/default-banner.svg'}"
+                         th:alt="${product.name}"
+                         onerror="this.src='/img/default-banner.svg'">
+                </div>
+            </div>
+
+            <!-- Right: Info Panel -->
+            <div class="product-info-panel">
+
+                <!-- Category badge -->
+                <div class="prod-card__cat" th:if="${category != null}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M17 14h3"/><path d="M14 17v3"/><path d="M17 20h3v-3"/></svg>
+                    <span th:text="${category.name}">Danh mục</span>
+                </div>
+
+                <!-- Name -->
+                <h1 class="prod-card__name" th:text="${product.name}">Tên sản phẩm</h1>
+
+                <!-- Description -->
+                <div class="prod-card__desc" th:text="${product.description != null ? product.description : 'Chưa có mô tả'}">Mô tả sản phẩm</div>
+
+                <!-- Price row -->
+                <div class="prod-price">
+                    <span class="prod-price__sale" th:if="${dealInfo != null}"
+                          th:text="${@priceFormatter.format(dealInfo.salePrice)}">0đ</span>
+                    <span class="prod-price__sale" th:if="${dealInfo == null}"
+                          th:text="${@priceFormatter.format(product.getDisplayPrice())}">0đ</span>
+                    <span class="prod-price__original" th:if="${dealInfo != null and dealInfo.originalPrice != null and dealInfo.salePrice != null and dealInfo.originalPrice > dealInfo.salePrice}"
+                          th:text="${@priceFormatter.format(dealInfo.originalPrice)}">0đ</span>
+                    <th:block th:if="${dealInfo != null}">
+                        <span class="prod-price__discount" th:text="|-${dealInfo.discountPercent}%|">-0%</span>
+                    </th:block>
+                </div>
+
+                <!-- Deal badge row -->
+                <div class="pd-deal-row" th:if="${dealInfo != null}">
+                    <span class="deal-badge-sm" th:classappend="|deal-badge--${dealInfo.dealType}|"
+                          th:text="${dealInfo.typeLabel}">Deal</span>
+                    <span style="font-size:13px;font-weight:600;color:#333;" th:text="${dealInfo.dealName}">Tên deal</span>
+                </div>
+
+                <!-- Meta info -->
+                <div class="prod-meta">
+                    <div class="prod-meta__row">
+                        <span class="prod-meta__label">Kho</span>
+                        <span class="prod-meta__val prod-meta__val--green" th:if="${product.stockQuantity > 0}"
+                              th:text="|${product.stockQuantity} sản phẩm|">0 sản phẩm</span>
+                        <span class="prod-meta__val prod-meta__val--red" th:unless="${product.stockQuantity > 0}"
+                              th:text="|${product.stockQuantity} sản phẩm|">0 sản phẩm</span>
+                    </div>
+                    <div class="prod-meta__row" th:if="${product.manufacturingDate != null}">
+                        <span class="prod-meta__label">Ngày sản xuất</span>
+                        <span class="prod-meta__val" th:text="${#temporals.format(product.manufacturingDate, 'dd/MM/yyyy')}">-</span>
+                    </div>
+                    <div class="prod-meta__row" th:if="${product.expiryDate != null}">
+                        <span class="prod-meta__label">Hạn sử dụng</span>
+                        <span class="prod-meta__val" th:text="${#temporals.format(product.expiryDate, 'dd/MM/yyyy')}">-</span>
+                    </div>
+                    <!-- Countdown đến HSD -->
+                    <div class="expiry-countdown" th:if="${product.expiryDate != null and product.remainingHours > 0 and product.remainingHours < 168}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span th:if="${product.remainingHours >= 24}"
+                              th:text="|Còn ${product.remainingHours / 24} ngày trước HSD|">Còn X ngày</span>
+                        <span th:unless="${product.remainingHours >= 24}"
+                              th:text="|Còn ${product.remainingHours} giờ trước HSD|">Còn X giờ</span>
+                    </div>
+                    <div class="prod-meta__row" th:if="${product.productType != null}">
+                        <span class="prod-meta__label">Loại</span>
+                        <span class="prod-meta__val" th:text="${product.productType == 'COMBO' ? 'Combo' : 'Sản phẩm lẻ'}">-</span>
+                    </div>
+                </div>
+
+                <!-- Quantity selector -->
+                <div class="pd-quantity-section" th:if="${product.stockQuantity > 0}">
+                    <span class="pd-quantity-label">Số lượng</span>
+                    <div class="pd-quantity">
+                        <button class="pd-qty-btn" type="button" id="pdQtyMinus" onclick="changeDesktopQty(-1)">−</button>
+                        <input type="number" class="pd-qty-input" id="pdQty" value="1" min="1" th:max="${product.stockQuantity}" onchange="validateDesktopQty()">
+                        <button class="pd-qty-btn" type="button" id="pdQtyPlus" th:disabled="${product.stockQuantity <= 1}" onclick="changeDesktopQty(1)">+</button>
+                    </div>
+                    <span class="pd-stock-hint" th:text="|${product.stockQuantity} sản phẩm có sẵn|">0 sản phẩm có sẵn</span>
+                </div>
+
+                <!-- Desktop Action Buttons -->
+                <div class="action-strip" th:if="${product.stockQuantity > 0}">
+                    <button class="btn-add-cart"
+                            th:attr="data-pid=${product.productId},data-pname=${product.name},data-sale=${dealInfo != null ? dealInfo.salePrice : product.getDisplayPrice()},data-original=${dealInfo != null ? dealInfo.originalPrice : product.originalPrice},data-storename=${store != null ? store.storeName : ''},data-image=${product.imageUrl != null ? product.imageUrl : ''},data-dealid=${dealInfo != null ? dealInfo.dealId : 0},data-storeid=${store != null ? store.storeId : 0},data-dealtype=${dealInfo != null ? dealInfo.dealType : ''},data-dealname=${dealInfo != null ? dealInfo.dealName : ''}"
+                            onclick="addToCartDetailDesktop(this)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                        Thêm vào giỏ
+                    </button>
+                    <button class="btn-buy-now"
+                            th:attr="data-pid=${product.productId},data-pname=${product.name},data-sale=${dealInfo != null ? dealInfo.salePrice : product.getDisplayPrice()},data-original=${dealInfo != null ? dealInfo.originalPrice : product.originalPrice},data-storename=${store != null ? store.storeName : ''},data-image=${product.imageUrl != null ? product.imageUrl : ''},data-dealid=${dealInfo != null ? dealInfo.dealId : 0},data-storeid=${store != null ? store.storeId : 0},data-dealtype=${dealInfo != null ? dealInfo.dealType : ''},data-dealname=${dealInfo != null ? dealInfo.dealName : ''}"
+                            onclick="buyNowDetailDesktop(this)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        Mua ngay
+                    </button>
+                </div>
+
+                <div class="action-strip" th:if="${product.stockQuantity <= 0}" style="justify-content:flex-start;">
+                    <button class="btn-add-cart" disabled style="opacity:.5;cursor:not-allowed;flex:none;padding:14px 32px;max-width:none;">
+                        Hết hàng
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Shop Card (desktop) -->
+        <a th:if="${store != null}" th:href="@{'/store/' + ${store.storeId}}" class="pd-shop-card-link">
+            <div class="pd-shop-card">
+                <div class="pd-shop-card__avatar">
+                    <img th:src="${store.logoUrl != null and !store.logoUrl.isEmpty() ? store.logoUrl : '/img/default-avatar.svg'}"
+                         alt="Store"
+                         onerror="this.src='/img/default-avatar.svg'">
+                </div>
+                <div class="pd-shop-card__info">
+                    <div class="pd-shop-card__name">
+                        <span class="pd-shop-card__name-text" th:text="${store.storeName}">Tên cửa hàng</span>
+                        <span class="pd-shop-card__tier" th:classappend="|tier--${store.partnerTier}|"
+                              th:text="${store.getPartnerTierLabel()}">Đồng</span>
+                    </div>
+                    <div class="pd-shop-card__meta">
+                        <span class="pd-shop-card__rating" th:if="${store.averageRating != null and store.averageRating > 0}"
+                              th:text="|★ ${#numbers.formatDecimal(store.averageRating, 0, 1)}/5 (${store.totalReviews} đánh giá)|">★ 4.5/5 (0 đánh giá)</span>
+                        <span class="pd-shop-card__address" th:text="${store.address}">Địa chỉ</span>
+                    </div>
+                </div>
+                <div class="pd-shop-card__action">
+                    <span class="pd-shop-card__btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        Xem shop
+                    </span>
+                </div>
+            </div>
+        </a>
+
+        <!-- Related Products (desktop) -->
+        <div th:if="${relatedProducts != null and !relatedProducts.isEmpty()}" class="pd-related">
+            <h2 class="pd-related__title">Sản phẩm khác từ shop này</h2>
+            <div class="pd-related__grid">
+                <a th:each="rp : ${relatedProducts}" th:href="@{'/products/' + ${rp.productId}}" class="pd-related__card">
+                    <div class="pd-related__thumb">
+                        <img th:src="${rp.imageUrl != null and !rp.imageUrl.isEmpty() ? rp.imageUrl : '/img/default-banner.svg'}"
+                             th:alt="${rp.name}"
+                             onerror="this.src='/img/default-banner.svg'" loading="lazy">
+                    </div>
+                    <div class="pd-related__body">
+                        <div class="pd-related__name" th:text="${rp.name}">Tên sản phẩm</div>
+                        <div class="pd-related__price" th:text="${@priceFormatter.format(rp.getDisplayPrice())}">0đ</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
+
+<script>
+// ===== Shared cart functions =====
+
+function addToCartDetail(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId, dealType, dealName) {
+    var fd = new URLSearchParams();
+    fd.append('dealId', dealId || 0);
+    fd.append('productId', productId);
+    fd.append('productName', productName);
+    fd.append('salePrice', salePrice);
+    fd.append('originalPrice', originalPrice);
+    fd.append('storeName', storeName);
+    fd.append('productImage', productImage || '');
+    if (storeId) fd.append('storeId', storeId);
+    if (dealType) fd.append('dealType', dealType);
+    if (dealName) fd.append('dealName', dealName);
+    fd.append('quantity', 1);
+
+    fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
+        .then(function(r){return r.json()})
+        .then(function(d){
+            showToast(d.message || 'Đã thêm vào giỏ', !d.success);
+            if (d.success) updateCartBadge(d.count);
+        })
+        .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
+}
+
+function buyNowDetail(productId, productName, salePrice, originalPrice, storeName, productImage, dealId, storeId, dealType, dealName) {
+    var fd = new URLSearchParams();
+    fd.append('dealId', dealId || 0);
+    fd.append('productId', productId);
+    fd.append('productName', productName);
+    fd.append('salePrice', salePrice);
+    fd.append('originalPrice', originalPrice);
+    fd.append('storeName', storeName);
+    fd.append('productImage', productImage || '');
+    if (storeId) fd.append('storeId', storeId);
+    if (dealType) fd.append('dealType', dealType);
+    if (dealName) fd.append('dealName', dealName);
+    fd.append('quantity', 1);
+
+    fetch('/checkout/buy-now', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
+        .then(function(r){return r.json()})
+        .then(function(d){
+            if (d.success) { window.location.href='/buyer/checkout?src=buyNow'; }
+            else { showToast(d.message || 'Không thể mua ngay', true); }
+        })
+        .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
+}
+
+// ===== Desktop cart functions (with quantity support) =====
+
+function getDesktopQty() {
+    var input = document.getElementById('pdQty');
+    var qty = input ? parseInt(input.value) || 1 : 1;
+    return Math.max(1, qty);
+}
+
+function changeDesktopQty(delta) {
+    var input = document.getElementById('pdQty');
+    if (!input) return;
+    var max = parseInt(input.max) || 999;
+    var val = (parseInt(input.value) || 1) + delta;
+    val = Math.max(1, Math.min(val, max));
+    input.value = val;
+    updateDesktopQtyButtons(val, max);
+}
+
+function validateDesktopQty() {
+    var input = document.getElementById('pdQty');
+    if (!input) return;
+    var max = parseInt(input.max) || 999;
+    var val = parseInt(input.value) || 1;
+    val = Math.max(1, Math.min(val, max));
+    input.value = val;
+    updateDesktopQtyButtons(val, max);
+}
+
+function updateDesktopQtyButtons(val, max) {
+    var minus = document.getElementById('pdQtyMinus');
+    var plus = document.getElementById('pdQtyPlus');
+    if (minus) minus.disabled = val <= 1;
+    if (plus) plus.disabled = val >= max;
+}
+
+function addToCartDetailDesktop(btn) {
+    var qty = getDesktopQty();
+    var fd = new URLSearchParams();
+    fd.append('dealId', btn.dataset.dealid || 0);
+    fd.append('productId', btn.dataset.pid);
+    fd.append('productName', btn.dataset.pname);
+    fd.append('salePrice', btn.dataset.sale);
+    fd.append('originalPrice', btn.dataset.original);
+    fd.append('storeName', btn.dataset.storename);
+    fd.append('productImage', btn.dataset.image || '');
+    if (btn.dataset.storeid) fd.append('storeId', btn.dataset.storeid);
+    if (btn.dataset.dealtype) fd.append('dealType', btn.dataset.dealtype);
+    if (btn.dataset.dealname) fd.append('dealName', btn.dataset.dealname);
+    fd.append('quantity', qty);
+
+    fetch('/api/cart/add', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
+        .then(function(r){return r.json()})
+        .then(function(d){
+            showToast(d.message || 'Đã thêm ' + qty + ' SP vào giỏ', !d.success);
+            if (d.success) updateCartBadge(d.count);
+        })
+        .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
+}
+
+function buyNowDetailDesktop(btn) {
+    var qty = getDesktopQty();
+    var fd = new URLSearchParams();
+    fd.append('dealId', btn.dataset.dealid || 0);
+    fd.append('productId', btn.dataset.pid);
+    fd.append('productName', btn.dataset.pname);
+    fd.append('salePrice', btn.dataset.sale);
+    fd.append('originalPrice', btn.dataset.original);
+    fd.append('storeName', btn.dataset.storename);
+    fd.append('productImage', btn.dataset.image || '');
+    if (btn.dataset.storeid) fd.append('storeId', btn.dataset.storeid);
+    if (btn.dataset.dealtype) fd.append('dealType', btn.dataset.dealtype);
+    if (btn.dataset.dealname) fd.append('dealName', btn.dataset.dealname);
+    fd.append('quantity', qty);
+
+    fetch('/checkout/buy-now', {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()})
+        .then(function(r){return r.json()})
+        .then(function(d){
+            if (d.success) { window.location.href='/buyer/checkout?src=buyNow'; }
+            else { showToast(d.message || 'Không thể mua ngay', true); }
+        })
+        .catch(function(){showToast('Lỗi kết nối, thử lại sau', true);});
+}
+
+// ===== Toast notification =====
+
+function showToast(msg, isError) {
+    var t = document.createElement('div');
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},300);},2000);
+}
+
+function updateCartBadge(count) {
+    var b = document.getElementById('mobile-nav-cart-badge');
+    if (b) {
+        if (count > 0) { b.textContent = count; b.style.display = ''; }
+        else b.style.display = 'none';
+    }
+}
+</script>
+
+<div th:replace="~{common/buyer/footer :: footer}"></div>
+
+</body>
+</html>

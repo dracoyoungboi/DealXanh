@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân tích & Đề xuất — DealXanh Seller</title>
+    <div th:replace="~{common/seller/css :: css}"></div>
+    <style>
+/* ===== KPI CARDS ===== */
+.kpi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.kpi-card{background:var(--surface);border-radius:var(--radius-md);padding:14px;border:1px solid var(--border-light);position:relative;overflow:hidden}
+.kpi-card .icon-circle{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:8px}
+.kpi-card .icon-circle.green{background:#e8f5ec;color:#0d5c2e}
+.kpi-card .icon-circle.blue{background:#eff6ff;color:#2563eb}
+.kpi-card .icon-circle.amber{background:#fffbeb;color:#d97706}
+.kpi-card .icon-circle.emerald{background:#f0fdf4;color:#059669}
+.kpi-card .icon-circle.red{background:#fef2f2;color:#dc2626}
+.kpi-card .icon-circle.purple{background:#f5f3ff;color:#7c3aed}
+.kpi-val{font-size:22px;font-weight:800;letter-spacing:-0.5px}
+.kpi-lbl{font-size:10px;color:var(--text-tertiary);margin-top:1px}
+.kpi-trend{font-size:10px;font-weight:600;margin-top:4px}
+.kpi-trend.up{color:var(--success)}
+.kpi-trend.down{color:var(--danger)}
+
+/* ===== SECTION ===== */
+.section-title{font-size:13px;font-weight:700;margin:16px 0 8px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary)}
+.section-title svg{width:15px;height:15px;color:var(--primary)}
+.section-title .pill{font-size:9px;font-weight:600;padding:2px 8px;border-radius:var(--radius-full);background:var(--primary-light);color:var(--primary);margin-left:auto;cursor:pointer}
+.section-title .pill.active{background:var(--primary);color:#fff}
+
+.chart-card{background:var(--surface);border-radius:var(--radius-md);padding:16px;border:1px solid var(--border-light);margin-bottom:10px}
+
+/* ===== BAR CHART ===== */
+.chart-bars{display:flex;align-items:flex-end;gap:2px;height:150px;padding:0 4px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;cursor:pointer}
+.bar-fill{width:100%;max-width:20px;border-radius:3px 3px 0 0;min-height:0;transition:height 0.4s ease}
+.bar-fill.green{background:linear-gradient(to top,var(--primary),#2ecc71)}
+.bar-fill.blue{background:linear-gradient(to top,#2563eb,#60a5fa)}
+.bar-tip{position:absolute;top:-22px;background:var(--text-primary);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.15s}
+.bar-col:hover .bar-tip{opacity:1}
+.bar-label{font-size:9px;color:var(--text-tertiary);margin-top:4px}
+.chart-legend{display:flex;gap:14px;margin-bottom:12px;font-size:10px}
+.chart-legend span{display:flex;align-items:center;gap:5px;color:var(--text-secondary)}
+.chart-legend .dot{width:10px;height:10px;border-radius:2px}
+.chart-legend .dot.green{background:var(--primary)}
+.chart-legend .dot.blue{background:var(--info)}
+
+/* ===== DONUT CHART ===== */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut{width:120px;height:120px;border-radius:50%;position:relative;flex-shrink:0}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.donut-center .total{font-size:22px;font-weight:800}
+.donut-center .lbl{font-size:9px;color:var(--text-tertiary)}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:6px}
+.donut-row{display:flex;align-items:center;gap:6px;font-size:11px}
+.donut-row .swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.donut-row .val{margin-left:auto;font-weight:700}
+
+/* ===== HORIZONTAL BARS ===== */
+.hbar-wrap{display:flex;flex-direction:column;gap:8px}
+.hbar-row{display:flex;align-items:center;gap:8px}
+.hbar-lbl{font-size:11px;font-weight:600;width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbar-track{flex:1;height:20px;background:var(--bg);border-radius:4px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+.hbar-val{font-size:11px;font-weight:700;width:55px;text-align:right;flex-shrink:0;color:var(--text-secondary)}
+
+/* ===== RECOMMENDATIONS ===== */
+.rec-card{background:var(--surface);border-radius:var(--radius-md);padding:12px 14px;border:1px solid var(--border-light);margin-bottom:6px;display:flex;gap:10px;align-items:flex-start}
+.rec-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.rec-dot.warn{background:var(--warning)}
+.rec-dot.info{background:var(--info)}
+.rec-dot.good{background:var(--success)}
+.rec-body{flex:1}
+.rec-title{font-size:12px;font-weight:700;margin-bottom:1px}
+.rec-detail{font-size:10px;color:var(--text-secondary);margin-bottom:3px}
+.rec-link{font-size:10px;font-weight:600;color:var(--primary);text-decoration:none}
+
+/* ===== LOADING ===== */
+.spinner{width:24px;height:24px;border:2.5px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.6s linear infinite;margin:30px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:linear-gradient(90deg,var(--bg) 25%,#e8e8e8 50%,var(--bg) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius-sm)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    </style>
+</head>
+<body>
+
+<div class="sl-sidebar-overlay" id="slSidebarOverlay" onclick="closeMobileSidebar()"></div>
+<div class="sl-layout">
+    <div th:replace="~{common/seller/sidebar :: sidebar('analytics')}"></div>
+    <div class="sl-main">
+        <div th:replace="~{common/seller/header :: header('Phân tích & Báo cáo', 'analytics')}"></div>
+        <main class="sl-content">
+        <!-- KPI Row 1: Revenue, Orders, Avg Order -->
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="icon-circle green">💰</div>
+                <div class="kpi-val" style="color:var(--primary);" id="kpiRevenue">—</div>
+                <div class="kpi-lbl">Doanh thu 30 ngày</div>
+                <div class="kpi-trend up" id="kpiRevenueTrend" style="display:none;">↗</div>
+            </div>
+            <div class="kpi-card">
+                <div class="icon-circle blue">📋</div>
+                <div class="kpi-val" style="color:var(--info);" id="kpiOrders">—</div>
+                <div class="kpi-lbl">Tổng đơn</div>
+            </div>
+            <div class="kpi-card">
+                <div class="icon-circle amber">💵</div>
+                <div class="kpi-val" style="color:#d97706;" id="kpiAvg">—</div>
+                <div class="kpi-lbl">TB / đơn</div>
+            </div>
+        </div>
+
+        <!-- KPI Row 2: Products, Deals, Rate -->
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="icon-circle emerald">📦</div>
+                <div class="kpi-val" style="color:var(--success);" id="kpiProducts">—</div>
+                <div class="kpi-lbl">Sản phẩm</div>
+            </div>
+            <div class="kpi-card">
+                <div class="icon-circle red">🏷️</div>
+                <div class="kpi-val" style="color:var(--danger);" id="kpiDeals">—</div>
+                <div class="kpi-lbl">Deal đang chạy</div>
+            </div>
+            <div class="kpi-card">
+                <div class="icon-circle purple">✅</div>
+                <div class="kpi-val" style="color:#7c3aed;" id="kpiRate">—</div>
+                <div class="kpi-lbl">Tỷ lệ hoàn thành</div>
+            </div>
+        </div>
+
+        <!-- Revenue Chart -->
+        <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Doanh thu 14 ngày gần nhất
+        </div>
+        <div class="chart-card">
+            <div class="chart-legend">
+                <span><span class="dot green"></span> Doanh thu</span>
+                <span><span class="dot blue"></span> Đơn hàng</span>
+            </div>
+            <div class="chart-bars" id="chartBars"><div class="spinner"></div></div>
+        </div>
+
+        <!-- Two-column: Donut + Top Products -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="chart-card">
+                <div style="font-size:12px;font-weight:700;margin-bottom:8px;">📊 Trạng thái đơn</div>
+                <div id="donutChart"><div class="spinner"></div></div>
+            </div>
+            <div class="chart-card">
+                <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🏆 Hạng đối tác</div>
+                <div id="tierInfo"><div class="spinner"></div></div>
+            </div>
+        </div>
+
+        <!-- Top Products - Horizontal Bars -->
+        <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg>
+            Top sản phẩm theo giá trị
+        </div>
+        <div class="chart-card" id="topProducts"><div class="spinner"></div></div>
+
+        <!-- Recommendations -->
+        <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            Đề xuất thông minh
+        </div>
+        <div id="recList"><div class="spinner"></div></div>
+        </main>
+        <div th:replace="~{common/seller/footer :: footer}"></div>
+    </div>
+</div>
+
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('analytics')}"></div>
+
+<script>
+const COLORS = ['#0d5c2e','#2563eb','#d97706','#059669','#dc2626','#7c3aed','#0891b2','#be185d','#65a30d','#ea580c'];
+let overviewData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadAll();
+});
+
+async function loadAll() {
+    await Promise.all([loadOverview(), loadChart(), loadOrderStats(), loadTopProducts(), loadRecommendations()]);
+}
+
+// ===== OVERVIEW =====
+async function loadOverview() {
+    try {
+        const r = await fetch('/seller/api/analytics/overview?days=30');
+        const d = await r.json();
+        if (d.error) return;
+        overviewData = d;
+        document.getElementById('kpiRevenue').textContent = fmt(d.periodRevenue);
+        document.getElementById('kpiOrders').textContent = (d.periodOrders||0).toLocaleString('vi-VN');
+        document.getElementById('kpiAvg').textContent = fmt(d.avgOrderValue);
+        document.getElementById('kpiProducts').textContent = d.totalProducts || 0;
+        document.getElementById('kpiDeals').textContent = d.activeDeals || 0;
+        document.getElementById('kpiRate').textContent = (d.completionRate||0) + '%';
+
+        const tiers = {10:'🥉 Đồng',8:'🥈 Bạc',6:'🥇 Vàng',4:'💎 Kim Cương'};
+        const tierName = tiers[d.commissionRate] || 'Đối tác';
+        document.getElementById('tierInfo').innerHTML =
+            '<div style="text-align:center;padding:10px 0;">' +
+                '<div style="font-size:36px;margin-bottom:4px;">' + (tiers[d.commissionRate]?.split(' ')[0] || '🏪') + '</div>' +
+                '<div style="font-size:14px;font-weight:700;">' + tierName + '</div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Phí hoa hồng ' + d.commissionRate + '%</div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);">Tổng tích lũy: ' + fmt(d.totalEarned) + '</div>' +
+            '</div>';
+    } catch(e){}
+}
+
+// ===== REVENUE CHART =====
+async function loadChart() {
+    try {
+        const r = await fetch('/seller/api/analytics/chart?days=14');
+        const d = await r.json();
+        const c = document.getElementById('chartBars');
+        if (!d.chartData || !d.chartData.length) { c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-tertiary);font-size:11px;">Chưa có dữ liệu doanh thu</div>'; return; }
+
+        const maxRev = Math.max(...d.chartData.map(p=>p.revenue), 1);
+        const maxOrd = Math.max(...d.chartData.map(p=>p.orders), 1);
+        c.innerHTML = d.chartData.map(p =>
+            '<div class="bar-col">' +
+                '<div class="bar-tip">' + fmt(p.revenue) + '</div>' +
+                '<div style="display:flex;gap:1px;align-items:flex-end;height:100%;">' +
+                    '<div class="bar-fill green" style="height:' + (p.revenue/maxRev*85) + '%;width:8px;"></div>' +
+                    '<div class="bar-fill blue" style="height:' + (p.orders/maxOrd*85) + '%;width:4px;border-radius:2px 2px 0 0;"></div>' +
+                '</div>' +
+                '<div class="bar-label">' + p.label + '</div>' +
+            '</div>').join('');
+    } catch(e){}
+}
+
+// ===== ORDER STATUS DONUT =====
+async function loadOrderStats() {
+    try {
+        const r = await fetch('/seller/api/analytics/order-stats');
+        const d = await r.json();
+        if (d.error) return;
+        const stats = [
+            {label:'Hoàn thành',val:d.completed,color:'#059669'},
+            {label:'Sẵn sàng',val:d.ready,color:'#2563eb'},
+            {label:'Đã xác nhận',val:d.confirmed,color:'#d97706'},
+            {label:'Chờ xử lý',val:d.pending,color:'#8b5cf6'},
+            {label:'Đã hủy',val:d.cancelled,color:'#dc2626'}
+        ];
+        const total = stats.reduce((s,x)=>s+x.val,0) || 1;
+        const donutParts = [];
+        let cum = 0;
+        stats.forEach(s => {
+            const pct = s.val/total*100;
+            if(pct>0) donutParts.push(s.color + ' ' + cum + 'deg ' + (cum+pct*3.6) + 'deg');
+            cum += pct*3.6;
+        });
+        const gradient = donutParts.length>0
+            ? 'conic-gradient(' + donutParts.join(',') + ')'
+            : '#e0e0e0';
+
+        document.getElementById('donutChart').innerHTML =
+            '<div class="donut-wrap">' +
+                '<div class="donut" style="background:' + gradient + ';">' +
+                    '<div class="donut-center">' +
+                        '<div class="total">' + total + '</div>' +
+                        '<div class="lbl">tổng đơn</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="donut-legend">' +
+                    stats.map(s =>
+                        '<div class="donut-row">' +
+                            '<span class="swatch" style="background:' + s.color + ';"></span>' +
+                            '<span>' + s.label + '</span>' +
+                            '<span class="val">' + s.val + '</span>' +
+                        '</div>').join('') +
+                '</div>' +
+            '</div>';
+    } catch(e){}
+}
+
+// ===== TOP PRODUCTS =====
+async function loadTopProducts() {
+    try {
+        const r = await fetch('/seller/api/analytics/top-products');
+        const d = await r.json();
+        const c = document.getElementById('topProducts');
+        if (!d.products || !d.products.length) {
+            c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-tertiary);font-size:11px;">Chưa có sản phẩm</div>';
+            return;
+        }
+        const maxPrice = Math.max(...d.products.map(p=>p.originalPrice), 1);
+        c.innerHTML = '<div class="hbar-wrap">' + d.products.map((p,i) =>
+            '<div class="hbar-row">' +
+                '<span style="font-size:14px;width:18px;text-align:center;font-weight:700;color:' + (i<3?'var(--primary)':'var(--text-tertiary)') + ';">' + (i+1) + '</span>' +
+                '<span class="hbar-lbl" title="' + p.name + '">' + p.name + '</span>' +
+                '<div class="hbar-track">' +
+                    '<div class="hbar-fill" style="width:' + (p.originalPrice/maxPrice*100) + '%;background:' + COLORS[i%COLORS.length] + ';"></div>' +
+                '</div>' +
+                '<span class="hbar-val">' + fmt(p.originalPrice) + '</span>' +
+            '</div>').join('') + '</div>';
+    } catch(e){}
+}
+
+// ===== RECOMMENDATIONS =====
+async function loadRecommendations() {
+    try {
+        const r = await fetch('/seller/api/analytics/recommendations');
+        const d = await r.json();
+        const c = document.getElementById('recList');
+        if (!d.recommendations || !d.recommendations.length) {
+            c.innerHTML = '<div class="chart-card" style="text-align:center;padding:20px;color:var(--text-secondary);font-size:12px;">✅ Cửa hàng đang hoạt động tốt, không có đề xuất nào!</div>';
+            return;
+        }
+        c.innerHTML = d.recommendations.map(rec => {
+            const dotClass = rec.type==='warning'?'warn':rec.type==='info'?'info':'good';
+            return '<div class="rec-card">' +
+                '<span class="rec-dot ' + dotClass + '"></span>' +
+                '<div class="rec-body">' +
+                    '<div class="rec-title">' + rec.icon + ' ' + rec.title + '</div>' +
+                    '<div class="rec-detail">' + rec.detail + '</div>' +
+                    '<a class="rec-link" href="' + rec.link + '">' + rec.action + ' →</a>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    } catch(e){}
+}
+
+function fmt(n) { return (n||0).toLocaleString('vi-VN') + 'đ'; }
+</script>
+</body>
+</html>

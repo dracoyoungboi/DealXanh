@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Sản phẩm — Nhân viên DealXanh</title>
+    <div th:replace="~{common/staff/css :: css}"></div>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+.content{padding:16px;max-width:600px;margin:0 auto}
+.alert{padding:10px 14px;border-radius:var(--radius-md);margin-bottom:12px;font-size:13px;font-weight:600}
+.alert.error{background:rgba(239,68,68,.1);color:var(--danger)}
+
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.form-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;background:var(--surface);font-family:var(--font)}
+.form-input:focus{outline:none;border-color:var(--primary)}
+textarea.form-input{resize:vertical}
+.form-select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:14px;background:var(--surface);font-family:var(--font)}
+.form-hint{font-size:11px;color:var(--text-tertiary);margin-top:4px}
+
+.file-upload{border:2px dashed var(--border);border-radius:var(--radius-md);padding:20px;text-align:center;cursor:pointer;transition:border-color .2s}
+.file-upload:hover{border-color:var(--primary)}
+.file-upload input{display:none}
+.file-upload__text{font-size:13px;color:var(--text-secondary)}
+.file-upload__hint{font-size:11px;color:var(--text-tertiary);margin-top:4px}
+
+.preview-img{width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--border);margin-top:8px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:12px 24px;border-radius:var(--radius-md);font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none}
+.btn-primary{background:var(--primary);color:#fff;width:100%;justify-content:center}
+
+/* Combo section */
+#comboSection{display:none;background:var(--surface);border-radius:var(--radius-md);border:1px solid var(--border);padding:14px;margin-bottom:16px}
+.combo-product-list{max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)}
+.combo-item{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border-light);cursor:pointer;transition:background 0.15s}
+.combo-item:hover{background:#f9fafb}
+.combo-item.selected{background:#e8f5e9}
+.combo-item:last-child{border-bottom:none}
+.combo-item .cb{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;transition:all 0.15s}
+.combo-item.selected .cb{background:var(--primary);border-color:var(--primary)}
+.combo-item .info{flex:1;min-width:0}
+.combo-item .name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.combo-item .meta{font-size:10px;color:var(--text-tertiary)}
+.combo-item .price{font-size:12px;font-weight:700;color:var(--primary);flex-shrink:0}
+.combo-summary{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:12px;font-weight:600}
+.combo-avg{color:var(--primary)}
+.hsd-warn{display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius-sm);padding:10px 12px;margin-top:8px;font-size:11px;color:#92400e}
+.hsd-warn strong{display:block;margin-bottom:2px}
+.hsd-warn .splist{font-size:10px;color:#b45309;margin-top:4px}
+.combo-confirm{display:none;margin-top:10px}
+.combo-confirm label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);cursor:pointer}
+.combo-confirm input[type=checkbox]{width:16px;height:16px;accent-color:var(--primary)}
+    </style>
+</head>
+<body>
+
+<div th:replace="~{common/staff/header :: header}"></div>
+
+<div class="content">
+    <div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+    <form method="post" th:action="@{/staff/products/create}" enctype="multipart/form-data" id="productForm">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <div class="form-group">
+            <label class="form-label">Tên sản phẩm <span style="color:var(--danger)">*</span></label>
+            <input type="text" name="name" class="form-input" required placeholder="VD: Bánh mì thịt nướng">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Mô tả</label>
+            <textarea name="description" class="form-input" rows="3" placeholder="Mô tả sản phẩm..."></textarea>
+        </div>
+
+        <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+                <label class="form-label">Giá gốc (đ) <span style="color:var(--danger)">*</span></label>
+                <input type="number" name="originalPrice" id="originalPrice" class="form-input" required min="1000" step="1000" placeholder="50000">
+            </div>
+            <div>
+                <label class="form-label">Số lượng tồn kho</label>
+                <input type="number" name="stockQuantity" class="form-input" min="0" value="0" placeholder="0">
+            </div>
+        </div>
+
+        <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+                <label class="form-label">Danh mục</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">Chọn danh mục...</option>
+                    <option th:each="cat : ${categories}" th:value="${cat.categoryId}" th:text="${cat.name}">Category</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Loại sản phẩm</label>
+                <select name="productType" class="form-select" id="productType" onchange="onProductTypeChange()">
+                    <option value="SPECIFIC_DEAL">Sản phẩm thường</option>
+                    <option value="COMBO">Combo</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Combo Section -->
+        <div id="comboSection">
+            <label class="form-label">Chọn sản phẩm cho Combo <span style="font-weight:400;color:var(--text-tertiary);">(tùy chọn)</span></label>
+            <div class="form-hint" style="margin-bottom:8px;">Có thể chọn sản phẩm để tính giá tự động. Nếu không chọn, nhập giá & HSD thủ công bên trên.</div>
+            <div class="combo-product-list" id="comboProductList">
+                <div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">Đang tải sản phẩm...</div>
+            </div>
+            <div class="combo-summary">
+                <span>Sản phẩm đã chọn: <strong id="comboCount">0</strong></span>
+                <span>Giá combo ước tính: <span class="combo-avg" id="comboAvgPrice">0đ</span></span>
+            </div>
+            <div class="hsd-warn" id="hsdWarn">
+                <strong>⚠️ Cảnh báo hạn sử dụng</strong>
+                <span>Các sản phẩm sau còn dưới 3 ngày HSD:</span>
+                <div class="splist" id="hsdWarnList"></div>
+            </div>
+            <div class="combo-confirm" id="comboConfirm">
+                <label>
+                    <input type="checkbox" id="comboConfirmCheck" onchange="toggleSubmitBtn()">
+                    Tôi xác nhận đưa những sản phẩm này vào combo. Tôi hiểu nếu sản phẩm gần hết HSD, giá combo sẽ giảm theo thời gian.
+                </label>
+            </div>
+            <input type="hidden" name="comboProductIds" id="comboProductIds">
+        </div>
+
+        <div class="form-group" id="expiryFormGroup">
+            <label class="form-label" id="expiryLabel">Hạn sử dụng</label>
+            <input type="date" name="expiryDateStr" class="form-input">
+            <div class="form-hint" id="expiryHint">Để trống nếu không có hạn sử dụng</div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Ảnh sản phẩm</label>
+            <div class="file-upload" onclick="document.getElementById('imageFile').click()">
+                <input type="file" id="imageFile" name="imageFile" accept="image/*" onchange="previewImage(this)">
+                <div class="file-upload__text" id="uploadText">📷 Nhấn để chọn ảnh</div>
+                <div class="file-upload__hint">JPG, PNG, WEBP. Tối đa 5MB</div>
+            </div>
+            <img id="imagePreview" class="preview-img" style="display:none;" src="" alt="Preview">
+        </div>
+
+        <div class="form-group" style="margin-top:20px;">
+            <button type="submit" class="btn btn-primary">Tạo sản phẩm</button>
+            <div class="form-hint" style="text-align:center;margin-top:8px;">Sản phẩm sẽ được gửi đến admin để duyệt trước khi hiển thị</div>
+        </div>
+    </form>
+</div>
+
+<div th:replace="~{common/staff/bottom-nav :: bottom-nav}"></div>
+
+<script>
+let comboProducts = [];
+let selectedComboIds = new Set();
+
+// ===== PRODUCT TYPE CHANGE =====
+function onProductTypeChange() {
+    const type = document.getElementById('productType').value;
+    const comboSection = document.getElementById('comboSection');
+    const expiryLabel = document.getElementById('expiryLabel');
+    const expiryHint = document.getElementById('expiryHint');
+
+    if (type === 'COMBO') {
+        comboSection.style.display = 'block';
+        expiryLabel.textContent = 'Hạn sử dụng (Combo)';
+        expiryHint.textContent = 'Nếu chọn SP bên dưới, HSD tự lấy sớm nhất. Không chọn thì nhập tay.';
+        loadComboProducts();
+    } else {
+        comboSection.style.display = 'none';
+        expiryLabel.textContent = 'Hạn sử dụng';
+        expiryHint.textContent = 'Để trống nếu không có hạn sử dụng';
+        selectedComboIds.clear();
+        updateComboSummary();
+    }
+}
+
+// ===== LOAD AVAILABLE PRODUCTS FOR COMBO =====
+async function loadComboProducts() {
+    const list = document.getElementById('comboProductList');
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">Đang tải sản phẩm...</div>';
+    try {
+        const r = await fetch('/staff/api/products/combo-available');
+        const d = await r.json();
+        if (d.error || !d.products || !d.products.length) {
+            list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">Không có sản phẩm nào khả dụng để tạo combo</div>';
+            return;
+        }
+        comboProducts = d.products;
+        renderComboList();
+    } catch(e) {
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);font-size:12px;">Lỗi tải sản phẩm</div>';
+    }
+}
+
+function renderComboList() {
+    const list = document.getElementById('comboProductList');
+    list.innerHTML = comboProducts.map(p => {
+        const sel = selectedComboIds.has(p.productId);
+        const hsd = p.expiryDate ? new Date(p.expiryDate) : null;
+        const daysLeft = hsd ? Math.ceil((hsd - new Date()) / (1000*60*60*24)) : null;
+        const hsdText = hsd ? 'HSD: ' + hsd.toLocaleDateString('vi-VN') + (daysLeft !== null ? ' (' + daysLeft + ' ngày)' : '') : 'Không HSD';
+        const cls = sel ? 'combo-item selected' : 'combo-item';
+        return `<div class="${cls}" onclick="toggleComboProduct(${p.productId})">
+            <div class="cb">${sel ? '✓' : ''}</div>
+            <div class="info">
+                <div class="name">${p.name}</div>
+                <div class="meta">${hsdText} · Tồn: ${p.stockQuantity || 0}</div>
+            </div>
+            <div class="price">${fmt(p.originalPrice)}</div>
+        </div>`;
+    }).join('');
+    updateComboSummary();
+}
+
+// ===== TOGGLE COMBO PRODUCT SELECTION =====
+function toggleComboProduct(id) {
+    if (selectedComboIds.has(id)) {
+        selectedComboIds.delete(id);
+    } else {
+        selectedComboIds.add(id);
+    }
+    renderComboList();
+}
+
+// ===== UPDATE SUMMARY =====
+function updateComboSummary() {
+    document.getElementById('comboCount').textContent = selectedComboIds.size;
+    document.getElementById('comboProductIds').value = [...selectedComboIds].join(',');
+
+    const selected = comboProducts.filter(p => selectedComboIds.has(p.productId));
+    let avgPrice = 0;
+    if (selected.length > 0) {
+        avgPrice = Math.round(selected.reduce((s, p) => s + (p.originalPrice || 0), 0) / selected.length);
+    }
+    document.getElementById('comboAvgPrice').textContent = fmt(avgPrice);
+    document.getElementById('originalPrice').value = avgPrice || '';
+
+    // Check HSD warnings
+    const warnDiv = document.getElementById('hsdWarn');
+    const warnList = document.getElementById('hsdWarnList');
+    const confirmDiv = document.getElementById('comboConfirm');
+    const hsdWarnProducts = selected.filter(p => {
+        if (!p.expiryDate) return false;
+        const daysLeft = Math.ceil((new Date(p.expiryDate) - new Date()) / (1000*60*60*24));
+        return daysLeft <= 3;
+    });
+
+    if (hsdWarnProducts.length > 0) {
+        warnDiv.style.display = 'block';
+        warnList.innerHTML = hsdWarnProducts.map(p => {
+            const daysLeft = Math.ceil((new Date(p.expiryDate) - new Date()) / (1000*60*60*24));
+            return '• ' + p.name + ' (HSD còn ' + daysLeft + ' ngày)';
+        }).join('<br>');
+        confirmDiv.style.display = 'block';
+    } else {
+        warnDiv.style.display = 'none';
+        confirmDiv.style.display = selected.length >= 2 ? 'block' : 'none';
+    }
+}
+
+function toggleSubmitBtn() {
+    // Just visual feedback - the checkbox state is checked in form validation
+}
+
+// Validate before submit — COMBO có thể tạo trực tiếp không cần chọn SP
+document.getElementById('productForm').addEventListener('submit', function(e) {
+    const type = document.getElementById('productType').value;
+    if (type === 'COMBO' && selectedComboIds.size > 0) {
+        // Chỉ bắt xác nhận nếu có chọn SP gần hết HSD
+        if (document.getElementById('comboConfirm').style.display !== 'none'
+            && !document.getElementById('comboConfirmCheck').checked) {
+            e.preventDefault();
+            alert('Vui lòng xác nhận đưa sản phẩm gần hết HSD vào combo');
+            return;
+        }
+    }
+});
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('imagePreview');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            document.getElementById('uploadText').textContent = '📷 ' + input.files[0].name;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function fmt(n) { return (n || 0).toLocaleString('vi-VN') + 'đ'; }
+</script>
+</body>
+</html>

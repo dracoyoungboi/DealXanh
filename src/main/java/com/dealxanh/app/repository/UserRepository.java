@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
 
+    List<User> findByPhone(String phone);
+
     boolean existsByEmail(String email);
 
     boolean existsByUsername(String username);
@@ -48,4 +50,29 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> searchUsersWithRole(@Param("search") String search, Pageable pageable);
 
     long countByRoleName(String roleName);
+
+    // Find users by role object
+    List<User> findByRole(com.dealxanh.app.entity.Role role);
+
+    // Find top 5 users by created date
+    List<User> findTop5ByOrderByCreatedAtDesc();
+
+    // Active/Inactive status methods
+    List<User> findByActive(Boolean active);
+
+    long countByActive(Boolean active);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE u.active = :active ORDER BY u.createdAt DESC")
+    List<User> findByActiveWithRole(@Param("active") Boolean active);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE u.active = :active AND LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) ORDER BY u.createdAt DESC")
+    List<User> searchActiveUsersWithRole(@Param("active") Boolean active, @Param("search") String search);
+
+    // Count active/inactive buyers
+    @Query("SELECT COUNT(u) FROM User u JOIN u.role r WHERE r.name = 'ROLE_USER' AND u.active = :active")
+    long countByRoleAndActive(@Param("active") Boolean active);
+
+    // Count new buyer registrations between dates
+    @Query("SELECT COUNT(u) FROM User u JOIN u.role r WHERE r.name = 'ROLE_USER' AND u.createdAt BETWEEN :startDate AND :endDate")
+    long countBuyersRegisteredBetweenDates(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
 }

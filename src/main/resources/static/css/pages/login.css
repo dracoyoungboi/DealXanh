@@ -164,7 +164,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 48px;
+    min-height: 100vh;
+    padding: 2rem;
     background-color: var(--background);
 }
 
@@ -172,6 +173,7 @@
 .login-card {
     width: 100%;
     max-width: 480px;
+    height: auto;
     background-color: var(--surface);
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-lg);
@@ -195,7 +197,7 @@
 
 /* Card Header */
 .login-card__header {
-    padding: 32px 32px 24px;
+    padding: 2rem 1.75rem 1rem;
 }
 
 .login-card__title {
@@ -246,14 +248,19 @@
 
 /* Card Body */
 .login-card__body {
-    padding: 0 32px 24px;
+    padding: 0 1.75rem 1.5rem;
 }
 
 /* Form */
 .login-card__form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
+}
+
+/* Override components.css margin-bottom — flex gap handles spacing */
+.login-card__form .form-group {
+    margin-bottom: 0;
 }
 
 /* Social Buttons */
@@ -286,84 +293,145 @@
     box-shadow: var(--shadow-sm);
 }
 
-/* Guest Banner */
-.guest-banner {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--accent) 0%, #c4a030 100%);
-    border-radius: var(--radius-lg);
-    margin-bottom: 16px;
-}
-
-.guest-banner__icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.25);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    flex-shrink: 0;
-}
-
-.guest-banner__content {
-    flex: 1;
-}
-
-.guest-banner__title {
-    font-size: 14px;
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-    margin-bottom: 2px;
-}
-
-.guest-banner__description {
+/* Register Link (inside body, after Google button) */
+.login-card__register-link {
     font-size: 13px;
-    color: rgba(0, 0, 0, 0.75);
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 8px 0 0;
 }
 
-.guest-banner__button {
-    padding: 8px 16px;
-    background-color: var(--text-primary);
-    color: var(--accent);
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: 13px;
+.login-card__register-link a {
+    color: #3B6D11;
     font-weight: var(--font-weight-semibold);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all var(--transition-base);
+    text-decoration: none;
 }
 
-.guest-banner__button:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+.login-card__register-link a:hover {
+    text-decoration: underline;
 }
 
 /* Card Footer */
 .login-card__footer {
-    padding: 24px 32px;
-    background-color: var(--background);
-    border-top: 1px solid var(--border-light);
+    padding: 1rem 1.75rem 1.5rem;
+    border-top: 0.5px solid var(--border);
 }
 
-.login-card__footer-text {
-    font-size: 14px;
+/* Bottom Action Buttons */
+.login-card__bottom-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.bottom-action-btn {
+    flex: 1;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 0.5px solid var(--border);
+}
+
+.bottom-action-btn svg {
+    flex-shrink: 0;
+}
+
+.bottom-action-btn--secondary {
+    background-color: var(--background-secondary, #f0f2f5);
     color: var(--text-secondary);
-    text-align: center;
+    border: 0.5px solid var(--border);
 }
 
-.login-card__footer-link {
-    color: var(--primary);
-    font-weight: var(--font-weight-semibold);
+.bottom-action-btn--secondary:hover {
+    background-color: var(--border);
+    color: var(--text-primary);
 }
 
-.login-card__footer-link:hover {
-    color: var(--primary-light);
+.bottom-action-btn--primary-outline {
+    background-color: transparent;
+    color: #3B6D11;
+    border: 0.5px solid #3B6D11;
+}
+
+.bottom-action-btn--primary-outline:hover {
+    background-color: rgba(59, 109, 17, 0.06);
+}
+
+/* Partner Register Block (Seller Login) */
+.partner-register-block {
+    background-color: var(--background-secondary, #f0f2f5);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    margin-bottom: 12px;
+}
+
+.partner-register-block__title {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: var(--font-weight-medium, 500);
+    margin: 0 0 4px;
+}
+
+.partner-register-block__link {
+    font-size: 13px;
+    color: #3B6D11;
+    font-weight: var(--font-weight-medium, 500);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all var(--transition-fast);
+}
+
+.partner-register-block__link:hover {
     text-decoration: underline;
+    color: #2d560a;
+}
+
+.partner-register-block__link svg {
+    flex-shrink: 0;
+}
+
+.partner-register-block__note {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-style: italic;
+    margin: 6px 0 0;
+    line-height: var(--line-height-relaxed);
+}
+
+/* Channel Switch Button (Seller Login) */
+.channel-switch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 40px;
+    background: transparent;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.channel-switch-btn:hover {
+    background-color: var(--background-secondary, #f0f2f5);
+    color: var(--text-primary);
+}
+
+.channel-switch-btn svg {
+    flex-shrink: 0;
 }
 
 /* Form Elements (Enhanced) */
@@ -489,13 +557,17 @@
     color: var(--primary-light);
 }
 
-/* Divider */
+/* Divider — "hoặc tiếp tục với" with horizontal lines on both sides */
 .divider {
     display: flex;
     align-items: center;
     gap: 16px;
     color: var(--text-tertiary);
     font-size: 13px;
+    height: auto;               /* override components.css height: 1px */
+    background: transparent;    /* override components.css background-color */
+    margin: 14px 0;             /* compact spacing above/below divider */
+    white-space: nowrap;        /* prevent text wrapping on narrow screens */
 }
 
 .divider::before,
@@ -727,6 +799,7 @@
     }
 }
 
+/* Tablet & Large Phone */
 @media (max-width: 768px) {
     .login-container {
         flex-direction: column;
@@ -737,9 +810,10 @@
     }
 
     .login-form-container {
-        padding: 24px;
+        padding: 20px;
         min-height: 100vh;
-        align-items: flex-start;
+        min-height: 100dvh;
+        align-items: center;
     }
 
     .login-card {
@@ -747,108 +821,312 @@
         box-shadow: none;
     }
 
+    /* Mobile logo — compact */
     .login-card__mobile-logo {
         display: flex;
+        padding: 16px 20px 0;
     }
 
-    .login-card__header,
-    .login-card__body,
-    .login-card__footer {
-        padding-left: 20px;
-        padding-right: 20px;
+    .login-card__mobile-brand {
+        font-size: 22px;
     }
 
+    /* Compact card sections */
     .login-card__header {
-        padding-top: 16px;
+        padding: 1.25rem 1.25rem 0.75rem;
     }
 
+    .login-card__body {
+        padding: 0 1.25rem 1rem;
+    }
+
+    .login-card__footer {
+        padding: 0.75rem 1.25rem 1rem;
+    }
+
+    /* Tighter typography */
     .login-card__title {
-        font-size: 24px;
+        font-size: 22px;
+        margin-bottom: 4px;
     }
 
     .login-card__subtitle {
-        font-size: 14px;
+        font-size: 13px;
+    }
+
+    /* Tighter form spacing */
+    .login-card__form {
+        gap: 10px;
     }
 
     .login-tabs {
-        margin: 0 20px 20px;
+        margin: 0 20px 16px;
     }
 
-    .login-card__social {
-        flex-wrap: wrap;
+    /* Tighter divider */
+    .divider {
+        margin: 12px 0;
     }
 
-    .social-button {
-        flex: 1 1 calc(50% - 6px);
+    /* Compact submit button */
+    .login-submit {
+        padding: 12px;
     }
 
-    .login-hero__title {
-        font-size: 32px;
+    /* Compact register link */
+    .login-card__register-link {
+        font-size: 12px;
+    }
+
+    /* Compact bottom buttons */
+    .bottom-action-btn {
+        height: 38px;
+        font-size: 12px;
+    }
+
+    /* Compact partner register block */
+    .partner-register-block {
+        padding: 10px 14px;
+    }
+
+    .partner-register-block__title,
+    .partner-register-block__link {
+        font-size: 12px;
+    }
+
+    .partner-register-block__note {
+        font-size: 11px;
+    }
+
+    /* Compact channel switch */
+    .channel-switch-btn {
+        height: 38px;
+        font-size: 12px;
     }
 }
 
+/* Small Phone */
 @media (max-width: 480px) {
     .login-form-container {
-        padding: 16px;
+        padding: 12px;
     }
 
     .login-card {
         border-radius: 0;
     }
 
-    .login-card__header,
-    .login-card__body,
-    .login-card__footer {
-        padding-left: 16px;
-        padding-right: 16px;
+    .login-card__mobile-logo {
+        padding: 12px 14px 0;
     }
 
-    .login-hero__title {
-        font-size: 28px;
-    }
-
-    .login-stats {
-        gap: 24px;
-    }
-
-    .login-stat__value {
-        font-size: 24px;
-    }
-
-    .otp-input {
-        gap: 8px;
-    }
-
-    .otp-input__digit {
-        width: 44px;
-        height: 54px;
+    .login-card__mobile-brand {
         font-size: 20px;
     }
 
+    .login-card__header {
+        padding: 1rem 0.875rem 0.5rem;
+    }
+
+    .login-card__body {
+        padding: 0 0.875rem 0.75rem;
+    }
+
+    .login-card__footer {
+        padding: 0.5rem 0.875rem 0.75rem;
+    }
+
+    .login-card__title {
+        font-size: 20px;
+    }
+
+    .login-card__subtitle {
+        font-size: 12px;
+    }
+
+    /* Ultra-compact form */
+    .login-card__form {
+        gap: 8px;
+    }
+
+    .login-tabs {
+        margin: 0 14px 12px;
+    }
+
+    .divider {
+        margin: 10px 0;
+        font-size: 12px;
+        gap: 12px;
+    }
+
+    .login-submit {
+        padding: 11px;
+        font-size: 15px;
+    }
+
+    .social-button {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    /* Compact form fields */
+    .form-input {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .form-label {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .form-check__label {
+        font-size: 13px;
+    }
+
+    .forgot-link {
+        font-size: 13px;
+    }
+
+    /* Compact register link */
+    .login-card__register-link {
+        font-size: 11px;
+    }
+
+    /* Compact bottom buttons */
+    .bottom-action-btn {
+        height: 36px;
+        font-size: 11px;
+        gap: 4px;
+    }
+
+    /* Compact partner register block */
+    .partner-register-block {
+        padding: 10px 12px;
+        margin-bottom: 10px;
+    }
+
+    .partner-register-block__title,
+    .partner-register-block__link {
+        font-size: 12px;
+    }
+
+    .partner-register-block__note {
+        font-size: 11px;
+    }
+
+    /* Compact channel switch */
+    .channel-switch-btn {
+        height: 36px;
+        font-size: 12px;
+    }
+
     .toast {
-        left: 16px;
-        right: 16px;
+        left: 12px;
+        right: 12px;
         min-width: auto;
     }
 }
 
-/* Small mobile */
+/* Tiny Phone */
 @media (max-width: 360px) {
+    .login-card__mobile-logo {
+        padding: 10px 12px 0;
+    }
+
+    .login-card__mobile-brand {
+        font-size: 18px;
+    }
+
+    .login-card__header {
+        padding: 0.75rem 0.75rem 0.4rem;
+    }
+
+    .login-card__body {
+        padding: 0 0.75rem 0.5rem;
+    }
+
+    .login-card__footer {
+        padding: 0.4rem 0.75rem 0.5rem;
+    }
+
     .login-card__title {
-        font-size: 22px;
+        font-size: 18px;
     }
 
-    .role-option {
-        padding: 12px;
+    .login-card__subtitle {
+        font-size: 12px;
     }
 
-    .role-option__icon {
-        width: 36px;
-        height: 36px;
+    .login-card__form {
+        gap: 6px;
     }
 
-    .role-option__label {
+    .login-tabs {
+        margin: 0 12px 10px;
+    }
+
+    .divider {
+        margin: 8px 0;
+        font-size: 11px;
+        gap: 10px;
+    }
+
+    .login-submit {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .social-button {
+        padding: 9px;
+        font-size: 12px;
+    }
+
+    .form-input {
+        padding: 9px 12px;
         font-size: 13px;
+    }
+
+    .form-label {
+        font-size: 11px;
+        margin-bottom: 4px;
+    }
+
+    .form-check__label,
+    .forgot-link {
+        font-size: 12px;
+    }
+
+    /* Compact register link */
+    .login-card__register-link {
+        font-size: 10px;
+    }
+
+    /* Compact bottom buttons */
+    .bottom-action-btn {
+        height: 34px;
+        font-size: 10px;
+        gap: 3px;
+    }
+
+    /* Compact partner register block */
+    .partner-register-block {
+        padding: 8px 10px;
+        margin-bottom: 8px;
+    }
+
+    .partner-register-block__title,
+    .partner-register-block__link {
+        font-size: 11px;
+    }
+
+    .partner-register-block__note {
+        font-size: 10px;
+    }
+
+    /* Compact channel switch */
+    .channel-switch-btn {
+        height: 34px;
+        font-size: 11px;
     }
 }
 

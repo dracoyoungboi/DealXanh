@@ -2,31 +2,90 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <!--
   common/buyer/footer.html
+  Footer mới — 2 phần: trên 5 cột, dưới copyright + location
 -->
 <body th:fragment="footer">
 <footer class="footer">
-    <div class="container">
-        <div class="footer__main">
-            <div class="footer__brand">
+    <!-- ===== PHẦN TRÊN: 5 CỘT ===== -->
+    <div class="footer__top">
+        <div class="footer__inner">
+
+            <!-- Cột 1: Brand + Contact + Social (~30%) -->
+            <div class="footer__col footer__col--brand">
                 <div class="footer__logo">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                    </svg>
-                    <span class="footer__brand-name">DealXanh</span>
+                    <img th:src="@{/img/logo-header.svg}" alt="DealXanh">
                 </div>
-                <p class="footer__description">Nền tảng săn deal đồ ăn.</p>
+                <ul class="footer__contact">
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <span>0776794487</span>
+                    </li>
+                    <li class="footer__contact-fb">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                        <a href="https://www.facebook.com/profile.php?id=61590542039566" target="_blank" rel="noopener">Theo dõi DealXanh</a>
+                    </li>
+                    <li>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <span>support@dealxanh.com</span>
+                    </li>
+                </ul>
             </div>
-            <div class="footer__links">
-                <div class="footer__links-group">
-                    <h4 class="footer__links-title">Liên hệ</h4>
-                    <ul class="footer__links-list">
-                        <li><span>1900 1234</span></li>
-                    </ul>
-                </div>
+
+            <!-- 4 cột links: Sản phẩm · Công ty · Hỗ trợ · Pháp lý -->
+            <div class="footer__links-grid">
+
+            <div class="footer__col">
+                <h4 class="footer__heading">Sản phẩm</h4>
+                <ul class="footer__links">
+                    <li><a href="#">Người mua</a></li>
+                    <li><a href="#">Cửa hàng</a></li>
+                    <li><a href="#">Tính năng</a></li>
+                    <li><a href="#">Đăng ký</a></li>
+                </ul>
             </div>
+
+            <div class="footer__col">
+                <h4 class="footer__heading">Công ty</h4>
+                <ul class="footer__links">
+                    <li><a href="#">Về chúng tôi</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Tuyển dụng</a></li>
+                    <li><a href="#">Báo chí</a></li>
+                </ul>
+            </div>
+
+            <div class="footer__col">
+                <h4 class="footer__heading">Hỗ trợ</h4>
+                <ul class="footer__links">
+                    <li><a href="#">Trung tâm trợ giúp</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Liên hệ</a></li>
+                    <li><a href="#">Góp ý</a></li>
+                </ul>
+            </div>
+
+            <div class="footer__col">
+                <h4 class="footer__heading">Pháp lý</h4>
+                <ul class="footer__links">
+                    <li><a th:href="@{/terms#section-2}">Điều khoản sử dụng</a></li>
+                    <li><a th:href="@{/terms#section-7}">Chính sách bảo mật</a></li>
+                    <li><a th:href="@{/terms#section-6}">Chính sách hoàn tiền</a></li>
+                </ul>
+            </div>
+
+            </div><!-- /footer__links-grid -->
+
         </div>
-        <div class="footer__bottom">
-            <p class="footer__copyright">© 2025 DealXanh. Tất cả quyền được bảo lưu.</p>
+    </div>
+
+    <!-- ===== PHẦN DƯỚI: Copyright + Location ===== -->
+    <div class="footer__bottom">
+        <div class="footer__inner footer__inner--bottom">
+            <span class="footer__copyright">&copy; 2026 DealXanh Việt Nam</span>
+            <span class="footer__location">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                TP. Hà Nội, Việt Nam
+            </span>
         </div>
     </div>
 </footer>

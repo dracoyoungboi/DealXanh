@@ -15,13 +15,13 @@ public class AppConstants {
 
     // Payment methods
     public static final String PAYMENT_BANK_TRANSFER = "BANK_TRANSFER";
+    public static final String PAYMENT_CREDIT_CARD = "CREDIT_CARD";
     public static final String PAYMENT_MOMO = "MOMO";
     public static final String PAYMENT_ZALOPAY = "ZALOPAY";
     public static final String PAYMENT_CASH = "CASH";
 
     // Product types
     public static final String PRODUCT_SPECIFIC_DEAL = "SPECIFIC_DEAL";
-    public static final String PRODUCT_BLIND_BOX = "BLIND_BOX";
 
     // Store statuses
     public static final String STORE_PENDING = "PENDING";

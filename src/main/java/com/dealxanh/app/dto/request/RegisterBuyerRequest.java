@@ -1,11 +1,14 @@
 package com.dealxanh.app.dto.request;
 
+import org.springframework.web.multipart.MultipartFile;
+
 public class RegisterBuyerRequest {
     private String fullName;
     private String email;
     private String phone;
     private String password;
     private String otp;
+    private MultipartFile avatarFile;
 
     // Getters and Setters
     public String getFullName() { return fullName; }
@@ -22,4 +25,7 @@ public class RegisterBuyerRequest {
 
     public String getOtp() { return otp; }
     public void setOtp(String otp) { this.otp = otp; }
+
+    public MultipartFile getAvatarFile() { return avatarFile; }
+    public void setAvatarFile(MultipartFile avatarFile) { this.avatarFile = avatarFile; }
 }

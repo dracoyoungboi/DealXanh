@@ -37,3 +37,9 @@ Thumbs.db
 application-secret.properties
 application-dev.properties
 .env
+
+# ==========================================
+# UPLOADS & RUNTIME DATA
+# ==========================================
+uploads/
+memory/

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Payout — Admin DealXanh</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <div th:replace="~{common/admin/css :: css}"></div>
+    <style>
+.content{padding:24px;display:flex;flex-direction:column;gap:20px}
+
+/* KPI row */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.kpi-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);padding:20px;transition:all var(--tr);
+}
+.kpi-card:hover{box-shadow:var(--shadow-md)}
+.kpi-card__top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.kpi-card__label{font-size:13px;color:var(--text-secondary);font-weight:500}
+.kpi-icon{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.kpi-icon svg{width:18px;height:18px}
+.kpi-card__value{font-size:24px;font-weight:800;margin-bottom:6px;line-height:1}
+.kpi-card__sub{font-size:12px;color:var(--text-tertiary)}
+
+/* Panel */
+.panel{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light)}
+.panel__header{
+    padding:14px 20px;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--border-light);
+}
+.panel__title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.panel__title svg{width:16px;height:16px;color:var(--primary)}
+.panel__body{padding:0}
+
+/* Tab buttons */
+.tab-group{display:flex;gap:2px;background:var(--bg);border-radius:var(--radius-md);padding:2px}
+.tab-btn{padding:6px 16px;border-radius:var(--radius-md);font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--font);transition:all .15s}
+.tab-btn.active{background:var(--surface);color:var(--text-primary);box-shadow:var(--shadow-sm)}
+.tab-btn:not(.active){background:transparent;color:var(--text-secondary)}
+.tab-btn:hover:not(.active){color:var(--text-primary)}
+
+/* Badge */
+.count-badge{font-size:10px;padding:1px 7px;border-radius:var(--radius-full);margin-left:4px;font-weight:700}
+
+/* Table */
+.table{width:100%;border-collapse:collapse}
+.table th{
+    text-align:left;padding:10px 14px;font-size:11px;font-weight:700;
+    color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;
+    border-bottom:1px solid var(--border-light);background:var(--bg);
+}
+.table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border-light)}
+.table tr:last-child td{border-bottom:none}
+.table tr:hover td{background:var(--bg)}
+
+.btn-sm{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:8px 14px;border-radius:var(--radius-md);
+    font-size:13px;font-weight:600;transition:all var(--tr);cursor:pointer;text-decoration:none;
+}
+.btn-sm--primary{background:var(--primary);color:#fff;border:none;font-family:var(--font)}
+.btn-sm--primary:hover{background:var(--primary-dark)}
+.btn-sm--outline{background:var(--surface);color:var(--text-primary);border:1px solid var(--border);font-family:var(--font)}
+.btn-sm--outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-sm svg{width:14px;height:14px}
+
+.status-badge{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:11px;font-weight:600;padding:4px 10px;border-radius:var(--radius-full);
+}
+.status-badge--success{background:var(--success-bg);color:var(--success)}
+.status-badge--warning{background:var(--warning-bg);color:var(--warning)}
+
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:center;gap:4px;padding:12px}
+.pagination button{
+    min-width:34px;height:34px;border-radius:var(--radius-sm);
+    font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);
+    background:var(--surface);color:var(--text-primary);font-family:var(--font);
+    transition:all var(--tr);
+}
+.pagination button:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.pagination button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pagination button:disabled{opacity:0.4;cursor:default}
+.pagination .page-info{font-size:12px;color:var(--text-secondary);padding:0 10px}
+
+/* Modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal__content{background:var(--surface);border-radius:var(--radius-lg);max-width:520px;width:90%;max-height:85vh;overflow-y:auto}
+.modal__header{padding:16px 20px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
+.modal__title{font-size:15px;font-weight:700}
+.modal__close{width:28px;height:28px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent}
+.modal__close:hover{background:var(--bg)}
+.modal__body{padding:20px}
+.modal__footer{padding:16px 20px;border-top:1px solid var(--border-light);display:flex;gap:10px;justify-content:end}
+
+.info-label{font-size:11px;color:var(--text-secondary);margin-bottom:2px}
+.info-value{font-size:13px;font-weight:600;color:var(--text-primary)}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div th:replace="~{common/admin/sidebar :: sidebar('payouts')}"></div>
+
+    <div class="main">
+        <div th:replace="~{common/admin/header :: header('Quản lý Payout', false)}"></div>
+
+        <div class="content">
+
+            <!-- Back button -->
+            <a th:href="@{/admin/finance}" class="btn-sm btn-sm--outline" style="width:fit-content;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="15 18 9 12 15 6"/></svg>
+                Quay lại 
+            </a>
+
+            <!-- KPI row -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__label">Lệnh chờ xử lý</div>
+                        <div class="kpi-icon" style="background:var(--warning-bg)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-card__value" th:text="${pendingPayoutCount}">0</div>
+                    <div class="kpi-card__sub">Lệnh</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__label">Tổng tiền chờ chi</div>
+                        <div class="kpi-icon" style="background:var(--warning-bg)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(pendingPayoutAmount, 0, 0) + 'đ'}">0đ</div>
+                    <div class="kpi-card__sub">Cần thanh toán</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__label">Tổng đã chi</div>
+                        <div class="kpi-icon" style="background:var(--success-bg)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(paidPayouts, 0, 0) + 'đ'}">0đ</div>
+                    <div class="kpi-card__sub">Đã thanh toán</div>
+                </div>
+            </div>
+
+            <!-- Main Payout Panel with Tabs -->
+            <div class="panel">
+                <div class="panel__header">
+                    <div class="panel__title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        Danh sách Payout
+                    </div>
+                    <div class="tab-group">
+                        <button class="tab-btn active" id="tab-pending" onclick="switchTab('pending')">
+                            Chờ xử lý
+                            <span class="count-badge" style="background:var(--warning);color:#fff;" th:text="${pendingPayoutCount}">0</span>
+                        </button>
+                        <button class="tab-btn" id="tab-history" onclick="switchTab('history')">
+                             Lịch sử
+                        </button>
+                    </div>
+                </div>
+                <div class="panel__body">
+
+                    <!-- Tab: Chờ xử lý -->
+                    <div id="panel-pending">
+                        <table class="table" th:if="${pendingPayouts != null and !pendingPayouts.isEmpty()}" id="pending-table">
+                            <thead>
+                                <tr><th>Cửa hàng</th><th>Số tiền</th><th>Ngân hàng nhận</th><th>Mô tả</th><th>Ngày yêu cầu</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="pt : ${pendingPayouts}">
+                                    <td>
+                                        <div style="font-weight:600" th:text="${pt.store != null ? pt.store.storeName : 'N/A'}">Store</div>
+                                    </td>
+                                    <td>
+                                        <div style="font-weight:600;color:var(--primary);" th:text="${#numbers.formatDecimal(pt.amount, 0, 0) + 'đ'}">0đ</div>
+                                    </td>
+                                    <td>
+                                        <div th:if="${pt.store != null and pt.store.bankName != null}" style="font-size:12px;">
+                                            <div style="font-weight:600" th:text="${pt.store.bankName}">Bank</div>
+                                            <div style="font-size:11px;color:var(--text-secondary);" th:text="${pt.store.bankAccountNumber}">STK</div>
+                                            <div style="font-size:10px;color:var(--text-tertiary);" th:text="${pt.store.bankAccountOwner}">Chủ TK</div>
+                                        </div>
+                                        <span th:unless="${pt.store != null and pt.store.bankName != null}" style="font-size:11px;color:var(--text-tertiary);">Chưa cập nhật</span>
+                                    </td>
+                                    <td style="font-size:11px;color:var(--text-secondary);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" th:text="${pt.description}">Desc</td>
+                                    <td style="font-size:11px;color:var(--text-tertiary);white-space:nowrap;" th:text="${#temporals.format(pt.createdAt, 'dd/MM/yyyy HH:mm')}">Date</td>
+                                    <td>
+                                        <button class="btn-sm btn-sm--primary"
+                                                th:attr="data-id=${pt.transactionId},data-store=${pt.store != null ? pt.store.storeName : 'N/A'},data-amount=${pt.amount},data-bank=${pt.store != null ? pt.store.bankName : ''},data-stk=${pt.store != null ? pt.store.bankAccountNumber : ''},data-owner=${pt.store != null ? pt.store.bankAccountOwner : ''},data-desc=${pt.description}"
+                                                onclick="openSinglePayoutModal(this.dataset)"
+                                                type="button"
+                                                style="font-size:11px;padding:5px 12px;white-space:nowrap;">
+                                            💰 Xử lý
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div th:unless="${pendingPayouts != null and !pendingPayouts.isEmpty()}" style="text-align:center;padding:50px 20px;color:var(--text-secondary);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin-bottom:12px;opacity:0.2;"><polyline points="20 6 9 17 4 12"/></svg>
+                            <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Tất cả lệnh đã được xử lý</div>
+                            <div style="font-size:12px;">Không có lệnh payout nào đang chờ</div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Lịch sử -->
+                    <div id="panel-history" style="display:none;">
+                        <div id="history-table-container">
+                            <div style="text-align:center;padding:50px 20px;color:var(--text-secondary);">Đang tải lịch sử...</div>
+                        </div>
+                        <div id="history-pagination" class="pagination" style="display:none;"></div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Manual Payout Modal -->
+<div class="modal" id="manual-payout-modal">
+    <div class="modal__content">
+        <div class="modal__header">
+            <div class="modal__title">🏦 Xác nhận chuyển tiền</div>
+            <button class="modal__close" onclick="closeManualPayoutModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal__body">
+            <!-- Store & Amount info -->
+            <div style="background:var(--bg);border-radius:var(--radius-md);padding:14px;margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <span style="font-size:13px;font-weight:700;" id="mp-storeName">--</span>
+                    <span class="status-badge status-badge--warning" style="font-size:10px;">⏳ Chờ xử lý</span>
+                </div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;" id="mp-description">--</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:var(--text-secondary);">Số tiền cần chuyển:</span>
+                    <span style="font-size:20px;font-weight:800;color:var(--primary);" id="mp-amount">0đ</span>
+                </div>
+            </div>
+
+            <!-- Receiver bank info -->
+            <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:var(--radius-md);padding:14px;margin-bottom:14px;">
+                <div style="font-size:11px;font-weight:700;color:var(--info);margin-bottom:8px;">📋 Người nhận (Cửa hàng)</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div>
+                        <div class="info-label">Ngân hàng</div>
+                        <div class="info-value" id="mp-recvBank">--</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Số tài khoản</div>
+                        <div class="info-value" style="color:var(--info);" id="mp-recvSTK">--</div>
+                    </div>
+                    <div style="grid-column:1/-1;">
+                        <div class="info-label">Chủ tài khoản</div>
+                        <div class="info-value" id="mp-recvOwner">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin fields (optional) -->
+            <div style="margin-bottom:12px;">
+                <div class="info-label" style="margin-bottom:4px;">Số TK Admin dùng để chuyển <span style="color:var(--text-tertiary);font-weight:400;">(tùy chọn)</span></div>
+                <input type="text" id="mp-adminAccount"
+                       placeholder="Nhập số tài khoản của bạn..."
+                       style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:var(--font);">
+            </div>
+            <div style="margin-bottom:12px;">
+                <div class="info-label" style="margin-bottom:4px;">Ghi chú <span style="color:var(--text-tertiary);font-weight:400;">(tùy chọn)</span></div>
+                <textarea id="mp-adminNote" rows="2"
+                          placeholder="VD: Đã chuyển qua Vietcombank, mã GD: FT123456..."
+                          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:var(--font);resize:vertical;"></textarea>
+            </div>
+
+            <div style="padding:10px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-md);font-size:12px;">
+                ⚠️ Hãy chắc chắn bạn đã chuyển khoản thành công. Hành động này không thể hoàn tác.
+            </div>
+        </div>
+        <div class="modal__footer">
+            <button class="btn-sm btn-sm--outline" onclick="closeManualPayoutModal()">Hủy</button>
+            <button class="btn-sm btn-sm--primary" id="confirmManualPayoutBtn" onclick="processSinglePayout()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                Xác nhận đã chuyển tiền
+            </button>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{common/admin/js :: js}"></div>
+
+<script>
+// ===== Tab Switching =====
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-pending').style.display = (tab === 'pending') ? '' : 'none';
+    document.getElementById('panel-history').style.display = (tab === 'history') ? '' : 'none';
+    if (tab === 'history') loadHistory(0);
+}
+
+// ===== Payout Processing =====
+
+var currentPayoutId = null;
+
+function openSinglePayoutModal(dataset) {
+    currentPayoutId = dataset.id;
+    document.getElementById('mp-storeName').textContent = dataset.store || 'N/A';
+    document.getElementById('mp-description').textContent = dataset.desc || '';
+    document.getElementById('mp-amount').textContent = Number(dataset.amount || 0).toLocaleString() + 'đ';
+    document.getElementById('mp-recvBank').textContent = dataset.bank || 'Chưa cập nhật';
+    document.getElementById('mp-recvSTK').textContent = dataset.stk || 'Chưa cập nhật';
+    document.getElementById('mp-recvOwner').textContent = dataset.owner || 'Chưa cập nhật';
+    document.getElementById('mp-adminAccount').value = '';
+    document.getElementById('mp-adminNote').value = '';
+    document.getElementById('manual-payout-modal').classList.add('show');
+}
+
+function closeManualPayoutModal() {
+    document.getElementById('manual-payout-modal').classList.remove('show');
+    currentPayoutId = null;
+}
+
+function processSinglePayout() {
+    if (!currentPayoutId) { alert('Vui lòng chọn một lệnh payout.'); return; }
+
+    var adminAccount = document.getElementById('mp-adminAccount').value.trim();
+    var adminNote = document.getElementById('mp-adminNote').value.trim();
+    var btn = document.getElementById('confirmManualPayoutBtn');
+    btn.disabled = true;
+    btn.textContent = 'Đang xử lý...';
+
+    var csrfToken = document.querySelector('meta[name="_csrf"]');
+    var csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+    var formData = new URLSearchParams();
+    if (adminAccount) formData.append('adminAccountNumber', adminAccount);
+    if (adminNote) formData.append('adminNote', adminNote);
+    if (csrfToken && csrfHeader) formData.append(csrfHeader.getAttribute('content'), csrfToken.getAttribute('content'));
+
+    fetch('/admin/api/finance/payout/' + currentPayoutId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Lỗi: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Xác nhận đã chuyển tiền';
+        }
+    })
+    .catch(function(err) {
+        alert('Lỗi kết nối: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Xác nhận đã chuyển tiền';
+    });
+}
+
+// ===== History with Pagination =====
+
+var historyPage = 0;
+var historyTotalPages = 0;
+
+function loadHistory(page) {
+    historyPage = page;
+    var container = document.getElementById('history-table-container');
+    container.innerHTML = '<div style="text-align:center;padding:40px;">Đang tải...</div>';
+
+    fetch('/admin/api/finance/payout-history?page=' + page + '&size=15')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) {
+                container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--danger);">Lỗi tải dữ liệu</div>';
+                return;
+            }
+            historyTotalPages = data.totalPages || 0;
+
+            if (!data.data || data.data.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--text-secondary);">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin-bottom:12px;opacity:0.2;"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>' +
+                    '<div style="font-size:15px;font-weight:600;margin-bottom:4px;">Chưa có lịch sử payout</div>' +
+                    '<div style="font-size:12px;">Các lệnh đã xử lý sẽ hiển thị ở đây</div>' +
+                '</div>';
+                document.getElementById('history-pagination').style.display = 'none';
+                return;
+            }
+
+            var rows = '';
+            for (var i = 0; i < data.data.length; i++) {
+                var p = data.data[i];
+                var bankInfo = p.bankName ? '<div style="font-size:10px;color:var(--text-secondary);margin-top:1px;">' + escapeHtml(p.bankName) + ' - ' + escapeHtml(p.bankAccountNumber || '') + '</div>' : '';
+                var adminInfo = '';
+                if (p.processedBy) {
+                    adminInfo = '<div style="font-size:10px;color:var(--success);margin-top:2px;">Người xử lý: ' + escapeHtml(p.processedBy) + '</div>';
+                    if (p.adminAccountNumber) adminInfo += '<div style="font-size:9px;color:var(--text-tertiary);">TK admin: ' + escapeHtml(p.adminAccountNumber) + '</div>';
+                    if (p.adminNote) adminInfo += '<div style="font-size:9px;color:var(--text-tertiary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeHtml(p.adminNote) + '">' + escapeHtml(p.adminNote) + '</div>';
+                }
+                rows += '<tr>' +
+                    '<td><div style="font-weight:600">' + escapeHtml(p.storeName) + '</div>' + bankInfo + '</td>' +
+                    '<td><div style="font-weight:600;color:var(--primary);">' + (p.amount || 0).toLocaleString() + 'đ</div></td>' +
+                    '<td><span class="status-badge status-badge--success">Đã thanh toán</span>' + adminInfo + '</td>' +
+                    '<td style="font-size:11px;color:var(--text-tertiary);white-space:nowrap;">' + formatDate(p.processedAt || p.createdAt) + '</td>' +
+                '</tr>';
+            }
+
+            container.innerHTML = '<table class="table">' +
+                '<thead><tr><th>Cửa hàng</th><th>Số tiền</th><th>Trạng thái</th><th>Ngày xử lý</th></tr></thead>' +
+                '<tbody>' + rows + '</tbody></table>';
+
+            renderHistoryPagination();
+        })
+        .catch(function() {
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--danger);">Không thể tải lịch sử</div>';
+        });
+}
+
+function renderHistoryPagination() {
+    var pagDiv = document.getElementById('history-pagination');
+    if (historyTotalPages <= 1) { pagDiv.style.display = 'none'; return; }
+    pagDiv.style.display = 'flex';
+
+    var html = '<button onclick="loadHistory(0)" ' + (historyPage === 0 ? 'disabled' : '') + '>«</button>';
+    html += '<button onclick="loadHistory(' + (historyPage - 1) + ')" ' + (historyPage === 0 ? 'disabled' : '') + '>‹</button>';
+
+    var startPage = Math.max(0, historyPage - 2);
+    var endPage = Math.min(historyTotalPages - 1, historyPage + 2);
+    for (var p = startPage; p <= endPage; p++) {
+        html += '<button onclick="loadHistory(' + p + ')" class="' + (p === historyPage ? 'active' : '') + '">' + (p + 1) + '</button>';
+    }
+
+    html += '<button onclick="loadHistory(' + (historyPage + 1) + ')" ' + (historyPage >= historyTotalPages - 1 ? 'disabled' : '') + '>›</button>';
+    html += '<button onclick="loadHistory(' + (historyTotalPages - 1) + ')" ' + (historyPage >= historyTotalPages - 1 ? 'disabled' : '') + '>»</button>';
+    html += '<span class="page-info">Trang ' + (historyPage + 1) + ' / ' + historyTotalPages + '</span>';
+
+    pagDiv.innerHTML = html;
+}
+
+// ===== Helpers =====
+
+function escapeHtml(str) { if (!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatDate(d) { if (!d) return 'N/A'; var dt = new Date(d); return dt.toLocaleDateString('vi-VN') + ' ' + dt.toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'}); }
+
+// Close modal on Escape / overlay click
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeManualPayoutModal(); });
+document.getElementById('manual-payout-modal').addEventListener('click', function(e) { if (e.target === this) closeManualPayoutModal(); });
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.dealxanh.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +22,12 @@ public class User {
     private String avatarUrl;
     private Boolean active = true;
 
+    // Đánh dấu mật khẩu yếu (tự động sinh) — cần đổi khi login
+    private Boolean weakPassword = false;
+
+    // Đã xác thực email (OTP) chưa? Nếu chưa, popup OTP sẽ hiện
+    private Boolean emailVerified = true;
+
     // OAuth2 (Google Login)
     private String provider; // local, google
     private String providerId;
@@ -36,13 +43,16 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<Order> orders;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<Review> reviews;
 
     // Dành cho STORE_STAFF: nhân viên này trực thuộc cửa hàng nào
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_store_id")
     private Store workStore;
@@ -76,6 +86,12 @@ public class User {
 
     public Boolean getActive() { return active != null ? active : true; }
     public void setActive(Boolean active) { this.active = active; }
+
+    public Boolean getWeakPassword() { return weakPassword != null ? weakPassword : false; }
+    public void setWeakPassword(Boolean weakPassword) { this.weakPassword = weakPassword; }
+
+    public Boolean getEmailVerified() { return emailVerified != null ? emailVerified : true; }
+    public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
 
     public String getProvider() { return provider; }
     public void setProvider(String provider) { this.provider = provider; }

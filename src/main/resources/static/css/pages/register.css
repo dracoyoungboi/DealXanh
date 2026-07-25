@@ -1,0 +1,1525 @@
+/**
+ * Registration Pages Styles — DealXanh
+ * Reusable auth-registration classes matching the Login page visual language.
+ * Uses design tokens from variables.css. Never hardcodes hex values.
+ *
+ * Prefix: auth- (avoid collision with login- prefixed classes in login.css)
+ */
+
+/* ==================== PAGE SHELL ==================== */
+
+.auth-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--background);
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-family);
+    -webkit-font-smoothing: antialiased;
+}
+
+.auth-shell {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1.25rem 2rem 2.5rem;
+    width: 100%;
+}
+
+/* ==================== AUTH CARD ==================== */
+
+.auth-card {
+    width: 100%;
+    background: var(--surface);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: authFadeIn 0.5s ease-out;
+}
+
+.auth-card--narrow {
+    max-width: 480px;
+}
+
+.auth-card--wide {
+    max-width: 640px;
+}
+
+.auth-card__header {
+    padding: 1.25rem 1.75rem 0.5rem;
+}
+
+.auth-card__body {
+    padding: 0 1.75rem 1.25rem;
+}
+
+.auth-card__footer {
+    padding: 1rem 1.75rem 1.5rem;
+    border-top: 0.5px solid var(--border);
+}
+
+/* ==================== CARD TYPOGRAPHY ==================== */
+
+.auth-card__title {
+    font-size: 28px;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.auth-card__subtitle {
+    font-size: 15px;
+    color: var(--text-secondary);
+}
+
+/* ==================== AUTH FORM ==================== */
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ==================== INPUT GROUP (icon + input) ==================== */
+
+.auth-input-group {
+    position: relative;
+}
+
+.auth-input-group__icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+    transition: color var(--transition-fast);
+    display: flex;
+    align-items: center;
+}
+
+.auth-input-group__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 13px 16px 13px 48px;
+    font-size: 15px;
+    font-family: var(--font-family);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: var(--text-primary);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    -webkit-appearance: none;
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(13, 92, 46, 0.1);
+}
+
+.auth-input:focus ~ .auth-input-group__icon {
+    color: var(--primary);
+}
+
+.auth-input--no-icon {
+    padding-left: 16px;
+}
+
+.auth-input.error {
+    border-color: var(--status-danger);
+}
+
+/* ==================== AUTH SELECT ==================== */
+
+.auth-select {
+    width: 100%;
+    padding: 13px 36px 13px 16px;
+    font-size: 15px;
+    font-family: var(--font-family);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: var(--text-primary);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color var(--transition-fast);
+    cursor: pointer;
+}
+
+.auth-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(13, 92, 46, 0.1);
+}
+
+/* ==================== AUTH BUTTON (green gradient + shimmer) ==================== */
+
+.auth-button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 16px;
+    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.auth-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.auth-button:hover:not(:disabled) {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.auth-button:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+.auth-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.auth-button svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* ==================== AUTH DIVIDER ==================== */
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    margin: 14px 0;
+    white-space: nowrap;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--border);
+}
+
+/* ==================== AUTH SOCIAL BUTTON ==================== */
+
+.auth-social-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 13px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    font-size: 14px;
+    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-decoration: none;
+}
+
+.auth-social-btn:hover {
+    border-color: var(--border);
+    background: var(--surface-hover);
+    box-shadow: var(--shadow-sm);
+}
+
+.auth-social-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* ==================== AUTH TERMS CHECKBOX ==================== */
+
+.auth-terms {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    background: rgba(13, 92, 46, 0.04);
+    border: 1px solid rgba(13, 92, 46, 0.08);
+    margin-bottom: 20px;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.auth-terms:has(input[type="checkbox"]:checked) {
+    background: rgba(13, 92, 46, 0.07);
+    border-color: rgba(13, 92, 46, 0.18);
+}
+
+.auth-terms input[type="checkbox"] {
+    margin-top: 2px;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.auth-terms label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    cursor: pointer;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.auth-terms a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-terms a:hover {
+    text-decoration: underline;
+}
+
+/* ==================== AUTH LINK ==================== */
+
+.auth-link {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 10px;
+}
+
+/* ==================== PASSWORD EYE TOGGLE (match .form-toggle) ==================== */
+
+.pwd-eye-btn {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    font-family: var(--font-family);
+    transition: color var(--transition-fast);
+    z-index: 2;
+}
+
+.pwd-eye-btn:hover {
+    color: var(--text-secondary);
+}
+
+.pwd-eye-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.auth-link a {
+    color: var(--primary);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+/* ==================== AUTH PROGRESS BAR ==================== */
+
+.auth-progress {
+    height: 3px;
+    background: var(--border-light);
+}
+
+.auth-progress__fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.4s ease;
+    border-radius: 0 2px 2px 0;
+}
+
+/* ==================== AUTH STEP DOTS ==================== */
+
+.auth-step-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 0 0;
+}
+
+.auth-step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--border);
+    transition: all 0.3s ease;
+}
+
+.auth-step-dot.active {
+    background: var(--primary);
+    width: 24px;
+}
+
+.auth-step-dot.done {
+    background: var(--status-success);
+}
+
+/* ==================== AUTH STEP BADGE ==================== */
+
+.auth-step-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    background: rgba(13, 92, 46, 0.08);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.auth-step-badge svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* ==================== AUTH CHIP ==================== */
+
+.auth-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-family);
+    transition: all var(--transition-fast);
+    user-select: none;
+    background: var(--surface);
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.auth-chip.selected {
+    background: rgba(13, 92, 46, 0.08);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.auth-chip:hover {
+    border-color: var(--primary);
+}
+
+.auth-chip input[type="checkbox"],
+.auth-chip input[type="radio"] {
+    display: none;
+}
+
+/* Chip wrap container */
+.auth-chip-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* ==================== AUTH PHONE ROW ==================== */
+
+.auth-phone-row {
+    display: flex;
+    gap: 10px;
+}
+
+.auth-phone-prefix {
+    flex-shrink: 0;
+    padding: 13px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    font-size: 15px;
+    font-weight: 600;
+    background: var(--background);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* ==================== AUTH FORM ROW ==================== */
+
+.auth-form-row {
+    display: flex;
+    gap: 14px;
+}
+
+.auth-form-row .form-group,
+.auth-form-row .auth-input-group {
+    flex: 1;
+}
+
+/* ==================== AUTH UPLOAD ==================== */
+
+.auth-upload {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: var(--surface);
+    position: relative;
+}
+
+.auth-upload:hover {
+    border-color: var(--primary);
+    background: rgba(13, 92, 46, 0.02);
+}
+
+.auth-upload.has-file {
+    border-color: var(--status-success);
+    background: var(--status-success-bg);
+    border-style: solid;
+}
+
+.auth-upload input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.auth-upload__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    background: rgba(13, 92, 46, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    color: var(--primary);
+}
+
+.auth-upload__icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.auth-upload__title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.auth-upload__sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ==================== AUTH CALLOUT ==================== */
+
+.auth-callout {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.auth-callout--info {
+    background: rgba(59, 130, 246, 0.06);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    color: var(--text-secondary);
+}
+
+.auth-callout--warn {
+    background: var(--status-warning-bg);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: var(--text-secondary);
+}
+
+.auth-callout svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.auth-callout--info svg {
+    color: var(--status-info);
+}
+
+.auth-callout--warn svg {
+    color: var(--status-warning);
+}
+
+.auth-callout strong {
+    color: var(--text-primary);
+}
+
+/* ==================== AUTH BOTTOM ACTIONS ==================== */
+
+.auth-bottom-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ==================== AUTH BENEFITS STRIP ==================== */
+
+.auth-benefits {
+    display: flex;
+    gap: 0;
+    margin-bottom: 18px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.auth-benefit-item {
+    flex: 1;
+    padding: 8px 6px;
+    text-align: center;
+    border-right: 1px solid var(--border-light);
+}
+
+.auth-benefit-item:last-child {
+    border-right: none;
+}
+
+.auth-benefit-item__icon {
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-md);
+    background: rgba(13, 92, 46, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 4px;
+    color: var(--primary);
+}
+
+.auth-benefit-item__icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.auth-benefit-item__text {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ==================== AUTH DOC ITEM ==================== */
+
+.auth-doc-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--border-light);
+    background: var(--surface);
+    margin-bottom: 12px;
+}
+
+.auth-doc-item.uploaded {
+    border-color: var(--status-success);
+    background: var(--status-success-bg);
+}
+
+.auth-doc-item.required {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: var(--status-warning-bg);
+}
+
+.auth-doc-item__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+}
+
+.auth-doc-item__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.auth-doc-item__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.auth-doc-item__name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.auth-doc-item__desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* ==================== AUTH UPLOAD BUTTON (compact) ==================== */
+
+.auth-upload-btn {
+    padding: 7px 14px;
+    border-radius: var(--radius-md);
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-family);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.auth-upload-btn:hover {
+    background: var(--primary-dark);
+}
+
+.auth-upload-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ==================== AUTH FORM LABEL (override) ==================== */
+
+.auth-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.auth-label span {
+    color: var(--status-danger);
+    margin-left: 2px;
+}
+
+/* ==================== AUTH FORM ERROR ==================== */
+
+.auth-error {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--status-danger);
+    display: none;
+}
+
+.auth-error.show {
+    display: block;
+}
+
+/* ==================== AUTH FORM HINT ==================== */
+
+.auth-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ==================== AUTH SLOT GRID ==================== */
+
+.auth-slot-grid,
+.slot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+/* ==================== CHIP LEGACY CLASSES (JS touchpoints) ==================== */
+
+/* Category, day, slot chips — JS selects by .cat-chip, .day-chip, .slot-chip */
+.cat-chip,
+.day-chip,
+.slot-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-family);
+    transition: all var(--transition-fast);
+    user-select: none;
+    background: var(--surface);
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.cat-chip input[type="checkbox"],
+.day-chip input[type="checkbox"],
+.slot-chip input[type="checkbox"],
+.cat-chip input[type="radio"],
+.day-chip input[type="radio"],
+.slot-chip input[type="radio"] {
+    display: none;
+}
+
+/* ==================== DOC ITEM LEGACY CLASSES (JS touchpoints) ==================== */
+
+.doc-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--border-light);
+    background: var(--surface);
+    margin-bottom: 12px;
+}
+
+.doc-item.uploaded {
+    border-color: var(--status-success);
+    background: var(--status-success-bg);
+}
+
+.doc-item.required {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: var(--status-warning-bg);
+}
+
+.doc-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+}
+
+.doc-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.doc-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.doc-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.doc-status {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.doc-status.uploaded {
+    color: var(--status-success);
+}
+
+.doc-upload-btn {
+    padding: 7px 14px;
+    border-radius: var(--radius-md);
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-family);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.doc-upload-btn:hover {
+    background: var(--primary-dark);
+}
+
+.doc-upload-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ==================== UPLOAD AREA LEGACY (JS touchpoints) ==================== */
+
+.upload-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: var(--surface);
+    position: relative;
+}
+
+.upload-area:hover {
+    border-color: var(--primary);
+    background: rgba(13, 92, 46, 0.02);
+}
+
+.upload-area.has-file {
+    border-color: var(--status-success);
+    background: var(--status-success-bg);
+    border-style: solid;
+}
+
+.upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-area__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    background: rgba(13, 92, 46, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    color: var(--primary);
+}
+
+.upload-area__icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.upload-area__title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.upload-area__sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ==================== PICKUP CONFIG LEGACY ==================== */
+
+.pickup-config {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.pickup-config__label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pickup-config__label svg {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+}
+
+/* ==================== AUTH PICKUP CONFIG ==================== */
+
+.auth-pickup-config {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.auth-pickup-config__label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.auth-pickup-config__label svg {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+}
+
+/* ==================== REGISTRATION HEADER ==================== */
+
+.reg-header {
+    padding: 16px 20px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-light);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-family);
+    transition: background var(--transition-fast);
+}
+
+.back-btn:hover {
+    background: var(--border-light);
+}
+
+.back-btn svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-primary);
+}
+
+.reg-header__logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reg-header__logo svg {
+    color: var(--primary);
+}
+
+.reg-header__brand {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.reg-header__step {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* ==================== STEP PAGE VISIBILITY ==================== */
+
+.step-page {
+    display: none;
+}
+
+.step-page.active {
+    display: block;
+}
+
+/* ==================== FORM LABEL EXTENSIONS ==================== */
+
+.form-label span {
+    color: var(--status-danger);
+    margin-left: 2px;
+}
+
+.form-label em {
+    font-style: normal;
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+/* ==================== FORM TOGGLE (password eye) ==================== */
+
+.form-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    font-family: var(--font-family);
+    transition: color var(--transition-fast);
+}
+
+.form-toggle:hover {
+    color: var(--text-secondary);
+}
+
+.form-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ==================== STEP HEADER (seller step title section) ==================== */
+
+.step-header {
+    margin-bottom: 28px;
+}
+
+/* ==================== ANIMATIONS ==================== */
+
+@keyframes authFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+/* Large desktop */
+@media (max-width: 1440px) {
+    .auth-card--wide {
+        max-width: 600px;
+    }
+}
+
+/* Laptop / small desktop */
+@media (max-width: 1024px) {
+    .auth-card--wide {
+        max-width: 560px;
+    }
+
+    .auth-card--narrow {
+        max-width: 440px;
+    }
+
+    .auth-card__title {
+        font-size: 24px;
+    }
+
+    .auth-shell {
+        padding: 1rem 24px 2rem;
+    }
+}
+
+/* Tablet / large phone */
+@media (max-width: 768px) {
+    .auth-shell {
+        padding: 12px 16px 2rem;
+    }
+
+    .auth-card {
+        border-radius: var(--radius-xl);
+        max-width: 100% !important;
+        box-shadow: none;
+    }
+
+    .auth-card__header {
+        padding: 1rem 1.25rem 0.5rem;
+    }
+
+    .auth-card__body {
+        padding: 0 1.25rem 1rem;
+    }
+
+    .auth-card__footer {
+        padding: 0.75rem 1.25rem 1rem;
+    }
+
+    .auth-card__title {
+        font-size: 22px;
+        margin-bottom: 4px;
+    }
+
+    .auth-card__subtitle {
+        font-size: 13px;
+    }
+
+    /* Stack form rows vertically */
+    .auth-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .auth-form {
+        gap: 10px;
+    }
+
+    .auth-button {
+        padding: 12px;
+    }
+
+    .auth-divider {
+        margin: 12px 0;
+    }
+
+    .auth-step-dots {
+        padding: 12px 0 0;
+    }
+
+    .auth-benefits {
+        margin-bottom: 14px;
+    }
+
+    .auth-upload {
+        padding: 22px 16px;
+    }
+
+    /* Terms checkbox: tighter padding on tablet */
+    .auth-terms {
+        padding: 12px 14px;
+    }
+
+    .auth-terms label {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+}
+
+/* Small phone */
+@media (max-width: 480px) {
+    .auth-shell {
+        padding: 8px 12px 1.5rem;
+    }
+
+    .auth-card {
+        border-radius: var(--radius-lg);
+    }
+
+    .auth-card__header {
+        padding: 0.75rem 0.875rem 0.4rem;
+    }
+
+    .auth-card__body {
+        padding: 0 0.875rem 0.75rem;
+    }
+
+    .auth-card__footer {
+        padding: 0.5rem 0.875rem 0.75rem;
+    }
+
+    .auth-card__title {
+        font-size: 20px;
+    }
+
+    .auth-card__subtitle {
+        font-size: 12px;
+    }
+
+    .auth-form {
+        gap: 8px;
+    }
+
+    .auth-button {
+        padding: 11px;
+        font-size: 15px;
+    }
+
+    .auth-divider {
+        margin: 14px 0;
+        font-size: 12px;
+        gap: 12px;
+    }
+
+    .auth-input {
+        padding: 11px 12px 11px 44px;
+        font-size: 14px;
+    }
+
+    .auth-input--no-icon {
+        padding-left: 12px;
+    }
+
+    .auth-select {
+        padding: 11px 32px 11px 12px;
+        font-size: 14px;
+    }
+
+    .auth-phone-prefix {
+        padding: 11px 12px;
+        font-size: 14px;
+    }
+
+    .auth-upload {
+        padding: 20px 14px;
+    }
+
+    .auth-upload__icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .auth-upload__title {
+        font-size: 13px;
+    }
+
+    .auth-chip {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .auth-link {
+        font-size: 13px;
+    }
+
+    .auth-social-btn {
+        padding: 11px;
+        font-size: 13px;
+    }
+
+    .auth-terms {
+        padding: 10px 12px;
+    }
+
+    .auth-terms label {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .auth-terms input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        min-width: 16px;
+        margin-top: 2px;
+    }
+
+    .auth-benefit-item {
+        padding: 10px 6px;
+    }
+
+    .auth-benefit-item__icon {
+        width: 28px;
+        height: 28px;
+        margin-bottom: 6px;
+    }
+
+    .auth-benefit-item__text {
+        font-size: 10px;
+    }
+
+    .auth-doc-item {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .auth-pickup-config {
+        padding: 16px;
+    }
+
+    .auth-slot-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Tiny phone */
+@media (max-width: 375px) {
+    .auth-shell {
+        padding: 4px 8px 1.25rem;
+    }
+
+    .auth-card {
+        border-radius: var(--radius-md);
+    }
+
+    .auth-card__header {
+        padding: 0.6rem 0.75rem 0.3rem;
+    }
+
+    .auth-card__body {
+        padding: 0 0.75rem 0.5rem;
+    }
+
+    .auth-card__footer {
+        padding: 0.4rem 0.75rem 0.5rem;
+    }
+
+    .auth-card__title {
+        font-size: 18px;
+    }
+
+    .auth-card__subtitle {
+        font-size: 12px;
+    }
+
+    .auth-form {
+        gap: 6px;
+    }
+
+    .auth-button {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .auth-divider {
+        margin: 10px 0;
+        font-size: 11px;
+        gap: 10px;
+    }
+
+    .auth-input {
+        padding: 10px 10px 10px 40px;
+        font-size: 13px;
+    }
+
+    .auth-input--no-icon {
+        padding-left: 10px;
+    }
+
+    .auth-select {
+        padding: 10px 28px 10px 10px;
+        font-size: 13px;
+    }
+
+    .auth-phone-prefix {
+        padding: 10px 10px;
+        font-size: 13px;
+    }
+
+    .auth-chip {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+
+    .auth-link {
+        font-size: 12px;
+    }
+
+    .auth-terms {
+        padding: 10px 12px;
+    }
+
+    .auth-terms label {
+        font-size: 11px;
+        line-height: 1.45;
+    }
+
+    .auth-terms input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        min-width: 16px;
+        margin-top: 1px;
+    }
+
+    .auth-social-btn {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .auth-step-dot {
+        width: 6px;
+        height: 6px;
+    }
+
+    .auth-step-dot.active {
+        width: 18px;
+    }
+
+    .auth-step-dots {
+        gap: 6px;
+        padding: 10px 0 0;
+    }
+
+    .auth-upload {
+        padding: 16px 12px;
+    }
+
+    .auth-upload__title {
+        font-size: 12px;
+    }
+
+    .auth-upload__sub {
+        font-size: 11px;
+    }
+
+    .auth-slot-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .auth-benefit-item {
+        padding: 8px 4px;
+    }
+
+    .auth-benefit-item__icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .auth-benefit-item__text {
+        font-size: 9px;
+    }
+}

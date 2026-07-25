@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  seller/fragments/header.html
+  Delegation wrapper → common/seller/header
+  Usage: <div th:replace="~{seller/fragments/header :: header('Page Title', 'activePage')}"></div>
+-->
+<body th:fragment="header(pageTitle, activePage)">
+    <th:block th:replace="~{common/seller/header :: header(${pageTitle}, ${activePage})}"/>
+</body>
+</html>
