@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký Buyer - DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/reset.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/register.css}">
+</head>
+<body>
+<div class="auth-page">
+
+    <!-- Header -->
+    <header class="reg-header">
+        <button class="back-btn" id="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <div class="reg-header__logo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span class="reg-header__brand">DealXanh</span>
+        </div>
+        <span class="reg-header__step" id="step-indicator">Bước 1 / 1</span>
+    </header>
+
+    <!-- Progress -->
+    <div class="auth-progress">
+        <div class="auth-progress__fill" id="progress-fill" style="width:100%"></div>
+    </div>
+
+    <!-- Centered card area -->
+    <div class="auth-shell">
+        <div class="auth-card auth-card--narrow">
+
+            <!-- Step header -->
+            <div class="auth-card__header">
+                <div class="auth-step-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Tạo tài khoản Buyer
+                </div>
+                <h1 class="auth-card__title">Thông tin cơ bản</h1>
+                <p class="auth-card__subtitle">Nhập thông tin để tạo tài khoản và bắt đầu săn deal ngay hôm nay.</p>
+            </div>
+
+            <!-- Form content -->
+            <div class="auth-card__body">
+                <div class="step-page active" id="step-1">
+
+                    <!-- Benefits -->
+                    <div class="auth-benefits">
+                        <div class="auth-benefit-item">
+                            <div class="auth-benefit-item__icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            </div>
+                            <div class="auth-benefit-item__text">Giảm đến 70%</div>
+                        </div>
+                        <div class="auth-benefit-item">
+                            <div class="auth-benefit-item__icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <div class="auth-benefit-item__text">An toàn 100%</div>
+                        </div>
+                        <div class="auth-benefit-item">
+                            <div class="auth-benefit-item__icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <div class="auth-benefit-item__text">Hoàn tiền nhanh</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Họ và tên <span>*</span></label>
+                        <div class="auth-input-group">
+                            <span class="auth-input-group__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                            <input type="text" class="auth-input" id="fullname" placeholder="Nguyễn Văn An" autocomplete="name">
+                        </div>
+                        <div class="auth-error" id="err-fullname">Vui lòng nhập họ và tên</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email <span>*</span></label>
+                        <div class="auth-input-group">
+                            <span class="auth-input-group__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+                            <input type="email" class="auth-input" id="email" placeholder="email@example.com" autocomplete="email">
+                        </div>
+                        <div class="auth-error" id="err-email">Email không hợp lệ</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Số điện thoại <span>*</span></label>
+                        <div class="auth-phone-row">
+                            <span class="auth-phone-prefix">🇻🇳 +84</span>
+                            <div class="auth-input-group" style="flex:1">
+                                <input type="tel" class="auth-input auth-input--no-icon" id="phone" placeholder="0912 345 678" autocomplete="tel">
+                            </div>
+                        </div>
+                        <div class="auth-error" id="err-phone">Số điện thoại không hợp lệ</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Mật khẩu <span>*</span></label>
+                        <div class="auth-input-group">
+                            <span class="auth-input-group__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                            <input type="password" class="auth-input" id="password" placeholder="Ít nhất 8 ký tự" oninput="updatePwdStrength(this.value)">
+                            <button type="button" class="form-toggle" id="toggle-pwd">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                        <!-- Password strength bar -->
+                        <div id="pwd-strength-wrap" style="display:none;margin-top:10px">
+                            <div style="display:flex;gap:4px;margin-bottom:6px">
+                                <div id="pws1" style="flex:1;height:4px;border-radius:2px;background:var(--border-light);transition:background .3s"></div>
+                                <div id="pws2" style="flex:1;height:4px;border-radius:2px;background:var(--border-light);transition:background .3s"></div>
+                                <div id="pws3" style="flex:1;height:4px;border-radius:2px;background:var(--border-light);transition:background .3s"></div>
+                                <div id="pws4" style="flex:1;height:4px;border-radius:2px;background:var(--border-light);transition:background .3s"></div>
+                            </div>
+                            <div id="pwd-strength-text" style="font-size:12px;color:var(--text-secondary)"></div>
+                            <div id="pwd-warning" style="display:none;font-size:11px;color:#92400e;margin-top:6px;padding:6px 8px;background:rgba(245,158,11,.1);border-radius:6px;">⚠️ Mật khẩu của bạn quá yếu và dễ đoán. Chúng tôi sẽ không chịu trách nhiệm nếu bạn bị đánh cắp tài khoản.</div>
+                        </div>
+                        <div class="auth-error" id="err-pwd">Mật khẩu tối thiểu 8 ký tự, gồm chữ và số</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Xác nhận mật khẩu <span>*</span></label>
+                        <div class="auth-input-group">
+                            <span class="auth-input-group__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                            <input type="password" class="auth-input" id="confirmPassword" placeholder="Nhập lại mật khẩu">
+                            <button type="button" class="form-toggle" id="toggle-confirm-pwd">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                        <div class="auth-error" id="err-confirm-pwd">Mật khẩu xác nhận không khớp</div>
+                    </div>
+
+                    <div class="auth-divider" style="display:none;">hoặc đăng ký với</div>
+
+                    <button class="auth-social-btn" style="display:none; margin-bottom:14px">
+                        <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                        Tiếp tục với Google
+                    </button>
+
+                    <div class="auth-terms" style="margin-bottom:14px">
+                        <input type="checkbox" id="agree-terms">
+                        <label for="agree-terms">Tôi đã đọc và đồng ý với <a href="/terms" target="_blank">Điều khoản sử dụng</a>, <a href="/terms#section-7" target="_blank">Chính sách bảo mật</a> và xác nhận đủ 16 tuổi trở lên.</label>
+                    </div>
+                    <div class="auth-error" id="err-terms" style="margin-bottom:12px">Vui lòng đồng ý với điều khoản sử dụng</div>
+
+                    <button class="auth-button" id="btn-step1">
+                        <span>Tiếp tục</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+
+                    <p class="auth-link">Đã có tài khoản? <a href='/login'>Đăng nhập ngay</a></p>
+                </div>
+            </div><!-- /auth-card__body -->
+
+        </div><!-- /auth-card -->
+    </div><!-- /auth-shell -->
+
+</div><!-- /auth-page -->
+
+<script>
+
+// Back button — direct history back
+document.getElementById('back-btn').onclick = function() { window.history.back(); };
+
+// Step 1 validation + submit directly
+document.getElementById('btn-step1').onclick = function() {
+    const name = document.getElementById('fullname').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const pwd = document.getElementById('password').value;
+    const cpwd = document.getElementById('confirmPassword').value;
+    const terms = document.getElementById('agree-terms').checked;
+    let valid = true;
+
+    // Full name
+    if (!name || name.length < 2) {
+        document.getElementById('err-fullname').textContent = 'Vui lòng nhập họ và tên (ít nhất 2 ký tự)';
+        document.getElementById('err-fullname').classList.add('show');
+        document.getElementById('fullname').classList.add('error');
+        valid = false;
+    } else {
+        document.getElementById('err-fullname').classList.remove('show');
+        document.getElementById('fullname').classList.remove('error');
+    }
+
+    // Email
+    var emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailReg.test(email)) {
+        document.getElementById('err-email').textContent = 'Email không hợp lệ';
+        document.getElementById('err-email').classList.add('show');
+        document.getElementById('email').classList.add('error');
+        valid = false;
+    } else {
+        document.getElementById('err-email').classList.remove('show');
+        document.getElementById('email').classList.remove('error');
+    }
+
+    // Phone
+    var phoneReg = /^(0[3|5|7|8|9])[0-9]{8}$/;
+    if (!phone || !phoneReg.test(phone)) {
+        document.getElementById('err-phone').textContent = 'Số điện thoại không hợp lệ (10 số, bắt đầu 03/05/07/08/09)';
+        document.getElementById('err-phone').classList.add('show');
+        document.getElementById('phone').classList.add('error');
+        valid = false;
+    } else {
+        document.getElementById('err-phone').classList.remove('show');
+        document.getElementById('phone').classList.remove('error');
+    }
+
+    // Password - only require minimum 8 characters
+    if (!pwd || pwd.length < 8) {
+        document.getElementById('err-pwd').textContent = 'Mật khẩu tối thiểu 8 ký tự, gồm chữ và số';
+        document.getElementById('err-pwd').classList.add('show');
+        document.getElementById('password').classList.add('error');
+        valid = false;
+    } else {
+        document.getElementById('err-pwd').classList.remove('show');
+        document.getElementById('password').classList.remove('error');
+    }
+
+    // Confirm password
+    if (!cpwd || cpwd !== pwd) {
+        document.getElementById('err-confirm-pwd').classList.add('show');
+        document.getElementById('confirmPassword').classList.add('error');
+        valid = false;
+    } else {
+        document.getElementById('err-confirm-pwd').classList.remove('show');
+        document.getElementById('confirmPassword').classList.remove('error');
+    }
+
+    // Terms
+    if (!terms) {
+        document.getElementById('err-terms').classList.add('show');
+        valid = false;
+    } else {
+        document.getElementById('err-terms').classList.remove('show');
+    }
+
+    if (valid) {
+        var btn = document.getElementById('btn-step1');
+        btn.disabled = true;
+        btn.innerHTML = '<span>Đang đăng ký...</span>';
+
+        var formData = new FormData();
+        formData.append('fullName', document.getElementById('fullname').value.trim());
+        formData.append('email', document.getElementById('email').value.trim());
+        formData.append('phone', document.getElementById('phone').value.trim());
+        formData.append('password', document.getElementById('password').value);
+
+        fetch('/api/auth/register-buyer', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                window.location.href = data.redirectUrl || '/';
+            } else {
+                alert('Lỗi: ' + data.message);
+                btn.disabled = false;
+                btn.innerHTML = '<span>Tiếp tục</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+            }
+        })
+        .catch(function(err) {
+            alert('Lỗi mạng, thử lại sau');
+            btn.disabled = false;
+            btn.innerHTML = '<span>Tiếp tục</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        });
+    }
+};
+
+// Password strength meter
+function updatePwdStrength(v) {
+    var wrap = document.getElementById('pwd-strength-wrap');
+    if (!v) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    var segs = ['pws1','pws2','pws3','pws4'].map(function(id) { return document.getElementById(id); });
+    segs.forEach(function(s) { s.style.background = 'var(--border-light)'; });
+    var checks = {
+        len: v.length >= 8,
+        upper: /[A-Z]/.test(v),
+        lower: /[a-z]/.test(v),
+        digit: /[0-9]/.test(v),
+        special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v)
+    };
+    var score = Object.values(checks).filter(Boolean).length;
+    var colors = ['#ef4444','#f59e0b','#f59e0b','var(--status-success)','var(--status-success)'];
+    var labels = ['Rất yếu','Yếu','Trung bình','Đủ mạnh','Mạnh '];
+    for (var i = 0; i < score; i++) segs[i].style.background = colors[score-1];
+    document.getElementById('pwd-strength-text').innerHTML = '<span style="color:' + colors[score-1] + ';font-weight:600">' + labels[score-1] + '</span>';
+    var warn = document.getElementById('pwd-warning');
+    if (warn) warn.style.display = (score <= 2 && v.length > 0) ? 'block' : 'none';
+}
+
+// Toggle password
+document.getElementById('toggle-pwd').addEventListener('click', function() {
+    var inp = document.getElementById('password');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+// Toggle confirm password
+document.getElementById('toggle-confirm-pwd').addEventListener('click', function() {
+    var inp = document.getElementById('confirmPassword');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+</script>
+</body>
+</html>

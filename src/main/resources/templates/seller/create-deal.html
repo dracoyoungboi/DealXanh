@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Deal Mới - DealXanh Seller</title>
+    <!-- CSRF Token -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <div th:replace="~{common/seller/css :: css}"></div>
+    <style>
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+a{text-decoration:none;color:inherit}
+
+/* Form */
+.form-container{padding:16px;max-width:600px;margin:0 auto;}
+.form-group{margin-bottom:20px;}
+.form-label{display:block;font-size:14px;font-weight:600;margin-bottom:8px;color:var(--text-primary);}
+.form-label .required{color:var(--danger);}
+.form-input, .form-select, .form-textarea{
+    width:100%;padding:12px;border:1px solid var(--border);
+    border-radius:var(--radius-md);font-size:14px;background:var(--surface);
+    transition:border-color .2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus{
+    outline:none;border-color:var(--primary);
+}
+.form-textarea{resize:vertical;min-height:80px;}
+.form-hint{font-size:12px;color:var(--text-secondary);margin-top:4px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* Buttons */
+.btn{
+    padding:12px 24px;border-radius:var(--radius-md);
+    font-size:14px;font-weight:600;cursor:pointer;
+    transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn--primary{background:var(--primary);color:#fff;}
+.btn--primary:hover{background:var(--primary-dark);}
+.btn--outline{background:transparent;border:1px solid var(--border);color:var(--text-primary);}
+.btn--outline:hover{background:var(--bg);}
+
+.btn-group{display:flex;gap:12px;margin-top:24px;}
+.btn-group .btn{flex:1;}
+
+/* Alert */
+.alert{padding:12px 16px;border-radius:var(--radius-md);margin-bottom:16px;}
+.alert.error{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);}
+.alert.success{background:rgba(16,185,129,.1);color:var(--success);border:1px solid rgba(16,185,129,.2);}
+
+/* Discount type specific hints */
+.validation-hint{font-size:11px;color:var(--info);margin-top:4px;}
+    </style>
+</head>
+<body>
+
+<div class="sl-sidebar-overlay" id="slSidebarOverlay" onclick="closeMobileSidebar()"></div>
+<div class="sl-layout">
+    <div th:replace="~{common/seller/sidebar :: sidebar('create-deal')}"></div>
+    <div class="sl-main">
+        <div th:replace="~{common/seller/header :: header('Tạo Deal mới', 'create-deal')}"></div>
+        <main class="sl-content">
+        <!-- Alert messages -->
+        <div class="form-container">
+            <div th:if="${error}" class="alert error" th:text="${error}"></div>
+            <div th:if="${success}" class="alert success" th:text="${success}"></div>
+        </div>
+
+        <!-- Form -->
+        <form class="form-container" method="post" action="/seller/deals/create" id="createDealForm" enctype="multipart/form-data">
+            <!-- CSRF Token -->
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <!-- Tên deal -->
+            <div class="form-group">
+                <label class="form-label">Tên Deal <span class="required">*</span></label>
+                <input type="text" name="dealName" required placeholder="VD: Flash Sale 50% Bánh Mì" class="form-input">
+            </div>
+
+            <!-- Mã deal -->
+            <div class="form-group">
+                <label class="form-label">Mã Deal <span class="required">*</span></label>
+                <input type="text" name="dealCode" required placeholder="VD: FLASH50 (chỉ chữ hoa, số, _,-)" class="form-input"
+                       oninput="this.value = this.value.toUpperCase()" style="font-family:monospace;text-transform:uppercase;">
+                <div class="form-hint">User sẽ nhập mã này khi áp dụng deal</div>
+            </div>
+
+            <!-- Loại deal -->
+            <div class="form-group">
+                <label class="form-label">Loại Deal <span class="required">*</span></label>
+                <select name="dealType" id="dealTypeSelect" required class="form-select" onchange="updateDealType()">
+                    <option value="">Chọn loại deal...</option>
+                    <option value="FLASH_SALE">⚡ Flash Sale (tối đa 6 giờ)</option>
+                    <option value="VOUCHER">🎫 Voucher (tối đa 30 ngày)</option>
+                    <option value="COMBO">📦 Combo (tối đa 15 ngày)</option>
+                    <option value="SEASONAL">🎉 Seasonal Sale (tối đa 30 ngày)</option>
+                </select>
+                <div class="form-hint" id="dealTypeHint">Chọn loại deal để tự động điền các giá trị đề xuất</div>
+            </div>
+
+            <!-- Mô tả -->
+            <div class="form-group">
+                <label class="form-label">Mô tả</label>
+                <textarea name="description" rows="2" placeholder="Mô tả chi tiết về deal..." class="form-textarea"></textarea>
+            </div>
+
+            <!-- Loại giảm giá + Giá trị -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Loại giảm giá <span class="required">*</span></label>
+                    <select id="discountTypeSelect" name="discountType" required class="form-select" onchange="updateDiscountType()">
+                        <option value="PERCENT">⚪ Phần trăm (%)</option>
+                        <option value="FIXED">💰 Số tiền cố định (đ)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giá trị giảm <span class="required">*</span></label>
+                    <input type="number" id="discountValueInput" name="discountValue" required min="1" max="85" step="1"
+                           placeholder="50" class="form-input">
+                    <div id="discountHint" class="validation-hint">⚪ Nhập % giảm: 1% - 85% (VD: 50 = giảm 50%)</div>
+                </div>
+            </div>
+
+            <!-- Giảm tối đa -->
+            <div class="form-group">
+                <label class="form-label">Giảm tối đa (đ) <span style="font-size:11px;color:var(--text-secondary);">- Chỉ áp dụng khi giảm theo %</span></label>
+                <input type="number" name="maxDiscountAmount" min="0" placeholder="VD: 30000" class="form-input">
+                <div class="form-hint">Để trống nếu không giới hạn số tiền giảm tối đa</div>
+            </div>
+
+            <!-- Giá trị đơn tối thiểu -->
+            <div class="form-group">
+                <label class="form-label">Giá trị đơn tối thiểu <span class="required">*</span></label>
+                <input type="number" name="minOrderAmount" required min="0" step="1000" placeholder="50000" class="form-input">
+                <div class="form-hint">Đơn hàng phải đạt giá trị này mới được áp dụng deal</div>
+            </div>
+
+            <!-- Số lượt sử dụng -->
+            <div class="form-group">
+                <label class="form-label">Số lượt tối đa</label>
+                <input type="number" name="maxUsageCount" min="1" step="1" placeholder="Để trống = vô hạn" class="form-input">
+                <div class="form-hint">Giới hạn số lần deal có thể được sử dụng</div>
+            </div>
+
+            <!-- Thời gian -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Thời gian bắt đầu <span class="required">*</span></label>
+                    <input type="datetime-local" name="startTime" required class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Thời gian kết thúc <span class="required">*</span></label>
+                    <input type="datetime-local" name="endTime" required class="form-input">
+                </div>
+            </div>
+
+            <!-- Cách áp dụng -->
+            <div class="form-group">
+                <label class="form-label">Cách áp dụng <span class="required">*</span></label>
+                <select name="applyMethod" required class="form-select">
+                    <option value="CODE_REQUIRED">🔑 Cần nhập mã (User phải nhập mã deal code)</option>
+                    <option value="AUTO_APPLY">⚡ Tự động áp dụng (Giảm giá tự động, sản phẩm hiển thị giá sale)</option>
+                </select>
+            </div>
+
+            <!-- Ảnh Banner (Upload) -->
+            <div class="form-group">
+                <label class="form-label">Banner Deal</label>
+                <input type="file" id="bannerFileInput" name="bannerFile" accept="image/*" onchange="previewBannerFile()"
+                       style="width:100%;padding:12px;border:2px dashed var(--border);border-radius:var(--radius-md);font-size:14px;cursor:pointer;background:var(--bg);" class="form-input">
+                <div class="form-hint">Upload ảnh banner (JPG, PNG, WEBP). Nên dùng ảnh 800x400px. Để trống sẽ dùng banner mặc định.</div>
+                <!-- Banner preview -->
+                <div id="bannerPreview" style="display:none;margin-top:8px;position:relative;">
+                    <img id="bannerPreviewImg" src="" alt="Banner preview" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--border);">
+                    <button type="button" onclick="clearBannerFile()" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;">✕</button>
+                </div>
+            </div>
+
+            <!-- Buttons (sticky bottom) -->
+            <div style="display:flex;gap:12px;margin-top:24px;padding:0 16px 80px;">
+                <button type="button" class="btn btn--outline" onclick="window.location.href='/seller/deals'" style="flex:1;">Hủy</button>
+                <button type="submit" class="btn btn--primary" style="flex:1;background:var(--primary);color:#fff;font-weight:700;padding:14px;border:none;border-radius:var(--radius-md);font-size:15px;cursor:pointer;">Tạo Deal</button>
+            </div>
+        </form>
+        </main>
+        <div th:replace="~{common/seller/footer :: footer}"></div>
+    </div>
+</div>
+
+<div th:replace="~{common/seller/bottom-nav :: bottom-nav('create-deal')}"></div>
+
+<script>
+// Update discount type UI
+function updateDiscountType() {
+    const discountType = document.getElementById('discountTypeSelect').value;
+    const discountInput = document.getElementById('discountValueInput');
+    const discountHint = document.getElementById('discountHint');
+
+    if (discountType === 'PERCENT') {
+        discountInput.min = '1';
+        discountInput.max = '85';
+        discountInput.step = '1';
+        discountInput.placeholder = '50';
+        discountInput.value = '';
+        discountHint.textContent = '⚪ Nhập % giảm: 1% - 85% (VD: 50 = giảm 50%)';
+    } else {
+        discountInput.min = '1000';
+        discountInput.max = '500000';
+        discountInput.step = '1000';
+        discountInput.placeholder = '50000';
+        discountInput.value = '';
+        discountHint.textContent = '💰 Nhập số tiền: 1,000đ - 500,000đ (VD: 50000 = giảm 50k)';
+    }
+}
+
+// Auto-fill suggested values based on deal type
+function updateDealType() {
+    const dealType = document.getElementById('dealTypeSelect').value;
+    const hint = document.getElementById('dealTypeHint');
+    const discountTypeSelect = document.getElementById('discountTypeSelect');
+    const discountInput = document.getElementById('discountValueInput');
+    const minOrderInput = document.querySelector('input[name="minOrderAmount"]');
+    const startTimeInput = document.querySelector('input[name="startTime"]');
+    const endTimeInput = document.querySelector('input[name="endTime"]');
+    const applyMethodSelect = document.querySelector('select[name="applyMethod"]');
+
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+
+    switch (dealType) {
+        case 'FLASH_SALE':
+            hint.innerHTML = '⚡ <b>Flash Sale:</b> Giảm giá sâu trong thời gian ngắn (tối đa 6h). Tự động đề xuất giảm 20%, theo %, tự động áp dụng, bắt đầu sau 1h, kéo dài 3h.';
+            if (discountTypeSelect) discountTypeSelect.value = 'PERCENT';
+            if (discountInput) { discountInput.value = '20'; discountInput.min = '10'; }
+            updateDiscountType();
+            if (minOrderInput) minOrderInput.value = '50000';
+            if (applyMethodSelect) applyMethodSelect.value = 'AUTO_APPLY';
+            if (startTimeInput) {
+                const start = new Date(now);
+                start.setHours(start.getHours() + 1);
+                startTimeInput.value = start.toISOString().slice(0, 16);
+            }
+            if (endTimeInput) {
+                const end = new Date(now);
+                end.setHours(end.getHours() + 4);
+                endTimeInput.value = end.toISOString().slice(0, 16);
+            }
+            break;
+
+        case 'VOUCHER':
+            hint.innerHTML = '🎫 <b>Voucher:</b> Mã giảm giá linh hoạt. Tự động đề xuất giảm theo số tiền cố định, tối đa 30 ngày.';
+            if (discountTypeSelect) discountTypeSelect.value = 'FIXED';
+            if (discountInput) { discountInput.value = '20000'; discountInput.min = '1000'; }
+            updateDiscountType();
+            if (minOrderInput) minOrderInput.value = '100000';
+            if (applyMethodSelect) applyMethodSelect.value = 'CODE_REQUIRED';
+            if (startTimeInput) startTimeInput.value = now.toISOString().slice(0, 16);
+            if (endTimeInput) {
+                const end = new Date(now);
+                end.setDate(end.getDate() + 7);
+                endTimeInput.value = end.toISOString().slice(0, 16);
+            }
+            break;
+
+        case 'COMBO':
+            hint.innerHTML = '📦 <b>Combo:</b> Giảm giá khi mua combo sản phẩm. Tối đa 15 ngày. Tự động đề xuất giảm theo %.';
+            if (discountTypeSelect) discountTypeSelect.value = 'PERCENT';
+            if (discountInput) { discountInput.value = '15'; discountInput.min = '5'; }
+            updateDiscountType();
+            if (minOrderInput) minOrderInput.value = '80000';
+            if (applyMethodSelect) applyMethodSelect.value = 'AUTO_APPLY';
+            if (startTimeInput) startTimeInput.value = now.toISOString().slice(0, 16);
+            if (endTimeInput) {
+                const end = new Date(now);
+                end.setDate(end.getDate() + 7);
+                endTimeInput.value = end.toISOString().slice(0, 16);
+            }
+            break;
+
+        case 'SEASONAL':
+            hint.innerHTML = '🎉 <b>Seasonal Sale:</b> Sale theo mùa/sự kiện. Tối đa 30 ngày. Tự động đề xuất giảm theo %.';
+            if (discountTypeSelect) discountTypeSelect.value = 'PERCENT';
+            if (discountInput) { discountInput.value = '25'; discountInput.min = '5'; }
+            updateDiscountType();
+            if (minOrderInput) minOrderInput.value = '50000';
+            if (applyMethodSelect) applyMethodSelect.value = 'AUTO_APPLY';
+            if (startTimeInput) startTimeInput.value = now.toISOString().slice(0, 16);
+            if (endTimeInput) {
+                const end = new Date(now);
+                end.setDate(end.getDate() + 14);
+                endTimeInput.value = end.toISOString().slice(0, 16);
+            }
+            break;
+
+        default:
+            hint.textContent = 'Chọn loại deal để tự động điền các giá trị đề xuất';
+            break;
+    }
+}
+
+// Banner file preview
+function previewBannerFile() {
+    const fileInput = document.getElementById('bannerFileInput');
+    const preview = document.getElementById('bannerPreview');
+    const previewImg = document.getElementById('bannerPreviewImg');
+
+    if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+    }
+}
+
+function clearBannerFile() {
+    document.getElementById('bannerFileInput').value = '';
+    document.getElementById('bannerPreview').style.display = 'none';
+    document.getElementById('bannerPreviewImg').src = '';
+}
+
+// Set default time values on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateDiscountType();
+
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const startTime = now.toISOString().slice(0, 16);
+
+    const endTime = new Date(now);
+    endTime.setDate(endTime.getDate() + 7);
+    const endTimeStr = endTime.toISOString().slice(0, 16);
+
+    const startTimeInput = document.querySelector('input[name="startTime"]');
+    const endTimeInput = document.querySelector('input[name="endTime"]');
+
+    if (startTimeInput) startTimeInput.value = startTime;
+    if (endTimeInput) endTimeInput.value = endTimeStr;
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - DealXanh</title>
+    <meta name="description" content="Đăng nhập vào DealXanh để săn deal đồ ăn cận date giá rẻ">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/pages/login.css">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+    <div class="login-container">
+        <!-- Left Side - Hero Section -->
+        <div class="login-hero">
+            <div class="login-hero__overlay"></div>
+            <div class="login-hero__content">
+                <!-- Logo -->
+                <div class="login-hero__logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    <span class="login-hero__brand">DealXanh</span>
+                </div>
+
+                <!-- Hero Text -->
+                <h1 class="login-hero__title">Săn deal đồ ăn ngon<br><span class="text-accent">Giảm đến 70%</span></h1>
+                <p class="login-hero__subtitle">
+                    Tiết kiệm chi phí ăn uống hàng ngày với các deal đồ ăn cận date chất lượng cao từ nhà hàng, quán ăn uy tín.
+                </p>
+
+                <!-- Features -->
+                <div class="login-features">
+                    <div class="login-feature">
+                        <div class="login-feature__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <div class="login-feature__text">
+                            <div class="login-feature__title">Deal Hot Hàng Ngày</div>
+                            <div class="login-feature__desc">Cập nhật liên tục 24/7</div>
+                        </div>
+                    </div>
+                    <div class="login-feature">
+                        <div class="login-feature__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <div class="login-feature__text">
+                            <div class="login-feature__title">An Toàn Tuyệt Đối</div>
+                            <div class="login-feature__desc">Kiểm tra chất lượng kỹ lưỡng</div>
+                        </div>
+                    </div>
+                    <div class="login-feature">
+                        <div class="login-feature__icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                        </div>
+                        <div class="login-feature__text">
+                            <div class="login-feature__title">Hoàn Tiền 100%</div>
+                            <div class="login-feature__desc">Nếu không như mô tả</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- App Stats -->
+                <div class="login-stats">
+                    <div class="login-stat">
+                        <div class="login-stat__value">50K+</div>
+                        <div class="login-stat__label">Người dùng</div>
+                    </div>
+                    <div class="login-stat">
+                        <div class="login-stat__value">1K+</div>
+                        <div class="login-stat__label">Cửa hàng</div>
+                    </div>
+                    <div class="login-stat">
+                        <div class="login-stat__value">100K+</div>
+                        <div class="login-stat__label">Deal đã bán</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Background Image -->
+            <div class="login-hero__bg">
+                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=800&fit=crop&q=80" alt="Delicious food" loading="lazy">
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="login-form-container">
+            <!-- Login Card -->
+            <div class="login-card">
+                <!-- Mobile Logo (hidden on desktop) -->
+                <div class="login-card__mobile-logo">
+                    <img th:src="@{/img/logo-header.svg}" alt="DealXanh" style="height:64px;">
+                </div>
+
+                <!-- Login View -->
+                <div id="login-view">
+                    <!-- Header -->
+                    <div class="login-card__header">
+                        <h2 class="login-card__title">Chào mừng trở lại!</h2>
+                        <p class="login-card__subtitle">Đăng nhập để tiếp tục trải nghiệm DealXanh</p>
+                    </div>
+
+                    <!-- Login Form -->
+                    <div class="login-card__body">
+                        <form action="/perform_login" method="post" id="login-form" class="login-card__form">
+                            <!-- Success Message for Registration Complete -->
+                            <div id="registration-success-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: 600; margin-bottom: 2px;">Gửi hồ sơ thành công!</div>
+                                        <div style="font-size: 13px;">Hồ sơ của bạn đã được gửi và đang chờ xét duyệt. Vui lòng đăng nhập lại để tiếp tục.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Error Message for Wrong Login Page -->
+                                <div id="wrong-login-page-alert" style="display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 2px;">Đăng nhập tại trang không đúng!</div>
+                                            <div style="font-size: 13px;">Vui lòng sử dụng <a href="/admin/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Admin</a> hoặc <a href="/seller/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Seller</a>.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="username">Tài khoản (Username hoặc Email)</label>
+                                <div class="input-with-icon">
+                                    <span class="input-with-icon__icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                    </span>
+                                    <input type="text" id="username" name="username" class="form-input" placeholder="Tên đăng nhập..." autocomplete="username" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="password">Mật khẩu</label>
+                                <div class="input-with-icon">
+                                    <span class="input-with-icon__icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                        </svg>
+                                    </span>
+                                    <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" autocomplete="current-password" required>
+                                    <button type="button" id="toggle-password" class="input-with-icon__toggle">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Error message placeholder -->
+                                <div id="password-error" class="error-message" style="display:none; color:#ef4444; font-size:13px; margin-top:5px;"></div>
+                            </div>
+
+                                <div class="form-options">
+                                    <label class="form-check">
+                                        <input type="checkbox" id="remember" name="rememberme" class="form-check__input">
+                                        <span class="form-check__label">Ghi nhớ đăng nhập</span>
+                                    </label>
+                                    <a href="/forgot-password" id="forgot-link" class="forgot-link">Quên mật khẩu?</a>
+                                </div>
+
+                                <div class="cf-turnstile" data-sitekey="0x4AAAAAADfjOpw6QvPRmL0v" data-callback="onTurnstileSuccess" data-theme="light"></div>
+                                <button type="submit" id="email-submit" class="login-submit" disabled>Đăng nhập</button>
+                            </form>
+
+                            <!-- Social Login -->
+                            <div class="divider" style="display:none;">hoặc tiếp tục với</div>
+
+                            <a href="/oauth2/authorization/google" class="social-button" style="text-decoration: none; width: 100%; display: none; align-items: center; justify-content: center;">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                </svg>
+                                Google
+                            </a>
+
+                            <!-- Register Link -->
+                            <p class="login-card__register-link">
+                                Chưa có tài khoản? <a href="/register">Đăng ký ngay</a>
+                            </p>
+                        </div>
+
+                        <!-- Footer Actions -->
+                        <div class="login-card__footer">
+                            <div class="login-card__bottom-actions">
+                                <a href="/" class="bottom-action-btn bottom-action-btn--secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                                        <polyline points="12 19 5 12 12 5"></polyline>
+                                    </svg>
+                                    Trang chủ
+                                </a>
+                                <a href="https://dealxanh.com/seller/login" class="bottom-action-btn bottom-action-btn--primary-outline">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                    </svg>
+                                    Kênh bán hàng
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Check for registration_complete parameter to show success message
+        window.addEventListener('DOMContentLoaded', function() {
+            // Clear localStorage except essential app settings and login_username
+            const keepKeys = ['theme', 'language'];
+            const tempStorage = {};
+            keepKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) tempStorage[key] = value;
+            });
+            localStorage.clear();
+            Object.keys(tempStorage).forEach(key => {
+                localStorage.setItem(key, tempStorage[key]);
+            });
+
+            // Check for registration_complete parameter to show success message
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('registration_complete') === 'true') {
+                const successAlert = document.getElementById('registration-success-alert');
+                if (successAlert) {
+                    successAlert.style.display = 'block';
+                    // Auto-hide after 5 seconds
+                    setTimeout(() => {
+                        successAlert.style.transition = 'opacity 0.5s';
+                        successAlert.style.opacity = '0';
+                        setTimeout(() => {
+                            successAlert.style.display = 'none';
+                        }, 500);
+                    }, 5000);
+                }
+                // Clean URL without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            // Check for wrong_login_page error
+            // Check for session expired
+            if (urlParams.get('expired') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                if (errorDiv) {
+                    errorDiv.textContent = '⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+                    errorDiv.style.display = 'block';
+                    errorDiv.style.color = '#f59e0b';
+                }
+            }
+
+            // Check for kicked (concurrent login from another device)
+            if (urlParams.get('kicked') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                if (errorDiv) {
+                    errorDiv.textContent = '🔒 Tài khoản của bạn đang đăng nhập ở nơi khác. Phiên này đã bị ngắt.';
+                    errorDiv.style.display = 'block';
+                    errorDiv.style.color = '#ef4444';
+                }
+            }
+
+            if (urlParams.get('error') === 'please_use_correct_login') {
+                // Check which role tried to login from wrong page
+                const fromParam = urlParams.get('from');
+                if (fromParam === 'admin' || fromParam === 'seller') {
+                    const wrongLoginAlert = document.getElementById('wrong-login-page-alert');
+                    if (wrongLoginAlert) {
+                        // Update message based on which role tried to login
+                        const messageDiv = wrongLoginAlert.querySelector('div div:last-child div:last-child');
+                        if (fromParam === 'admin') {
+                            messageDiv.innerHTML = 'Tài khoản Admin vui lòng đăng nhập tại <a href="/admin/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Admin</a>.';
+                        } else if (fromParam === 'seller') {
+                            messageDiv.innerHTML = 'Tài khoản Seller vui lòng đăng nhập tại <a href="/seller/login" style="color: #856404; font-weight: 600; text-decoration: underline;">trang đăng nhập Seller</a>.';
+                        }
+                        wrongLoginAlert.style.display = 'block';
+                    }
+                }
+            }
+
+            // Check for error parameter on page load
+            if (urlParams.get('error') === 'true') {
+                const errorDiv = document.getElementById('password-error');
+                errorDiv.textContent = 'Sai tài khoản mật khẩu';
+                errorDiv.style.display = 'block';
+
+                // Restore username if available (from sessionStorage)
+                const savedUsername = sessionStorage.getItem('login_username');
+                if (savedUsername) {
+                    const usernameField = document.getElementById('username');
+                    if (usernameField && !usernameField.value) {
+                        usernameField.value = savedUsername;
+                        sessionStorage.removeItem('login_username');
+                    }
+                }
+
+                // Focus on password field and clear it
+                const passwordField = document.getElementById('password');
+                passwordField.value = '';
+                passwordField.focus();
+            }
+
+            // Store username in sessionStorage for recovery after redirect
+            const form = document.getElementById('login-form');
+            const usernameField = document.getElementById('username');
+
+            form.addEventListener('submit', function() {
+                if (usernameField.value.trim()) {
+                    sessionStorage.setItem('login_username', usernameField.value.trim());
+                }
+            });
+
+            // Restore username if available
+            const savedUsername = sessionStorage.getItem('login_username');
+            if (savedUsername && !usernameField.value) {
+                usernameField.value = savedUsername;
+                sessionStorage.removeItem('login_username');
+            }
+        });
+
+        // Toggle password visibility
+        document.getElementById('toggle-password').addEventListener('click', function() {
+            var passInput = document.getElementById('password');
+            if(passInput.type === 'password') {
+                passInput.type = 'text';
+            } else {
+                passInput.type = 'password';
+            }
+        });
+
+    </script>
+    <script>
+      function onTurnstileSuccess(token) {
+        var btn = document.querySelector('[type="submit"]');
+        if (btn) btn.disabled = false;
+      }
+    </script>
+</body>
+</html>

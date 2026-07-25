@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${store.storeName + ' — DealXanh'}">Cửa hàng — DealXanh</title>
+    <div th:replace="~{common/buyer/css :: css}"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    <style>
+        html{height:auto;min-height:100%}
+        body{padding-bottom:80px;background:var(--background);font-family:var(--font-family);margin:0}
+        *,*::before,*::after{box-sizing:border-box}
+
+        /* Back bar */
+        .back-bar{padding:12px 16px;display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+        .back-bar a{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none}
+        .back-bar svg{width:18px;height:18px}
+
+        /* Store hero */
+        .sp-hero{background:linear-gradient(135deg, #0d5c2e 0%, #166534 100%);padding:28px 20px 32px;text-align:center;position:relative;overflow:hidden}
+        .sp-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 70%, rgba(255,255,255,.06) 0%, transparent 60%)}
+        .sp-avatar{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,.3);object-fit:cover;background:#fff;position:relative;z-index:1}
+        .sp-avatar-ph{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;margin:0 auto;position:relative;z-index:1}
+        .sp-name{font-size:20px;font-weight:700;color:#fff;margin-top:12px;position:relative;z-index:1}
+        .sp-meta{font-size:13px;color:rgba(255,255,255,.75);margin-top:4px;position:relative;z-index:1}
+        .sp-rating{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:var(--radius-full);font-size:13px;color:#fff;position:relative;z-index:1}
+        .sp-rating svg{width:14px;height:14px;color:#f59e0b;fill:#f59e0b}
+
+        /* Info cards */
+        .sp-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px;background:var(--surface)}
+        .sp-info-card{background:var(--background);border-radius:var(--radius-md);padding:12px 14px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-secondary)}
+        .sp-info-card svg{width:16px;height:16px;flex-shrink:0;color:var(--primary)}
+        .sp-info-card strong{display:block;font-size:14px;color:var(--text-primary);margin-bottom:1px}
+
+        /* Section title */
+        .sp-section-title{font-size:16px;font-weight:700;color:var(--text-primary);padding:16px 20px 8px;background:var(--surface);display:flex;align-items:center;gap:8px}
+        .sp-section-title svg{width:20px;height:20px;color:var(--primary)}
+
+        /* Product grid */
+        .sp-prod-grid{padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;background:var(--background)}
+        .sp-prod-card{background:var(--surface);border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border);text-decoration:none;color:inherit;transition:box-shadow .15s}
+        .sp-prod-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+        .sp-prod-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--background)}
+        .sp-prod-body{padding:10px 12px}
+        .sp-prod-name{font-size:13px;font-weight:600;color:var(--text-primary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;min-height:36px}
+        .sp-prod-price{font-size:15px;font-weight:700;color:var(--danger);margin-top:6px}
+        .sp-prod-original{font-size:12px;color:var(--text-tertiary);text-decoration:line-through;margin-left:6px}
+        .sp-prod-deal-badge{display:inline-block;background:#fef3c7;color:#b45309;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:4px}
+
+        .sp-empty{padding:40px 20px;text-align:center;color:var(--text-tertiary);font-size:14px;background:var(--surface)}
+
+        /* ===== REVIEW POPUP ===== */
+        .review-popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:100000;align-items:center;justify-content:center;padding:20px;animation:spFadeIn .25s ease-out}
+        .review-popup-overlay--visible{display:flex}
+        @keyframes spFadeIn{from{opacity:0}to{opacity:1}}
+        .review-popup{background:var(--surface);width:100%;max-width:440px;border-radius:var(--radius-lg);padding:28px 24px 24px;position:relative;box-shadow:0 16px 48px rgba(0,0,0,.18);animation:spPopIn .3s cubic-bezier(.175,.885,.32,1.275);max-height:90vh;overflow-y:auto}
+        @keyframes spPopIn{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        .review-popup__close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:var(--background);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);transition:all .2s;z-index:1}
+        .review-popup__close:hover{background:#e5e7eb;color:var(--text-primary)}
+        .review-popup__store{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border-light)}
+        .review-popup__avatar{width:48px;height:48px;border-radius:var(--radius-md);background:linear-gradient(135deg,#0d5c2e,#1a7c40);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 2px 8px rgba(13,92,46,.2)}
+        .review-popup__avatar img{width:100%;height:100%;object-fit:cover}
+        .review-popup__avatar-ph{color:#fff;font-size:20px;font-weight:700}
+        .review-popup__store-name{font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:2px}
+        .review-popup__store-sub{font-size:13px;color:var(--text-tertiary)}
+        .review-popup__stars-wrap{text-align:center;margin-bottom:20px}
+        .review-popup__stars-label{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:14px}
+        .review-popup__stars{display:inline-flex;gap:8px;cursor:pointer;user-select:none}
+        .review-popup__stars span{font-size:40px;color:#e5e7eb;transition:color .15s,transform .15s;line-height:1}
+        .review-popup__stars span:hover{transform:scale(1.15)}
+        .review-popup__stars span.active{color:#f59e0b}
+        .review-popup__stars span.preview{color:#fcd34d}
+        .review-popup__rating-hint{font-size:13px;color:var(--text-tertiary);margin-top:8px;min-height:18px}
+        .review-popup__error{color:var(--danger);font-size:12.5px;margin-top:6px;display:none;font-weight:500}
+        .review-popup__comment{width:100%;min-height:100px;padding:14px 16px;border:1.5px solid var(--border);border-radius:var(--radius-md);font-family:var(--font-family);font-size:14px;line-height:1.6;color:var(--text-primary);resize:vertical;outline:none;background:#fafafa;transition:border-color .2s,background .2s,box-shadow .2s;box-sizing:border-box;margin-bottom:4px}
+        .review-popup__comment:focus{border-color:#0d5c2e;background:#fff;box-shadow:0 0 0 3px rgba(13,92,46,.08)}
+        .review-popup__comment::placeholder{color:#bbb}
+        .review-popup__submit{width:100%;padding:14px;margin-top:4px;background:linear-gradient(135deg,#0d5c2e,#166534);color:#fff;border:none;border-radius:var(--radius-md);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 2px 8px rgba(13,92,46,.2)}
+        .review-popup__submit:hover{background:linear-gradient(135deg,#0b4f26,#14532d);box-shadow:0 4px 14px rgba(13,92,46,.3);transform:translateY(-1px)}
+        .review-popup__submit:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+        .review-popup__msg{text-align:center;font-size:13px;margin-top:12px;min-height:18px;font-weight:500}
+        .review-popup__success{display:none;text-align:center;padding:20px 0 8px}
+        .review-popup__success-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 16px rgba(16,185,129,.3)}
+        .review-popup__success-title{font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+        .review-popup__success-sub{font-size:13.5px;color:var(--text-tertiary)}
+        @keyframes spSpinReview{to{transform:rotate(360deg)}}
+
+        @media (min-width:768px){
+            .sp-info-grid{grid-template-columns:repeat(3,1fr)}
+            .sp-prod-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+        }
+        @media (max-width:480px){
+            .review-popup{border-radius:var(--radius-lg);padding:24px 18px 20px;max-width:100%;margin:0 8px}
+            .review-popup__stars span{font-size:36px;gap:6px}
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{common/buyer/header :: header}"></div>
+
+<!-- Back Bar -->
+<div class="back-bar">
+    <a href="javascript:history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Quay lại
+    </a>
+</div>
+
+<!-- Store Hero -->
+<div class="sp-hero">
+    <img th:if="${store.logoUrl != null and !store.logoUrl.isEmpty()}" th:src="${store.logoUrl}" class="sp-avatar" alt="Logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="sp-avatar-ph" th:if="${store.logoUrl == null or store.logoUrl.isEmpty()}" th:text="${store.storeName != null and !store.storeName.isEmpty() ? store.storeName.charAt(0) : 'S'}">S</div>
+    <h1 class="sp-name" th:text="${store.storeName}">Tên cửa hàng</h1>
+    <div class="sp-meta" th:text="${store.businessType != null ? store.businessType : 'Cửa hàng'}">Loại cửa hàng</div>
+    <div class="sp-rating">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span th:text="${store.averageRating != null ? #numbers.formatDecimal(store.averageRating, 0, 1) : '0.0'}">0.0</span>
+        <span th:text="'(' + ${store.totalReviews != null ? store.totalReviews : 0} + ' đánh giá)'">(0)</span>
+    </div>
+</div>
+
+<!-- Info Cards -->
+<div class="sp-info-grid">
+    <div class="sp-info-card" th:if="${store.address != null}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <div>
+            <strong>Địa chỉ</strong>
+            <span th:text="${store.address}">—</span>
+        </div>
+    </div>
+    <div class="sp-info-card" th:if="${store.openTime != null}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div>
+            <strong>Giờ mở cửa</strong>
+            <span th:text="${store.openTime + ' - ' + store.closeTime}">—</span>
+        </div>
+    </div>
+    <div class="sp-info-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
+        <div>
+            <strong>Sản phẩm</strong>
+            <span th:text="${productCount != null ? productCount : 0}">0</span>
+        </div>
+    </div>
+</div>
+
+<!-- Products -->
+<div class="sp-section-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>
+    Sản phẩm của cửa hàng
+</div>
+
+<div th:if="${products != null and !products.isEmpty()}" class="sp-prod-grid">
+    <th:block th:each="p : ${products}">
+        <th:block th:with="dealInfo=${dealProductMap != null ? dealProductMap[p.productId] : null},
+                          salePrice=${dealInfo != null ? dealInfo.salePrice : (p.currentPrice != null ? p.currentPrice : p.originalPrice)},
+                          origPrice=${dealInfo != null ? dealInfo.originalPrice : p.originalPrice}">
+            <a th:href="@{'/products/' + ${p.productId}}" class="sp-prod-card">
+                <img th:src="${p.imageUrl != null ? p.imageUrl : '/img/default-banner.svg'}" th:alt="${p.name}" class="sp-prod-img" onerror="this.src='/img/default-banner.svg'" loading="lazy">
+                <div class="sp-prod-body">
+                    <div class="sp-prod-name" th:text="${p.name}">Tên sản phẩm</div>
+                    <div class="sp-prod-price">
+                        <span th:text="${@priceFormatter.format(salePrice)}">0đ</span>
+                        <span th:if="${dealInfo != null}" class="sp-prod-original" th:text="${@priceFormatter.format(origPrice)}">0đ</span>
+                    </div>
+                    <span class="sp-prod-deal-badge" th:if="${dealInfo != null}" th:text="|Giảm ${dealInfo.discountPercent}%|">Giảm 50%</span>
+                </div>
+            </a>
+        </th:block>
+    </th:block>
+</div>
+<div class="sp-empty" th:unless="${products != null and !products.isEmpty()}">
+    Cửa hàng hiện chưa có sản phẩm nào.
+</div>
+
+<!-- Hidden review data -->
+<input type="hidden" id="review-store-id" th:value="${store.storeId}">
+<input type="hidden" id="review-order-id" th:value="${reviewOrderId}">
+<input type="hidden" id="review-mode-flag" th:value="${reviewMode ? '1' : '0'}">
+
+<!-- ===== REVIEW POPUP ===== -->
+<div class="review-popup-overlay" id="reviewPopupOverlay" onclick="closeReviewPopup(event)">
+    <div class="review-popup" onclick="event.stopPropagation()">
+        <button class="review-popup__close" onclick="closeReviewPopup()" aria-label="Đóng">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <div class="review-popup__store">
+            <div class="review-popup__avatar">
+                <img th:if="${store.logoUrl != null and !store.logoUrl.isEmpty()}" th:src="${store.logoUrl}" alt="Logo" onerror="this.style.display='none';this.parentElement.querySelector('.review-popup__avatar-ph').style.display='flex'">
+                <span class="review-popup__avatar-ph" th:if="${store.logoUrl == null or store.logoUrl.isEmpty()}" th:text="${store.storeName != null and !store.storeName.isEmpty() ? store.storeName.charAt(0) : 'S'}" style="display:none;">S</span>
+            </div>
+            <div>
+                <div class="review-popup__store-name" th:text="${store.storeName}">Tên cửa hàng</div>
+                <div class="review-popup__store-sub">Đánh giá trải nghiệm mua sắm của bạn</div>
+            </div>
+        </div>
+
+        <div class="review-popup__stars-wrap" id="reviewStarsWrap">
+            <div class="review-popup__stars-label" th:text="${reviewOrderId != null ? 'Đơn hàng #' + reviewOrderId + ' — Bạn thấy thế nào?' : 'Bạn thấy cửa hàng này thế nào?'}">Bạn thấy cửa hàng này thế nào?</div>
+            <div class="review-popup__stars" id="reviewStars">
+                <span data-star="1" onclick="setReviewRating(1)" onmouseenter="previewStars(1)" onmouseleave="clearStarPreview()">★</span>
+                <span data-star="2" onclick="setReviewRating(2)" onmouseenter="previewStars(2)" onmouseleave="clearStarPreview()">★</span>
+                <span data-star="3" onclick="setReviewRating(3)" onmouseenter="previewStars(3)" onmouseleave="clearStarPreview()">★</span>
+                <span data-star="4" onclick="setReviewRating(4)" onmouseenter="previewStars(4)" onmouseleave="clearStarPreview()">★</span>
+                <span data-star="5" onclick="setReviewRating(5)" onmouseenter="previewStars(5)" onmouseleave="clearStarPreview()">★</span>
+            </div>
+            <div class="review-popup__rating-hint" id="reviewRatingHint"></div>
+            <input type="hidden" id="reviewRatingValue" value="0">
+            <p class="review-popup__error" id="reviewRatingError">Vui lòng chọn số sao đánh giá</p>
+        </div>
+
+        <textarea id="reviewComment" class="review-popup__comment" placeholder="Chia sẻ chi tiết trải nghiệm của bạn về chất lượng sản phẩm, thái độ phục vụ..." rows="3"></textarea>
+
+        <button id="reviewSubmitBtn" class="review-popup__submit" onclick="submitReview()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Gửi đánh giá
+        </button>
+        <p class="review-popup__msg" id="reviewSubmitMsg"></p>
+
+        <div class="review-popup__success" id="reviewSuccessState">
+            <div class="review-popup__success-icon">✓</div>
+            <div class="review-popup__success-title">Cảm ơn bạn đã đánh giá!</div>
+            <div class="review-popup__success-sub">Đánh giá của bạn giúp ích cho cộng đồng DealXanh</div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
+
+<script>
+    var reviewSelectedRating = 0;
+
+    function previewStars(stars) {
+        var starEls = document.querySelectorAll('#reviewStars span');
+        starEls.forEach(function(el, i) {
+            if (i < stars) el.classList.add('preview');
+            else el.classList.remove('preview');
+        });
+        var hint = document.getElementById('reviewRatingHint');
+        var labels = ['', 'Rất tệ', 'Không hài lòng', 'Bình thường', 'Hài lòng', 'Tuyệt vời'];
+        if (hint) { hint.textContent = labels[stars] || ''; hint.style.color = stars >= 4 ? '#f59e0b' : 'var(--text-tertiary)'; }
+    }
+
+    function clearStarPreview() {
+        var starEls = document.querySelectorAll('#reviewStars span');
+        starEls.forEach(function(el) { el.classList.remove('preview'); });
+        var hint = document.getElementById('reviewRatingHint');
+        if (hint && reviewSelectedRating > 0) {
+            var labels = ['', 'Rất tệ', 'Không hài lòng', 'Bình thường', 'Hài lòng', 'Tuyệt vời'];
+            hint.textContent = labels[reviewSelectedRating] || '';
+            hint.style.color = reviewSelectedRating >= 4 ? '#f59e0b' : 'var(--text-tertiary)';
+        } else if (hint) { hint.textContent = ''; }
+    }
+
+    function setReviewRating(stars) {
+        reviewSelectedRating = stars;
+        document.getElementById('reviewRatingValue').value = stars;
+        var starEls = document.querySelectorAll('#reviewStars span');
+        starEls.forEach(function(el, i) {
+            if (i < stars) el.classList.add('active');
+            else el.classList.remove('active', 'preview');
+        });
+        document.getElementById('reviewRatingError').style.display = 'none';
+        var hint = document.getElementById('reviewRatingHint');
+        var labels = ['', 'Rất tệ', 'Không hài lòng', 'Bình thường', 'Hài lòng', 'Tuyệt vời'];
+        if (hint) { hint.textContent = labels[stars] || ''; hint.style.color = stars >= 4 ? '#f59e0b' : 'var(--text-tertiary)'; }
+    }
+
+    function openReviewPopup() {
+        var overlay = document.getElementById('reviewPopupOverlay');
+        overlay.style.display = 'flex';
+        reviewSelectedRating = 0;
+        document.getElementById('reviewRatingValue').value = '0';
+        document.getElementById('reviewComment').value = '';
+        document.getElementById('reviewSubmitMsg').textContent = '';
+        document.getElementById('reviewRatingError').style.display = 'none';
+        document.getElementById('reviewRatingHint').textContent = '';
+        document.getElementById('reviewSubmitBtn').style.display = 'flex';
+        document.getElementById('reviewSuccessState').style.display = 'none';
+        document.getElementById('reviewStarsWrap').style.display = '';
+        document.getElementById('reviewComment').style.display = '';
+        var starEls = document.querySelectorAll('#reviewStars span');
+        starEls.forEach(function(el) { el.classList.remove('active', 'preview'); });
+        var popup = overlay.querySelector('.review-popup');
+        if (popup) { popup.style.animation = 'none'; popup.offsetHeight; popup.style.animation = 'spPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; }
+    }
+
+    function closeReviewPopup(e) {
+        if (e && e.target !== e.currentTarget) return;
+        document.getElementById('reviewPopupOverlay').style.display = 'none';
+    }
+
+    function submitReview() {
+        var storeId = document.getElementById('review-store-id').value;
+        var orderId = document.getElementById('review-order-id').value;
+        var rating = parseInt(document.getElementById('reviewRatingValue').value) || 0;
+        var comment = document.getElementById('reviewComment').value.trim();
+        var btn = document.getElementById('reviewSubmitBtn');
+        var msg = document.getElementById('reviewSubmitMsg');
+
+        if (rating < 1 || rating > 5) {
+            document.getElementById('reviewRatingError').style.display = 'block';
+            return;
+        }
+        btn.disabled = true;
+        btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spSpinReview .6s linear infinite;"></span> Đang gửi...';
+        msg.textContent = '';
+
+        var formData = new FormData();
+        formData.append('storeId', storeId);
+        if (orderId) formData.append('orderId', orderId);
+        formData.append('rating', rating);
+        formData.append('comment', comment);
+
+        fetch('/api/review/create', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                document.getElementById('reviewStarsWrap').style.display = 'none';
+                document.getElementById('reviewComment').style.display = 'none';
+                btn.style.display = 'none';
+                msg.textContent = '';
+                document.getElementById('reviewSuccessState').style.display = 'block';
+                setTimeout(function() { closeReviewPopup(); }, 3000);
+            } else {
+                msg.style.color = 'var(--danger)';
+                msg.textContent = d.message || 'Lỗi gửi đánh giá';
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Gửi đánh giá';
+            }
+        }).catch(function() {
+            msg.style.color = 'var(--danger)';
+            msg.textContent = 'Lỗi kết nối máy chủ';
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Gửi đánh giá';
+        });
+    }
+
+    // Auto-open when coming from order review link
+    document.addEventListener('DOMContentLoaded', function() {
+        var flag = document.getElementById('review-mode-flag');
+        if (flag && flag.value === '1') {
+            setTimeout(openReviewPopup, 500);
+        }
+    });
+</script>
+</body>
+</html>

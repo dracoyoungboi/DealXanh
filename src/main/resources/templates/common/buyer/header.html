@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  common/buyer/header.html
+  Buyer header with notification bell + dropdown popup
+-->
+<body th:fragment="header">
+<style>
+/* ===== NOTIFICATION DROPDOWN ===== */
+.notif-overlay {
+  position:fixed;inset:0;z-index:499;
+  background:rgba(0,0,0,.25);
+  opacity:0;visibility:hidden;transition:all .25s;
+}
+.notif-overlay.show{opacity:1;visibility:visible}
+
+.notif-dropdown {
+  position:fixed;top:56px;left:8px;right:8px;z-index:500;
+  background:var(--surface);
+  border-radius:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.18);
+  max-height:70vh;
+  display:flex;flex-direction:column;
+  transform:translateY(-16px);
+  opacity:0;visibility:hidden;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+/* PC: notification as popup near bell icon */
+@media(min-width:768px){
+  .notif-dropdown {
+    position:fixed;top:60px;left:auto;right:calc((100vw - var(--container-max, 1200px)) / 2 + 120px);
+    width:380px;max-width:calc(100vw - 24px);
+    border-radius:14px;border:1px solid var(--border, #e0e0e0);
+    box-shadow:0 8px 32px rgba(0,0,0,.12);
+  }
+  .notif-overlay{display:none!important}
+}
+.notif-dropdown.show {
+  transform:translateY(0);
+  opacity:1;visibility:visible;
+}
+
+.notif-dropdown-header {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 12px;
+  border-bottom:1px solid var(--border-light);
+  flex-shrink:0;
+}
+.notif-dropdown-title {
+  font-size:16px;font-weight:700;color:var(--text-primary);
+  display:flex;align-items:center;gap:8px;
+}
+.notif-dropdown-title .count-badge {
+  background:var(--danger);color:#fff;
+  font-size:11px;font-weight:700;
+  padding:2px 8px;border-radius:var(--radius-full);
+  min-width:20px;text-align:center;
+}
+.notif-mark-all {
+  font-size:12px;font-weight:600;color:var(--primary);
+  padding:6px 12px;border-radius:var(--radius-full);
+  border:1px solid var(--primary);
+  background:transparent;cursor:pointer;
+  transition:all var(--tr,200ms);
+}
+.notif-mark-all:hover{background:var(--primary);color:#fff}
+
+.notif-list {
+  overflow-y:auto;flex:1;
+  scrollbar-width:thin;
+}
+.notif-list::-webkit-scrollbar{width:3px}
+.notif-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.notif-item {
+  display:flex;gap:12px;padding:12px 16px;
+  border-bottom:1px solid var(--border-light);
+  cursor:pointer;transition:background .15s;
+  align-items:flex-start;
+}
+.notif-item:hover{background:var(--background)}
+.notif-item.unread{background:rgba(13,92,46,.03)}
+.notif-item.unread:hover{background:rgba(13,92,46,.06)}
+
+.notif-item-icon {
+  width:38px;height:38px;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:18px;
+}
+.notif-icon-order{background:rgba(59,130,246,.1);color:#3b82f6}
+.notif-icon-deal{background:rgba(13,92,46,.1);color:var(--primary)}
+.notif-icon-system{background:rgba(245,158,11,.1);color:#f59e0b}
+.notif-icon-success{background:rgba(16,185,129,.1);color:#10b981}
+.notif-icon-danger{background:rgba(239,68,68,.1);color:#ef4444}
+
+.notif-item-body{flex:1;min-width:0}
+.notif-item-title{font-size:13px;font-weight:600;color:var(--text-primary);line-height:1.3;margin-bottom:2px}
+.notif-item-msg{font-size:12px;color:var(--text-secondary);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.notif-item-time{font-size:10px;color:var(--text-tertiary);margin-top:4px}
+
+.notif-item-dot {
+  width:8px;height:8px;border-radius:50%;
+  background:var(--primary);flex-shrink:0;margin-top:6px;
+}
+.notif-item.read .notif-item-dot{visibility:hidden}
+
+.notif-empty {
+  text-align:center;padding:40px 20px;color:var(--text-tertiary);
+}
+.notif-empty svg{width:48px;height:48px;color:var(--border);margin-bottom:12px}
+.notif-empty p{font-size:13px;margin:0}
+
+.notif-loading {
+  text-align:center;padding:40px 20px;color:var(--text-tertiary);
+  font-size:13px;
+}
+
+.notif-footer {
+  padding:10px 16px;border-top:1px solid var(--border-light);
+  text-align:center;flex-shrink:0;
+}
+.notif-footer a {
+  font-size:13px;font-weight:600;color:var(--primary);
+  text-decoration:none;
+}
+
+/* Notification badge */
+.notification-badge {
+  position:absolute;top:2px;right:2px;
+  min-width:18px;height:18px;
+  background:var(--danger);color:#fff;
+  border-radius:var(--radius-full);
+  font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 4px;
+  border:2px solid var(--surface);
+  line-height:1;
+}
+
+/* === DX AVATAR HEADER MOBILE === */
+#dx-av-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #1a5c2a;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+}
+#dx-av-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dx-av-fb {
+  width: 100%;
+  height: 100%;
+  background: #1a5c2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+/* === DX POPUP MOBILE === */
+.dx-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+}
+.dx-overlay.open { display: block; }
+.dx-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: 1;
+}
+.dx-popup {
+  position: fixed;
+  top: 56px;
+  right: 10px;
+  left: auto;
+  bottom: auto;
+  width: 220px;
+  max-width: calc(100vw - 20px);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+  overflow: hidden;
+  z-index: 2;
+  transform: scale(0.92) translateY(-8px);
+  transform-origin: top right;
+  opacity: 0;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s;
+}
+.dx-overlay.open .dx-popup {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+.dx-pu-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.dx-pu-av {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 2px solid #1a5c2a;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.dx-pu-av img { width:100%; height:100%; object-fit:cover; display:block; }
+.dx-pu-av-fb {
+  width:100%; height:100%;
+  background:#1a5c2a;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; color:#fff;
+}
+.dx-pu-name { font-size:13px; font-weight:600; color:#111; }
+.dx-pu-email {
+  font-size:10px; color:#999; margin-top:2px;
+  white-space:nowrap; overflow:hidden;
+  text-overflow:ellipsis; max-width:124px;
+}
+/* Account dropdown items inside mobile popup — match desktop compact style */
+.dx-popup .account-dropdown-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px; color: #222;
+  text-decoration: none;
+  min-height: 40px;
+  background: none; border: none;
+  width: 100%; text-align: left; cursor: pointer;
+  transition: background .12s;
+}
+.dx-popup .account-dropdown-item svg {
+  flex-shrink: 0;
+  color: #555;
+  width: 18px; height: 18px;
+}
+.dx-popup .account-dropdown-item:active,
+.dx-popup .account-dropdown-item:hover {
+  background: #f7f7f7;
+}
+.dx-popup .account-dropdown-item--danger,
+.dx-popup .account-dropdown-item--danger svg {
+  color: #c62828 !important;
+}
+.dx-popup .account-dropdown-item--danger:hover,
+.dx-popup .account-dropdown-item--danger:active {
+  background: #fef2f2;
+}
+.dx-popup .account-dropdown-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 3px 0;
+}
+
+/* Mobile login button — compact text button matching desktop btn-header-login */
+.dx-mb-login-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: transparent;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+.dx-mb-login-btn:active {
+  background-color: #f3f4f6;
+}
+</style>
+
+<header class="mobile-header">
+    <div class="mobile-header__logo">
+        <a th:href="@{/}">
+            <img th:src="@{/img/logo-header.svg}" alt="DealXanh">
+        </a>
+    </div>
+    <div class="mobile-header__actions">
+        <button class="mobile-header__button" id="search-toggle" aria-label="Tìm kiếm" onclick="openSearch()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </button>
+        <button class="mobile-header__button" id="notification-toggle" aria-label="Thông báo" style="position:relative" onclick="toggleNotifications()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="notification-badge" id="notif-badge" th:if="${notifCount != null and notifCount > 0}" th:text="${notifCount}">0</span>
+        </button>
+        <!-- DX Avatar Button -->
+        <div id="dx-av-btn" class="dx-av-btn" th:if="${currentUserFullName != null}">
+          <img
+            id="dx-av-img"
+            th:src="${currentUserAvatar != null ? currentUserAvatar : ''}"
+            alt="avatar"
+            onerror="this.style.display='none';
+                     document.getElementById('dx-av-fb').style.display='flex';"
+          />
+          <div id="dx-av-fb" class="dx-av-fb" th:style="${currentUserAvatar != null} ? 'display:none;' : 'display:flex;'" th:text="${currentUserInitials}" th:if="${currentUserInitials != null}">PT</div>
+        </div>
+        <!-- DX Login Button (visible when logged out) — compact text button like desktop -->
+        <a href="/login" class="dx-mb-login-btn" th:if="${currentUserFullName == null}">Đăng nhập</a>
+    </div>
+</header>
+
+<!-- DX Profile Popup Overlay -->
+<div id="dx-overlay" class="dx-overlay" th:if="${currentUserFullName != null}">
+  <div id="dx-backdrop" class="dx-backdrop"></div>
+  <div class="dx-popup">
+
+    <!-- USER INFO -->
+    <div class="dx-pu-user">
+      <div class="dx-pu-av">
+        <img
+          th:src="${currentUserAvatar != null ? currentUserAvatar : ''}"
+          alt="avatar"
+          onerror="this.style.display='none';
+                   this.nextElementSibling.style.display='flex';"
+        />
+        <div class="dx-pu-av-fb" th:style="${currentUserAvatar != null} ? 'display:none;' : 'display:flex;'" th:text="${currentUserInitials}" th:if="${currentUserInitials != null}">PT</div>
+      </div>
+      <div>
+        <div class="dx-pu-name" th:text="${currentUserFullName}">Tên User</div>
+        <div class="dx-pu-email" th:text="${currentUserEmail}">email@example.com</div>
+      </div>
+    </div>
+
+    <!-- MENU ITEMS — shared fragment: 3 items only (Tài khoản của tôi, Đơn hàng của tôi, Đăng xuất) -->
+    <div th:replace="~{common/buyer/account-dropdown-menu :: accountMenuItems}"></div>
+
+  </div>
+</div>
+
+<!-- Desktop Top Navigation Bar (visible on min-width: 768px) -->
+<div th:replace="~{common/buyer/top-nav :: topNav}"></div>
+
+<!-- Notification Dropdown -->
+<div class="notif-overlay" id="notif-overlay" onclick="closeNotifications()"></div>
+<div class="notif-dropdown" id="notif-dropdown">
+    <div class="notif-dropdown-header">
+        <div class="notif-dropdown-title">
+            Thông báo
+            <span class="count-badge" id="notif-dropdown-count">0</span>
+        </div>
+        <button class="notif-mark-all" onclick="markAllNotificationsRead(event)">Đánh dấu đã đọc</button>
+    </div>
+    <div class="notif-list" id="notif-list">
+        <div class="notif-loading">Đang tải...</div>
+    </div>
+    <div class="notif-footer">
+        <a href="/buyer/orders">Xem tất cả đơn hàng</a>
+    </div>
+</div>
+
+<!-- Search Overlay Container -->
+<div th:replace="~{common/buyer/search-overlay :: searchOverlay}"></div>
+
+<script>
+// ===== NOTIFICATION FUNCTIONS =====
+var notifOpen = false;
+
+function toggleNotifications() {
+    notifOpen ? closeNotifications() : openNotifications();
+}
+
+function openNotifications() {
+    notifOpen = true;
+    document.getElementById('notif-overlay').classList.add('show');
+    document.getElementById('notif-dropdown').classList.add('show');
+    fetchNotifications();
+}
+
+function closeNotifications() {
+    notifOpen = false;
+    document.getElementById('notif-overlay').classList.remove('show');
+    document.getElementById('notif-dropdown').classList.remove('show');
+}
+
+function getNotifIcon(type) {
+    if (!type) return '<div class="notif-item-icon notif-icon-system">🔔</div>';
+    if (type.indexOf('ORDER') === 0) return '<div class="notif-item-icon notif-icon-order">📦</div>';
+    if (type.indexOf('DEAL') === 0) return '<div class="notif-item-icon notif-icon-deal">🎉</div>';
+    if (type === 'COMPLETED' || type.indexOf('SUCCESS') === 0) return '<div class="notif-item-icon notif-icon-success">✅</div>';
+    if (type === 'CANCELLED') return '<div class="notif-item-icon notif-icon-danger">❌</div>';
+    return '<div class="notif-item-icon notif-icon-system">🔔</div>';
+}
+
+function timeAgo(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    var now = new Date();
+    var diff = Math.floor((now - d) / 1000);
+    if (diff < 60) return 'Vừa xong';
+    if (diff < 3600) return Math.floor(diff/60) + ' phút trước';
+    if (diff < 86400) return Math.floor(diff/3600) + ' giờ trước';
+    if (diff < 604800) return Math.floor(diff/86400) + ' ngày trước';
+    return d.toLocaleDateString('vi-VN');
+}
+
+function fetchNotifications() {
+    var list = document.getElementById('notif-list');
+    list.innerHTML = '<div class="notif-loading">Đang tải...</div>';
+
+    fetch('/api/notifications')
+    .then(function(r){return r.json()})
+    .then(function(data){
+        if (!data.success || !data.notifications) {
+            list.innerHTML = '<div class="notif-empty"><p>Không thể tải thông báo</p></div>';
+            return;
+        }
+        var notifs = data.notifications;
+        document.getElementById('notif-dropdown-count').textContent = data.unreadCount || 0;
+
+        if (notifs.length === 0) {
+            list.innerHTML = '<div class="notif-empty">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>' +
+                '<p>Chưa có thông báo nào</p></div>';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < notifs.length; i++) {
+            var n = notifs[i];
+            var readClass = n.isRead ? ' read' : ' unread';
+            html += '<div class="notif-item' + readClass + '" onclick="handleNotifClick(event, ' + n.id + ', \'' + (n.linkUrl || '') + '\')">' +
+                getNotifIcon(n.type) +
+                '<div class="notif-item-body">' +
+                    '<div class="notif-item-title">' + escapeHtml(n.title) + '</div>' +
+                    '<div class="notif-item-msg">' + escapeHtml(n.message) + '</div>' +
+                    '<div class="notif-item-time">' + timeAgo(n.createdAt) + '</div>' +
+                '</div>' +
+                '<div class="notif-item-dot"></div>' +
+            '</div>';
+        }
+        list.innerHTML = html;
+    })
+    .catch(function(){
+        list.innerHTML = '<div class="notif-empty"><p>Không thể tải thông báo</p></div>';
+    });
+}
+
+function handleNotifClick(e, notifId, linkUrl) {
+    e.stopPropagation();
+    // Mark as read
+    var formData = new FormData();
+    formData.append('id', notifId);
+    fetch('/api/notifications/read', {method:'POST',body:formData,headers:{'X-CSRF-TOKEN':getCsrfToken()}})
+    .then(function(r){return r.json()})
+    .then(function(data){
+        updateNotifBadge(data.unreadCount || 0);
+    });
+
+    closeNotifications();
+    if (linkUrl && linkUrl.length > 0) {
+        window.location.href = linkUrl;
+    }
+}
+
+function markAllNotificationsRead(e) {
+    e.stopPropagation();
+    fetch('/api/notifications/read-all', {method:'POST',headers:{'X-CSRF-TOKEN':getCsrfToken()}})
+    .then(function(r){return r.json()})
+    .then(function(data){
+        updateNotifBadge(0);
+        fetchNotifications();
+    });
+}
+
+function getCsrfToken() {
+    var meta = document.querySelector('meta[name="_csrf"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
+function updateNotifBadge(count) {
+    var badge = document.getElementById('notif-badge');
+    if (count > 0) {
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = 'flex';
+        } else {
+            var btn = document.getElementById('notification-toggle');
+            if (btn) {
+                var span = document.createElement('span');
+                span.className = 'notification-badge';
+                span.id = 'notif-badge';
+                span.textContent = count;
+                btn.appendChild(span);
+            }
+        }
+    } else {
+        if (badge) badge.style.display = 'none';
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    var d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+
+// Refresh badge count periodically (every 60s)
+setInterval(function(){
+    fetch('/api/notifications/count')
+    .then(function(r){return r.json()})
+    .then(function(data){
+        if (data.success) updateNotifBadge(data.count);
+    });
+}, 60000);
+
+// ===== SEARCH FUNCTIONS =====
+var suggestTimer = null;
+
+function openSearch() {
+    var overlay = document.getElementById('search-overlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.setAttribute('aria-hidden', 'false');
+        showDefaultSuggestions();
+        setTimeout(function() {
+            var input = document.getElementById('search-input');
+            if (input) input.focus();
+        }, 100);
+    }
+}
+
+function closeSearch() {
+    var overlay = document.getElementById('search-overlay');
+    if (overlay) { overlay.style.display = 'none'; overlay.setAttribute('aria-hidden', 'true'); }
+    // Clear input
+    var input = document.getElementById('search-input');
+    if (input) input.value = '';
+    showDefaultSuggestions();
+}
+
+function showDefaultSuggestions() {
+    document.getElementById('suggest-title').textContent = 'Tìm kiếm phổ biến';
+    document.getElementById('suggest-list').innerHTML =
+        '<button class="search-suggestion__chip" onclick="doSearch(\'Bánh mì\')">Bánh mì</button>' +
+        '<button class="search-suggestion__chip" onclick="doSearch(\'Cà phê\')">Cà phê</button>' +
+        '<button class="search-suggestion__chip" onclick="doSearch(\'Bún phở\')">Bún phở</button>' +
+        '<button class="search-suggestion__chip" onclick="doSearch(\'Trà sữa\')">Trà sữa</button>' +
+        '<button class="search-suggestion__chip" onclick="doSearch(\'Cơm\')">Cơm</button>' +
+        '<button class="search-suggestion__chip" onclick="doSearch(\'Bánh ngọt\')">Bánh ngọt</button>';
+    document.getElementById('suggest-list').style.display = '';
+    document.getElementById('suggest-list').style.flexDirection = 'row';
+    document.getElementById('search-loading').style.display = 'none';
+    document.getElementById('search-no-results').style.display = 'none';
+    document.getElementById('suggest-title').style.display = '';
+}
+
+function onSearchInput(val) {
+    clearTimeout(suggestTimer);
+    if (!val || val.trim().length < 2) {
+        showDefaultSuggestions();
+        return;
+    }
+    // Show loading
+    document.getElementById('suggest-list').style.display = 'none';
+    document.getElementById('suggest-title').style.display = 'none';
+    document.getElementById('search-loading').style.display = '';
+    document.getElementById('search-no-results').style.display = 'none';
+
+    suggestTimer = setTimeout(function() {
+        fetchSuggestions(val.trim());
+    }, 250);
+}
+
+function fetchSuggestions(q) {
+    fetch('/api/search/suggest?q=' + encodeURIComponent(q))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        document.getElementById('search-loading').style.display = 'none';
+        var hasProducts = data.success && data.products && data.products.length > 0;
+        var hasStores = data.success && data.stores && data.stores.length > 0;
+
+        if (!hasProducts && !hasStores) {
+            document.getElementById('search-no-results').style.display = '';
+            return;
+        }
+
+        document.getElementById('suggest-title').textContent = 'Gợi ý tìm kiếm';
+        document.getElementById('suggest-title').style.display = '';
+        document.getElementById('suggest-list').style.display = '';
+        document.getElementById('suggest-list').style.flexDirection = 'column';
+        document.getElementById('search-no-results').style.display = 'none';
+
+        var html = '';
+
+        // Product results
+        if (hasProducts) {
+            html += '<div style="font-size:11px;font-weight:600;color:var(--text-tertiary);padding:4px 4px 6px;text-transform:uppercase;letter-spacing:.5px">Sản phẩm</div>';
+            html += data.products.map(function(p) {
+                var storeText = p.storeName ? '<span style="font-size:10px;color:var(--text-tertiary)"> — ' + escapeHtml(p.storeName) + '</span>' : '';
+                return '<button class="search-suggestion__chip" onclick="doSearch(\'' + escapeHtml(p.name).replace(/'/g, "\\'") + '\')" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 12px;border-radius:var(--radius-md);font-size:13px;margin-bottom:2px">' +
+                    '<img src="' + p.image + '" alt="" style="width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0" onerror="this.src=\'/img/default-banner.svg\'">' +
+                    '<span>' + escapeHtml(p.name) + storeText + '</span>' +
+                '</button>';
+            }).join('');
+        }
+
+        // Store results
+        if (hasStores) {
+            html += '<div style="font-size:11px;font-weight:600;color:var(--text-tertiary);padding:8px 4px 6px;text-transform:uppercase;letter-spacing:.5px;border-top:1px solid var(--border-light)">Cửa hàng</div>';
+            html += data.stores.map(function(s) {
+                var addrText = s.address ? '<span style="font-size:10px;color:var(--text-tertiary)">' + escapeHtml(s.address) + '</span>' : '';
+                return '<button class="search-suggestion__chip" onclick="doStoreSearch(\'' + s.id + '\')" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 12px;border-radius:var(--radius-md);font-size:13px;margin-bottom:2px">' +
+                    '<img src="' + s.image + '" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.src=\'/img/default-banner.svg\'">' +
+                    '<span style="flex:1">' +
+                        '<span style="display:block;font-weight:600">' + escapeHtml(s.name) + '</span>' +
+                        addrText +
+                    '</span>' +
+                    '<span style="font-size:10px;padding:2px 6px;border-radius:10px;background:var(--status-success-bg);color:var(--primary);flex-shrink:0">' + escapeHtml(s.tier || '') + '</span>' +
+                '</button>';
+            }).join('');
+        }
+
+        document.getElementById('suggest-list').innerHTML = html;
+    })
+    .catch(function() {
+        document.getElementById('search-loading').style.display = 'none';
+        showDefaultSuggestions();
+    });
+}
+
+function doStoreSearch(storeId) {
+    closeSearch();
+    window.location.href = '/store/' + storeId;
+}
+
+function onSearchKeydown(e) {
+    if (e.key === 'Enter') {
+        performSearchNow();
+    }
+}
+
+function doSearch(q) {
+    closeSearch();
+    window.location.href = '/buyer/search?q=' + encodeURIComponent(q);
+}
+
+function performSearchNow() {
+    var q = document.getElementById('search-input').value.trim();
+    if (q.length > 0) {
+        closeSearch();
+        window.location.href = '/buyer/search?q=' + encodeURIComponent(q);
+    }
+}
+
+// === DX HEADER MOBILE POPUP ===
+(function () {
+  const avBtn     = document.getElementById('dx-av-btn');
+  const overlay   = document.getElementById('dx-overlay');
+  const backdrop  = document.getElementById('dx-backdrop');
+
+  // All elements only exist when user is logged in (th:if guards)
+  if (!avBtn || !overlay) return;
+
+  function openPopup()  { overlay.classList.add('open'); }
+  function closePopup() { overlay.classList.remove('open'); }
+
+  function togglePopup(e) {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    overlay.classList.contains('open') ? closePopup() : openPopup();
+  }
+
+  // Expose globally for mobile bottom-nav "Tài khoản" tab
+  window.toggleMobileAccountPopup = togglePopup;
+  window.closeMobileAccountPopup = closePopup;
+
+  avBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    overlay.classList.contains('open') ? closePopup() : openPopup();
+  });
+
+  backdrop.addEventListener('click', closePopup);
+
+  // ESC key → close mobile popup
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) {
+      closePopup();
+    }
+  });
+
+  // Click outside popup (but not on trigger) → close
+  document.addEventListener('click', function(e) {
+    if (!overlay.classList.contains('open')) return;
+    var popup = overlay.querySelector('.dx-popup');
+    if (popup && !popup.contains(e.target) && e.target !== avBtn && !avBtn.contains(e.target)) {
+      closePopup();
+    }
+  });
+
+  document.querySelectorAll('.dx-popup .account-dropdown-item').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      // Let the link navigate naturally — just close the popup
+      setTimeout(closePopup, 50);
+    });
+  });
+})();
+
+// ===== OTP VERIFICATION POPUP =====
+(function() {
+    var dismissedKey = 'dx_otp_popup_dismissed_v1';
+    var emailVerified = /*[[${emailVerified}]]*/ true;
+    var userEmail = /*[[${userEmail}]]*/ '';
+
+    if (emailVerified === false && localStorage.getItem(dismissedKey) !== '1') {
+        showOtpPopup();
+    }
+
+    function showOtpPopup() {
+        var html = '<div id="otp-verify-overlay" class="otp-verify-overlay" onclick="if(event.target===this)closeOtpPopup()">' +
+            '<div class="otp-verify-popup">' +
+                '<div class="otp-verify-popup__icon">📧</div>' +
+                '<h3 class="otp-verify-popup__title">Xác thực tài khoản</h3>' +
+                '<p class="otp-verify-popup__desc">Tài khoản của bạn chưa được xác thực. Nhấn nút bên dưới để nhận mã OTP qua email <strong>' + userEmail + '</strong>.</p>' +
+                '<p class="otp-verify-popup__warn">⚠️ Nếu không xác thực tài khoản, sau <strong>7 ngày</strong> bạn sẽ không thể truy cập vào web vì vi phạm chính sách.</p>' +
+                '<button class="otp-verify-popup__btn" id="otp-send-btn" onclick="sendOtpVerification()">📩 Nhận mã OTP xác thực</button>' +
+                '<div id="otp-verify-input-row" style="display:none;margin-top:12px">' +
+                    '<input type="text" id="otp-verify-input" class="otp-verify-popup__input" placeholder="Nhập mã OTP" maxlength="6" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;text-align:center;letter-spacing:4px">' +
+                    '<button class="otp-verify-popup__btn" style="margin-top:8px;background:var(--primary)" onclick="verifyOtpCode()">✅ Xác nhận</button>' +
+                '</div>' +
+                '<div id="otp-verify-msg" style="margin-top:8px;font-size:12px;text-align:center"></div>' +
+                '<div class="otp-verify-popup__footer">' +
+                    '<label class="otp-verify-dismiss"><input type="checkbox" id="otp-dismiss-check"> Không hiển thị lại</label>' +
+                    '<button class="otp-verify-close" onclick="closeOtpPopup()">✕</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+
+        var style = document.createElement('style');
+        style.textContent = '.otp-verify-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;animation:fadeIn .2s}' +
+            '.otp-verify-popup{background:var(--surface,#fff);border-radius:16px;width:90vw;max-width:420px;padding:24px 20px 16px;box-shadow:0 16px 48px rgba(0,0,0,.25);animation:popIn .25s ease-out;text-align:center}' +
+            '@keyframes popIn{from{opacity:0;transform:scale(.9) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}' +
+            '@keyframes fadeIn{from{opacity:0}to{opacity:1}}' +
+            '.otp-verify-popup__icon{font-size:40px;margin-bottom:12px}' +
+            '.otp-verify-popup__title{font-size:17px;font-weight:700;color:var(--text-primary);margin-bottom:8px}' +
+            '.otp-verify-popup__desc{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px}' +
+            '.otp-verify-popup__warn{font-size:11px;color:#b45309;background:rgba(245,158,11,.08);padding:8px 12px;border-radius:8px;line-height:1.5;margin-bottom:14px}' +
+            '.otp-verify-popup__btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:10px;border:none;background:var(--primary,#0d5c2e);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}' +
+            '.otp-verify-popup__btn:active{opacity:.85}' +
+            '.otp-verify-popup__footer{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--border-light)}' +
+            '.otp-verify-dismiss{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-tertiary);cursor:pointer}' +
+            '.otp-verify-close{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text-tertiary);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}';
+        document.head.appendChild(style);
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    window.sendOtpVerification = function() {
+        var btn = document.getElementById('otp-send-btn');
+        btn.disabled = true;
+        btn.textContent = 'Đang gửi...';
+        fetch('/api/auth/send-otp?email=' + encodeURIComponent(userEmail), {method:'POST'})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                document.getElementById('otp-verify-input-row').style.display = 'block';
+                document.getElementById('otp-verify-msg').textContent = 'Đã gửi OTP, kiểm tra email';
+                document.getElementById('otp-verify-msg').style.color = '#059669';
+                btn.textContent = 'Đã gửi ✓';
+            } else {
+                document.getElementById('otp-verify-msg').textContent = d.message || 'Lỗi gửi OTP';
+                document.getElementById('otp-verify-msg').style.color = '#dc2626';
+                btn.disabled = false;
+                btn.textContent = '📩 Nhận mã OTP xác thực';
+            }
+        })
+        .catch(function() {
+            document.getElementById('otp-verify-msg').textContent = 'Lỗi kết nối';
+            document.getElementById('otp-verify-msg').style.color = '#dc2626';
+            btn.disabled = false;
+            btn.textContent = '📩 Nhận mã OTP xác thực';
+        });
+    };
+
+    window.verifyOtpCode = function() {
+        var code = document.getElementById('otp-verify-input').value.trim();
+        if (!code) return;
+        fetch('/api/auth/verify-otp?email=' + encodeURIComponent(userEmail) + '&otp=' + encodeURIComponent(code), {method:'POST'})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                document.getElementById('otp-verify-msg').textContent = 'Xác thực thành công! ✅';
+                document.getElementById('otp-verify-msg').style.color = '#059669';
+                setTimeout(function() {
+                    var overlay = document.getElementById('otp-verify-overlay');
+                    if (overlay) overlay.remove();
+                    localStorage.setItem(dismissedKey, '1');
+                }, 1000);
+            } else {
+                document.getElementById('otp-verify-msg').textContent = d.message || 'OTP không đúng';
+                document.getElementById('otp-verify-msg').style.color = '#dc2626';
+            }
+        });
+    };
+
+    window.closeOtpPopup = function() {
+        if (document.getElementById('otp-dismiss-check').checked) {
+            localStorage.setItem(dismissedKey, '1');
+        }
+        var overlay = document.getElementById('otp-verify-overlay');
+        if (overlay) overlay.remove();
+    };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sẵn sàng rồi! - DealXanh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --primary:#0d5c2e; --primary-dark:#08421f; --primary-light:#1a7c40;
+    --accent:#d4af37;
+    --surface:#fff; --bg:#f5f6f8;
+    --text-primary:#1a1a1a; --text-secondary:#666; --text-tertiary:#999;
+    --border:#e0e0e0; --border-light:#f0f0f0;
+    --success:#10b981; --success-bg:rgba(16,185,129,.1);
+    --warning:#f59e0b; --warning-bg:rgba(245,158,11,.1);
+    --info:#3b82f6; --info-bg:rgba(59,130,246,.1);
+    --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:20px; --radius-full:9999px;
+    --font:'Inter',-apple-system,sans-serif; --tr:250ms ease-out;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--font);-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text-primary);min-height:100vh}
+button{cursor:pointer;border:none;font-family:inherit}
+img{display:block;max-width:100%}
+
+.page{min-height:100vh;display:flex;flex-direction:column}
+
+/* Top nav */
+.onboard-nav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 24px;background:var(--surface);
+    border-bottom:1px solid var(--border-light);
+}
+.nav-left{display:flex;align-items:center;gap:12px}
+.back-btn{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;
+    background:var(--bg);transition:background var(--tr);
+}
+.back-btn:hover{background:var(--border-light)}
+.back-btn svg{width:18px;height:18px}
+.onboard-dots{display:flex;gap:6px}
+.onboard-dot{width:8px;height:8px;border-radius:4px;background:var(--border);transition:all .3s}
+.onboard-dot.active{background:var(--primary);width:24px}
+.onboard-dot.done{background:var(--success)}
+.step-label{font-size:13px;color:var(--text-secondary);font-weight:500}
+
+/* Ready hero */
+.ready-hero{
+    background:linear-gradient(160deg,#0a3d1e 0%,#0d5c2e 50%,#1a7c40 100%);
+    padding:40px 24px;display:flex;flex-direction:column;align-items:center;
+    text-align:center;position:relative;overflow:hidden;
+}
+.ready-hero::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 70% 30%,rgba(255,255,255,.08) 0%,transparent 60%);
+}
+
+/* Achievement ring */
+.achievement{position:relative;z-index:2;margin-bottom:24px}
+.achievement-ring{
+    width:120px;height:120px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+}
+.achievement-ring svg.ring-svg{
+    position:absolute;top:0;left:0;width:120px;height:120px;
+    transform:rotate(-90deg);
+}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:4}
+.ring-progress{
+    fill:none;stroke:var(--accent);stroke-width:4;
+    stroke-linecap:round;
+    stroke-dasharray:326;stroke-dashoffset:0;
+    animation:ringFill 1s .5s ease-out both;
+}
+@keyframes ringFill{from{stroke-dashoffset:326}to{stroke-dashoffset:0}}
+.achievement-inner{
+    width:96px;height:96px;border-radius:50%;
+    background:rgba(255,255,255,.12);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:2px solid rgba(255,255,255,.2);
+    animation:popIn .5s .3s ease-out both;
+}
+@keyframes popIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.achievement-emoji{font-size:28px;margin-bottom:2px}
+.achievement-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px}
+
+/* Confetti dots */
+.confetti-dot{
+    position:absolute;border-radius:50%;
+    animation:confettiFall 1s ease-out both;
+}
+@keyframes confettiFall{
+    from{opacity:1;transform:translateY(0) rotate(0)}
+    to{opacity:0;transform:translateY(60px) rotate(180deg)}
+}
+
+.ready-title{
+    font-size:26px;font-weight:800;color:#fff;
+    line-height:1.2;margin-bottom:10px;position:relative;z-index:2;
+    animation:fadeUp .6s .4s ease-out both;
+}
+.ready-sub{
+    font-size:14px;color:rgba(255,255,255,.7);line-height:1.6;
+    max-width:300px;margin:0 auto;position:relative;z-index:2;
+    animation:fadeUp .6s .5s ease-out both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* Body */
+.body{flex:1;padding:24px 24px 48px;max-width:480px;margin:0 auto;width:100%}
+
+/* Notification section */
+.notif-section{margin-bottom:28px}
+.notif-title{font-size:17px;font-weight:800;margin-bottom:6px}
+.notif-sub{font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:18px}
+
+/* Notification preview */
+.notif-preview{
+    background:var(--surface);border-radius:var(--radius-xl);
+    border:1px solid var(--border-light);
+    padding:16px;margin-bottom:18px;
+    box-shadow:0 4px 12px rgba(0,0,0,.06);
+}
+.notif-preview__header{
+    display:flex;align-items:center;gap:8px;margin-bottom:12px;
+    font-size:11px;color:var(--text-tertiary);font-weight:500;
+}
+.notif-preview__header img{width:16px;height:16px;border-radius:4px}
+.notif-preview__time{margin-left:auto}
+.notif-item{
+    display:flex;gap:12px;padding:10px;
+    background:var(--bg);border-radius:var(--radius-md);margin-bottom:8px;
+    border-left:3px solid;
+}
+.notif-item:last-child{margin-bottom:0}
+.notif-item.deal{border-left-color:var(--primary)}
+.notif-item.flash{border-left-color:#ef4444}
+.notif-item.reminder{border-left-color:var(--warning)}
+.notif-item__icon{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.notif-item__icon svg{width:18px;height:18px}
+.notif-item__body{flex:1}
+.notif-item__title{font-size:13px;font-weight:700;margin-bottom:3px}
+.notif-item__desc{font-size:12px;color:var(--text-secondary);line-height:1.4}
+
+/* Toggle list */
+.toggle-list{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+.toggle-item{
+    display:flex;align-items:center;gap:14px;
+    padding:14px;border-radius:var(--radius-lg);
+    background:var(--surface);border:1px solid var(--border-light);
+}
+.toggle-icon{
+    width:40px;height:40px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.toggle-icon svg{width:20px;height:20px}
+.toggle-text{flex:1}
+.toggle-title{font-size:14px;font-weight:600;margin-bottom:2px}
+.toggle-desc{font-size:12px;color:var(--text-secondary)}
+
+/* Toggle switch */
+.toggle-switch{
+    position:relative;width:44px;height:24px;flex-shrink:0;
+}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{
+    position:absolute;inset:0;background:var(--border);border-radius:12px;
+    transition:background .2s;cursor:pointer;
+}
+.toggle-track::after{
+    content:'';position:absolute;top:2px;left:2px;
+    width:20px;height:20px;border-radius:50%;
+    background:#fff;transition:transform .2s;
+    box-shadow:0 2px 4px rgba(0,0,0,.2);
+}
+input:checked + .toggle-track{background:var(--primary)}
+input:checked + .toggle-track::after{transform:translateX(20px)}
+
+/* Buttons */
+.btn-enable{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;padding:16px;border-radius:var(--radius-md);
+    background:var(--primary);color:#fff;
+    font-size:16px;font-weight:700;
+    transition:all var(--tr);box-shadow:0 4px 16px rgba(13,92,46,.3);
+    margin-bottom:12px;
+}
+.btn-enable:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.btn-enable svg{width:18px;height:18px}
+
+.btn-later{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    width:100%;padding:14px;border-radius:var(--radius-md);
+    background:var(--bg);border:1.5px solid var(--border);
+    color:var(--text-secondary);font-size:14px;font-weight:600;
+    transition:all var(--tr);margin-bottom:20px;
+}
+.btn-later:hover{border-color:var(--primary);color:var(--primary)}
+
+/* Ready checklist */
+.ready-checklist{
+    background:rgba(13,92,46,.05);border-radius:var(--radius-lg);
+    border:1px solid rgba(13,92,46,.12);padding:16px;
+}
+.ready-checklist__title{font-size:13px;font-weight:700;color:var(--primary);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.ready-checklist__title svg{width:15px;height:15px}
+.check-item{
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;padding:4px 0;
+}
+.check-item svg{width:16px;height:16px;color:var(--success);flex-shrink:0}
+.check-item--pending svg{color:var(--border)}
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Top nav -->
+    <div class="onboard-nav">
+        <div class="nav-left">
+            <button class="back-btn" onclick="window.location.href='onboarding-step2.html'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            </button>
+            <div class="onboard-dots">
+                <div class="onboard-dot done"></div>
+                <div class="onboard-dot done"></div>
+                <div class="onboard-dot active"></div>
+            </div>
+        </div>
+        <span class="step-label">Bước cuối</span>
+    </div>
+
+    <!-- Ready hero -->
+    <div class="ready-hero">
+        <!-- Confetti -->
+        <div class="confetti-dot" style="width:8px;height:8px;background:#d4af37;top:20px;left:30%;animation-delay:.1s"></div>
+        <div class="confetti-dot" style="width:6px;height:6px;background:#fff;top:15px;left:60%;animation-delay:.2s"></div>
+        <div class="confetti-dot" style="width:10px;height:10px;background:rgba(16,185,129,.8);top:30px;left:75%;animation-delay:.15s"></div>
+        <div class="confetti-dot" style="width:7px;height:7px;background:#d4af37;top:10px;left:20%;animation-delay:.3s"></div>
+
+        <div class="achievement">
+            <div class="achievement-ring">
+                <svg class="ring-svg" viewBox="0 0 120 120">
+                    <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                    <circle class="ring-progress" cx="60" cy="60" r="52"/>
+                </svg>
+                <div class="achievement-inner">
+                    <div class="achievement-emoji">🎉</div>
+                    <div class="achievement-label">Thiết lập xong</div>
+                </div>
+            </div>
+        </div>
+        <h1 class="ready-title">Gần xong rồi!</h1>
+        <p class="ready-sub">Bật thông báo để không bỏ lỡ deal hot. Deal cận date thường hết trong vài phút đầu!</p>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+
+        <!-- Notification section -->
+        <div class="notif-section">
+            <h2 class="notif-title">Thông báo deal</h2>
+            <p class="notif-sub">Nhận alert ngay khi có deal mới, flash sale, hoặc deal gần hết. Tắt bất cứ lúc nào trong cài đặt.</p>
+
+            <!-- Preview -->
+            <div class="notif-preview">
+                <div class="notif-preview__header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    DealXanh
+                    <span class="notif-preview__time">vừa xong</span>
+                </div>
+                <div class="notif-item deal">
+                    <div class="notif-item__icon" style="background:rgba(13,92,46,.08)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                    <div class="notif-item__body">
+                        <div class="notif-item__title">🔥 Deal mới cách bạn 0.4km</div>
+                        <div class="notif-item__desc">Bánh mì Hương Việt: Combo -65% · Còn 8 slot · Pickup 17:00–18:00</div>
+                    </div>
+                </div>
+                <div class="notif-item flash">
+                    <div class="notif-item__icon" style="background:rgba(239,68,68,.08)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <div class="notif-item__body">
+                        <div class="notif-item__title">⚡ Flash Sale bắt đầu ngay!</div>
+                        <div class="notif-item__desc">5 cửa hàng đang giảm 50–70% · Chỉ còn 1 tiếng</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Granular toggles -->
+            <div class="toggle-list">
+                <div class="toggle-item">
+                    <div class="toggle-icon" style="background:rgba(13,92,46,.08)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                    <div class="toggle-text">
+                        <div class="toggle-title">Deal gần bạn</div>
+                        <div class="toggle-desc">Khi có deal mới trong 3km</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+                <div class="toggle-item">
+                    <div class="toggle-icon" style="background:rgba(239,68,68,.08)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <div class="toggle-text">
+                        <div class="toggle-title">Flash Sale</div>
+                        <div class="toggle-desc">Khi bắt đầu khuyến mãi lớn</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+                <div class="toggle-item">
+                    <div class="toggle-icon" style="background:var(--warning-bg)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="toggle-text">
+                        <div class="toggle-title">Nhắc pickup</div>
+                        <div class="toggle-desc">Trước 30 phút khi hết slot</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ready checklist -->
+        <div class="ready-checklist" style="margin-bottom:28px">
+            <div class="ready-checklist__title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                Tóm tắt thiết lập
+            </div>
+            <div class="check-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Tài khoản đã đăng ký thành công
+            </div>
+            <div class="check-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Sở thích ẩm thực đã chọn
+            </div>
+            <div class="check-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Vị trí đã được xác định
+            </div>
+            <div class="check-item check-item--pending" id="notif-check">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Thông báo (chờ bật)
+            </div>
+        </div>
+
+        <button class="btn-enable" onclick="enableNotifs()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Bật thông báo — Không bỏ lỡ deal
+        </button>
+
+        <button class="btn-later" onclick="window.location.href='../home.html'">
+            Để sau, vào trang chủ ngay
+        </button>
+
+        <p style="text-align:center;font-size:12px;color:var(--text-tertiary);line-height:1.5">
+            Bạn có thể thay đổi cài đặt thông báo bất kỳ lúc nào trong <strong>Tài khoản → Cài đặt thông báo</strong>
+        </p>
+
+    </div>
+
+</div>
+
+<script>
+function enableNotifs() {
+    if ('Notification' in window) {
+        Notification.requestPermission().then(() => {
+            document.getElementById('notif-check').innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                Thông báo đã bật
+            `;
+            setTimeout(() => { window.location.href = '../home.html'; }, 800);
+        });
+    } else {
+        window.location.href = '../home.html';
+    }
+}
+</script>
+</body>
+</html>

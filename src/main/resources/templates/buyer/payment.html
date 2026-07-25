@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phương thức thanh toán — DealXanh</title>
+    <meta name="description" content="Chọn phương thức thanh toán DealXanh">
+
+    <div th:replace="~{common/buyer/css :: css}"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+
+    <style>
+/* ============================================================
+   PAYMENT PAGE — SCOPED STYLES (prefix: .payment-page)
+   Desktop: 2-column grid | Mobile (<1024px): single column
+   ============================================================ */
+
+/* ---- Base ---- */
+html.payment-page, .payment-page body { height: auto; min-height: 100%; }
+.payment-page body { padding-bottom: 120px; background: var(--background); }
+
+/* ---- Back Bar ---- */
+.back-bar { padding: 12px 16px; display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 20; }
+.back-bar a { display: flex; align-items: center; gap: 4px; font-size: 13px;
+    font-weight: 600; color: var(--primary); text-decoration: none; }
+.back-bar svg { width: 18px; height: 18px; }
+.back-bar__title { flex: 1; font-size: 17px; font-weight: 700; text-align: center; margin-right: 38px; }
+
+/* ---- Stepper ---- */
+.payment-stepper { display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 16px 12px; position: relative; background: var(--surface);
+    border-bottom: 1px solid var(--border-light); max-width: 1180px; margin: 0 auto; }
+.payment-stepper .stepper__line { position: absolute; top: 28px;
+    left: calc(12% + 16px); right: calc(12% + 16px); height: 2px;
+    background: var(--border); z-index: 0; }
+.payment-page .step { display: flex; flex-direction: column; align-items: center;
+    gap: 6px; position: relative; z-index: 1; flex: 0 0 auto; min-width: 56px; }
+.payment-page .step__circle { width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 12px;
+    font-weight: 700; background: var(--border); color: var(--text-tertiary); transition: all .25s; }
+.payment-page .step__circle--done { background: var(--primary); color: #fff; }
+.payment-page .step__circle--done::after { content: '\2713'; font-size: 14px; }
+.payment-page .step__circle--active { background: var(--surface);
+    border: 2px solid var(--primary); color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(13,92,46,.1); }
+.payment-page .step__label { font-size: 10px; font-weight: 600;
+    color: var(--text-tertiary); text-align: center; white-space: nowrap; }
+.payment-page .step--active .step__label { color: var(--primary); }
+.payment-page .step--done .step__label { color: var(--primary); }
+
+/* ---- Main Layout: 2-col grid ---- */
+.payment-layout {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 16px 16px 40px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+.payment-left { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.payment-right { display: flex; flex-direction: column; gap: 16px; }
+
+@media (min-width: 1024px) {
+    .payment-layout {
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 24px;
+        padding: 24px 24px 48px;
+    }
+    .payment-left { gap: 20px; }
+    .payment-right { gap: 20px; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+    .payment-layout { padding: 20px 20px 40px; gap: 20px; }
+}
+
+/* ---- Shared Card ---- */
+.payment-page .payment-card {
+    background: var(--surface);
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.payment-page .payment-card__header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 16px; font-size: 14px; font-weight: 700;
+    color: var(--text-primary); border-bottom: 1px solid var(--border-light);
+    background: #fafbfc;
+}
+.payment-page .payment-card__header svg {
+    width: 16px; height: 16px; color: var(--primary); flex-shrink: 0;
+}
+.payment-page .payment-card__body { padding: 16px; }
+
+/* ---- Payment Method Card ---- */
+.pay-method { display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+    cursor: pointer; transition: all .15s; border-bottom: 1px solid var(--border-light); position: relative; }
+.pay-method:last-child { border-bottom: none; }
+.pay-method:hover { background: rgba(13,92,46,.02); }
+.pay-method--selected { background: linear-gradient(135deg, rgba(13,92,46,.03) 0%, rgba(13,92,46,.06) 100%); }
+.pay-method--selected::after { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px;
+    width: 3px; background: var(--primary); border-radius: 0 3px 3px 0; }
+.pay-method--disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
+.pay-method--disabled:hover { background: transparent; }
+.pay-method__icon { width: 46px; height: 46px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-size: 20px; background: var(--background); border: 1px solid var(--border-light);
+    transition: all .2s; }
+.pay-method--selected .pay-method__icon { border-color: var(--primary);
+    background: rgba(13,92,46,.06); }
+.pay-method--disabled .pay-method__icon { background: var(--background); border-color: var(--border-light); }
+.pay-method__icon svg { width: 20px; height: 20px; }
+.pay-method--selected .pay-method__icon svg { stroke: var(--primary); }
+.pay-method__info { flex: 1; min-width: 0; }
+.pay-method__name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.pay-method__desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+.pay-method__badge { display: inline-flex; align-items: center; gap: 3px;
+    padding: 3px 10px; border-radius: var(--radius-full); font-size: 10px;
+    font-weight: 700; margin-top: 5px; }
+.pay-method__badge--recommend { background: rgba(16,185,129,.1); color: #059669; }
+.pay-method__badge--soon { background: rgba(107,114,128,.08); color: #6b7280; }
+.pay-method__radio { width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--border); flex-shrink: 0; display: flex;
+    align-items: center; justify-content: center; transition: all .2s; }
+.pay-method--selected .pay-method__radio { border-color: var(--primary); background: var(--primary); }
+.pay-method__radio-dot { width: 8px; height: 8px; border-radius: 50%;
+    background: #fff; display: none; }
+.pay-method--selected .pay-method__radio-dot { display: block; }
+.pay-method--disabled .pay-method__radio { border-color: var(--border-light); background: var(--border-light); }
+
+/* ---- Security Notice ---- */
+.payment-security-note { display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; background: rgba(16,185,129,.05);
+    border: 1px solid rgba(16,185,129,.15); border-radius: 10px;
+    font-size: 11px; color: #059669; font-weight: 500; line-height: 1.4; }
+.payment-security-note svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* ---- Pickup Time Card ---- */
+.payment-page .pickup-time-input {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 14px; font-family: var(--font-family);
+    color: var(--text-primary); background: var(--background);
+    box-sizing: border-box; outline: none; transition: border-color .2s, box-shadow .2s; }
+.payment-page .pickup-time-input:focus { border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(13,92,46,.06); }
+.payment-page .pickup-hint { font-size: 12px; color: var(--text-secondary); margin-top: 8px;
+    line-height: 1.5; display: flex; align-items: flex-start; gap: 4px; }
+.payment-page .pickup-hint svg { width: 13px; height: 13px; flex-shrink: 0; margin-top: 1px; color: var(--text-tertiary); }
+
+/* ---- Order Recap Card ---- */
+.payment-page .order-recap-row { display: flex; align-items: center; gap: 12px; padding: 2px 0; }
+.payment-page .order-recap-icon { width: 42px; height: 42px; border-radius: 10px;
+    background: rgba(13,92,46,.06); display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; }
+.payment-page .order-recap-icon svg { width: 20px; height: 20px; stroke: var(--primary); }
+.payment-page .order-recap-info { flex: 1; min-width: 0; }
+.payment-page .order-recap-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.payment-page .order-recap-detail { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ---- Price Summary Card ---- */
+.payment-page .price-row { display: flex; justify-content: space-between;
+    align-items: center; padding: 6px 0; font-size: 13px; color: var(--text-secondary); }
+.payment-page .price-row--discount { color: #059669; font-weight: 600; }
+.payment-page .price-row--strike { color: var(--text-tertiary); }
+.payment-page .price-row--strike .price-row__val { text-decoration: line-through; }
+.payment-page .price-row--divider { border-top: 1px dashed var(--border);
+    margin-top: 10px; padding-top: 14px; }
+.payment-page .price-row--total { font-size: 16px; font-weight: 800; color: var(--primary); }
+.payment-page .price-row--total .price-row__val { font-size: 22px; color: #0b4d25; }
+.payment-page .price-row__val { font-variant-numeric: tabular-nums; }
+
+/* ---- Confirm Button ---- */
+.payment-page .btn-confirm { display: flex; align-items: center; justify-content: center;
+    gap: 8px; width: 100%; padding: 14px 24px; background: var(--primary);
+    color: #fff; border: none; border-radius: 12px; font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: var(--font-family);
+    transition: all .15s; }
+.payment-page .btn-confirm:hover { background: var(--primary-dark);
+    box-shadow: 0 4px 16px rgba(13,92,46,.2); }
+.payment-page .btn-confirm:active { transform: scale(.98); }
+.payment-page .btn-confirm svg { width: 17px; height: 17px; }
+
+/* ---- Sticky Bottom Bar (mobile only) ---- */
+.payment-page .sticky-bottom { position: fixed; bottom: 72px; left: 0; right: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 14px 16px 20px; z-index: 50; box-shadow: 0 -4px 16px rgba(0,0,0,.08); }
+.payment-page .sticky-bottom__row { display: flex; align-items: baseline;
+    justify-content: space-between; margin-bottom: 10px; }
+.payment-page .sticky-bottom__method { font-size: 12px; color: var(--text-secondary);
+    display: flex; align-items: center; gap: 4px; }
+.payment-page .sticky-bottom__method strong { color: var(--text-primary); font-weight: 700; }
+.payment-page .sticky-bottom__total { font-size: 20px; font-weight: 800; color: var(--primary); }
+@media (min-width: 1024px) {
+    .payment-page .sticky-bottom { display: none !important; }
+}
+@media (max-width: 1023px) {
+    .payment-card-action { display: none !important; }
+}
+
+/* ---- Toast ---- */
+.toast { position: fixed; bottom: 140px; left: 50%; transform: translateX(-50%);
+    padding: 10px 20px; border-radius: var(--radius-full); font-size: 12px;
+    font-weight: 600; z-index: 200; background: var(--text-primary); color: #fff;
+    white-space: nowrap; box-shadow: var(--shadow-md); animation: toastIn .3s ease; }
+@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(10px); }
+    to { opacity:1; transform:translateX(-50%) translateY(0); } }
+    </style>
+</head>
+<body class="payment-page">
+
+<!-- Shared Header -->
+<div th:replace="~{common/buyer/header :: header}"></div>
+
+<!-- Back Bar -->
+<div class="back-bar">
+    <a href="javascript:history.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Quay lại
+    </a>
+    <span class="back-bar__title">Phương thức thanh toán</span>
+</div>
+
+<!-- Stepper: Step 3 active -->
+<div class="payment-stepper">
+    <div class="stepper__line"></div>
+    <div class="step step--done">
+        <div class="step__circle step__circle--done"></div>
+        <div class="step__label">Giỏ hàng</div>
+    </div>
+    <div class="step step--done">
+        <div class="step__circle step__circle--done"></div>
+        <div class="step__label">Xác nhận</div>
+    </div>
+    <div class="step step--active">
+        <div class="step__circle step__circle--active">3</div>
+        <div class="step__label">Thanh toán</div>
+    </div>
+    <div class="step">
+        <div class="step__circle">4</div>
+        <div class="step__label">Hoàn tất</div>
+    </div>
+</div>
+
+<!-- Buy-now mode: hidden data container (UNCHANGED) -->
+<th:block th:if="${isBuyNow}">
+<div id="buyNowData" th:attr="data-total=${buyNowTotal},data-count=${buyNowItemCount},data-original=${buyNowOriginalTotal}" style="display:none"></div>
+</th:block>
+
+<!-- MAIN PAYMENT LAYOUT (2-col desktop, 1-col mobile) -->
+<div class="payment-layout">
+
+    <!-- ========== LEFT COLUMN ========== -->
+    <div class="payment-left">
+
+        <!-- 1. Payment Method Card -->
+        <div class="payment-card">
+            <div class="payment-card__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span>Phương thức thanh toán</span>
+            </div>
+            <div class="payment-card__body" style="padding:0;">
+
+                <!-- Bank transfer (default selected, only active method) -->
+                <div class="pay-method pay-method--selected" id="pm-bank" onclick="selectPayment('bank')">
+                    <div class="pay-method__icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    </div>
+                    <div class="pay-method__info">
+                        <div class="pay-method__name">Chuyển khoản ngân hàng (PayOS)</div>
+                        <div class="pay-method__desc">Quét mã QR PayOS tại cửa hàng để thanh toán</div>
+                        <span class="pay-method__badge pay-method__badge--recommend">⭐ Khuyên dùng</span>
+                    </div>
+                    <div class="pay-method__radio"><div class="pay-method__radio-dot"></div></div>
+                </div>
+
+                <!-- Credit Card (disabled) -->
+                <div class="pay-method pay-method--disabled" id="pm-credit">
+                    <div class="pay-method__icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="4" y1="14" x2="8" y2="14"/></svg>
+                    </div>
+                    <div class="pay-method__info">
+                        <div class="pay-method__name">Thẻ tín dụng / Ghi nợ</div>
+                        <div class="pay-method__desc">Thanh toán bằng thẻ Visa, Mastercard, JCB</div>
+                        <span class="pay-method__badge pay-method__badge--soon">🚧 Tính năng đang được phát triển</span>
+                    </div>
+                    <div class="pay-method__radio"><div class="pay-method__radio-dot"></div></div>
+                </div>
+
+                <!-- MoMo (disabled) -->
+                <div class="pay-method pay-method--disabled" id="pm-momo">
+                    <div class="pay-method__icon" style="background:#ae2070;border-color:#ae2070;color:#fff;font-size:15px;font-weight:900;">M</div>
+                    <div class="pay-method__info">
+                        <div class="pay-method__name">Ví MoMo</div>
+                        <div class="pay-method__desc">Thanh toán nhanh qua ví điện tử MoMo</div>
+                        <span class="pay-method__badge pay-method__badge--soon">🚧 Tính năng đang được phát triển</span>
+                    </div>
+                    <div class="pay-method__radio"><div class="pay-method__radio-dot"></div></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="payment-security-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Giao dịch được bảo mật bởi SSL 256-bit. Chúng tôi không lưu thông tin thanh toán của bạn.
+        </div>
+
+        <!-- 2. Pickup Time Card -->
+        <div class="payment-card">
+            <div class="payment-card__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Giờ nhận hàng dự kiến</span>
+            </div>
+            <div class="payment-card__body">
+                <input type="datetime-local" name="scheduledPickupTime" id="pickupTimeInput"
+                    class="pickup-time-input" required>
+                <div class="pickup-hint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span>Chọn giờ bạn dự định đến nhận hàng. Cửa hàng sẽ chuẩn bị đơn hàng trước giờ này.</span>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /payment-left -->
+
+    <!-- ========== RIGHT COLUMN ========== -->
+    <div class="payment-right">
+
+        <!-- 3. Order Recap Card -->
+        <div class="payment-card">
+            <div class="payment-card__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <span>Đơn hàng của bạn</span>
+            </div>
+            <div class="payment-card__body">
+                <div class="order-recap-row">
+                    <div class="order-recap-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                    </div>
+                    <div class="order-recap-info">
+                        <div class="order-recap-label" id="recapItems">Đang tải...</div>
+                        <div class="order-recap-detail">Nhận tại cửa hàng</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Payment Summary Card -->
+        <div class="payment-card" id="summaryCard">
+            <div class="payment-card__header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2" ry="2"/><line x1="6" y1="8" x2="6" y2="12"/><line x1="10" y1="8" x2="10" y2="16"/><line x1="14" y1="8" x2="14" y2="12"/><line x1="18" y1="8" x2="18" y2="16"/></svg>
+                <span>Chi tiết thanh toán</span>
+            </div>
+            <div class="payment-card__body">
+                <div class="price-row">
+                    <span>Tạm tính</span>
+                    <span class="price-row__val" id="summarySubtotal">0đ</span>
+                </div>
+                <div class="price-row price-row--discount" id="summaryDealDiscountRow" style="display:none;">
+                    <span>Giảm giá Deal</span>
+                    <span class="price-row__val" id="summaryDealDiscount">-0đ</span>
+                </div>
+                <div class="price-row price-row--discount" id="summaryVoucherRow" style="display:none;">
+                    <span>Mã giảm giá</span>
+                    <span class="price-row__val" id="summaryVoucher">-0đ</span>
+                </div>
+                <div class="price-row price-row--strike" id="summaryOriginalRow" style="display:none;">
+                    <span>Tổng giá gốc</span>
+                    <span class="price-row__val" id="summaryOriginal">0đ</span>
+                </div>
+                <div class="price-row price-row--divider price-row--total">
+                    <span>Tổng thanh toán</span>
+                    <span class="price-row__val" id="recapTotal">0đ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Confirm Form (desktop-only: hidden on mobile to avoid duplicate with sticky bar) -->
+        <form class="payment-card-action" th:action="@{/buyer/checkout/confirm}" method="post" style="margin:0">
+            <input type="hidden" name="paymentMethod" id="paymentMethodInput" value="BANK_TRANSFER">
+            <button type="submit" class="btn-confirm" id="confirmBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Xác nhận đặt hàng
+            </button>
+        </form>
+
+    </div><!-- /payment-right -->
+
+</div><!-- /payment-layout -->
+
+<!-- Sticky Bottom Bar (mobile only — hidden on desktop via CSS) -->
+<div class="sticky-bottom">
+    <div class="sticky-bottom__row">
+        <span class="sticky-bottom__method" id="methodLabel">Chuyển khoản <strong>qua PayOS</strong></span>
+        <span class="sticky-bottom__total" id="stickyTotal">0đ</span>
+    </div>
+    <form th:action="@{/buyer/checkout/confirm}" method="post" style="margin:0">
+        <input type="hidden" name="paymentMethod" value="BANK_TRANSFER">
+        <button type="submit" class="btn-confirm" id="stickyConfirmBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Xác nhận đặt hàng
+        </button>
+    </form>
+</div>
+
+<!-- Fragments -->
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
+
+<script>
+var selectedPayment = 'bank';
+
+function selectPayment(method) {
+    // Block selection of disabled methods
+    if (method === 'credit' || method === 'momo') return;
+
+    selectedPayment = method;
+    document.querySelectorAll('.pay-method:not(.pay-method--disabled)').forEach(function(el) {
+        el.classList.remove('pay-method--selected');
+    });
+    var el = document.getElementById('pm-' + method);
+    if (el) el.classList.add('pay-method--selected');
+
+    // Update hidden inputs (both in right column and sticky bar)
+    var methodMap = { bank: 'BANK_TRANSFER' };
+    var val = methodMap[method] || 'BANK_TRANSFER';
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(function(inp) {
+        inp.value = val;
+    });
+
+    // Update footer label
+    var labels = {
+        bank: 'Chuyển khoản <strong>qua PayOS</strong>'
+    };
+    document.getElementById('methodLabel').innerHTML = labels[method] || '';
+}
+
+// Load cart total from API — same logic as cart page recalcCart()
+function loadCartTotal() {
+    // Buy-now mode: use server-provided totals
+    var buyNowData = document.getElementById('buyNowData');
+    if (buyNowData) {
+        var count = parseInt(buyNowData.dataset.count) || 0;
+        var total = parseInt(buyNowData.dataset.total) || 0;
+        var origTotal = parseInt(buyNowData.dataset.original) || 0;
+        updateRecap(count, total, total, 0, 0, origTotal > total ? origTotal : null);
+        return;
+    }
+
+    // Cart mode: load from API
+    fetch('/api/cart')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var items = d.items || [];
+            var count = 0;
+            var tp = 0;
+            var to = 0;
+            var fixedDealIds = {};
+            var fixedDealDiscount = 0;
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.unavailable) continue;
+                var q = item.quantity || 1;
+                tp += (item.salePrice || 0) * q;
+                to += (item.originalPrice || item.salePrice || 0) * q;
+                count += q;
+                if (item.discountType === 'FIXED' && item.dealId > 0 && !fixedDealIds[item.dealId]) {
+                    fixedDealDiscount += (item.discountValue || 0);
+                    fixedDealIds[item.dealId] = true;
+                }
+            }
+            var voucher = d.voucher;
+            var vd = voucher ? (voucher.voucherDiscount || 0) : 0;
+            var total = tp - fixedDealDiscount - vd;
+            if (total < 0) total = 0;
+            updateRecap(count, total, tp, fixedDealDiscount, vd, to > tp ? to : null);
+        })
+        .catch(function() {
+            document.getElementById('recapItems').textContent = 'Không thể tải';
+            document.getElementById('recapTotal').textContent = '---';
+            document.getElementById('stickyTotal').textContent = '---';
+        });
+}
+
+function updateRecap(count, total, subtotal, dealDiscount, voucherDiscount, originalTotal) {
+    // Recap
+    document.getElementById('recapItems').textContent = count + ' món';
+    document.getElementById('recapTotal').textContent = fmt(total);
+    document.getElementById('stickyTotal').textContent = fmt(total);
+
+    // Summary breakdown
+    document.getElementById('summarySubtotal').textContent = fmt(subtotal);
+
+    if (dealDiscount > 0) {
+        document.getElementById('summaryDealDiscountRow').style.display = '';
+        document.getElementById('summaryDealDiscount').textContent = '−' + fmt(dealDiscount);
+    } else {
+        document.getElementById('summaryDealDiscountRow').style.display = 'none';
+    }
+
+    if (voucherDiscount > 0) {
+        document.getElementById('summaryVoucherRow').style.display = '';
+        document.getElementById('summaryVoucher').textContent = '−' + fmt(voucherDiscount);
+    } else {
+        document.getElementById('summaryVoucherRow').style.display = 'none';
+    }
+
+    if (originalTotal && originalTotal > total) {
+        document.getElementById('summaryOriginalRow').style.display = '';
+        document.getElementById('summaryOriginal').textContent = fmt(originalTotal);
+    } else {
+        document.getElementById('summaryOriginalRow').style.display = 'none';
+    }
+}
+
+function fmt(n) {
+    return (n || 0).toLocaleString('vi-VN') + 'đ';
+}
+
+// Set min/max for pickup time: tomorrow to 3 days from now
+(function() {
+    var now = new Date();
+    now.setDate(now.getDate() + 1);
+    var minStr = now.toISOString().slice(0, 16);
+    var max = new Date();
+    max.setDate(max.getDate() + 3);
+    var maxStr = max.toISOString().slice(0, 16);
+    var input = document.getElementById('pickupTimeInput');
+    if (input) {
+        input.min = minStr;
+        input.max = maxStr;
+        input.value = minStr;
+    }
+})();
+
+loadCartTotal();
+
+// ===== LEAVE WARNING (bank transfer orders) =====
+var _pmSelected = 'bank';
+var _orderSubmitted = false;
+var _origSelectPayment = selectPayment;
+selectPayment = function(m) { _pmSelected = m; _origSelectPayment(m); };
+window.addEventListener('beforeunload', function(e) {
+    if (_orderSubmitted || _pmSelected !== 'bank') return;
+    var msg = 'Bạn có xác nhận chuyển trang hay không? Nếu bạn chuyển trang, hệ thống sẽ tự động ghi nhận bạn muốn thanh toán ở cửa hàng.';
+    e.preventDefault(); e.returnValue = msg; return msg;
+});
+document.querySelectorAll('.btn-confirm').forEach(function(btn) {
+    btn.addEventListener('click', function() { _orderSubmitted = true; });
+});
+</script>
+
+<div th:replace="~{common/buyer/footer :: footer}"></div>
+
+</body>
+</html>

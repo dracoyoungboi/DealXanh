@@ -1,0 +1,109 @@
+package com.dealxanh.app.entity;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "transactions")
+public class Transaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long transactionId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", nullable = false)
+    private Store store;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id") // Có thể null nếu giao dịch rút tiền
+    private Order order;
+
+    /**
+     * Payout (rút tiền từ sàn về ví), 
+     * Sale (doanh thu bán hàng), 
+     * Refund (hoàn tiền),
+     * Fee (phí nền tảng)
+     */
+    private String type; 
+
+    private Double amount;
+    private Double platformFee = 0.0;
+    
+    // Số tiền ròng cửa hàng nhận được (amount - platformFee)
+    private Double netAmount;
+
+    // Trạng thái: COMPLETED, PENDING, FAILED
+    private String status = "PENDING";
+
+    // Mã tham chiếu PayOS (orderCode từ PayOS)
+    private String transactionRef;
+
+    // Phương thức thanh toán: CASH, MOMO, BANK_TRANSFER, ZALOPAY
+    private String paymentMethod;
+
+    private String description;
+
+    // Admin manual payout processing fields
+    private String adminAccountNumber; // Số tài khoản admin dùng để chuyển tiền
+    private String adminNote;          // Ghi chú của admin khi xử lý payout
+    private String processedBy;        // Username của admin đã xử lý
+    private LocalDateTime processedAt; // Thời điểm admin xác nhận đã chuyển tiền
+
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    public Transaction() {}
+
+    // Getters & Setters
+    public Long getTransactionId() { return transactionId; }
+    public void setTransactionId(Long transactionId) { this.transactionId = transactionId; }
+
+    public Store getStore() { return store; }
+    public void setStore(Store store) { this.store = store; }
+
+    public Order getOrder() { return order; }
+    public void setOrder(Order order) { this.order = order; }
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public Double getAmount() { return amount; }
+    public void setAmount(Double amount) { this.amount = amount; }
+
+    public Double getPlatformFee() { return platformFee != null ? platformFee : 0.0; }
+    public void setPlatformFee(Double platformFee) { this.platformFee = platformFee; }
+
+    public Double getNetAmount() { return netAmount; }
+    public void setNetAmount(Double netAmount) { this.netAmount = netAmount; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getTransactionRef() { return transactionRef; }
+    public void setTransactionRef(String transactionRef) { this.transactionRef = transactionRef; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getAdminAccountNumber() { return adminAccountNumber; }
+    public void setAdminAccountNumber(String adminAccountNumber) { this.adminAccountNumber = adminAccountNumber; }
+
+    public String getAdminNote() { return adminNote; }
+    public void setAdminNote(String adminNote) { this.adminNote = adminNote; }
+
+    public String getProcessedBy() { return processedBy; }
+    public void setProcessedBy(String processedBy) { this.processedBy = processedBy; }
+
+    public LocalDateTime getProcessedAt() { return processedAt; }
+    public void setProcessedAt(LocalDateTime processedAt) { this.processedAt = processedAt; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+}

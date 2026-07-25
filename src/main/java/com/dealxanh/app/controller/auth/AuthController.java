@@ -1,0 +1,393 @@
+package com.dealxanh.app.controller.auth;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Controller
+public class AuthController {
+
+    // Trang đăng nhập của User (Buyer)
+    @GetMapping("/login")
+    public String buyerLogin(jakarta.servlet.http.HttpServletRequest request) {
+        // Clear buyer-related session data when accessing login page
+        jakarta.servlet.http.HttpSession session = request.getSession(false);
+        if (session != null) {
+            // Remove specific attributes instead of invalidating entire session
+            // This prevents Spring Security issues
+            session.removeAttribute("user");
+            session.removeAttribute("cart");
+            session.removeAttribute("orderData");
+            // IMPORTANT: Also clear security context to ensure clean state
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
+
+        return "buyer/login";
+    }
+
+    // Trang đăng nhập của Admin / Moderator
+    @GetMapping("/admin/login")
+    public String adminLogin() {
+        return "admin/login";
+    }
+
+    // Trang đăng nhập của Store Owner / Staff
+    @GetMapping("/seller/login")
+    public String sellerLogin() {
+        return "seller/login";
+    }
+
+    // Logout endpoint for buyer (trả về JSON cho AJAX)
+    @GetMapping("/api/auth/logout")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<Map<String, String>> buyerLogoutApi(
+            jakarta.servlet.http.HttpServletRequest request,
+            jakarta.servlet.http.HttpServletResponse response) {
+        Map<String, String> result = new HashMap<>();
+
+        try {
+            // Use Spring Security's proper logout handler (invalidates session,
+            // clears auth, removes remember-me, clears SecurityContextRepository)
+            org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                new org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler()
+                    .logout(request, response, auth);
+            }
+
+            // Also delete all cookies manually as backup
+            jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (jakarta.servlet.http.Cookie cookie : cookies) {
+                    cookie.setMaxAge(0);
+                    cookie.setPath("/");
+                    cookie.setValue("");
+                    response.addCookie(cookie);
+                }
+            }
+
+            result.put("success", "true");
+            result.put("message", "Logged out successfully");
+            return org.springframework.http.ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            result.put("success", "false");
+            result.put("error", e.getMessage());
+            return org.springframework.http.ResponseEntity.status(500).body(result);
+        }
+    }
+
+    // Trang chọn vai trò Đăng ký (Người mua / Cửa hàng)
+    @GetMapping("/register")
+    public String roleSelect() {
+        return "auth/role-select";
+    }
+
+    // Trang đăng ký Người mua (User)
+    @GetMapping("/register/buyer")
+    public String registerBuyer() {
+        return "auth/register-buyer";
+    }
+
+    // Trang đăng ký Chủ Cửa hàng (Owner)
+    @GetMapping("/seller/register")
+    public String registerSeller(java.security.Principal principal, org.springframework.ui.Model model) {
+        if (principal != null) {
+            String username = principal.getName();
+            com.dealxanh.app.entity.User user = userRepository.findByUsername(username)
+                    .orElse(userRepository.findByEmail(username).orElse(null));
+            if (user != null) {
+                model.addAttribute("userObj", user);
+                java.util.Optional<com.dealxanh.app.entity.Store> storeOpt = storeRepository.findByOwner(user);
+                storeOpt.ifPresent(store -> {
+                    model.addAttribute("storeObj", store);
+                    // Add document URLs for file pre-loading
+                    model.addAttribute("cccdUrl", store.getCccdUrl());
+                    model.addAttribute("licenseUrl", store.getBusinessLicenseUrl());
+                    model.addAttribute("vsattpUrl", store.getVsattpUrl());
+                    model.addAttribute("logoUrl", store.getLogoUrl());
+                });
+            }
+        }
+        return "auth/register-seller";
+    }
+
+    // Trang Quên mật khẩu chung (User)
+    @GetMapping("/terms")
+    public String termsPage(java.security.Principal principal, org.springframework.ui.Model model) {
+        model.addAttribute("isLoggedIn", principal != null);
+        return "auth/terms";
+    }
+
+    @GetMapping("/forgot-password")
+    public String forgotPasswordUser(jakarta.servlet.http.HttpServletRequest request, org.springframework.ui.Model model) {
+        // Store referer for back button
+        String referer = request.getHeader("Referer");
+        if (referer != null && referer.contains("/login")) {
+            model.addAttribute("backUrl", "/login");
+        } else {
+            model.addAttribute("backUrl", "/login");
+        }
+        return "auth/forgot-password";
+    }
+
+    // Trang Quên mật khẩu của Chủ Cửa hàng / Nhân viên
+    @GetMapping("/seller/forgot-password")
+    public String forgotPasswordSeller(jakarta.servlet.http.HttpServletRequest request, org.springframework.ui.Model model) {
+        // Store referer for back button
+        String referer = request.getHeader("Referer");
+        if (referer != null && referer.contains("/seller/login")) {
+            model.addAttribute("backUrl", "/seller/login");
+        } else {
+            model.addAttribute("backUrl", "/seller/login");
+        }
+        return "auth/forgot-password";
+    }
+
+    // Trang Quên mật khẩu của Admin / Moderator
+    @GetMapping("/admin/forgot-password")
+    public String forgotPasswordAdmin(jakarta.servlet.http.HttpServletRequest request, org.springframework.ui.Model model) {
+        // Store referer for back button
+        String referer = request.getHeader("Referer");
+        if (referer != null && referer.contains("/admin/login")) {
+            model.addAttribute("backUrl", "/admin/login");
+        } else {
+            model.addAttribute("backUrl", "/admin/login");
+        }
+        return "auth/forgot-password";
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.dealxanh.app.repository.UserRepository userRepository;
+    
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.dealxanh.app.repository.StoreRepository storeRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.dealxanh.app.repository.OrderRepository orderRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.dealxanh.app.service.NotificationService notificationService;
+
+    @GetMapping({"/seller/onboarding-pending", "/auth/onboarding-pending"})
+    public String onboardingPending(java.security.Principal principal, org.springframework.ui.Model model) {
+        if (principal == null) {
+            return "redirect:/seller/login";
+        }
+
+        // Set default values to avoid null issues in template
+        model.addAttribute("storeStatus", "PENDING");
+        model.addAttribute("storeName", "");
+        model.addAttribute("submittedAt", null);
+        model.addAttribute("hasCccd", false);
+        model.addAttribute("hasLicense", false);
+        model.addAttribute("hasVsattp", false);
+        model.addAttribute("hasBank", false);
+        model.addAttribute("pickupSlots", "");
+        model.addAttribute("ownerEmail", "");
+        model.addAttribute("ownerName", "");
+
+        String username = principal.getName();
+        com.dealxanh.app.entity.User user = userRepository.findByUsername(username)
+                .orElse(userRepository.findByEmail(username).orElse(null));
+
+        if (user != null) {
+            model.addAttribute("ownerEmail", user.getEmail() != null ? user.getEmail() : "");
+            model.addAttribute("ownerName", user.getFullName() != null ? user.getFullName() : "");
+
+            java.util.Optional<com.dealxanh.app.entity.Store> storeOpt = storeRepository.findByOwner(user);
+            if (storeOpt.isPresent()) {
+                com.dealxanh.app.entity.Store store = storeOpt.get();
+                model.addAttribute("storeStatus", store.getStatus() != null ? store.getStatus() : "PENDING");
+                model.addAttribute("storeName", store.getStoreName() != null ? store.getStoreName() : "");
+                model.addAttribute("submittedAt", store.getCreatedAt());
+                model.addAttribute("hasCccd", store.getCccdUrl() != null && !store.getCccdUrl().isEmpty());
+                model.addAttribute("hasLicense", store.getBusinessLicenseUrl() != null && !store.getBusinessLicenseUrl().isEmpty());
+                model.addAttribute("hasVsattp", store.getVsattpUrl() != null && !store.getVsattpUrl().isEmpty());
+                model.addAttribute("hasBank", store.getBankAccountNumber() != null && !store.getBankAccountNumber().isEmpty());
+                model.addAttribute("pickupSlots", store.getPickupSlots() != null ? store.getPickupSlots() : "");
+            }
+        }
+        return "auth/onboarding-pending";
+    }
+
+    @GetMapping("/seller/logout")
+    public String logoutSeller(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            new org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler().logout(request, response, auth);
+        }
+        return "redirect:/seller/login";
+    }
+
+    // Trang thông tin tài khoản (Profile)
+    @GetMapping("/profile")
+    public String profilePage(java.security.Principal principal, org.springframework.ui.Model model,
+                              jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            System.out.println("=== PROFILE PAGE ACCESS ===");
+            System.out.println("DEBUG: Request URI: " + request.getRequestURI());
+            System.out.println("DEBUG: Principal: " + (principal != null ? principal.getName() : "null"));
+            System.out.println("DEBUG: Auth Context: " + (org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()));
+            System.out.println("DEBUG: Session ID: " + (request.getSession(false) != null ? request.getSession().getId() : "no session"));
+
+            if (principal == null) {
+                System.out.println("DEBUG: No principal, redirecting to /login");
+                return "redirect:/login";
+            }
+
+            String principalName = principal.getName();
+            System.out.println("DEBUG: Looking up user with: " + principalName);
+
+            // Try findByUsername first, then findByEmail
+            com.dealxanh.app.entity.User user = userRepository.findByUsername(principalName)
+                    .orElse(null);
+
+            if (user == null) {
+                System.out.println("DEBUG: Not found by username, trying email...");
+                user = userRepository.findByEmail(principalName).orElse(null);
+            }
+
+            if (user == null) {
+                System.out.println("=== USER NOT FOUND ===");
+                System.out.println("DEBUG: Principal exists but user NOT in DB: " + principalName);
+                System.out.println("DEBUG: This is a STALE/OLD session. Forcing logout...");
+
+                // Force logout: invalidate session and clear authentication
+                jakarta.servlet.http.HttpSession session = request.getSession(false);
+                if (session != null) {
+                    System.out.println("DEBUG: Invalidating session...");
+                    session.invalidate();
+                }
+
+                // Clear security context
+                org.springframework.security.core.context.SecurityContextHolder.clearContext();
+
+                // Delete JSESSIONID cookie
+                jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+                for (jakarta.servlet.http.Cookie cookie : cookies) {
+                    if (cookie.getName().equals("JSESSIONID") || cookie.getName().equals("remember-me")) {
+                        System.out.println("DEBUG: Deleting cookie: " + cookie.getName());
+                        cookie.setMaxAge(0);
+                        cookie.setPath("/");
+                        cookie.setValue("");
+                        response.addCookie(cookie);
+                    }
+                }
+
+                System.out.println("=== FORCE LOGOUT COMPLETE ===");
+                return "redirect:/login?session_expired=true";
+            }
+
+            // User found - verify user is active
+            if (user.getActive() == null || !user.getActive()) {
+                System.out.println("DEBUG: User is inactive, redirecting to /login");
+                return "redirect:/login";
+            }
+
+            model.addAttribute("user", user);
+
+            // Set login state for header/top-nav (desktop avatar pill vs login/register)
+            String fullName = user.getFullName();
+            model.addAttribute("currentUserFullName", fullName);
+            if (fullName != null && !fullName.trim().isEmpty()) {
+                String[] parts = fullName.trim().split("\\s+");
+                String initials;
+                if (parts.length == 1) {
+                    initials = parts[0].substring(0, 1).toUpperCase();
+                } else {
+                    initials = (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
+                }
+                model.addAttribute("currentUserInitials", initials);
+            }
+            // Notification badge count for header
+            model.addAttribute("notifCount", (int) notificationService.getUnreadCount(user));
+
+            // Order stats for profile page
+            java.util.List<com.dealxanh.app.entity.Order> orders = orderRepository.findByUserUserIdOrderByCreatedAtDesc(user.getUserId());
+            long total = orders != null ? orders.size() : 0;
+            long completed = orders != null ? orders.stream().filter(o -> "COMPLETED".equals(o.getStatus())).count() : 0;
+            model.addAttribute("totalOrders", total);
+            model.addAttribute("completedOrders", completed);
+            model.addAttribute("pendingOrders", total - completed);
+            model.addAttribute("recentOrders", orders != null ? orders.stream().limit(5).toList() : java.util.List.of());
+
+            System.out.println("DEBUG: User found: " + user.getUsername() + " / " + user.getEmail());
+            System.out.println("DEBUG: User full name: " + user.getFullName());
+
+            model.addAttribute("activeNav", "account");
+            System.out.println("=== PROFILE PAGE SUCCESS ===");
+            return "buyer/profile";
+        } catch (Exception e) {
+            System.err.println("ERROR in profile page: " + e.getMessage());
+            e.printStackTrace();
+
+            // On error, force logout and redirect
+            try {
+                jakarta.servlet.http.HttpSession session = request.getSession(false);
+                if (session != null) {
+                    session.invalidate();
+                }
+                org.springframework.security.core.context.SecurityContextHolder.clearContext();
+            } catch (Exception ex) {
+                System.err.println("ERROR during force logout: " + ex.getMessage());
+            }
+
+            return "redirect:/login?error=profile_error";
+        }
+    }
+
+    // Generic logout handler - handles GET /logout requests from admin/seller links
+    @GetMapping("/logout")
+    public String logout(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        String redirectTarget = "/login?logout=true"; // default: buyer login
+        try {
+            System.out.println("=== GENERIC LOGOUT START ===");
+
+            // Determine target login page BEFORE invalidating session
+            String referer = request.getHeader("Referer");
+            if (referer != null) {
+                if (referer.contains("/admin")) {
+                    redirectTarget = "/admin/login?logout=true";
+                } else if (referer.contains("/staff") || referer.contains("/seller")) {
+                    redirectTarget = "/seller/login?logout=true";
+                }
+            }
+
+            // Invalidate session
+            jakarta.servlet.http.HttpSession session = request.getSession(false);
+            if (session != null) {
+                System.out.println("DEBUG: Invalidating session");
+                session.invalidate();
+            }
+
+            // Clear security context
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+            System.out.println("DEBUG: Security context cleared");
+
+            // Delete cookies
+            jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (jakarta.servlet.http.Cookie cookie : cookies) {
+                    if (cookie.getName().equals("JSESSIONID") || cookie.getName().equals("remember-me")) {
+                        System.out.println("DEBUG: Deleting cookie: " + cookie.getName());
+                        cookie.setMaxAge(0);
+                        cookie.setPath("/");
+                        cookie.setValue("");
+                        response.addCookie(cookie);
+                    }
+                }
+            }
+
+            System.out.println("=== GENERIC LOGOUT END -> " + redirectTarget + " ===");
+        } catch (Exception e) {
+            System.err.println("ERROR during logout: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return "redirect:" + redirectTarget;
+    }
+}

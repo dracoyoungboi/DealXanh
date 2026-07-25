@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:fragment="footer">
+<footer class="sl-footer">
+    <div>
+        &copy; <span th:text="${#temporals.format(#temporals.createNow(), 'yyyy')}">2026</span>
+        DealXanh — Nền tảng O2O Deal Marketplace
+    </div>
+    <div class="sl-footer__links">
+        <a th:href="@{/seller/dashboard}">Dashboard</a>
+        <a th:href="@{/seller/products}">Sản phẩm</a>
+        <a th:href="@{/seller/orders}">Đơn hàng</a>
+        <a th:href="@{/seller/finance}">Tài chính</a>
+        <a th:href="@{/seller/profile}">Hồ sơ</a>
+    </div>
+</footer>
+</body>
+</html>

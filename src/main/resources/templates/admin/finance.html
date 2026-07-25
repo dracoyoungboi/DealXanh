@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài chính & Đối soát — Admin DealXanh</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <div th:replace="~{common/admin/css :: css}"></div>
+    <style>
+.content{padding:24px;display:flex;flex-direction:column;gap:20px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.kpi-card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);padding:20px;transition:all var(--tr);
+}
+.kpi-card:hover{box-shadow:var(--shadow-md)}
+.kpi-card__top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.kpi-card__label{font-size:13px;color:var(--text-secondary);font-weight:500}
+.kpi-icon{
+    width:36px;height:36px;border-radius:var(--radius-md);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.kpi-icon svg{width:18px;height:18px}
+.kpi-card__value{font-size:24px;font-weight:800;margin-bottom:6px;line-height:1}
+.kpi-card__sub{font-size:12px;color:var(--text-tertiary);margin-top:4px}
+
+.panel{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border-light)}
+.panel__header{
+    padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--border-light);
+}
+.panel__title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.panel__title svg{width:16px;height:16px;color:var(--primary)}
+.panel__actions{display:flex;align-items:center;gap:8px}
+.panel__body{padding:20px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.chart-area{height:180px;display:flex;align-items:flex-end;gap:8px;padding:0 4px;}
+.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;}
+.chart-bar-wrap{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;}
+.chart-bar{width:100%;max-width:32px;margin:0 auto;border-radius:4px 4px 0 0;transition:all var(--tr);}
+.chart-bar.gmv{background:rgba(13,92,46,.25)}
+.chart-bar.commission{background:rgba(212,175,55,.6);margin-top:2px}
+.chart-label-x{font-size:11px;color:var(--text-tertiary);margin-top:6px;font-weight:500}
+.chart-tooltip{font-size:9px;color:var(--text-tertiary);text-align:center;margin-bottom:2px;}
+
+.chart-legend{display:flex;gap:16px;margin-bottom:12px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-secondary)}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+
+.btn-sm{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:8px 14px;border-radius:var(--radius-md);
+    font-size:13px;font-weight:600;transition:all var(--tr);cursor:pointer;text-decoration:none;
+}
+.btn-sm--primary{background:var(--primary);color:#fff;border:none}
+.btn-sm--primary:hover{background:var(--primary-dark)}
+.btn-sm--outline{background:var(--surface);color:var(--text-primary);border:1px solid var(--border)}
+.btn-sm--outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-sm svg{width:14px;height:14px}
+
+.table{width:100%;border-collapse:collapse}
+.table th{
+    text-align:left;padding:10px 14px;font-size:11px;font-weight:700;
+    color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;
+    border-bottom:1px solid var(--border-light);
+}
+.table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border-light)}
+.table tr:last-child td{border-bottom:none}
+.table tr:hover td{background:var(--bg)}
+
+.status-badge{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:11px;font-weight:600;padding:4px 10px;border-radius:var(--radius-full);
+}
+.status-badge--success{background:var(--success-bg);color:var(--success)}
+.status-badge--warning{background:var(--warning-bg);color:var(--warning)}
+.status-badge--danger{background:var(--danger-bg);color:var(--danger)}
+
+.alert-strip{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 16px;border-radius:var(--radius-md);
+    background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);font-size:13px;
+}
+.alert-strip svg{width:16px;height:16px;color:var(--warning);flex-shrink:0}
+.alert-strip__text{flex:1}
+.alert-strip__action{
+    padding:6px 12px;border-radius:var(--radius-md);
+    background:var(--warning);color:#fff;font-size:12px;font-weight:600;
+    cursor:pointer;transition:all var(--tr);border:none;
+}
+.alert-strip__action:hover{background:#d97706}
+
+.date-form{display:flex;align-items:center;gap:8px;}
+.date-form input[type="date"]{
+    padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-md);
+    font-size:13px;font-family:var(--font);background:var(--surface);
+}
+.date-form input[type="date"]:focus{outline:none;border-color:var(--primary)}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal__content{background:var(--surface);border-radius:var(--radius-lg);max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+.modal__header{padding:16px 20px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
+.modal__title{font-size:15px;font-weight:700}
+.modal__close{width:28px;height:28px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background var(--tr);border:none;background:transparent}
+.modal__close:hover{background:var(--bg)}
+.modal__body{padding:20px}
+.modal__footer{padding:16px 20px;border-top:1px solid var(--border-light);display:flex;gap:10px;justify-content:end}
+
+.payout-summary{font-size:14px;line-height:1.8}
+.payout-summary strong{color:var(--text-primary)}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div th:replace="~{common/admin/sidebar :: sidebar('finance')}"></div>
+
+    <div class="main">
+        <!-- Dùng chung header -->
+        <div th:replace="~{common/admin/header :: header('Tài chính & Đối soát', false)}"></div>
+
+        <div class="content">
+
+            <!-- Alert / Flash messages -->
+            <div th:if="${success}" style="padding:12px 16px;border-radius:var(--radius-md);background:var(--success-bg);color:var(--success);border:1px solid var(--success);font-size:13px;display:flex;align-items:center;gap:8px;">
+                <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" style="padding:12px 16px;border-radius:var(--radius-md);background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);font-size:13px;display:flex;align-items:center;gap:8px;">
+                <span th:text="${error}"></span>
+            </div>
+
+            <!-- Date Range + Actions -->
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                <form class="date-form" method="get" th:action="@{/admin/finance}" id="dateFilterForm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-secondary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <input type="date" name="startDate" th:value="${startDate}" onchange="document.getElementById('dateFilterForm').submit()">
+                    <span style="color:var(--text-tertiary)">–</span>
+                    <input type="date" name="endDate" th:value="${endDate}" onchange="document.getElementById('dateFilterForm').submit()">
+                </form>
+                <div style="display:flex;gap:8px;">
+                    <a th:href="@{/admin/finance/export-csv(startDate=${startDate},endDate=${endDate})}" class="btn-sm btn-sm--outline">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Xuất CSV
+                    </a>
+                    <button class="btn-sm btn-sm--outline" id="reconcile-btn" onclick="openReconcileModal()" style="color:var(--warning);border-color:var(--warning);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
+                        Đối soát
+                    </button>
+                    <button class="btn-sm btn-sm--outline" id="wallet-btn" onclick="openWalletModal()" style="color:var(--primary);border-color:var(--primary);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                        Ví
+                    </button>
+                    <a th:href="@{/admin/payouts}" class="btn-sm btn-sm--primary" id="process-payout-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        Xem lệnh Payout
+                    </a>
+                </div>
+            </div>
+
+            <!-- KPI row -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__label">Tổng GMV</div>
+                        <div class="kpi-icon" style="background:rgba(13,92,46,.1)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(gmv, 0, 0) + 'đ'}">0đ</div>
+                    <div class="kpi-card__sub">Tổng giá trị giao dịch trong kỳ</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__label">Hoa hồng thu về</div>
+                        <div class="kpi-icon" style="background:rgba(212,175,55,.12)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(commission, 0, 0) + 'đ'}">0đ</div>
+                    <div class="kpi-card__sub" th:text="'Tỷ lệ ~' + ${commissionRate} + '%'">Tỷ lệ ~13%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__label">Đã chi Payout</div>
+                        <div class="kpi-icon" style="background:var(--info-bg)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(paidPayouts, 0, 0) + 'đ'}">0đ</div>
+                    <div class="kpi-card__sub">Đã thanh toán cho cửa hàng</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card__top">
+                        <div class="kpi-card__label">Chờ xử lý</div>
+                        <div class="kpi-icon" style="background:var(--warning-bg)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-card__value" th:text="${#numbers.formatDecimal(pendingPayoutAmount, 0, 0) + 'đ'}">0đ</div>
+                    <div class="kpi-card__sub" th:text="${pendingPayoutCount} + ' cửa hàng chờ payout'">0 cửa hàng</div>
+                </div>
+            </div>
+
+            <!-- Chart + Pending Payouts -->
+            <div class="two-col">
+                <!-- Revenue chart -->
+                <div class="panel">
+                    <div class="panel__header">
+                        <div class="panel__title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            GMV & Hoa hồng (7 ngày qua)
+                        </div>
+                    </div>
+                    <div class="panel__body">
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="legend-dot" style="background:var(--primary)"></div>GMV</div>
+                            <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Hoa hồng</div>
+                        </div>
+                        <div class="chart-area">
+                            <th:block th:each="day : ${chartData}">
+                                <div class="chart-col">
+                                    <div class="chart-tooltip" th:text="${#numbers.formatDecimal(day.gmv / 1000000, 0, 1) + 'tr'}">0tr</div>
+                                    <div class="chart-bar-wrap">
+                                        <div class="chart-bar gmv" th:style="'height:' + ${day.gmv / maxGmv * 100} + '%'"></div>
+                                        <div class="chart-bar commission" th:style="'height:' + ${day.commission / maxGmv * 100} + '%'"></div>
+                                    </div>
+                                    <div class="chart-label-x" th:text="${day.label}">T2</div>
+                                </div>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payout Summary (xem nhanh, link sang trang riêng) -->
+                <div class="panel">
+                    <div class="panel__header">
+                        <div class="panel__title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Payout gần đây
+                        </div>
+                        <a th:href="@{/admin/payouts}" class="btn-sm btn-sm--primary" style="font-size:11px;padding:6px 14px;text-decoration:none;">
+                            Xem tất cả →
+                        </a>
+                    </div>
+                    <div class="panel__body" style="padding:0">
+                        <table class="table" th:if="${pendingPayouts != null and !pendingPayouts.isEmpty()}">
+                            <thead>
+                                <tr><th>Cửa hàng</th><th>Số tiền</th><th>Ngân hàng</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="pt : ${pendingPayouts}">
+                                    <td>
+                                        <div style="font-weight:600" th:text="${pt.store != null ? pt.store.storeName : 'N/A'}">Store</div>
+                                    </td>
+                                    <td>
+                                        <div style="font-weight:600;color:var(--primary)" th:text="${#numbers.formatDecimal(pt.amount, 0, 0) + 'đ'}">0đ</div>
+                                    </td>
+                                    <td>
+                                        <div th:if="${pt.store != null and pt.store.bankName != null}" style="font-size:11px;">
+                                            <span th:text="${pt.store.bankName}">Bank</span>
+                                            <span style="color:var(--text-tertiary);" th:text="' - ' + ${pt.store.bankAccountNumber}">STK</span>
+                                        </div>
+                                        <span th:unless="${pt.store != null and pt.store.bankName != null}" style="font-size:11px;color:var(--text-tertiary);">--</span>
+                                    </td>
+                                    <td><span class="status-badge status-badge--warning" style="font-size:10px;">Chờ</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div th:unless="${pendingPayouts != null and !pendingPayouts.isEmpty()}" style="text-align:center;padding:30px 20px;color:var(--text-secondary);">
+                            <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Không có lệnh chờ payout</div>
+                            <a th:href="@{/admin/payouts}" style="font-size:12px;color:var(--primary);">Xem lịch sử payout →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="panel">
+                <div class="panel__header">
+                    <div class="panel__title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                        Giao dịch gần đây
+                    </div>
+                    <div class="panel__actions" id="transactionCount" style="font-size:12px;color:var(--text-secondary);"></div>
+                </div>
+                <div class="panel__body" style="padding:0">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Cửa hàng</th><th>Loại</th><th>Số tiền</th><th>Phí</th><th>Thực nhận</th><th>Trạng thái</th><th>Xử lý bởi</th><th>Ngày</th></tr>
+                        </thead>
+                        <tbody id="transactionTableBody">
+                            <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-secondary);">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Wallet Modal -->
+<div class="modal" id="wallet-modal">
+    <div class="modal__content" style="max-width:420px;">
+        <div class="modal__header">
+            <div class="modal__title">💼 Ví nền tảng</div>
+            <button class="modal__close" onclick="closeWalletModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal__body" id="walletModalBody">
+            <div style="text-align:center;padding:30px;">Đang tải...</div>
+        </div>
+        <div class="modal__footer">
+            <button class="btn-sm btn-sm--outline" onclick="closeWalletModal()">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reconciliation Modal -->
+<div class="modal" id="reconcile-modal">
+    <div class="modal__content" style="max-width:700px;">
+        <div class="modal__header">
+            <div class="modal__title">🔍 Đối soát giao dịch</div>
+            <button class="modal__close" onclick="closeReconcileModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal__body" id="reconcileModalBody">
+            <div style="text-align:center;padding:30px;">Đang tải dữ liệu đối soát...</div>
+        </div>
+        <div class="modal__footer">
+            <span id="reconcileStats" style="font-size:12px;color:var(--text-secondary);flex:1;"></span>
+            <button class="btn-sm btn-sm--outline" onclick="printReconciliation()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                In biên bản
+            </button>
+            <button class="btn-sm btn-sm--outline" onclick="closeReconcileModal()">Đóng</button>
+            <button class="btn-sm btn-sm--primary" id="confirmReconcileBtn" onclick="processReconciliation()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                Xác nhận đã đối soát
+            </button>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{common/admin/js :: js}"></div>
+
+<script>
+// Load transactions on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTransactions();
+});
+
+function loadTransactions() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const startDate = urlParams.get('startDate') || '';
+    const endDate = urlParams.get('endDate') || '';
+
+    fetch(`/admin/api/finance/transactions?startDate=${startDate}&endDate=${endDate}`)
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.getElementById('transactionTableBody');
+            document.getElementById('transactionCount').textContent = data.data.length + ' giao dịch';
+
+            if (!data.data || data.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-secondary);">Không có giao dịch nào trong kỳ</td></tr>';
+                return;
+            }
+
+            const typeLabels = {'SALE': 'Bán hàng', 'PAYOUT': 'Payout', 'REFUND': 'Hoàn tiền', 'FEE': 'Phí'};
+            tbody.innerHTML = data.data.map(t => {
+                let processorCell = '<span style="font-size:11px;color:var(--text-tertiary);">--</span>';
+                if (t.type === 'PAYOUT' && t.processedBy) {
+                    processorCell = '<div style="font-size:11px;"><span style="font-weight:600;">' + escapeHtml(t.processedBy) + '</span>';
+                    if (t.adminAccountNumber) {
+                        processorCell += '<div style="font-size:10px;color:var(--text-secondary);">TK: ' + escapeHtml(t.adminAccountNumber) + '</div>';
+                    }
+                    if (t.adminNote) {
+                        processorCell += '<div style="font-size:10px;color:var(--text-tertiary);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeHtml(t.adminNote) + '">' + escapeHtml(t.adminNote) + '</div>';
+                    }
+                    processorCell += '</div>';
+                }
+                return '<tr>' +
+                    '<td><div style="font-weight:600">' + escapeHtml(t.storeName) + '</div></td>' +
+                    '<td><span style="font-size:12px;font-weight:600;color:' + (t.type === 'SALE' ? 'var(--success)' : t.type === 'PAYOUT' ? 'var(--info)' : t.type === 'REFUND' ? 'var(--danger)' : 'var(--warning)') + '">' + (typeLabels[t.type] || t.type) + '</span></td>' +
+                    '<td><span style="font-weight:600">' + (t.amount || 0).toLocaleString() + 'đ</span></td>' +
+                    '<td style="color:var(--text-secondary)">' + (t.platformFee || 0).toLocaleString() + 'đ</td>' +
+                    '<td><span style="font-weight:600">' + (t.netAmount || 0).toLocaleString() + 'đ</span></td>' +
+                    '<td><span class="status-badge ' + (t.status === 'COMPLETED' ? 'status-badge--success' : 'status-badge--warning') + '">' + (t.status === 'COMPLETED' ? 'Hoàn thành' : 'Đang xử lý') + '</span></td>' +
+                    '<td>' + processorCell + '</td>' +
+                    '<td style="font-size:12px;color:var(--text-secondary)">' + formatDate(t.createdAt) + '</td>' +
+                '</tr>';
+            }).join('');
+        })
+        .catch(err => {
+            document.getElementById('transactionTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--danger);">Không thể tải giao dịch</td></tr>';
+        });
+}
+
+function escapeHtml(str) { if (!str) return ''; return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatDate(d) { if (!d) return 'N/A'; const dt = new Date(d); return dt.toLocaleDateString('vi-VN') + ' ' + dt.toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'}); }
+
+// Close modal on Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeReconcileModal(); closeWalletModal(); }
+});
+document.getElementById('reconcile-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeReconcileModal();
+});
+document.getElementById('wallet-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeWalletModal();
+});
+
+// ===== Wallet Functions =====
+
+function openWalletModal() {
+    document.getElementById('wallet-modal').classList.add('show');
+    document.getElementById('walletModalBody').innerHTML = '<div style="text-align:center;padding:30px;">Đang tải...</div>';
+
+    fetch('/admin/api/finance/wallet')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                document.getElementById('walletModalBody').innerHTML = `<div style="text-align:center;padding:20px;color:var(--danger);">${data.message}</div>`;
+                return;
+            }
+            document.getElementById('walletModalBody').innerHTML = `
+                <div style="text-align:center;margin-bottom:20px;">
+                    <div style="width:60px;height:60px;border-radius:50%;background:var(--primary);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" style="width:28px;height:28px;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    </div>
+                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Số dư khả dụng</div>
+                    <div style="font-size:28px;font-weight:800;color:var(--primary);">${(data.balance || 0).toLocaleString()}đ</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--bg);border-radius:var(--radius-md);padding:16px;">
+                    <div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Tổng GMV</div>
+                        <div style="font-size:15px;font-weight:700;">${(data.totalGmv || 0).toLocaleString()}đ</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Hoa hồng đã thu</div>
+                        <div style="font-size:15px;font-weight:700;color:var(--accent);">${(data.totalCommission || 0).toLocaleString()}đ</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Đã payout</div>
+                        <div style="font-size:15px;font-weight:700;color:var(--info);">${(data.totalPaidOut || 0).toLocaleString()}đ</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Chờ payout</div>
+                        <div style="font-size:15px;font-weight:700;color:var(--warning);">${(data.pendingPayout || 0).toLocaleString()}đ</div>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(err => {
+            document.getElementById('walletModalBody').innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);">Không thể tải dữ liệu</div>';
+        });
+}
+
+function closeWalletModal() {
+    document.getElementById('wallet-modal').classList.remove('show');
+}
+
+// ===== Reconciliation Functions =====
+
+let reconciliationData = [];
+let confirmedStoreIds = new Set(); // Track which stores have been confirmed
+
+function openReconcileModal() {
+    document.getElementById('reconcile-modal').classList.add('show');
+    document.getElementById('reconcileModalBody').innerHTML = '<div style="text-align:center;padding:30px;">Đang tải dữ liệu đối soát...</div>';
+    confirmedStoreIds = new Set();
+    updateConfirmBtn();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const startDate = urlParams.get('startDate') || '';
+    const endDate = urlParams.get('endDate') || '';
+
+    fetch(`/admin/api/finance/reconciliation?startDate=${startDate}&endDate=${endDate}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                document.getElementById('reconcileModalBody').innerHTML = `<div style="text-align:center;padding:30px;color:var(--danger);">${data.message}</div>`;
+                return;
+            }
+            reconciliationData = data.stores || [];
+            renderReconciliationTable();
+        })
+        .catch(err => {
+            document.getElementById('reconcileModalBody').innerHTML = '<div style="text-align:center;padding:30px;color:var(--danger);">Không thể tải dữ liệu</div>';
+        });
+}
+
+function renderReconciliationTable() {
+    const body = document.getElementById('reconcileModalBody');
+    const stats = document.getElementById('reconcileStats');
+
+    if (reconciliationData.length === 0) {
+        body.innerHTML = `
+            <div style="text-align:center;padding:40px 20px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin:0 auto 12px;opacity:0.3;color:var(--success);">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <div style="font-size:15px;font-weight:700;color:var(--success);margin-bottom:4px;">Tất cả đã được đối soát</div>
+                <div style="font-size:13px;color:var(--text-secondary);">Không có giao dịch nào cần đối soát trong kỳ</div>
+            </div>`;
+        stats.textContent = '';
+        document.getElementById('confirmReconcileBtn').style.display = 'none';
+        return;
+    }
+
+    let totalAmount = 0;
+    let totalStores = reconciliationData.length;
+    let totalTransactions = 0;
+
+    let html = `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;text-align:center;">
+        Nhấn <b>"Xác nhận"</b> từng dòng để kiểm tra — nhấn <b>"Xác nhận đã đối soát"</b> bên dưới để hoàn tất
+    </div>
+    <div style="max-height:380px;overflow-y:auto;"><table class="table">
+        <thead><tr><th>Cửa hàng</th><th style="text-align:right;">Số đơn</th><th style="text-align:right;">Doanh thu</th><th style="text-align:right;">Hoa hồng</th><th style="text-align:right;">Cần trả</th><th style="width:140px;">Trạng thái</th></tr></thead>
+        <tbody>`;
+
+    const tierColors = {'Kim Cương':'#667eea','Bạch Kim':'#d4af37','Vàng':'#7a8a9a','Đồng':'#cd7f32'};
+    reconciliationData.forEach((store, idx) => {
+        totalTransactions += store.orderCount || 0;
+        totalAmount += store.revenue || 0;
+        const storeKey = String(store.storeId);
+        const isConfirmed = confirmedStoreIds.has(storeKey);
+        const tierBadge = store.tier ? `<span style="font-size:10px;font-weight:700;color:${tierColors[store.tier]||'#cd7f32'};margin-left:6px;">${store.tier} · ${store.commissionRate || '10%'}</span>` : '';
+
+        html += `
+            <tr id="reconcile-row-${idx}" style="transition:background .3s;${isConfirmed ? 'background:rgba(16,185,129,.04);' : ''}">
+                <td>
+                    <div style="font-weight:600">${escapeHtml(store.storeName)}${tierBadge}</div>
+                    <div style="font-size:11px;color:var(--text-tertiary);">#${escapeHtml(store.storeId)}</div>
+                </td>
+                <td style="text-align:right;font-weight:600;">${store.orderCount || 0} đơn</td>
+                <td style="text-align:right;">${(store.revenue || 0).toLocaleString()}đ</td>
+                <td style="text-align:right;color:var(--text-secondary);">${(store.commission || 0).toLocaleString()}đ</td>
+                <td style="text-align:right;font-weight:600;color:var(--primary);">${(store.netAmount || 0).toLocaleString()}đ</td>
+                <td id="reconcile-status-${idx}">
+                    ${isConfirmed ? `
+                        <span class="status-badge status-badge--success">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+                            Đã đối soát
+                        </span>` : `
+                        <button onclick="confirmStoreReconciliation(${idx}, '${storeKey}')"
+                                style="padding:5px 12px;border-radius:var(--radius-md);background:var(--warning);color:#fff;font-size:11px;font-weight:600;cursor:pointer;border:none;white-space:nowrap;transition:all .2s;"
+                                onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='var(--warning)'">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;"><polyline points="20 6 9 17 4 12"/></svg>
+                            Xác nhận
+                        </button>
+                        <span class="status-badge status-badge--warning" style="margin-left:4px;">⏳ Chờ</span>`
+                    }
+                </td>
+            </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    body.innerHTML = html;
+    stats.textContent = `${totalStores} cửa hàng · ${totalTransactions} đơn · Tổng ${totalAmount.toLocaleString()}đ`;
+    document.getElementById('confirmReconcileBtn').style.display = 'flex';
+    updateConfirmBtn();
+}
+
+// Per-store confirmation (visual only - no DB write yet)
+function confirmStoreReconciliation(idx, storeKey) {
+    confirmedStoreIds.add(storeKey);
+    // Re-render just the status cell
+    const statusCell = document.getElementById('reconcile-status-' + idx);
+    const row = document.getElementById('reconcile-row-' + idx);
+    if (row) row.style.background = 'rgba(16,185,129,.04)';
+    if (statusCell) {
+        statusCell.innerHTML = `
+            <span class="status-badge status-badge--success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Đã đối soát
+            </span>
+            <button onclick="undoStoreReconciliation(${idx}, '${storeKey}')"
+                    style="padding:3px 8px;border-radius:var(--radius-md);background:transparent;color:var(--text-tertiary);font-size:10px;cursor:pointer;border:1px solid var(--border);margin-left:4px;"
+                    title="Hoàn tác">↩</button>`;
+    }
+    updateConfirmBtn();
+}
+
+// Undo per-store confirmation
+function undoStoreReconciliation(idx, storeKey) {
+    confirmedStoreIds.delete(storeKey);
+    const statusCell = document.getElementById('reconcile-status-' + idx);
+    const row = document.getElementById('reconcile-row-' + idx);
+    if (row) row.style.background = '';
+    if (statusCell) {
+        statusCell.innerHTML = `
+            <button onclick="confirmStoreReconciliation(${idx}, '${storeKey}')"
+                    style="padding:5px 12px;border-radius:var(--radius-md);background:var(--warning);color:#fff;font-size:11px;font-weight:600;cursor:pointer;border:none;white-space:nowrap;transition:all .2s;"
+                    onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='var(--warning)'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Xác nhận
+            </button>
+            <span class="status-badge status-badge--warning" style="margin-left:4px;">⏳ Chờ</span>`;
+    }
+    updateConfirmBtn();
+}
+
+function updateConfirmBtn() {
+    const btn = document.getElementById('confirmReconcileBtn');
+    const total = reconciliationData.length;
+    const confirmed = confirmedStoreIds.size;
+    if (total === 0 || confirmed === 0) {
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+    } else {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    }
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Xác nhận đã đối soát (${confirmed}/${total})`;
+}
+
+// Print reconciliation report
+function printReconciliation() {
+    if (reconciliationData.length === 0) {
+        alert('Không có dữ liệu đối soát để in.');
+        return;
+    }
+    const startDate = document.getElementById('startDate')?.value || '';
+    const endDate = document.getElementById('endDate')?.value || '';
+    const now = new Date().toLocaleDateString('vi-VN');
+
+    let totalRevenue = 0, totalCommission = 0, totalNet = 0, totalOrders = 0;
+    let rows = '';
+    reconciliationData.forEach((store, idx) => {
+        totalRevenue += store.revenue || 0;
+        totalCommission += store.commission || 0;
+        totalNet += store.netAmount || 0;
+        totalOrders += store.orderCount || 0;
+        rows += `
+            <tr>
+                <td>${idx + 1}</td>
+                <td>${escapeHtml(store.storeName)}</td>
+                <td style="text-align:right;">${(store.orderCount || 0)}</td>
+                <td style="text-align:right;">${(store.revenue || 0).toLocaleString()}đ</td>
+                <td style="text-align:right;">${(store.commission || 0).toLocaleString()}đ</td>
+                <td style="text-align:right;font-weight:600;">${(store.netAmount || 0).toLocaleString()}đ</td>
+            </tr>`;
+    });
+
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    printWindow.document.write(`
+        <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>Biên bản đối soát</title>
+        <style>
+            body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:30px;color:#1a1a1a;line-height:1.5;}
+            .header{text-align:center;margin-bottom:24px;border-bottom:2px solid #0d5c2e;padding-bottom:16px;}
+            .header h2{color:#0d5c2e;margin:0 0 4px 0;font-size:20px;}
+            .header .sub{color:#666;font-size:13px;}
+            .meta{display:flex;justify-content:space-between;margin-bottom:20px;font-size:13px;color:#666;}
+            .meta strong{color:#1a1a1a;}
+            table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;}
+            th{background:#0d5c2e;color:#fff;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
+            th.right{text-align:right;}
+            td{padding:8px 12px;border-bottom:1px solid #e0e0e0;}
+            .summary{background:#f0f2f5;padding:16px;border-radius:8px;margin-top:20px;}
+            .summary h3{margin:0 0 12px 0;font-size:15px;color:#0d5c2e;}
+            .summary-row{display:flex;justify-content:space-between;padding:4px 0;font-size:14px;}
+            .summary-row.total{border-top:2px solid #0d5c2e;padding-top:8px;margin-top:4px;font-weight:700;font-size:15px;}
+            .footer{text-align:center;margin-top:40px;font-size:12px;color:#999;border-top:1px solid #e0e0e0;padding-top:12px;}
+            .signatures{display:flex;justify-content:space-between;margin-top:60px;font-size:13px;}
+            .sig-block{text-align:center;width:200px;}
+            .sig-line{border-bottom:1px solid #1a1a1a;margin-bottom:6px;}
+            @media print{
+                body{margin:15px;}
+                .no-print{display:none;}
+            }
+        </style></head><body>
+            <div class="header">
+                <h2>BIÊN BẢN ĐỐI SOÁT GIAO DỊCH</h2>
+                <div class="sub">DealXanh O2O Deal Marketplace</div>
+            </div>
+            <div class="meta">
+                <div><strong>Kỳ đối soát:</strong> ${startDate || '...'} — ${endDate || '...'}</div>
+                <div><strong>Ngày in:</strong> ${now}</div>
+            </div>
+            <table>
+                <thead><tr><th>#</th><th>Cửa hàng</th><th class="right">Số đơn</th><th class="right">Doanh thu</th><th class="right">Hoa hồng (10%)</th><th class="right">Cần trả shop</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="summary">
+                <h3>Tổng kết</h3>
+                <div class="summary-row"><span>Tổng cửa hàng</span><span>${reconciliationData.length}</span></div>
+                <div class="summary-row"><span>Tổng số đơn</span><span>${totalOrders}</span></div>
+                <div class="summary-row"><span>Tổng doanh thu (GMV)</span><span>${totalRevenue.toLocaleString()}đ</span></div>
+                <div class="summary-row"><span>Tổng hoa hồng nền tảng</span><span>${totalCommission.toLocaleString()}đ</span></div>
+                <div class="summary-row total"><span>Tổng cần trả cho cửa hàng</span><span>${totalNet.toLocaleString()}đ</span></div>
+            </div>
+            <div class="signatures">
+                <div class="sig-block"><div class="sig-line"></div>Người lập biên bản</div>
+                <div class="sig-block"><div class="sig-line"></div>Kế toán xác nhận</div>
+                <div class="sig-block"><div class="sig-line"></div>Người duyệt</div>
+            </div>
+            <div class="footer">Biên bản được tạo tự động từ hệ thống DealXanh — ${now}</div>
+            <div class="no-print" style="text-align:center;margin-top:20px;">
+                <button onclick="window.print()" style="padding:10px 30px;background:#0d5c2e;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">🖨 In biên bản</button>
+            </div>
+        </body></html>
+    `);
+    printWindow.document.close();
+}
+
+// Final reconciliation - only processes confirmed stores
+function processReconciliation() {
+    if (confirmedStoreIds.size === 0) {
+        alert('Vui lòng xác nhận ít nhất một cửa hàng trước khi đối soát.');
+        return;
+    }
+
+    const btn = document.getElementById('confirmReconcileBtn');
+    btn.disabled = true;
+    btn.textContent = 'Đang xử lý...';
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+    const formData = new URLSearchParams();
+    if (csrfToken && csrfHeader) {
+        formData.append(csrfHeader.getAttribute('content'), csrfToken.getAttribute('content'));
+    }
+
+    const storeIds = Array.from(confirmedStoreIds).join(',');
+
+    fetch(`/admin/api/finance/reconcile?storeIds=${storeIds}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeReconcileModal();
+            location.reload();
+        } else {
+            alert('Lỗi: ' + data.message);
+            btn.disabled = false;
+            updateConfirmBtn();
+        }
+    })
+    .catch(err => {
+        alert('Lỗi kết nối: ' + err.message);
+        btn.disabled = false;
+        updateConfirmBtn();
+    });
+}
+
+function closeReconcileModal() {
+    document.getElementById('reconcile-modal').classList.remove('show');
+    reconciliationData = [];
+    confirmedStoreIds = new Set();
+}
+</script>
+</body>
+</html>

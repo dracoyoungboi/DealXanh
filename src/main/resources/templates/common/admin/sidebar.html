@@ -1,0 +1,540 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:fragment="sidebar(activeSidebar)">
+<aside class="sidebar" id="adminSidebar" aria-expanded="true">
+
+    <!-- Collapse toggle (desktop) — positioned INSIDE the green sidebar -->
+    <button class="sidebar__toggle" id="adminSidebarToggle"
+            title="Thu gọn sidebar"
+            onclick="toggleAdminSidebar()"
+            aria-label="Thu gọn sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+    </button>
+
+    <!-- Mobile close button -->
+    <button class="sidebar__close" id="adminSidebarClose"
+            title="Đóng menu"
+            onclick="closeAdminMobileSidebar()"
+            aria-label="Đóng menu">
+        ✕
+    </button>
+
+    <!-- Branding -->
+    <a th:href="${adminUser != null and adminUser.role != null and adminUser.role.name == 'ROLE_MODERATOR' ? '/admin/seller-verify' : '/admin/dashboard'}"
+       class="sidebar-header" style="text-decoration:none;cursor:pointer;">
+        <div class="sidebar-header__logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+        </div>
+        <div class="sidebar-header__text sidebar__text">
+            <div class="sidebar-header__brand">DealXanh</div>
+            <div class="sidebar-header__sub"
+                 th:text="${adminUser != null and adminUser.role != null and adminUser.role.name == 'ROLE_MODERATOR' ? 'Moderator Portal' : 'Admin Portal'}">Admin Portal</div>
+        </div>
+    </a>
+
+    <!-- Navigation: Tổng quan -->
+    <div class="nav-section">
+        <div class="nav-section__label sidebar__text">Tổng quan</div>
+        <a class="nav-item" th:href="@{/admin/dashboard}"
+           th:classappend="${activeSidebar == 'dashboard'} ? 'active' : ''"
+           title="Dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <path d="M14 14h7v7h-7z"/>
+            </svg>
+            <span class="sidebar__text">Dashboard</span>
+        </a>
+    </div>
+
+    <!-- Navigation: Quản lý -->
+    <div class="nav-section">
+        <div class="nav-section__label sidebar__text">Quản lý</div>
+        <a class="nav-item" th:href="@{/admin/seller-verify}"
+           th:classappend="${activeSidebar == 'seller-verify'} ? 'active' : ''"
+           title="Xét duyệt Seller">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span class="sidebar__text">Xét duyệt Seller</span>
+            <span class="nav-badge sidebar__text" id="sidebar-pending-count"
+                  th:if="${stats != null and stats.pendingStores != null and stats.pendingStores > 0}"
+                  th:text="${stats.pendingStores}">0</span>
+        </a>
+        <a class="nav-item" th:href="@{/admin/users}"
+           th:classappend="${activeSidebar == 'users'} ? 'active' : ''"
+           title="Người dùng">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span class="sidebar__text">Người dùng</span>
+        </a>
+        <a class="nav-item" th:href="@{/admin/deals}"
+           th:classappend="${activeSidebar == 'deals'} ? 'active' : ''"
+           title="Tất cả Deals">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span class="sidebar__text">Tất cả Deals</span>
+        </a>
+        <a class="nav-item" th:href="@{/admin/products}"
+           th:classappend="${activeSidebar == 'products'} ? 'active' : ''"
+           title="Sản phẩm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+            <span class="sidebar__text">Sản phẩm</span>
+        </a>
+        <a class="nav-item" th:href="@{/admin/orders}"
+           th:classappend="${activeSidebar == 'orders'} ? 'active' : ''"
+           title="Đơn hàng">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+            <span class="sidebar__text">Đơn hàng</span>
+        </a>
+    </div>
+
+    <!-- Navigation: Tài chính & Hỗ trợ -->
+    <div class="nav-section">
+        <div class="nav-section__label sidebar__text">Tài chính &amp; Hỗ trợ</div>
+        <a class="nav-item" th:href="@{/admin/finance}"
+           th:classappend="${activeSidebar == 'finance'} ? 'active' : ''"
+           title="Tài chính & Đối soát">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            <span class="sidebar__text">Tài chính &amp; Đối soát</span>
+        </a>
+        <a class="nav-item" th:href="@{/admin/payouts}"
+           th:classappend="${activeSidebar == 'payouts'} ? 'active' : ''"
+           title="Quản lý Payout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            <span class="sidebar__text">Payout</span>
+        </a>
+        <a class="nav-item" th:href="@{/admin/dispute}"
+           th:classappend="${activeSidebar == 'dispute'} ? 'active' : ''"
+           title="Khiếu nại & Tranh chấp">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span class="sidebar__text">Khiếu nại &amp; Tranh chấp</span>
+        </a>
+        <a class="nav-item" th:href="@{/admin/analytics}"
+           th:classappend="${activeSidebar == 'analytics'} ? 'active' : ''"
+           title="Báo cáo & Analytics">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            <span class="sidebar__text">Báo cáo &amp; Analytics</span>
+        </a>
+    </div>
+
+    <!-- Navigation: Hệ thống -->
+    <div class="nav-section">
+        <div class="nav-section__label sidebar__text">Hệ thống</div>
+        <div class="maintenance-toggle">
+            <div class="maintenance-toggle__row">
+                <span class="sidebar__text">Chế độ bảo trì</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="maintenanceCheckbox"
+                           th:checked="${maintenanceMode}"
+                           onchange="toggleMaintenance(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+        <a th:href="@{/admin/profile}" class="sidebar-user" style="text-decoration:none;">
+            <div class="sidebar-user__avatar">
+                <img th:src="${adminUser != null and adminUser.avatarUrl != null ? adminUser.avatarUrl : '/img/default-avatar.svg'}"
+                     alt="" onerror="this.src='/img/default-avatar.svg'">
+            </div>
+            <div class="sidebar__text" style="min-width:0;">
+                <div class="sidebar-user__name"
+                     th:text="${adminUser != null ? (adminUser.fullName != null ? adminUser.fullName : adminUser.username) : 'Admin'}">Admin Name</div>
+                <div class="sidebar-user__role"
+                     th:text="${adminUser != null and adminUser.role != null ? (adminUser.role.name == 'ROLE_ADMIN' ? 'Quản trị viên' : 'Kiểm duyệt viên') : 'Quản trị viên'}">Quản trị viên</div>
+            </div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 class="sidebar-user__chevron">
+                <path d="M9 18l6-6-6-6"/>
+            </svg>
+        </a>
+    </div>
+
+</aside>
+
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay" id="adminSidebarOverlay" onclick="closeAdminMobileSidebar()"></div>
+
+<!-- ============================================================
+     SIDEBAR ENHANCEMENT CSS — matches seller sidebar visual style
+     Loaded after common/admin/css.html so these take precedence
+     ============================================================ -->
+<style>
+/* ── Sidebar gradient background (match seller) ── */
+.sidebar {
+    background: linear-gradient(180deg, #0a4a24 0%, #063018 100%);
+    overflow-y: auto; overflow-x: hidden;
+    scrollbar-width: none;
+}
+.sidebar::-webkit-scrollbar { display: none; }
+
+/* ── Toggle button — sit fully INSIDE the green sidebar ── */
+.sidebar__toggle {
+    position: absolute; top: 14px; right: 8px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 5; flex-shrink: 0;
+    transition: all var(--tr);
+}
+.sidebar__toggle:hover { background: rgba(255,255,255,.22); }
+.sidebar__toggle svg {
+    width: 18px; height: 18px;
+    color: rgba(255,255,255,.65);
+    transition: transform var(--tr);
+}
+.sidebar.collapsed .sidebar__toggle { right: auto; left: 50%; transform: translateX(-50%); }
+.sidebar.collapsed .sidebar__toggle svg { transform: rotate(180deg); }
+/* Hard-width collapsed sidebar — nothing can override */
+.sidebar.collapsed { width: var(--sidebar-collapsed) !important; }
+
+/* ── Mobile close button (hidden on desktop) ── */
+.sidebar__close {
+    display: none; position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,.1); color: #fff;
+    align-items: center; justify-content: center;
+    cursor: pointer; z-index: 6; border: none; font-size: 18px;
+}
+
+/* ── Overlay ── */
+.sidebar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 29;
+    opacity: 0; pointer-events: none; transition: opacity 220ms ease;
+}
+.sidebar-overlay.show { opacity: 1; pointer-events: auto; }
+
+/* ── Brand header (match seller sl-sidebar__brand) ── */
+.sidebar-header {
+    padding: 22px 18px 18px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 12px;
+    transition: padding var(--tr), gap var(--tr);
+}
+.sidebar-header__logo {
+    width: 40px; height: 40px; border-radius: var(--radius-md);
+    background: rgba(255,255,255,.12);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: width var(--tr), height var(--tr);
+    border: 2px solid rgba(255,255,255,.15);
+}
+.sidebar-header__logo svg { width: 20px; height: 20px; color: #fff; }
+.sidebar-header__text { overflow: hidden; }
+.sidebar-header__brand { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.2; }
+.sidebar-header__sub { font-size: 10px; color: rgba(255,255,255,.45); margin-top: 1px; font-weight: 500; }
+
+/* ── Text wrapper — hides on collapse ── */
+.sidebar__text { transition: opacity 120ms ease, visibility 120ms ease; }
+
+/* ── Nav sections (match seller sl-nav-section) ── */
+.nav-section { padding: 14px 12px 0; transition: padding var(--tr); }
+.nav-section__label {
+    font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3);
+    text-transform: uppercase; letter-spacing: .8px;
+    padding: 0 8px; margin-bottom: 6px;
+    transition: opacity 120ms ease; overflow: hidden; white-space: nowrap;
+}
+.nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: var(--radius-md);
+    color: rgba(255,255,255,.6); font-size: 13px; font-weight: 500;
+    margin-bottom: 1px; cursor: pointer; transition: all var(--tr);
+    position: relative; text-decoration: none; overflow: hidden; white-space: nowrap;
+}
+.nav-item:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); }
+.nav-item.active { background: rgba(255,255,255,.12); color: #fff; font-weight: 600; }
+.nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 18px; border-radius: 0 2px 2px 0; background: #fff;
+}
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.nav-badge {
+    margin-left: auto; min-width: 20px; height: 18px; border-radius: var(--radius-full);
+    background: rgba(239,68,68,.8); color: #fff; font-size: 10px; font-weight: 700;
+    padding: 0 6px; display: flex; align-items: center; justify-content: center;
+    transition: opacity 120ms ease;
+}
+
+/* ── Footer (match seller sl-sidebar__footer) ── */
+.sidebar-footer {
+    margin-top: auto; padding: 16px 12px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    transition: padding var(--tr);
+}
+.sidebar-user {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: var(--radius-md);
+    cursor: pointer; text-decoration: none;
+    transition: all var(--tr);
+}
+.sidebar-user:hover { background: rgba(255,255,255,.08); }
+.sidebar-user__avatar {
+    width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    background: rgba(255,255,255,.15);
+}
+.sidebar-user__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sidebar-user__name { font-size: 12px; font-weight: 600; color: #fff; }
+.sidebar-user__role { font-size: 10px; color: rgba(255,255,255,.4); margin-top: 1px; }
+.sidebar-user__chevron {
+    width: 16px; height: 16px; color: rgba(255,255,255,.4);
+    margin-left: auto; flex-shrink: 0; transition: opacity 120ms ease;
+}
+
+/* ── Maintenance toggle ── */
+.maintenance-toggle { padding: 4px 0; }
+.maintenance-toggle__row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; border-radius: 8px; transition: background .2s;
+}
+.maintenance-toggle__row:hover { background: rgba(255,255,255,.08); }
+.maintenance-toggle__row span { font-size: 13px; color: rgba(255,255,255,.75); font-weight: 500; }
+.toggle-switch { position: relative; width: 44px; height: 24px; display: inline-block; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,.25); border-radius: 24px; transition: .3s;
+}
+.toggle-slider:before {
+    content: ""; position: absolute; height: 18px; width: 18px;
+    left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .3s;
+}
+input:checked + .toggle-slider { background: #f59e0b; }
+input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+/* ===== COLLAPSED SIDEBAR (desktop) ===== */
+.sidebar.collapsed .sidebar__text,
+.sidebar.collapsed .sidebar-header__text,
+.sidebar.collapsed .nav-section__label,
+.sidebar.collapsed .nav-badge,
+.sidebar.collapsed .sidebar-user__name,
+.sidebar.collapsed .sidebar-user__role,
+.sidebar.collapsed .sidebar-user__chevron { opacity: 0; visibility: hidden; pointer-events: none; }
+.sidebar.collapsed .nav-item .sidebar__text,
+.sidebar.collapsed .nav-item .nav-badge { position: absolute; opacity: 0; visibility: hidden; pointer-events: none; }
+.sidebar.collapsed .sidebar-header { gap: 0; padding: 22px 14px 18px; justify-content: center; }
+.sidebar.collapsed .sidebar-header__logo { width: 36px; height: 36px; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 9px 0; gap: 0; }
+.sidebar.collapsed .nav-item.active::before { display: none; }
+.sidebar.collapsed .sidebar-user { justify-content: center; padding: 8px 0; }
+.sidebar.collapsed .sidebar-footer { padding: 16px 8px; }
+.sidebar.collapsed .nav-section { padding: 14px 8px 0; }
+.sidebar.collapsed .maintenance-toggle { display: none; }
+
+/* ===== RESPONSIVE (mobile drawer) ===== */
+@media (max-width: 1024px) {
+    .sidebar { display: none; }
+    .sidebar-overlay { display: block; }
+    .sidebar .sidebar__toggle { display: none; }
+    /* Sidebar as drawer */
+    .sidebar.mobile-open {
+        display: flex; position: fixed; left: 0; top: 0; bottom: 0;
+        width: var(--sidebar); z-index: 31;
+        transform: translateX(0); box-shadow: var(--shadow-md);
+    }
+    .sidebar.mobile-open .sidebar__close { display: flex; }
+    /* Reset collapsed styles on mobile */
+    .sidebar.mobile-open .sidebar__text,
+    .sidebar.mobile-open .sidebar-header__text,
+    .sidebar.mobile-open .nav-section__label,
+    .sidebar.mobile-open .nav-badge,
+    .sidebar.mobile-open .sidebar-user__name,
+    .sidebar.mobile-open .sidebar-user__role,
+    .sidebar.mobile-open .sidebar-user__chevron { opacity: 1; visibility: visible; }
+    .sidebar.mobile-open .nav-item .sidebar__text,
+    .sidebar.mobile-open .nav-item .nav-badge { position: static; }
+    .sidebar.mobile-open .sidebar-header { gap: 12px; padding: 22px 18px 18px; justify-content: flex-start; }
+    .sidebar.mobile-open .sidebar-header__logo { width: 40px; height: 40px; }
+    .sidebar.mobile-open .nav-item { justify-content: flex-start; padding: 9px 10px; gap: 10px; }
+    .sidebar.mobile-open .nav-item.active::before { display: block; }
+    .sidebar.mobile-open .sidebar-user { justify-content: flex-start; padding: 8px 10px; }
+    .sidebar.mobile-open .sidebar-footer { padding: 16px 12px; }
+    .sidebar.mobile-open .nav-section { padding: 14px 12px 0; }
+    .sidebar.mobile-open .maintenance-toggle { display: block; }
+}
+</style>
+
+<!-- ===== SIDEBAR JS ===== -->
+<script>
+function toggleMaintenance(enabled) {
+    var message = '';
+    var endTime = '';
+    if (enabled) {
+        var msg = prompt('Nhập thông báo bảo trì (để trống để giữ mặc định):', 'Hệ thống đang bảo trì, vui lòng quay lại sau.');
+        if (msg === null) { document.getElementById('maintenanceCheckbox').checked = false; return; }
+        message = msg;
+        var et = prompt('Dự kiến quay lại lúc (VD: 22:00 ngày 09/06/2026) — để trống nếu chưa xác định:', '');
+        if (et === null) { document.getElementById('maintenanceCheckbox').checked = false; return; }
+        endTime = et;
+    }
+    var formData = new URLSearchParams();
+    formData.append('mode', enabled);
+    if (message) formData.append('message', message);
+    if (endTime) formData.append('endTime', endTime);
+    fetch('/admin/settings/maintenance/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            alert(enabled ? '🔧 Đã bật chế độ bảo trì.' : '✅ Đã tắt chế độ bảo trì.');
+        } else {
+            alert('Lỗi: ' + (data.message || 'Không thể thay đổi'));
+            document.getElementById('maintenanceCheckbox').checked = !enabled;
+        }
+    })
+    .catch(function(err) {
+        alert('Lỗi kết nối: ' + err.message);
+        document.getElementById('maintenanceCheckbox').checked = !enabled;
+    });
+}
+
+(function() {
+    var STORAGE_KEY = 'dx_admin_sidebar_collapsed';
+    var MOBILE_BP = 1024;
+
+    var sidebar = document.getElementById('adminSidebar');
+    var overlay = document.getElementById('adminSidebarOverlay');
+    var layout  = sidebar.closest('.layout');
+    // Fallback: if closest() returns null, try querySelector
+    if (!layout) layout = document.querySelector('.layout');
+
+    if (!sidebar) return;
+
+    // ── INIT: restore saved state ──
+    var saved       = localStorage.getItem(STORAGE_KEY);
+    var isCollapsed = saved === '1';
+    var isMobile    = window.innerWidth < MOBILE_BP;
+
+    function updateToggleTitle(text) {
+        var btn = document.getElementById('adminSidebarToggle');
+        if (btn) btn.setAttribute('title', text);
+    }
+
+    function applyState() {
+        if (isMobile) {
+            // Mobile: hide sidebar drawer by default, ensure no collapsed class
+            sidebar.classList.remove('collapsed', 'mobile-open');
+            if (layout) layout.classList.remove('sidebar-collapsed');
+            sidebar.setAttribute('aria-expanded', 'false');
+            overlay.classList.remove('show');
+        } else {
+            // Desktop: apply collapse state
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                sidebar.classList.remove('mobile-open');
+                if (layout) layout.classList.add('sidebar-collapsed');
+                sidebar.setAttribute('aria-expanded', 'false');
+                updateToggleTitle('Mở rộng sidebar');
+            } else {
+                sidebar.classList.remove('collapsed', 'mobile-open');
+                if (layout) layout.classList.remove('sidebar-collapsed');
+                sidebar.setAttribute('aria-expanded', 'true');
+                updateToggleTitle('Thu gọn sidebar');
+            }
+        }
+    }
+
+    applyState();
+
+    // ── DESKTOP: collapse/expand toggle ──
+    window.toggleAdminSidebar = function() {
+        if (window.innerWidth < MOBILE_BP) return; // ignore on mobile
+        isCollapsed = !isCollapsed;
+        localStorage.setItem(STORAGE_KEY, isCollapsed ? '1' : '0');
+        isMobile = false;
+        applyState();
+    };
+
+    // ── MOBILE: open drawer ──
+    window.openAdminMobileSidebar = function() {
+        if (window.innerWidth >= MOBILE_BP) return;
+        sidebar.classList.add('mobile-open');
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        sidebar.setAttribute('aria-expanded', 'true');
+    };
+
+    // ── MOBILE: close drawer ──
+    window.closeAdminMobileSidebar = function() {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+        sidebar.setAttribute('aria-expanded', 'false');
+    };
+
+    // ── RESIZE: switch between desktop/mobile modes ──
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            var nowMobile = window.innerWidth < MOBILE_BP;
+            if (nowMobile !== isMobile) {
+                isMobile = nowMobile;
+                // Close mobile drawer when switching
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('show');
+                document.body.style.overflow = '';
+                applyState();
+            }
+        }, 150);
+    });
+
+    // ── Close drawer on Escape key ──
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
+            closeAdminMobileSidebar();
+        }
+    });
+
+    // ── Auto-close drawer after clicking a nav link (mobile) ──
+    sidebar.addEventListener('click', function(e) {
+        if (sidebar.classList.contains('mobile-open') && e.target.closest('.nav-item')) {
+            // Let the link navigate, then close (small delay)
+            setTimeout(closeAdminMobileSidebar, 100);
+        }
+    });
+
+})();
+</script>
+
+</body>
+</html>

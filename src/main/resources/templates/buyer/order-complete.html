@@ -1,0 +1,501 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt hàng thành công — DealXanh</title>
+    <meta name="description" content="Đơn hàng của bạn đã được đặt thành công trên DealXanh">
+    <div th:replace="~{common/buyer/css :: css}"></div>
+    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    <style>
+html{height:auto;min-height:100%}
+body{padding-bottom:120px;background:var(--background);font-family:var(--font-family)}
+*,*::before,*::after{box-sizing:border-box}
+
+/* ===== SUCCESS HERO ===== */
+.success-hero{background:linear-gradient(135deg,#0d5c2e 0%,#1a8b4a 40%,#22c55e 100%);padding:40px 24px 32px;text-align:center;position:relative;overflow:hidden}
+.success-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.12) 0%,transparent 60%)}
+.success-checkmark{width:72px;height:72px;margin:0 auto 14px;position:relative;z-index:1}
+.success-checkmark__circle{width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;animation:scaleIn .5s ease .2s both}
+.success-checkmark__icon svg{width:32px;height:32px;color:#fff;stroke-width:3}
+.success-title{font-size:22px;font-weight:800;color:#fff;margin:0 0 6px;position:relative;z-index:1;animation:fadeUp .6s ease .4s both}
+.success-subtitle{font-size:13px;color:rgba(255,255,255,.8);line-height:1.5;max-width:360px;margin:0 auto;position:relative;z-index:1;animation:fadeUp .6s ease .5s both}
+.order-count-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);border-radius:var(--radius-full);font-size:13px;font-weight:700;color:#fff;margin-top:12px;position:relative;z-index:1;animation:fadeUp .6s ease .6s both}
+.order-count-badge svg{width:14px;height:14px;flex-shrink:0}
+
+@keyframes scaleIn{0%{transform:scale(0);opacity:0}60%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
+
+/* ===== CONTENT ===== */
+.content-area{padding:16px 16px 100px;display:flex;flex-direction:column;gap:12px}
+
+/* QR Ticket Card */
+.qr-ticket{background:var(--surface);border-radius:var(--radius-xl);border:1px solid var(--border-light);overflow:hidden;box-shadow:var(--shadow-md);position:relative}
+.qr-ticket::before,.qr-ticket::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:var(--background);top:50%;transform:translateY(-50%);z-index:1}
+.qr-ticket::before{left:-10px;box-shadow:inset -2px 0 0 var(--border-light)}
+.qr-ticket::after{right:-10px;box-shadow:inset 2px 0 0 var(--border-light)}
+
+.ticket-top{padding:14px 16px;background:rgba(13,92,46,.04);border-bottom:1.5px dashed var(--border)}
+.ticket-store-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ticket-store-img{width:36px;height:36px;border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0;background:var(--background);display:flex;align-items:center;justify-content:center}
+.ticket-store-img img{width:100%;height:100%;object-fit:cover}
+.ticket-store-img .store-icon{width:22px;height:22px;color:var(--text-tertiary)}
+.ticket-store-name{font-size:14px;font-weight:700;color:var(--text-primary)}
+.ticket-store-addr{font-size:11px;color:var(--text-tertiary);margin-top:1px}
+.ticket-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.ticket-chip{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:600;border:1px solid}
+.t-chip-id{background:rgba(13,92,46,.08);color:var(--primary);border-color:rgba(13,92,46,.2)}
+.t-chip-status{background:rgba(245,158,11,.1);color:var(--warning);border-color:rgba(245,158,11,.2)}
+.ticket-chip svg{width:10px;height:10px;flex-shrink:0}
+.t-chip-unpaid{background:rgba(239,68,68,.08);color:var(--danger);border-color:rgba(239,68,68,.2)}
+.t-chip-paid{background:rgba(16,185,129,.1);color:var(--success);border-color:rgba(16,185,129,.2)}
+/* Payment info row */
+.ticket-payment-info{display:flex;align-items:center;gap:6px;margin-top:8px;padding:8px 10px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.12);border-radius:var(--radius-sm);font-size:11px;font-weight:600;color:var(--info)}
+.ticket-payment-info svg{width:12px;height:12px;flex-shrink:0}
+
+.ticket-bottom{padding:16px}
+.ticket-qr-row{display:flex;align-items:center;gap:14px}
+.ticket-qr-box{width:100px;height:100px;flex-shrink:0;background:var(--surface);border-radius:var(--radius-lg);border:2px solid var(--border-light);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);position:relative;cursor:pointer;transition:transform var(--tr, .2s)}
+.ticket-qr-box:hover{transform:scale(1.05)}
+.qr-code-text{font-size:10px;font-weight:700;color:var(--text-primary);text-align:center;word-break:break-all;padding:8px;line-height:1.3;letter-spacing:.5px}
+
+.ticket-info{flex:1;min-width:0}
+.ticket-order-num{font-size:11px;color:var(--text-tertiary);font-weight:500;margin-bottom:4px}
+.ticket-items-list{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.ticket-item-row{display:flex;justify-content:space-between;font-size:12px}
+.ticket-item-name{color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:8px}
+.ticket-item-price{font-weight:600;color:var(--text-primary);flex-shrink:0}
+.ticket-subtotal{display:flex;justify-content:space-between;align-items:center;padding-top:7px;border-top:1px solid var(--border-light);margin-top:4px}
+.ticket-subtotal-label{font-size:12px;font-weight:600;color:var(--text-secondary)}
+.ticket-subtotal-val{font-size:16px;font-weight:800;color:var(--primary)}
+.ticket-discount{font-size:11px;color:var(--danger);font-weight:500;text-align:right;margin-top:2px}
+
+/* OTP fallback */
+.otp-fallback{margin-top:10px;padding:10px 12px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:space-between}
+.otp-fallback-label{font-size:11px;color:var(--text-secondary);font-weight:500}
+.otp-code{font-size:20px;font-weight:800;color:#1d4ed8;letter-spacing:4px;font-variant-numeric:tabular-nums}
+
+/* Pickup instructions */
+.instructions-card{background:var(--surface);border-radius:var(--radius-lg);padding:20px 16px;border:1px solid var(--border-light);box-shadow:var(--shadow-sm)}
+.instructions-card__title{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+.instructions-card__title svg{width:15px;height:15px;color:var(--primary);flex-shrink:0}
+.instructions-card__subtitle{font-size:12px;color:var(--text-secondary);margin-bottom:16px}
+.instruction-steps{display:flex;flex-direction:column;gap:12px}
+.instruction-step{display:flex;align-items:flex-start;gap:12px}
+.instruction-step__num{width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.instruction-step__text{flex:1;padding-top:3px}
+.instruction-step__label{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:2px}
+.instruction-step__desc{font-size:12px;color:var(--text-secondary);line-height:1.5}
+
+/* Empty state */
+.empty-state{text-align:center;padding:30px 20px}
+.empty-state__icon{font-size:48px;margin-bottom:12px}
+.empty-state__text{font-size:14px;color:var(--text-secondary);margin-bottom:16px}
+
+/* Buttons */
+.action-buttons{display:flex;flex-direction:column;gap:10px;padding:0 16px 20px}
+.btn-primary-action{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-md);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;font-family:var(--font-family);transition:all .15s;box-shadow:0 4px 16px rgba(13,92,46,.25)}
+.btn-primary-action:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.btn-secondary-action{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--surface);color:var(--primary);border:2px solid var(--primary);border-radius:var(--radius-md);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;font-family:var(--font-family);transition:all .15s}
+.btn-secondary-action:hover{background:var(--status-success-bg)}
+
+/* ===== CONFETTI ===== */
+.confetti-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}
+
+@media(min-width:768px){
+    .content-area{max-width:520px;margin:0 auto}
+    .action-buttons{max-width:520px;margin:0 auto;flex-direction:row}
+    .action-buttons>*{flex:1}
+    .success-hero{padding:60px 24px 48px}
+    .success-title{font-size:26px}
+}
+    </style>
+</head>
+<body>
+
+<div th:replace="~{common/buyer/header :: header}"></div>
+
+<!-- ===== SUCCESS HERO ===== -->
+<div class="success-hero">
+    <div class="success-checkmark">
+        <div class="success-checkmark__circle">
+            <div class="success-checkmark__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <h1 class="success-title">Đặt hàng thành công!</h1>
+    <p class="success-subtitle" th:if="${completedOrders == null or completedOrders.isEmpty()}">Cảm ơn bạn đã đặt hàng tại DealXanh. Vui lòng kiểm tra đơn hàng trong mục "Đơn hàng của tôi".</p>
+    <p class="success-subtitle" th:if="${not #lists.isEmpty(completedOrders)}" th:text="|Cảm ơn ${user != null ? user.fullName : 'bạn'} đã đặt hàng. Đến cửa hàng, thanh toán qua PayOS và nhận hàng ngay!|">Cảm ơn bạn đã đặt hàng.</p>
+    <div class="order-count-badge" th:if="${not #lists.isEmpty(completedOrders)}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span th:text="|${#lists.size(completedOrders)} đơn hàng đã được tạo|">1 đơn hàng đã được tạo</span>
+    </div>
+</div>
+
+<!-- ===== QR TICKETS ===== -->
+<div class="content-area">
+
+    <!-- Empty state -->
+    <div class="empty-state" th:if="${completedOrders == null or completedOrders.isEmpty()}">
+        <div class="empty-state__icon">📋</div>
+        <div class="empty-state__text">Đơn hàng của bạn đang được xử lý. Vui lòng kiểm tra trong mục "Đơn hàng của tôi".</div>
+    </div>
+
+    <!-- Order ticket per store -->
+    <div class="qr-ticket" th:each="order : ${completedOrders}">
+        <div class="ticket-top">
+            <div class="ticket-store-row">
+                <div class="ticket-store-img">
+                    <img th:if="${order.store != null and order.store.logoUrl != null and !order.store.logoUrl.isEmpty()}"
+                         th:src="${order.store.logoUrl}" alt="Store logo"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <svg th:if="${order.store == null or order.store.logoUrl == null or order.store.logoUrl.isEmpty()}"
+                         class="store-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         style="display:flex;">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <svg class="store-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         style="display:none;">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="ticket-store-name" th:text="${order.store?.storeName}">Tên cửa hàng</div>
+                    <div class="ticket-store-addr" th:text="${order.store?.address}">Địa chỉ</div>
+                </div>
+            </div>
+            <div class="ticket-meta">
+                <span class="ticket-chip t-chip-id">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span th:text="|DX-#${order.orderId}|">DX-#0</span>
+                </span>
+                <span class="ticket-chip t-chip-status" th:if="${order.status != null}" th:text="${order.status}">PENDING</span>
+                <!-- Payment status badge -->
+                <span class="ticket-chip" th:if="${order.paymentStatus != null}"
+                      th:classappend="${order.paymentStatus == 'PAID' ? 't-chip-paid' : 't-chip-unpaid'}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/><path d="M17 14h3"/><path d="M14 17v3"/><path d="M17 20h3v-3"/></svg>
+                    <span th:text="${order.paymentStatus == 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}">UNPAID</span>
+                </span>
+            </div>
+            <!-- Payment method info (only for non-CASH) -->
+            <div class="ticket-payment-info" th:if="${order.paymentMethod != 'CASH' and order.paymentMethod != null}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <span th:text="|Thanh toán qua PayOS — ${order.paymentMethod == 'MOMO' ? 'Ví MoMo' : (order.paymentMethod == 'BANK_TRANSFER' ? 'Chuyển khoản ngân hàng' : (order.paymentMethod == 'CREDIT_CARD' ? 'Thẻ tín dụng' : order.paymentMethod))}|">Bank Transfer</span>
+            </div>
+            <!-- Legacy CASH payment info -->
+            <div class="ticket-payment-info" th:if="${order.paymentMethod == 'CASH'}" style="background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.2);color:var(--success);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span>Thanh toán tiền mặt khi nhận hàng</span>
+            </div>
+        </div>
+        <div class="ticket-bottom">
+            <div class="ticket-qr-row">
+                <div class="ticket-qr-box" th:attr="onclick=|window.location.href='/buyer/orders/' + ${order.orderId}|">
+                    <div class="qr-code-text" th:text="${order.pickupQrCode}">DX-CODE</div>
+                </div>
+                <div class="ticket-info">
+                    <div class="ticket-order-num" th:text="|Mã nhận hàng: ${order.pickupQrCode}|">Mã nhận hàng</div>
+                    <div class="ticket-items-list">
+                        <div class="ticket-item-row" th:each="item : ${order.orderItems}">
+                            <span class="ticket-item-name" th:text="|${item.quantity}x ${item.product?.name}|">Sản phẩm</span>
+                            <span class="ticket-item-price" th:text="${@priceFormatter.format(item.subtotal)}">0đ</span>
+                        </div>
+                    </div>
+                    <div class="ticket-subtotal">
+                        <span class="ticket-subtotal-label">Tổng cửa hàng này</span>
+                        <span class="ticket-subtotal-val" th:text="${@priceFormatter.format(order.finalAmount)}">0đ</span>
+                    </div>
+                    <div class="ticket-discount" th:if="${order.discountAmount != null and order.discountAmount > 0}">
+                        <span th:text="|(Tiết kiệm ${@priceFormatter.format(order.discountAmount)})|">(Tiết kiệm 0đ)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="otp-fallback" th:if="${order.pickupQrCode != null}">
+                <div>
+                    <div class="otp-fallback-label">Mã OTP nhận hàng (không cần internet)</div>
+                    <div class="otp-code" th:text="${order.pickupQrCode.length() >= 4 ? order.pickupQrCode.substring(order.pickupQrCode.length() - 4) : order.pickupQrCode}">0000</div>
+                </div>
+                <div style="font-size:11px;color:var(--text-tertiary);text-align:right">Đưa cho<br><strong>nhân viên</strong><br>sau khi thanh toán</div>
+            </div>
+
+            <!-- Prepay section: show for UNPAID non-CASH orders -->
+            <div class="prepay-section" th:if="${order.paymentStatus != 'PAID' and order.paymentMethod != 'CASH'}"
+                 th:attr="data-oid=${order.orderId}" style="margin-top:12px;padding:14px 16px;background:var(--bg);border-radius:10px;border:1px dashed var(--border);text-align:center;">
+                <div class="prepay-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-size:14px;font-weight:700;color:var(--primary);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        Thanh toán trước qua PayOS
+                    </span>
+                    <span class="prepay-amount" style="font-size:14px;font-weight:700;color:var(--text-primary);"
+                          th:text="${@priceFormatter.format(order.finalAmount)}">0đ</span>
+                </div>
+                <button class="btn-prepay" th:attr="onclick=|createPrepayQR(${order.orderId})|"
+                        style="width:100%;padding:10px;font-size:14px;font-weight:600;color:#fff;background:var(--primary);border:none;border-radius:8px;cursor:pointer;">
+                    Tạo mã QR thanh toán ngay
+                </button>
+                <div class="prepay-qr-box" th:id="'qrBox_' + ${order.orderId}" style="display:none;margin-top:12px;padding:20px 16px;background:var(--surface);border-radius:10px;border:2px solid var(--primary);flex-direction:column;align-items:center;justify-content:center;">
+                    <img th:id="'qrImg_' + ${order.orderId}" src="" style="width:200px;height:200px;border-radius:8px;display:block;margin:0 auto;" alt="PayOS QR">
+                    <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">
+                        <div th:id="'qrBank_' + ${order.orderId}" style="font-weight:600;"></div>
+                        <div th:id="'qrAccount_' + ${order.orderId}"></div>
+                    </div>
+                    <div class="prepay-countdown" th:id="'qrCountdown_' + ${order.orderId}" style="margin-top:6px;font-size:13px;font-weight:600;color:var(--warning);">Còn 30:00</div>
+                    <div th:id="'qrStatus_' + ${order.orderId}" style="display:none;margin-top:8px;padding:8px;background:#d4edda;border-radius:6px;color:#155724;font-weight:600;font-size:14px;">
+                        Đã thanh toán thành công!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pickup & Payment instructions -->
+    <div class="instructions-card">
+        <div class="instructions-card__title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Hướng dẫn thanh toán & nhận hàng
+        </div>
+        <div class="instructions-card__subtitle">Làm theo 4 bước để thanh toán và nhận hàng nhanh chóng</div>
+        <div class="instruction-steps">
+            <div class="instruction-step">
+                <div class="instruction-step__num">1</div>
+                <div class="instruction-step__text">
+                    <div class="instruction-step__label">Đến cửa hàng</div>
+                    <div class="instruction-step__desc">Đến địa chỉ cửa hàng trong giờ hoạt động. Kiểm tra lại thông tin cửa hàng và mã đơn hàng trong mục "Đơn hàng của tôi".</div>
+                </div>
+            </div>
+            <div class="instruction-step">
+                <div class="instruction-step__num">2</div>
+                <div class="instruction-step__text">
+                    <div class="instruction-step__label">Thanh toán qua PayOS tại cửa hàng</div>
+                    <div class="instruction-step__desc">Nhân viên cửa hàng sẽ tạo mã QR PayOS. Bạn quét mã để thanh toán qua chuyển khoản ngân hàng. Sau khi thanh toán thành công, trạng thái đơn hàng sẽ được cập nhật.</div>
+                </div>
+            </div>
+            <div class="instruction-step">
+                <div class="instruction-step__num">3</div>
+                <div class="instruction-step__text">
+                    <div class="instruction-step__label">Đưa mã nhận hàng cho nhân viên</div>
+                    <div class="instruction-step__desc">Sau khi thanh toán xong, mở đơn hàng trong mục "Đơn hàng của tôi", đưa mã QR hoặc 4 số OTP cuối cho nhân viên để xác nhận nhận hàng.</div>
+                </div>
+            </div>
+            <div class="instruction-step">
+                <div class="instruction-step__num">4</div>
+                <div class="instruction-step__text">
+                    <div class="instruction-step__label">Nhận hàng và thưởng thức</div>
+                    <div class="instruction-step__desc">Sau khi nhân viên xác nhận, bạn sẽ nhận được hàng. Hãy kiểm tra sản phẩm trước khi rời cửa hàng nhé!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Action buttons -->
+<div class="action-buttons" th:if="${not #lists.isEmpty(completedOrders)}">
+    <a th:href="${completedOrders.size() == 1 ? '/buyer/orders/' + completedOrders[0].orderId : '/buyer/orders'}" class="btn-primary-action">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span th:text="${completedOrders.size() == 1 ? 'Xem chi tiết đơn hàng' : 'Xem đơn hàng của tôi'}">Xem đơn hàng</span>
+    </a>
+    <a href="/" class="btn-secondary-action">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Về trang chủ
+    </a>
+</div>
+
+<div class="action-buttons" th:if="${completedOrders == null or completedOrders.isEmpty()}">
+    <a href="/buyer/orders" class="btn-primary-action">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Xem đơn hàng của tôi
+    </a>
+    <a href="/" class="btn-secondary-action">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Về trang chủ
+    </a>
+</div>
+
+<div th:replace="~{common/buyer/mobile-nav :: mobileNav}"></div>
+<div th:replace="~{common/buyer/js :: js}"></div>
+
+<canvas id="confettiCanvas" class="confetti-container"></canvas>
+
+<script>
+// ===== CONFETTI ANIMATION =====
+(function(){
+    var canvas = document.getElementById('confettiCanvas');
+    var ctx = canvas.getContext('2d');
+    var particles = [];
+    var colors = ['#0d5c2e','#d4af37','#22c55e','#f59e0b','#3b82f6','#ec4899','#ffffff','#10b981'];
+    var w, h;
+
+    function resize(){
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function createParticle(){
+        return {
+            x: Math.random() * w,
+            y: Math.random() * -h,
+            size: Math.random() * 8 + 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            speed: Math.random() * 3 + 2,
+            angle: Math.random() * Math.PI * 2,
+            rotation: Math.random() * 0.2 - 0.1,
+            wobble: Math.random() * 2 - 1,
+            delay: Math.random() * 2000
+        };
+    }
+
+    for(var i = 0; i < 120; i++) particles.push(createParticle());
+
+    var startTime = Date.now();
+
+    function draw(){
+        var elapsed = Date.now() - startTime;
+        ctx.clearRect(0, 0, w, h);
+
+        for(var i = 0; i < particles.length; i++){
+            var p = particles[i];
+            if(elapsed < p.delay) continue;
+
+            var t = (elapsed - p.delay) / 1000;
+            var x = p.x + Math.sin(t * 3 + p.wobble) * 30;
+            var y = h * (t * p.speed / 20);
+
+            if(y > h + 20){
+                y = h + 20;
+                ctx.globalAlpha = 0;
+            } else {
+                ctx.globalAlpha = Math.max(0, 1 - t / 4);
+            }
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(t * 5 + p.rotation);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.6);
+            ctx.restore();
+        }
+
+        ctx.globalAlpha = 1;
+
+        if(elapsed < 5000){
+            requestAnimationFrame(draw);
+        }
+    }
+
+    draw();
+})();
+
+// ===== PREPAY PAYOS QR =====
+var prepayTimers = {};
+var prepayPollers = {};
+
+function createPrepayQR(orderId) {
+    var btn = document.querySelector('[onclick="createPrepayQR(' + orderId + ')"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang tạo mã QR...'; }
+
+    fetch('/api/payment/buyer-create/' + orderId, { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) {
+                if (btn) { btn.disabled = false; btn.textContent = 'Tạo mã QR thanh toán ngay'; }
+                alert(data.message || 'Không thể tạo mã QR');
+                return;
+            }
+            // Hide button, show QR
+            if (btn) btn.style.display = 'none';
+            var qrBox = document.getElementById('qrBox_' + orderId);
+            if (qrBox) qrBox.style.display = 'flex';
+            var qrImg = document.getElementById('qrImg_' + orderId);
+            if (qrImg && data.qrCode) {
+                qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(data.qrCode);
+            }
+            var bankEl = document.getElementById('qrBank_' + orderId);
+            if (bankEl && data.bin) bankEl.textContent = 'Ngan hang: ' + (data.bin || '');
+            var accEl = document.getElementById('qrAccount_' + orderId);
+            if (accEl && data.accountNumber) accEl.textContent = 'STK: ' + data.accountNumber + (data.accountName ? ' - ' + data.accountName : '');
+            // Start countdown
+            startPrepayCountdown(orderId, 1800);
+            // Start polling
+            prepayPollers[orderId] = setInterval(function() { checkPrepayStatus(orderId); }, 5000);
+        })
+        .catch(function(err) {
+            if (btn) { btn.disabled = false; btn.style.display = ''; btn.textContent = 'Tạo mã QR thanh toán ngay'; }
+            console.error('Prepay QR error:', err);
+        });
+}
+
+function startPrepayCountdown(orderId, seconds) {
+    var el = document.getElementById('qrCountdown_' + orderId);
+    if (!el) return;
+    prepayTimers[orderId] = setInterval(function() {
+        seconds--;
+        var m = Math.floor(seconds / 60);
+        var s = seconds % 60;
+        el.textContent = 'Con ' + m + ':' + (s < 10 ? '0' : '') + s;
+        if (seconds <= 0) {
+            clearInterval(prepayTimers[orderId]);
+            clearInterval(prepayPollers[orderId]);
+            el.textContent = 'Ma QR da het han';
+            el.style.color = 'var(--danger)';
+        }
+    }, 1000);
+}
+
+function checkPrepayStatus(orderId) {
+    fetch('/api/payment/status/' + orderId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.paidFromPayOS) {
+                clearInterval(prepayPollers[orderId]);
+                clearInterval(prepayTimers[orderId]);
+                var qrBox = document.getElementById('qrBox_' + orderId);
+                if (qrBox) {
+                    var img = qrBox.querySelector('img');
+                    var countdown = document.getElementById('qrCountdown_' + orderId);
+                    var status = document.getElementById('qrStatus_' + orderId);
+                    if (img) img.style.display = 'none';
+                    if (countdown) countdown.style.display = 'none';
+                    if (status) status.style.display = 'block';
+                }
+                // Auto-redirect to orders after 2 seconds
+                var allPaid = true;
+                var pollerKeys = Object.keys(prepayPollers);
+                for (var k = 0; k < pollerKeys.length; k++) {
+                    if (prepayPollers[pollerKeys[k]]) { allPaid = false; break; }
+                }
+                if (allPaid) {
+                    window.location.href = '/buyer/orders';
+                }
+            }
+        })
+        .catch(function() {});
+}
+
+</script>
+
+<div th:replace="~{common/buyer/footer :: footer}"></div>
+</body>
+</html>
